@@ -1,63 +1,42 @@
+const express = require('express');
 const bcrypt = require('bcrypt');
-const http = require('node:http');
-const querystring = require('querystring');
-
+const router = express.Router();
 
 const salt = 10;
 const userPassword = 'asd';
 
+router.use(express.urlencoded({ extended: true }));
 
-const server = http.createServer((req, res) => {
-  if (req.method === 'POST' && req.url === '/login') {
-    let body = '';
-    
-    req.on('data', chunk => {
-      body += chunk.toString();
+router.post('/login', (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  console.log('Username:', username);
+  console.log('Password:', password);
+
+  bcrypt.hash(password, salt, (err, hash) => {
+    if (err) {
+      res.status(500).send('Error hashing password');
+      return;
+    }
+
+    console.log('Hashed password:', hash);
+
+    bcrypt.compare(userPassword, hash, (err, result) => {
+      if (err) {
+        res.status(500).send('Error comparing password');
+        return;
+      }
+
+      if (result) {
+        console.log('mukodik');
+        res.status(200).send(`Welcome, ${username}. Hash: ${hash}`);
+      } else {
+        console.log('nem mukodik');
+        res.status(401).send('Authentication failed');
+      }
     });
-    
-    req.on('end', () => {
-      const parsedData = querystring.parse(body);
-      const username = parsedData.username;
-      const password = parsedData.password;
-
-      console.log('Username:', username);
-      console.log('Password:', password);
-
-      // Hash the received password
-      bcrypt.hash(password, salt, (err, hash) => {
-        if (err) {
-          res.writeHead(500);
-          return res.end('Error hashing password');
-        }
-
-        console.log('Hashed password:', hash);
-
-        // Compare with stored password (for demo, using userPassword)
-        bcrypt.compare(userPassword, hash, (err, result) => {
-          if (err) {
-            res.writeHead(500);
-            return res.end('Error comparing password');
-          }
-
-          if (result) {
-            console.log('mukodik');
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end(`Welcome, ${username}. Hash: ${hash}`);
-          } else {
-            console.log('nem mukodik');
-            res.writeHead(401);
-            res.end('Authentication failed');
-          }
-        });
-      });
-    });
-  } else {
-    res.writeHead(404);
-    res.end('Not Found');
-  }
+  });
 });
 
-
-server.listen(3000, () => {
-  console.log('Server running at http://localhost:3000');
-});
+module.exports = router;
