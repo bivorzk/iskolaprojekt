@@ -2,10 +2,10 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 
-const salt = 10;
-const userPassword = 'asd';
+ const salt = 10;
 
 router.use(express.urlencoded({ extended: true }));
+
 
 router.post('/login', (req, res) => {
   const username = req.body.username;
@@ -22,7 +22,7 @@ router.post('/login', (req, res) => {
 
     console.log('Hashed password:', hash);
 
-    bcrypt.compare(userPassword, hash, (err, result) => {
+    bcrypt.compare(password, hash, (err, result) => {
       if (err) {
         res.status(500).send('Error comparing password');
         return;
@@ -37,6 +37,7 @@ router.post('/login', (req, res) => {
       }
     });
   });
+
 });
 
 module.exports = router;
