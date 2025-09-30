@@ -3,8 +3,11 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 
+
 require('dotenv').config();
 
+const banned_words_hu = require('./hu.json');
+const banned_words = require('badwords-list').array;
 
 /*
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
@@ -33,9 +36,26 @@ router.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
     // Input validation
-    if (!username || !password || username.length < 3 || password.length < 6) {
+    if (!username || !password || username.length < 3 || password.length < 8) {
       return res.status(400).send('Invalid username or password');
     }
+
+    if (username === password) {
+      return res.status(400).send('Username and password cannot be the same');
+    }
+
+    for (const word of banned_words_hu ) {
+      if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
+        return res.status(400).send('Username or password contains banned words');
+      }
+    }
+
+    for (const word of banned_words) {
+      if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
+        return res.status(400).send('Username or password contains banned words');
+      }
+    }
+
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
