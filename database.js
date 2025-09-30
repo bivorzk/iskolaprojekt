@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
+const bcrypt = require('bcrypt');
 const router = express.Router();
-const mongodb = require('mongodb');
 
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
 const dbName = 'Projekt_vizsgaremek';
@@ -19,7 +19,8 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-router.post('/', async (req, res) => {
+// Registration route
+router.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
   // Check if user already exists
@@ -28,24 +29,32 @@ router.post('/', async (req, res) => {
     return res.status(400).send('User already exists');
   }
 
+  // Hash password before saving
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   // Create new user
-  const user = new User({ username, password });
+  const user = new User({ username, password: hashedPassword });
   await user.save();
   res.status(201).send('User registered successfully');
-  console.log(username, password);
+  console.log('User registered:', username);
 });
 
+// Login route
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({
-    username,
-    password
-  });
+  const user = await User.findOne({ username });
   if (!user) {
     return res.status(401).send('Authentication failed');
+    console.log('nem mukodik');
   }
-  res.status(200).send(`Welcome, ${username}`, password);
-  console.log(username, password);
+
+  // Compare password with hash
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).send('Authentication failed');
+  }
+
+  res.status(200).send(`Welcome, ${username}`);
 });
 
 module.exports = router;
