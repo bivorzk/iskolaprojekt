@@ -3,12 +3,20 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 
+require('dotenv').config();
+
+
+/*
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
-const dbName = 'Projekt_vizsgaremek';
+const dbName = 'Projekt_vizsgaremek'; 
+*/
+
+const dbUrl = process.env.MONGODB_URI;
+const dbName = process.env.DB_NAME;
 
 router.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(dbUrl + dbName, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(dbUrl + dbName)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
@@ -21,40 +29,56 @@ const User = mongoose.model('User', userSchema);
 
 // Registration route
 router.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ username });
-  if (existingUser) {
-    return res.status(400).send('User already exists');
+    // Input validation
+    if (!username || !password || username.length < 3 || password.length < 6) {
+      return res.status(400).send('Invalid username or password');
+    }
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).send('User already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+    res.status(201).send('User registered successfully');
+    console.log('User registered:', username);
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).send('Server error');
   }
-
-  // Hash password before saving
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create new user
-  const user = new User({ username, password: hashedPassword });
-  await user.save();
-  res.status(201).send('User registered successfully');
-  console.log('User registered:', username);
 });
 
 // Login route
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if (!user) {
-    return res.status(401).send('Authentication failed');
-    console.log('nem mukodik');
-  }
+  try {
+    const { username, password } = req.body;
 
-  // Compare password with hash
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(401).send('Authentication failed');
-  }
+    // Input validation
+    if (!username || !password) {
+      return res.status(400).send('Username and password are required');
+    }
 
-  res.status(200).send(`Welcome, ${username}`);
+    const user = await User.findOne({ username });
+    if (!user) {
+      console.log('Username not found:', username);
+      return res.status(401).send('Username not found');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).send('Incorrect password');
+    }
+
+    res.status(200).send(`Welcome, ${username}`);
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).send('Server error');
+  }
 });
 
 module.exports = router;

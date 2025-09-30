@@ -2,14 +2,37 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 
- const salt = 10;
+const salt = 10;
 
 router.use(express.urlencoded({ extended: true }));
+router.use(express.json());
 
+// ✅ Registration route
+router.post('/register', async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
+    if (!username || !password) {
+      return res.status(400).send('Username and password are required');
+    }
+
+    // Hash the password
+    const hash = await bcrypt.hash(password, salt);
+
+    // For now just log the user (later you’ll save to MongoDB)
+    console.log('New user:', username);
+    console.log('Hashed password:', hash);
+
+    res.status(201).send(`User ${username} registered with hashed password`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// ✅ Login route (your original)
 router.post('/login', (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
+  const { username, password } = req.body;
 
   console.log('Username:', username);
   console.log('Password:', password);
@@ -37,7 +60,6 @@ router.post('/login', (req, res) => {
       }
     });
   });
-
 });
 
 module.exports = router;
