@@ -6,8 +6,12 @@ const router = express.Router();
 
 require('dotenv').config();
 
+
+// Banned words lists json files
 const banned_words_hu = require('./hu.json');
 const banned_words = require('badwords-list').array;
+// Password characters json file
+const password_characters = require('./password_characters.json');
 
 /*
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
@@ -56,6 +60,36 @@ router.post('/register', async (req, res) => {
       }
     }
 
+
+    for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
+    if (!password.toLowerCase().includes(char)){
+      return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
+     }
+    }
+
+    for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
+      if (!password.toLowerCase().includes(char)) {
+        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
+      }
+    }
+
+    for (const char of password_characters.lowercase + password_characters.hungarian_lowercase) {
+      if (!password.toLowerCase().includes(char)) {
+        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
+      }
+    }
+
+    for (const char of password_characters.digits) {
+      if (!password.toLowerCase().includes(char)) {
+        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
+      }
+    }
+
+    for (const char of password_characters.special) {
+      if (!password.toLowerCase().includes(char)) {
+        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
+      }
+    }
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
