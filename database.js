@@ -61,11 +61,6 @@ router.post('/register', async (req, res) => {
     }
 
 
-    for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
-    if (!password.toLowerCase().includes(char)){
-      return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
-     }
-    }
 
     for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
       if (!password.toLowerCase().includes(char)) {
