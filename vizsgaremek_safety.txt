@@ -1,0 +1,9 @@
+--> login - rate limiting, captha?, Brute-force protection
+--> login - email verification
+- password reset via crypto npm 
+- ip track?
+-- > register+login - XSS attack prevention?
+-- 2fa?
+------------------------------------------------
+
+sql injection

@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
     // Input validation
-    if (!username || !password || username.length < 3 || password.length < 8) {
+    if (!username || !password || username.length < 3 || password.length <= 8) {
       return res.status(400).send('Invalid username or password');
     }
 
@@ -59,8 +59,6 @@ router.post('/register', async (req, res) => {
         return res.status(400).send('Username or password contains banned words');
       }
     }
-
-
 
     for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
       if (!password.toLowerCase().includes(char)) {
@@ -89,7 +87,8 @@ router.post('/register', async (req, res) => {
     await user.save();
     res.status(201).send('User registered successfully');
     console.log('User registered:', username);
-  } catch (err) {
+  }
+   catch (err) {
     console.error('Registration error:', err);
     res.status(500).send('Server error');
   }
