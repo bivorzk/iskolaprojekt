@@ -29,7 +29,8 @@ mongoose.connect(dbUrl + dbName)
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -37,7 +38,7 @@ const User = mongoose.model('User', userSchema);
 // Registration route
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, email } = req.body;
 
     // Input validation
     if (!username || !password || username.length < 3 || password.length <= 8) {
@@ -81,9 +82,14 @@ router.post('/register', async (req, res) => {
     if (existingUser) {
       return res.status(400).send('User already exists');
     }
+    
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).send('Email already in use');
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword });
+    const user = new User({ username, password: hashedPassword, email });
     await user.save();
     res.status(201).send('User registered successfully');
     console.log('User registered:', username);
@@ -107,12 +113,12 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) {
       console.log('Username not found:', username);
-      return res.status(401).send('Username not found');
+      return res.status(401).send('Invalid credentials');
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).send('Incorrect password');
+      return res.status(401).send('Invalid credentials');
     }
 
     res.status(200).send(`Welcome, ${username}`);
