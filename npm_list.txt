@@ -9,3 +9,4 @@ projekt@1.0.0 E:\vizsgaremek\iskolaprojekt
 ├── mongoose@8.18.2
 ├── nodemon@3.1.0
 └── zxcvbn@4.4.2
+node-express-rate-limiter@1.0.2

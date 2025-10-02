@@ -17,6 +17,7 @@
     "express": "^4.21.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
+    "node-express-rate-limiter": "^1.0.2",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
