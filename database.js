@@ -13,6 +13,11 @@ const banned_words = require('badwords-list').array;
 // Password characters json file
 const password_characters = require('./password_characters.json');
 
+// Banned password list (too weak/most used) at least 8 characters
+// Source:
+const banned_passwords = require('./Most_used_passwords.json');
+
+
 /*
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
 const dbName = 'Projekt_vizsgaremek'; 
@@ -44,11 +49,15 @@ router.post('/register', async (req, res) => {
     if (!username || !password || username.length < 3 || password.length <= 8) {
       return res.status(400).send('Invalid username or password');
     }
+    
+    if (username.length >= 40 || password.length >= 50) {
+      return res.status(400).send('Username or password too long Please shorten it');
+    }
 
     if (username === password) {
       return res.status(400).send('Username and password cannot be the same');
     }
-
+ 
     for (const word of banned_words_hu ) {
       if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
         return res.status(400).send('Username or password contains banned words');
@@ -58,6 +67,12 @@ router.post('/register', async (req, res) => {
     for (const word of banned_words) {
       if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
         return res.status(400).send('Username or password contains banned words');
+      }
+    }
+    
+    for (const bannedPassword of banned_passwords) {
+      if (password.toLowerCase() === bannedPassword) {
+        return res.status(400).send('Password is too common, choose a stronger one');
       }
     }
 
