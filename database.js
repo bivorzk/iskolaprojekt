@@ -12,6 +12,8 @@ const banned_words_hu = require('./hu.json');
 const banned_words = require('badwords-list').array;
 // Password characters json file
 const password_characters = require('./password_characters.json');
+// Disposable email domains list json file
+const disposable_email_list = require('./disposable_email_list.json');
 
 // Banned password list (too weak/most used) at least 8 characters
 // Source:
@@ -46,13 +48,17 @@ router.post('/register', async (req, res) => {
     const { username, password, email } = req.body;
 
     // Input validation
+    // Username checks and password checks
     if (!username || !password || username.length < 3 || password.length <= 8) {
       return res.status(400).send('Invalid username or password');
     }
-    
+  
     if (username.length >= 40 || password.length >= 50) {
       return res.status(400).send('Username or password too long Please shorten it');
     }
+
+
+    // Username security checks
 
     if (username === password) {
       return res.status(400).send('Username and password cannot be the same');
@@ -69,7 +75,9 @@ router.post('/register', async (req, res) => {
         return res.status(400).send('Username or password contains banned words');
       }
     }
-    
+  
+    // Password security checks
+
     for (const bannedPassword of banned_passwords) {
       if (password.toLowerCase() === bannedPassword) {
         return res.status(400).send('Password is too common, choose a stronger one');
@@ -92,6 +100,13 @@ router.post('/register', async (req, res) => {
         return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
       }
     }
+
+// Email security checks
+
+    if (disposable_email_list.includes(email)) {
+      return res.status(400).send('This type of email is not allowed please user another email');
+    }
+    // Check for existing users
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {

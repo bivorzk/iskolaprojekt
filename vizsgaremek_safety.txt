@@ -1,13 +1,13 @@
 --> login - rate limiting, captha?, Brute-force protection
 --> login - email verification
---> login? - password reset via crypto npm 
+--> login? - password reset 
 --> login? - ip track?
--- > register+login - XSS attack prevention?
+-- > register+login+BODY OF THE SITE  - XSS attack prevention?
 --> login - 2fa?
 --> register - password blacklist ✅
 --> register - zxcvbn? password strength 
 (Input length limits) check ✅
-Disposable email rejection (block domains of certain email providers)
+Disposable email rejection (block domains of certain email providers) ✅
 ------------------------------------------------
 sql injection
 -------------------------------------------------

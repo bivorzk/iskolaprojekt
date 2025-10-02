@@ -1,0 +1,3 @@
+disposable email checks: https://raw.githubusercontent.com/wesbos/burner-email-providers/refs/heads/master/emails.txt
+username bad word check: https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/hu
+Most used passwords: ChatGPT
