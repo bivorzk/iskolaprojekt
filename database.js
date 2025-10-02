@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
-
+const passwordStrength = require('zxcvbn')
 
 require('dotenv').config();
 
@@ -53,7 +53,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).send('Invalid username or password');
     }
   
-    if (username.length >= 40 || password.length >= 50) {
+    if (username.length <= 40 || password.length <= 50) {
       return res.status(400).send('Username or password too long Please shorten it');
     }
 
@@ -99,6 +99,10 @@ router.post('/register', async (req, res) => {
       if (!password.toLowerCase().includes(char)) {
         return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
       }
+    }
+
+    if (passwordStrength(password).score < 3) {
+      return res.status(400).send('Password is too weak, choose a stronger one' + passwordStrength(password).feedback.warning + ' ' + passwordStrength(password).guesses);
     }
 
 // Email security checks

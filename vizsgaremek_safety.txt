@@ -5,7 +5,7 @@
 -- > register+login+BODY OF THE SITE  - XSS attack prevention?
 --> login - 2fa?
 --> register - password blacklist ✅
---> register - zxcvbn? password strength 
+--> register - zxcvbn? password strength ✅
 (Input length limits) check ✅
 Disposable email rejection (block domains of certain email providers) ✅
 ------------------------------------------------
