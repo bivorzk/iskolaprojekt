@@ -15,9 +15,9 @@
     "dotenv": "^17.2.3",
     "ejs": "^3.1.9",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.1.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
-    "node-express-rate-limiter": "^1.0.2",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {

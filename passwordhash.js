@@ -8,7 +8,7 @@ router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
 // ✅ Registration route
-router.post('/register', async (req, res) => {
+router.get('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
 

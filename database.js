@@ -48,13 +48,15 @@ router.post('/register', async (req, res) => {
     const { username, password, email } = req.body;
 
     // Input validation
-    // Username checks and password checks
-    if (!username || !password || username.length < 3 || password.length <= 8) {
-      return res.status(400).send('Invalid username or password');
+    // Username and password length checks
+    if (!username || !password) {
+      return res.status(400).send('Username and password are required');
     }
-  
-    if (username.length <= 40 || password.length <= 50) {
-      return res.status(400).send('Username or password too long Please shorten it');
+    if (username.length < 3 || username.length > 40) {
+      return res.status(400).send('Username must be between 3 and 40 characters');
+    }
+    if (password.length < 8 || password.length > 50) {
+      return res.status(400).send('Password must be between 8 and 50 characters');
     }
 
 
@@ -64,7 +66,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).send('Username and password cannot be the same');
     }
  
-    for (const word of banned_words_hu ) {
+    for (const word of Object.values(banned_words_hu)) {
       if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
         return res.status(400).send('Username or password contains banned words');
       }
@@ -84,22 +86,14 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    for (const char of password_characters.uppercase + password_characters.hungarian_uppercase) {
-      if (!password.toLowerCase().includes(char)) {
-        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
-      }
-    }
-    for (const char of password_characters.digits) {
-      if (!password.toLowerCase().includes(char)) {
-        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
-      }
-    }
+    // Check for at least one uppercase (including Hungarian), one digit, and one special character
+const hasUppercase = [...password_characters.uppercase, ...password_characters.hungarian_uppercase].find(char => password.includes(char));
+const hasDigit = Array.from(password_characters.digits).find(char => password.includes(char));
+const hasSpecial = Array.from(password_characters.special).find(char => password.includes(char));
 
-    for (const char of password_characters.special) {
-      if (!password.toLowerCase().includes(char)) {
-        return res.status(400).send('Password must contain uppercase, lowercase, digit, and special character');
-      }
-    }
+if (!hasUppercase || !hasDigit || !hasSpecial) {
+  return res.status(400).send('Password must contain at least one uppercase letter, one digit, and one special character');
+}
 
     if (passwordStrength(password).score < 3) {
       return res.status(400).send('Password is too weak, choose a stronger one' + passwordStrength(password).feedback.warning + ' ' + passwordStrength(password).guesses);
