@@ -16,12 +16,13 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 })
 
+app.use('/passwordhash', limiter);
 app.use('/database', limiter);
-
+app.use('/login', limiter);
+app.use('/register', limiter);
 
 
 // Mount routes from database router at root so it provides POST /login and POST /register
-app.use('/', database);
 
 // Serve HTML
 app.get('/', (req, res) => {
@@ -30,6 +31,14 @@ app.get('/', (req, res) => {
 
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'register.html'));
+});
+
+
+app.use('/', database);
+
+
+app.use((req, res) => {
+  res.status(404).send('Page not found 😀');
 });
 
 // Note: POST /login and POST /register are handled by the database router

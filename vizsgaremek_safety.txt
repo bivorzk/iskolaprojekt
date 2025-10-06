@@ -1,4 +1,4 @@
---> login - rate limiting, captha?, Brute-force protection
+--> login - rate limiting, captha?, Brute-force protection (rate limit ✅)
 --> login - email verification
 --> login? - password reset 
 --> login? - ip track?
