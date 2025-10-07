@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>reCAPTCHA Test</title>
+</head>
+<body>
+    <h1>reCAPTCHA Key Type Test</h1>
+    
+    <h2>Test 1: reCAPTCHA v2 (Checkbox)</h2>
+    <div id="recaptcha-v2"></div>
+    
+    <h2>Test 2: reCAPTCHA v3 (Invisible)</h2>
+    <button onclick="testV3()">Test v3</button>
+    <div id="v3-result"></div>
+    
+    <script>
+        // Test v2 key
+        function onRecaptchaLoad() {
+            try {
+                grecaptcha.render('recaptcha-v2', {
+                    'sitekey': '6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk',
+                    'callback': function(response) {
+                        console.log('v2 Success:', response);
+                    },
+                    'error-callback': function() {
+                        console.log('v2 Error - Invalid key type for v2');
+                    }
+                });
+            } catch(e) {
+                console.log('v2 Exception:', e);
+            }
+        }
+        
+        // Test v3 key
+        function testV3() {
+            grecaptcha.ready(function() {
+                try {
+                    grecaptcha.execute('6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk', {action: 'test'})
+                    .then(function(token) {
+                        console.log('v3 Success:', token);
+                        document.getElementById('v3-result').innerHTML = 'v3 works!';
+                    })
+                    .catch(function(error) {
+                        console.log('v3 Error:', error);
+                        document.getElementById('v3-result').innerHTML = 'v3 failed: ' + error;
+                    });
+                } catch(e) {
+                    console.log('v3 Exception:', e);
+                    document.getElementById('v3-result').innerHTML = 'v3 exception: ' + e;
+                }
+            });
+        }
+    </script>
+    
+    <!-- Load both APIs to test -->
+    <script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk"></script>
+</body>
+</html>

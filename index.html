@@ -19,5 +19,78 @@
     <!--  <input type="email" name="email" placeholder="Email" required> -->
     <br><br>
   </form>
+
+  <script>
+        // Client-side password confirmation validation and reCAPTCHA v3
+        const RECAPTCHA_SITE_KEY = '6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk';
+        
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Verifying...';
+            submitBtn.disabled = true;
+            
+            // Execute reCAPTCHA v3
+            grecaptcha.ready(function() {
+                grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'register'}).then(function(token) {
+                    console.log('reCAPTCHA token received:', token.substring(0, 20) + '...');
+                    
+                    // Add CAPTCHA token to form and submit
+                    let tokenInput = document.querySelector('input[name="g-recaptcha-response"]');
+                    if (!tokenInput) {
+                        tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'g-recaptcha-response';
+                        document.querySelector('form').appendChild(tokenInput);
+                    }
+                    tokenInput.value = token;
+                    
+                    // Submit the form
+                    const form = document.querySelector('form');
+                    const formData = new FormData(form);
+                    
+                    fetch('/register', {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        } else {
+                            return response.text().then(text => Promise.reject(text));
+                        }
+                    }).then(message => {
+                        alert('Registration successful: ' + message);
+                        form.reset();
+                    }).catch(error => {
+                        alert('Registration failed: ' + error);
+                    }).finally(() => {
+                        // Reset button state
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    });
+                    
+                }).catch(function(error) {
+                    console.error('reCAPTCHA error:', error);
+                    alert('CAPTCHA verification failed. Please try again.');
+                    // Reset button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        });
+    </script>
+
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk"></script>
 </body>
 </html>

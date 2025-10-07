@@ -7,19 +7,25 @@ const path = require('path');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
+  
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 10 requests per `window` (here, per 15 minutes)
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 })
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 5, // start blocking after 5 requests
+  message: 'Too many accounts created from this IP, please try again after an hour'
+});
+
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);
 app.use('/login', limiter);
-app.use('/register', limiter);
+app.use('/register', registerLimiter);
 
 
 // Mount routes from database router at root so it provides POST /login and POST /register

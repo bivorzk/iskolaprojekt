@@ -4,6 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - User Registration</title>
+    <style>
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .form-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .captcha-container {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .form-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .form-container button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        
+        .form-container button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="form-container">
@@ -21,6 +94,13 @@
             <label for="confirmPassword">Confirm Password:</label>
             <input type="password" id="confirmPassword" name="confirmPassword" required>
             
+            <!-- reCAPTCHA v3 badge will appear automatically -->
+            <p style="font-size: 12px; color: #666; margin: 10px 0;">
+                This site is protected by reCAPTCHA and the Google 
+                <a href="https://policies.google.com/privacy">Privacy Policy</a> and 
+                <a href="https://policies.google.com/terms">Terms of Service</a> apply.
+            </p>
+            
             <button type="submit">Register</button>
         </form>
         
@@ -30,17 +110,90 @@
     </div>
 
     <script>
-        // Client-side password confirmation validation
+        // Client-side password confirmation validation and reCAPTCHA v3
+        const RECAPTCHA_SITE_KEY = '6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk';
+        
         document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
             if (password !== confirmPassword) {
-                e.preventDefault();
                 alert('Passwords do not match!');
-                return false;
+                return;
             }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Verifying...';
+            submitBtn.disabled = true;
+            
+            // Execute reCAPTCHA v3
+            grecaptcha.ready(function() {
+                console.log('reCAPTCHA ready, executing...');
+                grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'register'}).then(function(token) {
+                    console.log('reCAPTCHA token received:', token ? 'YES (length: ' + token.length + ')' : 'NO');
+                    console.log('Token preview:', token.substring(0, 50) + '...');
+                    
+                    // Add CAPTCHA token to form and submit
+                    let tokenInput = document.querySelector('input[name="g-recaptcha-response"]');
+                    if (!tokenInput) {
+                        tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'g-recaptcha-response';
+                        document.querySelector('form').appendChild(tokenInput);
+                        console.log('Created new token input field');
+                    }
+                    tokenInput.value = token;
+                    console.log('Token set in form field:', tokenInput.value ? 'YES' : 'NO');
+                    
+                    // Submit the form
+                    const form = document.querySelector('form');
+                    const formData = new FormData(form);
+                    
+                    // Debug: Log what's being sent
+                    console.log('Form data being sent:');
+                    for (let [key, value] of formData.entries()) {
+                        if (key === 'g-recaptcha-response') {
+                            console.log(key + ':', value ? 'TOKEN_PRESENT (length: ' + value.length + ')' : 'TOKEN_MISSING');
+                        } else {
+                            console.log(key + ':', value);
+                        }
+                    }
+                    
+                    fetch('/register', {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        } else {
+                            return response.text().then(text => Promise.reject(text));
+                        }
+                    }).then(message => {
+                        alert('Registration successful: ' + message);
+                        form.reset();
+                    }).catch(error => {
+                        alert('Registration failed: ' + error);
+                    }).finally(() => {
+                        // Reset button state
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    });
+                    
+                }).catch(function(error) {
+                    console.error('reCAPTCHA error:', error);
+                    alert('CAPTCHA verification failed. Please try again.');
+                    // Reset button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
         });
     </script>
+
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk"></script>
 </body>
 </html>

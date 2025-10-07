@@ -20,6 +20,9 @@ const disposable_email_list = require('./disposable_email_list.json');
 const banned_passwords = require('./Most_used_passwords.json');
 
 
+// https://www.google.com/recaptcha/api/siteverify (POST request) 
+
+
 /*
 const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
 const dbName = 'Projekt_vizsgaremek'; 
@@ -27,6 +30,9 @@ const dbName = 'Projekt_vizsgaremek';
 
 const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
+// Captcha secret key
+const secretKey = process.env.Server_Side_Captha;
+
 
 router.use(express.urlencoded({ extended: true }));
 
@@ -46,6 +52,63 @@ const User = mongoose.model('User', userSchema);
 router.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
+
+    // Verify reCAPTCHA v3 first
+    const captchaResponse = req.body['g-recaptcha-response'];
+    
+    console.log('Received CAPTCHA token:', captchaResponse ? 'YES (length: ' + captchaResponse.length + ')' : 'NO');
+    console.log('Request body keys:', Object.keys(req.body));
+    
+    if (!captchaResponse) {
+      console.log('CAPTCHA token missing from request');
+      return res.status(400).send('Please complete the CAPTCHA verification');
+    }
+
+    try {
+      // Verify reCAPTCHA v3
+      const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          secret: secretKey,
+          response: captchaResponse,
+          remoteip: req.ip || req.connection.remoteAddress || req.socket.remoteAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('reCAPTCHA API response not ok:', response.status);
+        return res.status(400).send('CAPTCHA verification service unavailable');
+      }
+
+      const data = await response.json();
+      console.log('reCAPTCHA verification result:', data);
+      
+      if (!data.success) {
+        console.error('reCAPTCHA verification failed:', data['error-codes']);
+        return res.status(400).send('CAPTCHA verification failed');
+      }
+
+      // Check reCAPTCHA v3 score (0.0 = bot, 1.0 = human)
+      if (data.score !== undefined) {
+        console.log('reCAPTCHA score:', data.score);
+        if (data.score < 0.5) {
+          console.log('reCAPTCHA score too low, possible bot activity');
+          return res.status(400).send('Registration blocked due to suspicious activity');
+        }
+      }
+
+      // Check if action matches
+      if (data.action && data.action !== 'register') {
+        console.log('reCAPTCHA action mismatch:', data.action);
+        return res.status(400).send('CAPTCHA verification failed - action mismatch');
+      }
+
+      console.log('reCAPTCHA verification successful');
+    } catch (captchaError) {
+      console.error('reCAPTCHA verification error:', captchaError);
+      return res.status(500).send('CAPTCHA verification service error');
+    }
 
     // Input validation
     // Username and password length checks
@@ -95,7 +158,7 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
   return res.status(400).send('Password must contain at least one uppercase letter, one digit, and one special character');
 }
 
-    if (passwordStrength(password).score < 3) {
+    if (passwordStrength(password).score <= 3) {
       return res.status(400).send('Password is too weak, choose a stronger one' + passwordStrength(password).feedback.warning + ' ' + passwordStrength(password).guesses);
     }
 
