@@ -65,46 +65,38 @@ router.post('/register', async (req, res) => {
     }
 
     try {
+      console.log('Starting reCAPTCHA verification...');
+      console.log('Secret key present:', secretKey ? 'YES' : 'NO');
+      
       // Verify reCAPTCHA v3
       const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           secret: secretKey,
-          response: captchaResponse,
-          remoteip: req.ip || req.connection.remoteAddress || req.socket.remoteAddress,
-        }),
+          response: captchaResponse
+        })
       });
-
-      if (!response.ok) {
-        console.error('reCAPTCHA API response not ok:', response.status);
-        return res.status(400).send('CAPTCHA verification service unavailable');
-      }
 
       const data = await response.json();
       console.log('reCAPTCHA verification result:', data);
       
       if (!data.success) {
-        console.error('reCAPTCHA verification failed:', data['error-codes']);
-        return res.status(400).send('CAPTCHA verification failed');
+        console.log('reCAPTCHA verification failed:', data['error-codes']);
+        return res.status(400).json({ 
+          error: 'CAPTCHA verification failed', 
+          details: data['error-codes'] 
+        });
       }
 
-      // Check reCAPTCHA v3 score (0.0 = bot, 1.0 = human)
-      if (data.score !== undefined) {
-        console.log('reCAPTCHA score:', data.score);
-        if (data.score < 0.5) {
-          console.log('reCAPTCHA score too low, possible bot activity');
-          return res.status(400).send('Registration blocked due to suspicious activity');
-        }
-      }
-
-      // Check if action matches
-      if (data.action && data.action !== 'register') {
-        console.log('reCAPTCHA action mismatch:', data.action);
-        return res.status(400).send('CAPTCHA verification failed - action mismatch');
-      }
-
-      console.log('reCAPTCHA verification successful');
+      console.log('reCAPTCHA verification SUCCESS, score:', data.score);
+      
+      // Continue with the rest of your registration logic here
+      // Input validation, password hashing, saving to database, etc.
+      
+      // For now, return success to test
+      return res.status(200).json({ message: 'Registration successful!' });
+      
     } catch (captchaError) {
       console.error('reCAPTCHA verification error:', captchaError);
       return res.status(500).send('CAPTCHA verification service error');

@@ -1,6 +1,7 @@
 // 6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk
 
-const RECAPTCHA_SITE_KEY = process.env.Client_Side_Captha;
+
+const RECAPTCHA_SITE_KEY = '6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk'
         
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
@@ -41,15 +42,15 @@ const RECAPTCHA_SITE_KEY = process.env.Client_Side_Captha;
                     // Submit the form
                     const form = document.querySelector('form');
                     const formData = new FormData(form);
-                    const params = new URLSearchParams();
+                    
+                    console.log('Form data entries:');
                     for (let [key, value] of formData.entries()) {
-                        params.append(key, value);
+                        console.log(key + ':', value);
                     }
 
                     fetch('/register', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params.toString()
+                        body: formData // Send FormData directly, no need for URLSearchParams
                     }).then(response => {
                         if (response.ok) {
                             return response.text();
