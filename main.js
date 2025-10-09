@@ -4,6 +4,7 @@ const port = 3000;
 const rateLimit = require('express-rate-limit');
 const database = require('./database');
 const path = require('path');
+const emailverification = require('./email_verification');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -27,7 +28,6 @@ app.use('/database', limiter);
 app.use('/login', limiter);
 app.use('/register', registerLimiter);
 
-
 // Mount routes from database router at root so it provides POST /login and POST /register
 
 // Serve HTML
@@ -39,7 +39,7 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'register.html'));
 });
 
-
+app.use('/email-verification', emailverification);
 app.use('/', database);
 
 

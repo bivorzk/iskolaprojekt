@@ -3,6 +3,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const passwordStrength = require('zxcvbn')
+const fetch = require('node-fetch');
 
 require('dotenv').config();
 
@@ -89,22 +90,7 @@ router.post('/register', async (req, res) => {
         });
       }
 
-      console.log('reCAPTCHA verification SUCCESS, score:', data.score);
-      
-      // Continue with the rest of your registration logic here
-      // Input validation, password hashing, saving to database, etc.
-      
-      // For now, return success to test
-      return res.status(200).json({ message: 'Registration successful!' });
-      
-    } catch (captchaError) {
-      console.error('reCAPTCHA verification error:', captchaError);
-      return res.status(500).send('CAPTCHA verification service error');
-    }
-
-    // Input validation
-    // Username and password length checks
-    if (!username || !password) {
+      if (!username || !password) {
       return res.status(400).send('Username and password are required');
     }
     if (username.length < 3 || username.length > 40) {
@@ -176,6 +162,24 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
     await user.save();
     res.status(201).send('User registered successfully');
     console.log('User registered:', username);
+    
+      console.log('reCAPTCHA verification SUCCESS, score:', data.score);
+    
+      // Continue with the rest of your registration logic here
+      // Input validation, password hashing, saving to database, etc.
+      
+      // For now, return success to test
+      return res.status(200).json({ message: 'Registration successful!' });
+      
+      
+    } catch (captchaError) {
+      console.error('reCAPTCHA verification error:', captchaError);
+      return res.status(500).send('CAPTCHA verification service error');
+    }
+
+    // Input validation
+    // Username and password length checks
+    
   }
    catch (err) {
     console.error('Registration error:', err);
