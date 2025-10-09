@@ -3,10 +3,11 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const passwordStrength = require('zxcvbn')
-const fetch = require('node-fetch');
-
+const sendVerificationEmail = require('./email_verification');
 require('dotenv').config();
-
+const fetch = require('node-fetch');
+const realFetch = fetch.default || fetch;
+// Use realFetch instead of fetch
 
 // Banned words lists json files
 const banned_words_hu = require('./hu.json');
@@ -34,6 +35,7 @@ const dbName = process.env.DB_NAME;
 // Captcha secret key
 const secretKey = process.env.Server_Side_Captha;
 
+let lastRegisteredEmail = null;
 
 router.use(express.urlencoded({ extended: true }));
 
@@ -70,7 +72,7 @@ router.post('/register', async (req, res) => {
       console.log('Secret key present:', secretKey ? 'YES' : 'NO');
       
       // Verify reCAPTCHA v3
-      const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+      const response = await realFetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -157,25 +159,32 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       return res.status(400).send('Email already in use');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+  lastRegisteredEmail = email;
+  try {
+    await sendVerificationEmail.sendVerificationEmail(email);
+    console.log('Verification email sent to:', email);
+  } catch (emailError) {
+    console.error('Failed to send verification email:', emailError);
+    // Continue with registration even if email fails
+  }
+  
+  const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, password: hashedPassword, email });
     await user.save();
-    res.status(201).send('User registered successfully');
     console.log('User registered:', username);
-    
-      console.log('reCAPTCHA verification SUCCESS, score:', data.score);
-    
-      // Continue with the rest of your registration logic here
-      // Input validation, password hashing, saving to database, etc.
-      
-      // For now, return success to test
-      return res.status(200).json({ message: 'Registration successful!' });
+    console.log('Email registered:', lastRegisteredEmail);
+
+    console.log('reCAPTCHA verification SUCCESS, score:', data.score);
+
+    // Only send one response:
+    return res.status(200).json({ message: 'Registration successful!' });
       
       
     } catch (captchaError) {
       console.error('reCAPTCHA verification error:', captchaError);
       return res.status(500).send('CAPTCHA verification service error');
     }
+    
 
     // Input validation
     // Username and password length checks
@@ -185,6 +194,7 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
     console.error('Registration error:', err);
     res.status(500).send('Server error');
   }
+
 });
 
 // Login route
@@ -214,5 +224,6 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
 
 module.exports = router;

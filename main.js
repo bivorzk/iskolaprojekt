@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const database = require('./database');
 const path = require('path');
 const emailverification = require('./email_verification');
+const api = require('./api');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -41,7 +42,7 @@ app.get('/register', (req, res) => {
 
 app.use('/email-verification', emailverification);
 app.use('/', database);
-
+app.use('/api', api);
 
 app.use((req, res) => {
   res.status(404).send('Page not found 😀');
