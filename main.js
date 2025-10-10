@@ -20,7 +20,7 @@ const limiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 15, // start blocking after 5 requests
+  max: 15, // Teszt célokra max 15 orankent
   message: 'Too many accounts created from this IP, please try again after an hour'
 });
 
@@ -39,6 +39,13 @@ app.get('/', (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'register.html'));
 });
+
+
+/*
+app.get('/email-verification/verify/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, 'verify.html'));
+});
+*/
 
 app.use('/email-verification', emailverification);
 app.use('/', database);

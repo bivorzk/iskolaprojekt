@@ -25,10 +25,10 @@ const token = jwt.sign({
 function sendVerificationEmail(email) {
     const mailConfig = {
         from: process.env.EMAIL_USER,
-        to: email, // Use the email parameter instead of lastRegisteredEmail
+        to: email,
         subject: 'Email verification',
         text: 'Hi, please verify your email by clicking the link below. This link is valid for 15 minutes.\n\n' +
-        'http://localhost:3000/api/verify/' + token + '\n\n' +
+        'http://localhost:3000/email-verification/verify/' + token + '\n\n' +
         'If you did not request this, please ignore this email.\n\n' +
         'Thank you!\n'
     };
@@ -43,6 +43,23 @@ function sendVerificationEmail(email) {
         }
     });
 }
+
+router.get('/verify/:token', (req, res) => {
+    
+    const token = req.params.token;
+
+    if (!token) {
+        return res.status(400).send('Token is required');
+    }
+    try {
+        const decoded = jwt.verify(token, 'ourSecretKey');
+        console.log('Decoded token:', decoded);
+        res.status(200).send('Email verified successfully');
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        res.status(400).send('Token has expired or is invalid please try again');
+    }
+});
 
 router.sendVerificationEmail = sendVerificationEmail;
 router.token = token;
