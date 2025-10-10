@@ -35,8 +35,6 @@ app.use('/database', limiter);
 app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
 
-// Mount routes from database router at root so it provides POST /login and POST /register
-
 // Serve HTML
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

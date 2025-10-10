@@ -30,7 +30,7 @@ router.get('/register', async (req, res) => {
   }
 });
 
-// ✅ Login route (your original)
+
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
 
