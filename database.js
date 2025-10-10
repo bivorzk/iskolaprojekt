@@ -5,9 +5,8 @@ const router = express.Router();
 const passwordStrength = require('zxcvbn')
 const sendVerificationEmail = require('./email_verification');
 require('dotenv').config();
-const fetch = require('node-fetch');
+// const fetch = require('node-fetch'); // if doesnt work realFetch use this one
 const realFetch = fetch.default || fetch;
-// Use realFetch instead of fetch
 
 // Banned words lists json files
 const banned_words_hu = require('./hu.json');

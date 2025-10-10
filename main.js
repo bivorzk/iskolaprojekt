@@ -24,9 +24,15 @@ const registerLimiter = rateLimit({
   message: 'Too many accounts created from this IP, please try again after an hour'
 });
 
+const LoginLimiter = rateLimit({
+  windowMs: 20 * 60 * 1000, // 20  minutes window 
+  max: 35,
+  message: 'Too many login attempts from this IP, please try again after 20 minutes'
+});
+
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);
-app.use('/login', limiter);
+app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
 
 // Mount routes from database router at root so it provides POST /login and POST /register

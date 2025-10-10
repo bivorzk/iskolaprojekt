@@ -1,15 +1,15 @@
 --> login - rate limiting, captha?, Brute-force protection (rate limit ✅)
---> login - email verification
+--> login - email verification ✅
 --> login? - password reset 
---> login? - ip track?
+--> login? - ip track? ✅
 -- > register+login+BODY OF THE SITE  - XSS attack prevention?
---> login - 2fa?
+--> login - 2fa? 
 --> register - password blacklist ✅
 --> register - zxcvbn? password strength ✅
 (Input length limits) check ✅
 Disposable email rejection (block domains of certain email providers) ✅
 ------------------------------------------------
-sql injection
+sql injection ☑?
 -------------------------------------------------
 
 Already done: 
