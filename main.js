@@ -6,10 +6,11 @@ const database = require('./database');
 const path = require('path');
 const emailverification = require('./email_verification');
 const api = require('./api');
+const password_reset = require('./password_reset');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-  
+app.use(express.static(__dirname));
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 15 minutes
@@ -43,6 +44,9 @@ app.get('/', (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'register.html'));
 });
+app.get('/password-reset/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, 'password_reset.html'));
+});
 
 
 /*
@@ -51,9 +55,12 @@ app.get('/email-verification/verify/:token', (req, res) => {
 });
 */
 
-app.use('/email-verification', emailverification);
+app.use('/password-reset', password_reset);
+app.use('/forgot-password', password_reset);
+app.use('/email-verification/:token', emailverification);
 app.use('/', database);
 app.use('/api', api);
+
 
 app.use((req, res) => {
   res.status(404).send('Page not found 😀');

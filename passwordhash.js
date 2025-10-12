@@ -62,4 +62,26 @@ router.post('/login', (req, res) => {
   });
 });
 
+
+router.post('/password-reset/:token', async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).send('Both password fields are required');
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send('Passwords do not match');
+    }
+    // Hash the new password
+    const hash = await bcrypt.hash(newPassword, salt);
+
+    console.log('New hashed password:', hash);
+    res.status(200).send('Password has been reset successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;
