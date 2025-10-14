@@ -57,7 +57,7 @@ app.get('/email-verification/verify/:token', (req, res) => {
 
 app.use('/password-reset', password_reset);
 app.use('/forgot-password', password_reset);
-app.use('/email-verification/:token', emailverification);
+app.use('/email-verification', emailverification);
 app.use('/', database);
 app.use('/api', api);
 

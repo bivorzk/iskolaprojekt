@@ -45,7 +45,8 @@ mongoose.connect(dbUrl + dbName)
 const userSchema =  new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true }
+  email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true },
+  isVerified: { type: Boolean, default: false } // Email verification status
 });
 
 const User = mongoose.model('User', userSchema);
@@ -115,7 +116,7 @@ router.post('/register', async (req, res) => {
 
 
     for (const char of username) {
-      if (!usernameletters.includes(char) && !password_characters.digits.includes(char) && char !== '_' && char !== '.' && char !== '-') {
+      if (!usernameletters.includes(char) && !password_characters.digits.includes(char) && char !== '_' && char !== '.' && char !== '-' && char !== " ") {
         return res.status(400).send('Username has to be made up of letters and digits special characters are not allowed for safety reasosn');
       }
     }
@@ -188,9 +189,10 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       return res.status(400).send('Email already in use');
     }
 
-  lastRegisteredEmail = email;
+  
   try {
     await sendVerificationEmail.sendVerificationEmail(email);
+    lastRegisteredEmail = email;
     console.log('Verification email sent to:', email);
   } catch (emailError) {
     console.error('Failed to send verification email:', emailError);
@@ -254,6 +256,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
 module.exports = router;
 module.exports.User = User;
+module.exports.lastRegisteredEmail = lastRegisteredEmail;

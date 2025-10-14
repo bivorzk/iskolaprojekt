@@ -45,7 +45,6 @@ function sendVerificationEmail(email) {
 }
 
 router.get('/verify/:token', (req, res) => {
-    
     const token = req.params.token;
 
     if (!token) {
@@ -55,6 +54,18 @@ router.get('/verify/:token', (req, res) => {
         const decoded = jwt.verify(token, 'ourSecretKey');
         console.log('Decoded token:', decoded);
         res.status(200).send('Email verified successfully');
+        
+        // Get the email when you need it, not at module load time
+        const { User, lastRegisteredEmail } = require('./database');
+        
+        console.log("========================================");
+        console.log("Email to verify:", lastRegisteredEmail);
+        console.log("========================================");
+
+        User.updateOne({ email: lastRegisteredEmail }, { isVerified: true })
+            .then(() => console.log('User email verified:', lastRegisteredEmail))
+            .catch(err => console.error('Error updating user:', err));
+        
     } catch (error) {
         console.error('Error verifying token:', error);
         res.status(400).send('Token has expired or is invalid please try again');
