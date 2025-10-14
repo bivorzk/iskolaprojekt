@@ -107,7 +107,21 @@ router.post('/register', async (req, res) => {
     if (username === password) {
       return res.status(400).send('Username and password cannot be the same');
     }
- 
+
+  const usernameletters = [...password_characters.hungarian_lowercase,
+     ...password_characters.hungarian_uppercase,
+      ...password_characters.lowercase,
+    ...password_characters.uppercase]
+
+
+    for (const char of username) {
+      if (!usernameletters.includes(char) && !password_characters.digits.includes(char) && char !== '_' && char !== '.' && char !== '-') {
+        return res.status(400).send('Username has to be made up of letters and digits special characters are not allowed for safety reasosn');
+      }
+    }
+
+
+
     for (const word of Object.values(banned_words_hu)) {
       if (username.toLowerCase().includes(word) || password.toLowerCase().includes(word)) {
         return res.status(400).send('Username or password contains banned words');
