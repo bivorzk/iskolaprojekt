@@ -141,6 +141,22 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       return res.status(400).send('Password is too weak, choose a stronger one' + passwordStrength(password).feedback.warning + ' ' + passwordStrength(password).guesses);
     }
 
+    if (password.includes('(') && password.includes(')') ||
+     password.includes('[') && password.includes(']') ||
+      password.includes('{') && password.includes('}') ||
+       password.includes('<') && password.includes('>') ||
+        password.includes('"') && password.includes('"') ||
+         password.includes("'") && password.includes("'") ||
+         password.includes("`") && password.includes("`") ||
+         password.includes("\\") || password.includes("/") ||
+         password.includes("\'") || password.includes('\"') ||
+         password.includes("db.") || password.includes("DB.") ||
+         password.includes("$")
+      )  {
+      return res.status(400).send('Please consider avoiding using matching pairs of brackets or quotes in your password, as they can sometimes cause issues during input or processing.');
+    }
+
+
 // Email security checks
 
     if (disposable_email_list.includes(email)) {

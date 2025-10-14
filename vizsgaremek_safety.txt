@@ -1,6 +1,6 @@
 --> login - rate limiting, captha?, Brute-force protection (rate limit ✅)
 --> login - email verification ✅
---> login? - password reset 
+--> login? - password reset ✅
 --> login? - ip track? ✅
 -- > register+login+BODY OF THE SITE  - XSS attack prevention?
 --> login - 2fa? 
