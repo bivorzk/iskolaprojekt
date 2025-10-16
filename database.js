@@ -42,11 +42,12 @@ mongoose.connect(dbUrl + dbName)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
-const userSchema =  new mongoose.Schema({
+const userSchema =  new mongoose.Schema({ 
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true },
-  isVerified: { type: Boolean, default: false } // Email verification status
+  isVerified: { type: Boolean, default: false }, // Email verification status
+  usertype: {type: String, default: "default"} // Defines user type e.g if they are admin, child or anything else 
 });
 
 const User = mongoose.model('User', userSchema);
@@ -171,7 +172,6 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       return res.status(400).send('Please consider avoiding using matching pairs of brackets or quotes in your password, as they can sometimes cause issues during input or processing.');
     }
 
-
 // Email security checks
 
     if (disposable_email_list.includes(email)) {
@@ -256,6 +256,17 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+console.log('======================================')
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log(lastRegisteredEmail);
+console.log('======================================')
+
+module.exports.lastRegisteredEmail = lastRegisteredEmail;
 module.exports = router;
 module.exports.User = User;
-module.exports.lastRegisteredEmail = lastRegisteredEmail;

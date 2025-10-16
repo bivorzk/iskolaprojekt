@@ -33,18 +33,21 @@ function sendVerificationEmail(email) {
         'Thank you!\n'
     };
 
+    newemail = null
+
     transport.sendMail(mailConfig, function(err, info){
         if(err){
             console.log(err);
             return false;
         } else {
             console.log('Email sent: ' + info.response);
+            newemail = info.accepted[0];
             return true;
         }
     });
 }
 
-router.get('/verify/:token', (req, res) => {
+router.get('/verify/:token', async (req, res) => {
     const token = req.params.token;
 
     if (!token) {
@@ -53,19 +56,18 @@ router.get('/verify/:token', (req, res) => {
     try {
         const decoded = jwt.verify(token, 'ourSecretKey');
         console.log('Decoded token:', decoded);
-        res.status(200).send('Email verified successfully');
-        
-        // Get the email when you need it, not at module load time
-        const { User, lastRegisteredEmail } = require('./database');
-        
+
+        const { User } = require('./database');
+        const email = newemail; // Use the email captured during sending
+
         console.log("========================================");
-        console.log("Email to verify:", lastRegisteredEmail);
+        console.log("Email to verify:", email);
         console.log("========================================");
 
-        User.updateOne({ email: lastRegisteredEmail }, { isVerified: true })
-            .then(() => console.log('User email verified:', lastRegisteredEmail))
-            .catch(err => console.error('Error updating user:', err));
-        
+        await User.updateOne({ email: email }, { isVerified: true });
+        console.log('User email verified:', email);
+
+        res.status(200).send('Email verified successfully');
     } catch (error) {
         console.error('Error verifying token:', error);
         res.status(400).send('Token has expired or is invalid please try again');

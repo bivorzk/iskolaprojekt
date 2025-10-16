@@ -21,7 +21,7 @@ const limiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 15, // Teszt célokra max 15 orankent
+  max: 50, // Teszt célokra max 15 orankent
   message: 'Too many accounts created from this IP, please try again after an hour'
 });
 
