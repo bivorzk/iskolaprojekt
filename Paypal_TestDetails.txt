@@ -1,0 +1,16 @@
+Email: sb-czavl33431774@business.example.com
+Password: |iY+77N>
+Type: business
+
+
+Success:
+
+Card Number: 4032030008838535
+cvc: any 
+expiration date: any
+
+failed card: 
+https://gyazo.com/112f1706b45b616cd1ef2340f6695bc0
+
+3DS card:
+https://gyazo.com/9dd1e2c56532c07fd9b3ea47050d9161

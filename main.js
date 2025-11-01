@@ -7,6 +7,7 @@ const path = require('path');
 const emailverification = require('./email_verification');
 const api = require('./api');
 const password_reset = require('./password_reset');
+require('dotenv').config();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -31,10 +32,14 @@ const LoginLimiter = rateLimit({
   message: 'Too many login attempts from this IP, please try again after 20 minutes'
 });
 
+
+// Apply the rate limiting middleware to all requests
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);
 app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
+
+
 
 // Serve HTML
 app.get('/', (req, res) => {
@@ -48,6 +53,9 @@ app.get('/password-reset/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'password_reset.html'));
 });
 
+app.get('/pay', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pay.html'));
+});
 
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
@@ -55,18 +63,18 @@ app.get('/email-verification/verify/:token', (req, res) => {
 });
 */
 
+// Use routers
 app.use('/password-reset', password_reset);
 app.use('/forgot-password', password_reset);
 app.use('/email-verification', emailverification);
 app.use('/', database);
 app.use('/api', api);
 
+// 404 handler
 
 app.use((req, res) => {
   res.status(404).send('Page not found 😀');
 });
-
-// Note: POST /login and POST /register are handled by the database router
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

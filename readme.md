@@ -14,4 +14,5 @@ projekt@1.0.0 E:\vizsgaremek\iskolaprojekt-1
 ├── node-fetch@2.7.0
 ├── nodemailer@7.0.9
 ├── nodemon@3.1.0
+├── paypal@1.0.1
 └── zxcvbn@4.4.2

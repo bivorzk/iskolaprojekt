@@ -10,9 +10,30 @@
 
     <!-- Load Google Pay library first -->
     <script async src="https://pay.google.com/gp/p/js/pay.js" onload="initializeGooglePay()"></script>
+    <script src="googlepay.js"></script>
 
-    <script>
-    
-    </script>
+        <div id="paypal-button-container"></div>
+        <p id="result-message"></p>
+
+        <script
+            src="https://www.paypal.com/sdk/js?client-id=AaKKbqc8uITr4-b5piK0r_vdUl2cWSfnJ2tZyq9YzrahVsXWUbZH1z7mGKJ9Yew7YcWSB7vWNhHfV6HC&buyer-country=US&currency=USD&components=buttons&enable-funding=venmo,paylater,card"
+            data-sdk-integration-source="developer-studio"
+            onload="initializePayPal()"
+            onerror="handlePayPalScriptError()"></script>
+        <script src="paypal.js"></script>
+
+        <script>
+            function initializePayPal() {
+                // PayPal SDK loaded successfully, paypal.js will execute
+                console.log('PayPal SDK loaded successfully');
+            }
+
+            function handlePayPalScriptError() {
+                console.error('Failed to load PayPal SDK');
+                document.getElementById('paypal-button-container').innerHTML = 
+                    '<p>PayPal is currently unavailable. Please try again later or use an alternative payment method.</p>';
+            }
+        </script>
+
 </body>
 </html>
