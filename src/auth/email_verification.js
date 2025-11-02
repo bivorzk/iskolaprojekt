@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const nodemailer = require('nodemailer');
 const router = express.Router();
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const app = express();
 
 const transport = nodemailer.createTransport({
@@ -57,7 +58,7 @@ router.get('/verify/:token', async (req, res) => {
         const decoded = jwt.verify(token, 'ourSecretKey');
         console.log('Decoded token:', decoded);
 
-        const { User } = require('./database');
+        const { User } = require('../database');
         const email = newemail; // Use the email captured during sending
 
         console.log("========================================");

@@ -3,22 +3,23 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const passwordStrength = require('zxcvbn')
-const sendVerificationEmail = require('./email_verification');
-require('dotenv').config();
+const sendVerificationEmail = require('./auth/email_verification');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // const fetch = require('node-fetch'); // if doesnt work realFetch use this one
 const realFetch = fetch.default || fetch;
 
 // Banned words lists json files
-const banned_words_hu = require('./hu.json');
+const banned_words_hu = require('../config/hu.json');
 const banned_words = require('badwords-list').array;
 // Password characters json file
-const password_characters = require('./password_characters.json');
+const password_characters = require('../data/password_characters.json');
 // Disposable email domains list json file
-const disposable_email_list = require('./disposable_email_list.json');
+const disposable_email_list = require('../data/disposable_email_list.json');
 
 // Banned password list (too weak/most used) at least 8 characters
 // Source:
-const banned_passwords = require('./Most_used_passwords.json');
+const banned_passwords = require('../data/Most_used_passwords.json');
 
 
 // https://www.google.com/recaptcha/api/siteverify (POST request) 

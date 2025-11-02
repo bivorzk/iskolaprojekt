@@ -1,18 +1,59 @@
-Ha valamiert nem tudjatok lefutatni ezeket a nod modulokat hasznalja jelenleg a vizsgaremek:
-node modulokat ugy tudjatok letolteni hogy: npm i (vagy install) _nev. 
-projekt@1.0.0 E:\vizsgaremek\iskolaprojekt-1
-├── @google-cloud/recaptcha-enterprise@6.3.0
-├── badwords-list@2.0.1-4
-├── bcrypt@6.0.0
-├── dotenv@17.2.3
-├── ejs@3.1.10
-├── express-rate-limit@8.1.0
-├── express@4.21.2
-├── jsonwebtoken@9.0.2
-├── mongodb@6.20.0
-├── mongoose@8.18.2
-├── node-fetch@2.7.0
-├── nodemailer@7.0.9
-├── nodemon@3.1.0
-├── paypal@1.0.1
-└── zxcvbn@4.4.2
+# Project Structure
+
+This project has been reorganized into a clean folder structure for better maintainability and organization.
+
+## Directory Structure
+
+```
+├── src/                     # Server-side source code
+│   ├── main.js             # Main application entry point
+│   ├── database.js         # Database connection and user management
+│   ├── api.js              # API routes and PayPal integration
+│   ├── chapta.js           # CAPTCHA functionality
+│   └── auth/               # Authentication modules
+│       ├── email_verification.js
+│       ├── password_reset.js
+│       └── passwordhash.js
+├── public/                 # Static files served to client
+│   ├── *.html             # HTML pages (index, register, pay, etc.)
+│   ├── paypal.js          # Client-side PayPal integration
+│   ├── googlepay.js       # Client-side Google Pay integration
+│   └── css/               # Stylesheets
+│       └── register.css
+├── config/                 # Configuration files
+│   └── hu.json            # Hungarian language/localization
+├── data/                   # Data files
+│   ├── disposable_email_list.json
+│   ├── Most_used_passwords.json
+│   └── password_characters.json
+├── docs/                   # Documentation
+│   ├── readme.md          # Original readme
+│   ├── Paypal_TestDetails.txt
+│   ├── sourcefor_security_checks.txt
+│   ├── vizsgaremek_safety.txt
+│   └── npm_list.txt
+├── tests/                  # Test files
+│   └── register_testing.py
+├── .env                    # Environment variables
+├── package.json           # Node.js dependencies and scripts
+└── node_modules/          # Installed dependencies
+```
+
+## Running the Application
+
+- **Development**: `npm run dev` (uses nodemon for auto-restart)
+- **Production**: `npm start`
+
+## Key Changes Made
+
+1. **Server code** moved to `src/` folder
+2. **Authentication modules** organized in `src/auth/`
+3. **Static files** (HTML, CSS, client-side JS) moved to `public/`
+4. **Configuration files** moved to `config/`
+5. **Data files** moved to `data/`
+6. **Documentation** moved to `docs/`
+7. **Test files** moved to `tests/`
+8. **Updated all file paths** in require statements and static file serving
+9. **Updated package.json** scripts to reflect new main file location
+
+This structure follows Node.js best practices and makes the project more maintainable and scalable.

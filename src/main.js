@@ -4,14 +4,14 @@ const port = 3000;
 const rateLimit = require('express-rate-limit');
 const database = require('./database');
 const path = require('path');
-const emailverification = require('./email_verification');
+const emailverification = require('./auth/email_verification');
 const api = require('./api');
-const password_reset = require('./password_reset');
-require('dotenv').config();
+const password_reset = require('./auth/password_reset');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '../public')));
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 15 minutes
@@ -43,18 +43,18 @@ app.use('/register', registerLimiter);
 
 // Serve HTML
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'register.html'));
+  res.sendFile(path.join(__dirname, '../public/register.html'));
 });
 app.get('/password-reset/:token', (req, res) => {
-  res.sendFile(path.join(__dirname, 'password_reset.html'));
+  res.sendFile(path.join(__dirname, '../public/password_reset.html'));
 });
 
 app.get('/pay', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pay.html'));
+  res.sendFile(path.join(__dirname, '../public/pay.html'));
 });
 
 /*

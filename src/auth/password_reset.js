@@ -2,14 +2,15 @@
     const express = require('express');
     const nodemailer = require('nodemailer');
     const router = express.Router();
-    require('dotenv').config();
+    const path = require('path');
+    require('dotenv').config({ path: path.join(__dirname, '../../.env') });
     const app = express();
     const bcrypt = require('bcrypt');
     const passwordStrength = require('zxcvbn')
-    const banned_words_hu = require('./hu.json');
+    const banned_words_hu = require('../../config/hu.json');
     const banned_words = require('badwords-list').array;
-    const password_characters = require('./password_characters.json');
-    const banned_passwords = require('./Most_used_passwords.json');
+    const password_characters = require('../../data/password_characters.json');
+    const banned_passwords = require('../../data/Most_used_passwords.json');
     const mongoose = require('mongoose');
 
     salt = 10;
@@ -23,7 +24,7 @@
     .catch(err => console.error('Could not connect to MongoDB', err));
 
 
-    const User = require('./database').User;
+    const User = require('../database').User;
 
     router.use(express.urlencoded({ extended: true }));
     router.use(express.json());
