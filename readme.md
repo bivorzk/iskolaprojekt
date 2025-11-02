@@ -1,6 +1,23 @@
-# Project Structure
+# npm list
 
-This project has been reorganized into a clean folder structure for better maintainability and organization.
+Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akkor a verzioval egyutt toltsetek le 
+
+- @google-cloud/recaptcha-enterprise@6.3.0  
+- @paypal/paypal-server-sdk@1.1.0  
+- badwords-list@2.0.1-4  
+- bcrypt@6.0.0  
+- dotenv@17.2.3  
+- ejs@3.1.10  
+- express-rate-limit@8.1.0  
+- express@4.21.2  
+- jsonwebtoken@9.0.2  
+- mongodb@6.20.0  
+- mongoose@8.18.2  
+- node-fetch@2.7.0  
+- nodemailer@7.0.9  
+- nodemon@3.1.0  
+- paypal@1.0.1  
+- zxcvbn@4.4.2  
 
 ## Directory Structure
 
@@ -39,21 +56,3 @@ This project has been reorganized into a clean folder structure for better maint
 └── node_modules/          # Installed dependencies
 ```
 
-## Running the Application
-
-- **Development**: `npm run dev` (uses nodemon for auto-restart)
-- **Production**: `npm start`
-
-## Key Changes Made
-
-1. **Server code** moved to `src/` folder
-2. **Authentication modules** organized in `src/auth/`
-3. **Static files** (HTML, CSS, client-side JS) moved to `public/`
-4. **Configuration files** moved to `config/`
-5. **Data files** moved to `data/`
-6. **Documentation** moved to `docs/`
-7. **Test files** moved to `tests/`
-8. **Updated all file paths** in require statements and static file serving
-9. **Updated package.json** scripts to reflect new main file location
-
-This structure follows Node.js best practices and makes the project more maintainable and scalable.
