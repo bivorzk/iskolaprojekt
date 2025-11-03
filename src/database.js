@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
-const passwordStrength = require('zxcvbn')
+const passwordStrength = require('zxcvbn');
 const sendVerificationEmail = require('./auth/email_verification');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -49,7 +49,7 @@ const userSchema =  new mongoose.Schema({
   email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true },
   isVerified: { type: Boolean, default: false }, // Email verification status
   usertype: {type: String,enum:['admin', 'child', 'parent', 'teacher'], default: "child"}, // Defines user type e.g if they are admin, child,parent or anything else default = child
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }, // Account creation date
   balance : { type: Number, default: 0 } // User balance for in-app purchases
 });
 
@@ -71,6 +71,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).send('Please complete the CAPTCHA verification');
     }
 
+
+
     try {
       console.log('Starting reCAPTCHA verification...');
       console.log('Secret key present:', secretKey ? 'YES' : 'NO');
@@ -87,6 +89,12 @@ router.post('/register', async (req, res) => {
 
       const data = await response.json();
       console.log('reCAPTCHA verification result:', data);
+      
+
+      if (data.success && data.score <= 0.5) {
+      console.log('CAPTCHA score too low:', data.score);
+      return res.status(400).send('CAPTCHA verification failed');
+    }
       
       if (!data.success) {
         console.log('reCAPTCHA verification failed:', data['error-codes']);

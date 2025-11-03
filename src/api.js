@@ -98,7 +98,7 @@ const captureOrder = async (orderID) => {
     }
 };
 
-// api/orders 
+// api/orders
 router.get('/test', (req, res) => {
   res.send('Test route working!');
 });
