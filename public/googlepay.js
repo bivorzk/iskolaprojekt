@@ -76,9 +76,29 @@ function onGooglePayButtonClick(isReadyToPayRequest) {
 
     paymentsClient.loadPaymentData(paymentDataRequest)
         .then(paymentData => {
-            // Handle the payment data (send to your backend)
-            console.log('Payment data:', paymentData);
-            // Example: Send paymentData.paymentMethodData.tokenizationData to your backend
+            // Handle the payment data
+            console.log('Full paymentData object:', JSON.stringify(paymentData, null, 2));
+
+            // Send payment data to backend
+                fetch('/api/payments/googlepay', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentMethodData: paymentData.paymentMethodData,
+                        amount: paymentDataRequest.transactionInfo.totalPrice,
+                        currency: paymentDataRequest.transactionInfo.currencyCode,
+                        merchantInfo: paymentDataRequest.merchantInfo
+                    })
+                })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Payment saved to database:', data);
+            })
+            .catch(err => {
+                console.error('Error saving payment to database:', err);
+            });
         })
         .catch(err => console.error('Payment error:', err));
 }

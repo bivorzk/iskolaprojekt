@@ -6,7 +6,9 @@ const database = require('./database');
 const path = require('path');
 const emailverification = require('./auth/email_verification');
 const api = require('./api');
+const googlepayRouter = require('./payments/googlepay');
 const password_reset = require('./auth/password_reset');
+const database_queries = require('../config/database_queries');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 app.use(express.urlencoded({ extended: true }));
@@ -69,6 +71,7 @@ app.use('/forgot-password', password_reset);
 app.use('/email-verification', emailverification);
 app.use('/', database);
 app.use('/api', api);
+app.use('/api/payments', googlepayRouter);
 
 // 404 handler
 

@@ -40,8 +40,8 @@ let lastRegisteredEmail = null;
 router.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(dbUrl + dbName)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB', err));
+  .then(() => console.log('Connected to MongoDB for user auth'))
+  .catch(err => console.error('Could not connect to MongoDB for user auth', err));
 
 const userSchema =  new mongoose.Schema({ 
   username: { type: String, required: true, unique: true },
