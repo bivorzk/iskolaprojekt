@@ -1,5 +1,9 @@
 let paymentsClient;
 
+
+ price =  '10.0';
+currency = 'HUF';
+
 // Initialize Google Pay after the library loads
 function initializeGooglePay() {
     // Initialize PaymentsClient
@@ -64,7 +68,7 @@ function onGooglePayButtonClick(isReadyToPayRequest) {
         ...isReadyToPayRequest, // Reuse the base request
         transactionInfo: {
             totalPriceStatus: 'FINAL',
-            totalPrice: '10.00',
+            totalPrice: price,
             currencyCode: 'HUF',
             countryCode: 'HU'
         },
