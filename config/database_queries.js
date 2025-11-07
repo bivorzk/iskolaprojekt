@@ -13,7 +13,7 @@ const db = mongoose.connection;
 
 const User = require('../src/database').User;
 
-
+// Payment Schema
 
 const PaymentScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
@@ -25,20 +25,19 @@ const PaymentScheme = new mongoose.Schema({
 });
 
 // Might expand later depends on features 
-const LoyaltyProgramSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    points: { type: Number, default: 0 },
-    lastUpdated: { type: Date, default: Date.now }
-});
+// Menu Items Schema
 
 const MenuItemsScheme = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true, enum: [ 'Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other' ], default: 'Other' },
-    available: { type: Boolean, default: true }
+    available: { type: Boolean, default: true },
+    QRCode: { type: String, required: false } // QR code for the menu item
 
 });
+
+// Order Item Schema
 
 const OrderItemsScheme = new mongoose.Schema({
     menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems', required: true },
@@ -58,19 +57,18 @@ const OrderScheme = new mongoose.Schema({
 
 const LoyaltyProgramScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    points: { type: Number, default: 0 },
-    type: { type: String},
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+    points: { type: Number, default: 0 }, // Loyalty points accumulated
+    type: { type: String}, // Type of the discount
     discountRate: { type: Number, default: 0 }, // e.g., 0.05 for 5% discount
-    ValidUntil: { type: Date, default: null },
+    validUntil: { type: Date, default: null }, // Expiration date for the loyalty program
     lastUpdated: { type: Date, default: Date.now }
 });
 
 
 
-
-
 const Payment = mongoose.model('Payment', PaymentScheme);
-const LoyaltyProgram = mongoose.model('LoyaltyProgram', LoyaltyProgramSchema);
+const LoyaltyProgram = mongoose.model('LoyaltyProgram', LoyaltyProgramScheme);
 const MenuItems = mongoose.model('MenuItems', MenuItemsScheme);
 const Order = mongoose.model('Order', OrderScheme);
 const OrderItems = mongoose.model('OrderItems', OrderItemsScheme);
@@ -80,6 +78,5 @@ module.exports = {
     LoyaltyProgram,
     MenuItems,
     Order,
-    OrderItems,
-    LoyaltyProgram
+    OrderItems
 };
