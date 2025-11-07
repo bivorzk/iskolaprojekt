@@ -45,52 +45,29 @@ const paypalButtons = window.paypal.Buttons({
     },
    async onApprove(data, actions) {
         try {
-            const response = await fetch(
-                `/api/orders/${data.orderID}/capture`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            // Send payment details to backend after approval
+            // You may want to get amount/currency from your cart or UI
+            const amount = 100; // Replace with dynamic value if needed
+            const currency = "USD"; // Replace with dynamic value if needed
 
-            const orderData = await response.json();
-            // Three cases to handle:
-            //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-            //   (2) Other non-recoverable errors -> Show a failure message
-            //   (3) Successful transaction -> Show confirmation or thank you message
-
-            const errorDetail = orderData?.details?.[0];
-
-            if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
-                // (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-                // recoverable state, per
-                // https://developer.paypal.com/docs/checkout/standard/customize/handle-funding-failures/
-                return actions.restart();
-            } else if (errorDetail) {
-                // (2) Other non-recoverable errors -> Show a failure message
-                throw new Error(
-                    `${errorDetail.description} (${orderData.debug_id})`
-                );
-            } else if (!orderData.purchase_units) {
-                throw new Error(JSON.stringify(orderData));
+            const response = await fetch('/api/payments/paypal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderID: data.orderID,
+                    payerID: data.payerID,
+                    amount,
+                    currency
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                resultMessage(`Payment successful! Payment ID: ${result.payment._id}`);
+                console.log('Payment saved:', result.payment);
             } else {
-                // (3) Successful transaction -> Show confirmation or thank you message
-                // Or go to another URL:  actions.redirect('thank_you.html');
-                const transaction =
-                    orderData?.purchase_units?.[0]?.payments?.captures?.[0] ||
-                    orderData?.purchase_units?.[0]?.payments
-                        ?.authorizations?.[0];
-                resultMessage(
-                    `Transaction ${transaction.status}: ${transaction.id}<br>
-          <br>See console for all available details`
-                );
-                console.log(
-                    "Capture result",
-                    orderData,
-                    JSON.stringify(orderData, null, 2)
-                );
+                throw new Error(result.error || 'Payment failed to save.');
             }
         } catch (error) {
             console.error(error);

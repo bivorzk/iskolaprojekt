@@ -1,0 +1,24 @@
+email: sb-czavl33431774@business.example.com
+password: |iY+77N>
+
+
+Successful Card:
+
+Card number: 4032039805611318
+Expiry date: Any
+CVC code: Any
+
+
+|Test Name          |	Trigger	Processor   | response code |
+|Fraudulent card    |	CCREJECT-SF	        |   9500        |
+|Card is declined   |	CCREJECT-BANK_ERROR |	5100        |
+|CVC check fails    |	CCREJECT-CVV_F	    |   00N7        |
+|Card expired       |	CCREJECT-EC	        |   5400        |
+
+
+| Test Name                | Card Type   | Card Number       | Expiry Date | CVC  |
+|--------------------------|------------|---------------------|------------|------|
+| Successful authentication| Visa       | 4868 7194 6070 7704 | 01/2025    | 123  |
+| Successful authentication| Mastercard | 5329 8797 8623 4393 | 01/2025    | 123  |
+| Failed signature         | Visa       | 4868 7191 1551 4992 | 01/2025    | 123  |
+| Failed signature         | Mastercard | 5329 8797 8516 0250 | 01/2025    | 123  |

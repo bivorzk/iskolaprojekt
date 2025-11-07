@@ -13,12 +13,7 @@ const db = mongoose.connection;
 
 const User = require('../src/database').User;
 
-const PaymentTypeSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  description: { type: String },
-  feePercentage: { type: Number },
-  supportsRefunds: { type: Boolean }
-});
+
 
 const PaymentScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
@@ -61,7 +56,14 @@ const OrderScheme = new mongoose.Schema({
 
 });
 
-
+const LoyaltyProgramScheme = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    points: { type: Number, default: 0 },
+    type: { type: String},
+    discountRate: { type: Number, default: 0 }, // e.g., 0.05 for 5% discount
+    ValidUntil: { type: Date, default: null },
+    lastUpdated: { type: Date, default: Date.now }
+});
 
 
 
@@ -78,5 +80,6 @@ module.exports = {
     LoyaltyProgram,
     MenuItems,
     Order,
-    OrderItems
+    OrderItems,
+    LoyaltyProgram
 };
