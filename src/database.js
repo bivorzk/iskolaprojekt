@@ -71,7 +71,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).send('Please complete the CAPTCHA verification');
     }
 
-
+    if (req.body.isParent) {
+    req.body.usertype = 'parent';
+    }
 
     try {
       console.log('Starting reCAPTCHA verification...');
@@ -211,7 +213,12 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
   }
   
   const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword, email });
+    const user = new User({
+      username,
+      password: hashedPassword,
+      email,
+      usertype: req.body.usertype || 'child'
+    });
     await user.save();
     console.log('User registered:', username);
     console.log('Email registered:', lastRegisteredEmail);

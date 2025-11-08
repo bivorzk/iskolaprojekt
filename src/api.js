@@ -1,4 +1,7 @@
 const express = require('express');
+// Import User model and other database models
+const { User } = require('./database');
+const { Payment, LoyaltyProgram, MenuItems, Order, OrderItems } = require('../config/database_queries');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
