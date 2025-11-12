@@ -249,10 +249,15 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
 // Login route
 router.post('/login', async (req, res) => {
   try {
+    console.log('Login request body:', req.body);
     const { username, password } = req.body;
+    
+    console.log('Username received:', username);
+    console.log('Password received:', password ? '***' : 'undefined');
 
     // Input validation
     if (!username || !password) {
+      console.log('Missing username or password');
       return res.status(400).send('Username and password are required');
     }
 
@@ -262,11 +267,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials');
     }
 
+    console.log('User found:', user.username);
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('Password does not match');
       return res.status(401).send('Invalid credentials');
     }
 
+    console.log('Login successful for:', username);
     res.status(200).send(`Welcome, ${username}`);
   } catch (err) {
     console.error('Login error:', err);

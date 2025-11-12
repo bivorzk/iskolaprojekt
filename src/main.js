@@ -10,6 +10,9 @@ const googlepayRouter = require('./payments/googlepay');
 const paypalRouter = require('./payments/paypal');
 const password_reset = require('./auth/password_reset');
 const database_queries = require('../config/database_queries');
+const TwoFA = require('./auth/2fa');
+const dashboardRouter = require('./dashboard/dashboard');
+
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 app.use(express.urlencoded({ extended: true }));
@@ -60,6 +63,8 @@ app.get('/pay', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/pay.html'));
 });
 
+
+
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'verify.html'));
@@ -74,9 +79,11 @@ app.use('/', database);
 app.use('/api', api);
 app.use('/api/payments', googlepayRouter);
 app.use('/api/payments', paypalRouter);
+app.use('/2fa', TwoFA);
+app.use('/dashboard', dashboardRouter);
+
 
 // 404 handler
-
 app.use((req, res) => {
   res.status(404).send('Page not found 😀');
 });
