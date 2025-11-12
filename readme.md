@@ -23,36 +23,51 @@ Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akk
 
 ```
 ├── src/                     # Server-side source code
-│   ├── main.js             # Main application entry point
-│   ├── database.js         # Database connection and user management
-│   ├── api.js              # API routes and PayPal integration
-│   ├── chapta.js           # CAPTCHA functionality
-│   └── auth/               # Authentication modules
-│       ├── email_verification.js
-│       ├── password_reset.js
-│       └── passwordhash.js
+│   ├── main.js
+│   ├── database.js
+│   ├── api.js
+│   ├── chapta.js
+│   ├── auth/
+│   │   ├── 2fa.js
+│   │   ├── email_verification.js
+│   │   ├── password_reset.js
+│   │   ├── passwordhash.js
+│   ├── dashboard/
+│   │   └── dashboard.js
+│   ├── payments/
+│   │   ├── googlepay.js
+│   │   └── paypal.js
+│   ├── profile/
+│   │   ├── children.js
+│   │   └── parent.js
 ├── public/                 # Static files served to client
-│   ├── *.html             # HTML pages (index, register, pay, etc.)
-│   ├── paypal.js          # Client-side PayPal integration
-│   ├── googlepay.js       # Client-side Google Pay integration
-│   └── css/               # Stylesheets
+│   ├── index.html
+│   ├── register.html
+│   ├── pay.html
+│   ├── verify.html
+│   ├── password_reset.html
+│   ├── paypal.js
+│   ├── googlepay.js
+│   └── css/
 │       └── register.css
 ├── config/                 # Configuration files
-│   └── hu.json            # Hungarian language/localization
+│   ├── database_queries.js
+│   └── hu.json
 ├── data/                   # Data files
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
 │   └── password_characters.json
 ├── docs/                   # Documentation
-│   ├── readme.md          # Original readme
+│   ├── readme.md
 │   ├── Paypal_TestDetails.txt
 │   ├── sourcefor_security_checks.txt
 │   ├── vizsgaremek_safety.txt
 │   └── npm_list.txt
 ├── tests/                  # Test files
+│   ├── creating_test_users.js
+│   ├── Paypal_TestConfig.txt
 │   └── register_testing.py
-├── .env                    # Environment variables
 ├── package.json           # Node.js dependencies and scripts
-└── node_modules/          # Installed dependencies
+└── readme.md              # Project documentation
 ```
 
