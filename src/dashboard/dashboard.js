@@ -26,6 +26,7 @@ router.get('/admin', async (req, res) => {
     console.error('Error fetching admin users:', error);
     res.status(500).send('Server error');
   }
+
 });
 
 module.exports = router;

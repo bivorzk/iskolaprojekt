@@ -5,6 +5,7 @@ const router = express.Router();
 const passwordStrength = require('zxcvbn');
 const sendVerificationEmail = require('./auth/email_verification');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // const fetch = require('node-fetch'); // if doesnt work realFetch use this one
 const realFetch = fetch.default || fetch;
@@ -249,7 +250,7 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
 // Login route
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login request body:', req.body);
+   // console.log('Login request body:', req.body); Uncomment for debugging purposes
     const { username, password } = req.body;
     
     console.log('Username received:', username);
@@ -276,6 +277,10 @@ router.post('/login', async (req, res) => {
 
     console.log('Login successful for:', username);
     res.status(200).send(`Welcome, ${username}`);
+    const token = jwt.sign({ id: user.id, username: user.username }, 'ourSecretKey');
+
+    const decoded = jwt.verify(token, 'ourSecretKey');
+    const currentUser = decoded;
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).send('Server error');
