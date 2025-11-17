@@ -20,6 +20,9 @@ mongoose.connect(dbUrl + dbName)
 // Use inside an async function or route handler, for example:
 router.get('/admin', async (req, res) => {
   try {
+    if (!req.session.userId) {
+      return res.status(401).send('Unauthorized: No session available');
+    }
     const Admin = await User.find({ usertype: 'admin' });
     res.json(Admin); // Only send one response
   } catch (error) {
