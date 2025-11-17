@@ -106,6 +106,15 @@ router.get('/test', (req, res) => {
   res.send('Test route working!');
 });
 
+// Route to get current logged-in user
+router.get('/current_user', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({ loggedIn: true });
+    } else {
+        res.json({ loggedIn: false });
+    }
+});
+
 router.post('/orders', async (req, res) => {
     // Extract order details from request body
     const { cart } = req.body;

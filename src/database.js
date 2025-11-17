@@ -276,6 +276,7 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('Login successful for:', username);
+    req.session.user = true; // Set user as logged in
     res.status(200).send(`Welcome, ${username}`);
     const token = jwt.sign({ id: user.id, username: user.username }, 'ourSecretKey');
 

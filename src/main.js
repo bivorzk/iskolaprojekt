@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const rateLimit = require('express-rate-limit');
+const session = require('express-session'); // Add this line
 const database = require('./database');
 const path = require('path');
 const emailverification = require('./auth/email_verification');
@@ -14,6 +15,14 @@ const TwoFA = require('./auth/2fa');
 const dashboardRouter = require('./dashboard/dashboard');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+// Add session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your_secret_key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -91,4 +100,3 @@ app.use((req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-  

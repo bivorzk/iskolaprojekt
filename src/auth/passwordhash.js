@@ -53,6 +53,7 @@ router.post('/login', (req, res) => {
 
       if (result) {
         console.log('mukodik');
+        req.session.user = true; // Set user as logged in
         res.status(200).send(`Welcome, ${username}. Hash: ${hash}`);
       } else {
         console.log('nem mukodik');
