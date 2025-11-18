@@ -49,7 +49,7 @@ MenuItemsScheme.pre('save', function(next) {
     if (this.stock <= 0) {
         this.available = false;
     } else {
-        this.available = true; // optional: auto-enable again
+        this.available = true; 
     }
     next();
 });
@@ -60,8 +60,6 @@ const OrderItemsScheme = new mongoose.Schema({
     menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems', required: true },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
     quantity: { type: Number, required: true, default: 1 },
-    
-
 });
 
 const OrderScheme = new mongoose.Schema({
@@ -99,7 +97,7 @@ const ReviewScheme = new mongoose.Schema({
 
 const DailyMenuScheme = new mongoose.Schema({
     date: { type: Date, required: true },
-    schoolPeriod: { type: String, required: true }, // e.g., 'morning', 'afternoon'
+    schoolPeriod: { type: String, required: true, enum: ['morning', 'afternoon'] }, // e.g., 'morning', 'afternoon'
     menuItems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems' }],
     createdAt: { type: Date, default: Date.now }
 });

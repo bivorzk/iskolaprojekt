@@ -105,12 +105,25 @@ router.get('/admin/orders', async (req, res) => {
 
 router.get('/admin/soldout', async (req, res) => {
   try {
-    const soldOutItems = await MenuItems.find({ stock: { $lte: 0 } }, 'name stock');
+    const soldOutItems = await MenuItems.find({ available: false }, 'name available');
     res.json(soldOutItems);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// REMINDER TO Implement this in admin route 
+
+router.get('/admin/itemcount', async (req, res) => {
+  try {
+    const count = await MenuItems.countDocuments({});
+    res.json({ total: count });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 
 router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/dashboard/dashboard.html'));
