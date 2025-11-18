@@ -43,6 +43,7 @@ const OrderItemsScheme = new mongoose.Schema({
     menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems', required: true },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
     quantity: { type: Number, required: true, default: 1 },
+    
 
 });
 
