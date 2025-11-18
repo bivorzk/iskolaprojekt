@@ -74,7 +74,6 @@ app.get('/pay', (req, res) => {
 });
 
 
-
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'verify.html'));

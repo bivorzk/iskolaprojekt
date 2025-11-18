@@ -1,0 +1,110 @@
+/* Admin Dashboard CSS */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6f8;
+}
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #2c3e50;
+  color: #fff;
+  width: 220px;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+.sidebar ul li {
+  margin-bottom: 1.2rem;
+}
+.sidebar ul li a {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: color 0.2s;
+}
+.sidebar ul li a:hover {
+  color: #1abc9c;
+}
+.main-content {
+  flex: 1;
+  padding: 2rem;
+}
+header h1 {
+  margin-top: 0;
+  font-size: 2rem;
+  color: #34495e;
+}
+section {
+  margin-bottom: 2.5rem;
+}
+.user-list {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.05);
+}
+.stats-cards {
+  display: flex;
+  gap: 1.5rem;
+}
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.2rem 2rem;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.08);
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+.btn {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #16a085;
+}
+@media (max-width: 800px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    box-shadow: none;
+    padding: 1rem;
+  }
+  .main-content {
+    padding: 1rem;
+  }
+  .stats-cards {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+td.admin {
+  color: #e20606e4 !important;
+}
+
+td.child {
+  color: #4285fa !important;
+}
+
+td.parent {
+  color: #08eb0c !important;
+}
