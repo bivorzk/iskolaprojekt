@@ -13,6 +13,7 @@ const password_reset = require('./auth/password_reset');
 const database_queries = require('../config/database_queries');
 const TwoFA = require('./auth/2fa');
 const dashboardRouter = require('./dashboard/dashboard');
+const logoutRouter = require('./logout');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -57,7 +58,7 @@ app.use('/register', registerLimiter);
 
 
 // Serve HTML
-app.get('/', (req, res) => {
+app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
@@ -90,6 +91,7 @@ app.use('/api/payments', googlepayRouter);
 app.use('/api/payments', paypalRouter);
 app.use('/2fa', TwoFA);
 app.use('/dashboard', dashboardRouter);
+app.use('/', logoutRouter);
 
 
 // 404 handler
