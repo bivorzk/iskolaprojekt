@@ -94,7 +94,7 @@ router.post('/register', async (req, res) => {
       console.log('reCAPTCHA verification result:', data);
       
 
-      if (data.success && data.score <= 0.5) {
+      if (data.success && data.score < 0.1) {
       console.log('CAPTCHA score too low:', data.score);
       return res.status(400).send('CAPTCHA verification failed');
     }

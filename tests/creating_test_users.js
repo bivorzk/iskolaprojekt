@@ -13,4 +13,3 @@ mongooose.connect(dbUrl + dbName)
   })
   .catch(err => console.error('Could not connect to MongoDB for creating test users', err));
   
-

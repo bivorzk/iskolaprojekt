@@ -14,6 +14,7 @@ const database_queries = require('../config/database_queries');
 const TwoFA = require('./auth/2fa');
 const dashboardRouter = require('./dashboard/dashboard');
 const logoutRouter = require('./logout');
+const admin = require('./admin/admin');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -38,7 +39,7 @@ const limiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 50, // Teszt célokra max 15 orankent
+  max: 10002, // Teszt célokra max 15 orankent
   message: 'Too many accounts created from this IP, please try again after an hour'
 });
 
@@ -91,7 +92,7 @@ app.use('/api/payments', paypalRouter);
 app.use('/2fa', TwoFA);
 app.use('/dashboard', dashboardRouter);
 app.use('/', logoutRouter);
-
+app.use('/admin', admin);
 
 // 404 handler
 app.use((req, res) => {
