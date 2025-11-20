@@ -61,8 +61,51 @@
             </section>
         </main>
     </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <section id="menu-items">
+        <h2>Menu Item Management</h2>
+        <form id="menu-item-form" class="menu-item-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" min="0" required>
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" required>
+            <label for="allergens">Allergens (comma separated):</label>
+            <input type="text" id="allergens" name="allergens">
+            <label for="calories">Calories:</label>
+            <input type="number" id="calories" name="calories" min="0">
+            <label for="protein">Protein:</label>
+            <input type="number" id="protein" name="protein" min="0">
+            <label for="healthScore">Health Score:</label>
+            <input type="number" id="healthScore" name="healthScore" min="0">
+            <button type="submit" id="menu-item-form" class="btn">Add Menu Item</button>
+        </form>
+        <div class="menu-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:left">Name</th>
+                        <th style="text-align:left">Description</th>
+                        <th style="text-align:right">Stock</th>
+                        <th style="text-align:right">Price</th>
+                        <th style="text-align:right">Available</th>
+                        <th style="text-align:left">Category</th>
+                        <th style="text-align:left">Allergens</th>
+                        <th style="text-align:right">Calories</th>
+                        <th style="text-align:right">Protein</th>
+                        <th style="text-align:right">Health Score</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="menu-list"></tbody>
+            </table>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

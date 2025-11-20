@@ -11,6 +11,7 @@ const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
 router.use(express.urlencoded({ extended: true }));
+router.use(express.json());
 
 const { User } = require('../../src/database');
 const { Payment, LoyaltyProgram, MenuItems, Order, OrderItems } = require('../../config/database_queries');
@@ -123,6 +124,45 @@ router.get('/admin/itemcount', async (req, res) => {
   }
 });
 
+router.post('/admin/create_menuitem', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      stock,
+      price,
+      category,
+      allergens,
+      nutritionalInfo,
+      healthScore
+    } = req.body;
+
+    await MenuItems.create({
+      name,
+      description,
+      stock,
+      price,
+      category,
+      allergens,
+      nutritionalInfo,
+      healthScore
+    });
+
+    res.json({ message: 'Menu item created' });
+  } catch (error) {
+    console.error('Error creating menu item:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+router.get('/admin/menulist', async (req, res) => {
+  try {
+    const menuItems = await MenuItems.find({});
+    res.json(menuItems);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 

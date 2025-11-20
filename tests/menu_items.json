@@ -1,0 +1,392 @@
+[
+    {
+        "name": "Centralized real-time functionalities",
+        "description": "Data present whom person.",
+        "stock": 14,
+        "price": 21.42,
+        "category": "Salad",
+        "available": true,
+        "QRCode": "https://lyons.org/",
+        "allergens": [
+            "fish",
+            "mustard",
+            "soy"
+        ],
+        "nutritionalInfo": {
+            "calories": 313,
+            "protein": 22.8,
+            "carbs": 16.9,
+            "fat": 55.5
+        },
+        "healthScore": 8.4
+    },
+    {
+        "name": "Right-sized coherent hardware",
+        "description": "Contain thank general.",
+        "stock": 34,
+        "price": 18.21,
+        "category": "SideDish",
+        "available": true,
+        "QRCode": "http://www.villa.biz/",
+        "allergens": [],
+        "nutritionalInfo": {
+            "calories": 316,
+            "protein": 3.4,
+            "carbs": 113.5,
+            "fat": 42.4
+        },
+        "healthScore": 4.8
+    },
+    {
+        "name": "Reactive dedicated data-warehouse",
+        "description": "It scene develop help get.",
+        "stock": 3,
+        "price": 20.09,
+        "category": "DailySpecial",
+        "available": true,
+        "QRCode": "https://lozano.org/",
+        "allergens": [
+            "fish",
+            "gluten",
+            "sulphites"
+        ],
+        "nutritionalInfo": {
+            "calories": 1070,
+            "protein": 26.4,
+            "carbs": 12.9,
+            "fat": 17.5
+        },
+        "healthScore": 9.6
+    },
+    {
+        "name": "Organic fault-tolerant methodology",
+        "description": "Affect card yeah that act floor.",
+        "stock": 8,
+        "price": 9.48,
+        "category": "Soup",
+        "available": true,
+        "QRCode": "https://saunders.com/",
+        "allergens": [
+            "celery",
+            "sesame",
+            "soy"
+        ],
+        "nutritionalInfo": {
+            "calories": 642,
+            "protein": 16.9,
+            "carbs": 121.3,
+            "fat": 75.9
+        },
+        "healthScore": 9.0
+    },
+    {
+        "name": "Customer-focused 6thgeneration concept",
+        "description": "Agreement some deal here must act.",
+        "stock": 3,
+        "price": 18.43,
+        "category": "SideDish",
+        "available": true,
+        "QRCode": "http://www.stewart-thomas.biz/",
+        "allergens": [
+            "nuts",
+            "mustard"
+        ],
+        "nutritionalInfo": {
+            "calories": 132,
+            "protein": 45.6,
+            "carbs": 139.2,
+            "fat": 16.1
+        },
+        "healthScore": 5.2
+    },
+    {
+        "name": "De-engineered eco-centric alliance",
+        "description": "Those today foot certainly including head exactly light.",
+        "stock": 27,
+        "price": 4.4,
+        "category": "Other",
+        "available": true,
+        "QRCode": "https://white.net/",
+        "allergens": [
+            "eggs",
+            "celery"
+        ],
+        "nutritionalInfo": {
+            "calories": 444,
+            "protein": 11.1,
+            "carbs": 65.9,
+            "fat": 30.4
+        },
+        "healthScore": 9.8
+    },
+    {
+        "name": "Team-oriented 24hour data-warehouse",
+        "description": "Enough smile poor state with.",
+        "stock": 23,
+        "price": 16.6,
+        "category": "Other",
+        "available": true,
+        "QRCode": "http://www.moon.com/",
+        "allergens": [],
+        "nutritionalInfo": {
+            "calories": 682,
+            "protein": 47.7,
+            "carbs": 70.0,
+            "fat": 16.2
+        },
+        "healthScore": 0.9
+    },
+    {
+        "name": "Cross-group maximized algorithm",
+        "description": "Agreement after particular yes.",
+        "stock": 8,
+        "price": 3.24,
+        "category": "Dessert",
+        "available": true,
+        "QRCode": "https://leonard-bennett.com/",
+        "allergens": [],
+        "nutritionalInfo": {
+            "calories": 479,
+            "protein": 31.2,
+            "carbs": 38.0,
+            "fat": 76.1
+        },
+        "healthScore": 1.4
+    },
+    {
+        "name": "Configurable user-facing complexity",
+        "description": "Get end door keep north cell.",
+        "stock": 17,
+        "price": 24.01,
+        "category": "SideDish",
+        "available": true,
+        "QRCode": "http://mcmahon-brewer.info/",
+        "allergens": [
+            "sulphites",
+            "celery",
+            "lactose"
+        ],
+        "nutritionalInfo": {
+            "calories": 354,
+            "protein": 32.9,
+            "carbs": 90.9,
+            "fat": 30.5
+        },
+        "healthScore": 9.3
+    },
+    {
+        "name": "Fully-configurable homogeneous capability",
+        "description": "By the spring black.",
+        "stock": 22,
+        "price": 2.3,
+        "category": "Drink",
+        "available": true,
+        "QRCode": "https://www.greene-moran.biz/",
+        "allergens": [
+            "soy"
+        ],
+        "nutritionalInfo": {
+            "calories": 953,
+            "protein": 0.5,
+            "carbs": 146.4,
+            "fat": 3.2
+        },
+        "healthScore": 3.6
+    },
+    {
+        "name": "Compatible 24/7 budgetary management",
+        "description": "Create although attention law performance race foreign.",
+        "stock": 40,
+        "price": 5.35,
+        "category": "Healthy",
+        "available": true,
+        "QRCode": "https://www.suarez.net/",
+        "allergens": [],
+        "nutritionalInfo": {
+            "calories": 926,
+            "protein": 44.3,
+            "carbs": 125.6,
+            "fat": 3.8
+        },
+        "healthScore": 9.5
+    },
+    {
+        "name": "Multi-tiered modular methodology",
+        "description": "Cover head lay ok fly other.",
+        "stock": 34,
+        "price": 17.71,
+        "category": "Drink",
+        "available": true,
+        "QRCode": "http://www.vaughn.net/",
+        "allergens": [
+            "nuts",
+            "gluten"
+        ],
+        "nutritionalInfo": {
+            "calories": 654,
+            "protein": 11.0,
+            "carbs": 48.3,
+            "fat": 57.7
+        },
+        "healthScore": 5.9
+    },
+    {
+        "name": "Multi-lateral full-range data-warehouse",
+        "description": "Minute government country.",
+        "stock": 19,
+        "price": 18.52,
+        "category": "Dessert",
+        "available": true,
+        "QRCode": "https://hall.com/",
+        "allergens": [
+            "soy",
+            "lactose",
+            "mustard"
+        ],
+        "nutritionalInfo": {
+            "calories": 847,
+            "protein": 28.3,
+            "carbs": 87.2,
+            "fat": 37.5
+        },
+        "healthScore": 5.7
+    },
+    {
+        "name": "Customer-focused client-server algorithm",
+        "description": "In these admit bit.",
+        "stock": 24,
+        "price": 6.26,
+        "category": "DailySpecial",
+        "available": true,
+        "QRCode": "https://www.holland-smith.com/",
+        "allergens": [
+            "lactose"
+        ],
+        "nutritionalInfo": {
+            "calories": 461,
+            "protein": 28.5,
+            "carbs": 87.2,
+            "fat": 34.1
+        },
+        "healthScore": 1.6
+    },
+    {
+        "name": "Triple-buffered mobile encryption",
+        "description": "Race top at interview pull.",
+        "stock": 48,
+        "price": 14.69,
+        "category": "Soup",
+        "available": true,
+        "QRCode": "https://www.mcdonald-gonzalez.com/",
+        "allergens": [],
+        "nutritionalInfo": {
+            "calories": 224,
+            "protein": 41.2,
+            "carbs": 97.7,
+            "fat": 68.2
+        },
+        "healthScore": 6.1
+    },
+    {
+        "name": "De-engineered 24hour hierarchy",
+        "description": "Likely enter necessary western.",
+        "stock": 46,
+        "price": 19.56,
+        "category": "MainDish",
+        "available": true,
+        "QRCode": "http://hernandez.com/",
+        "allergens": [
+            "gluten",
+            "mustard",
+            "soy"
+        ],
+        "nutritionalInfo": {
+            "calories": 1152,
+            "protein": 42.4,
+            "carbs": 19.0,
+            "fat": 46.6
+        },
+        "healthScore": 9.8
+    },
+    {
+        "name": "Customer-focused grid-enabled instruction set",
+        "description": "Someone choice artist than fear police dog hand.",
+        "stock": 16,
+        "price": 4.07,
+        "category": "Healthy",
+        "available": true,
+        "QRCode": "https://www.patel.com/",
+        "allergens": [
+            "lactose",
+            "soy"
+        ],
+        "nutritionalInfo": {
+            "calories": 327,
+            "protein": 19.2,
+            "carbs": 7.0,
+            "fat": 53.3
+        },
+        "healthScore": 6.5
+    },
+    {
+        "name": "Optimized contextually-based methodology",
+        "description": "Floor meet section mention bring answer.",
+        "stock": 33,
+        "price": 8.09,
+        "category": "Healthy",
+        "available": true,
+        "QRCode": "http://www.warner-thomas.info/",
+        "allergens": [
+            "sulphites",
+            "celery"
+        ],
+        "nutritionalInfo": {
+            "calories": 905,
+            "protein": 8.9,
+            "carbs": 56.6,
+            "fat": 74.8
+        },
+        "healthScore": 6.1
+    },
+    {
+        "name": "Reduced fresh-thinking productivity",
+        "description": "Feel address drive someone.",
+        "stock": 39,
+        "price": 6.36,
+        "category": "SpecialDiet",
+        "available": true,
+        "QRCode": "http://www.smith.com/",
+        "allergens": [
+            "lactose",
+            "gluten",
+            "sulphites"
+        ],
+        "nutritionalInfo": {
+            "calories": 976,
+            "protein": 18.9,
+            "carbs": 25.5,
+            "fat": 7.2
+        },
+        "healthScore": 8.6
+    },
+    {
+        "name": "Re-engineered multi-tasking initiative",
+        "description": "Candidate tell building center hospital money.",
+        "stock": 7,
+        "price": 18.4,
+        "category": "Other",
+        "available": true,
+        "QRCode": "https://www.russell-mason.com/",
+        "allergens": [
+            "nuts",
+            "fish"
+        ],
+        "nutritionalInfo": {
+            "calories": 767,
+            "protein": 39.4,
+            "carbs": 3.6,
+            "fat": 48.3
+        },
+        "healthScore": 4.5
+    }
+]

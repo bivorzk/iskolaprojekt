@@ -1,4 +1,48 @@
 /* Admin Dashboard CSS */
+/* Menu Items Section */
+#menu-items {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.05);
+  margin-bottom: 2.5rem;
+}
+.menu-item-form {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.menu-item-form label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+.menu-item-form input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: #f9f9f9;
+}
+.menu-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.menu-list th, .menu-list td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.menu-list th {
+  background: #f4f6f8;
+  font-weight: 600;
+}
+.menu-list td {
+  background: #fff;
+}
+.menu-list tr:last-child td {
+  border-bottom: none;
+}
 body {
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;

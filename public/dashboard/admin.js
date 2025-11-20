@@ -64,3 +64,67 @@ fetch('/dashboard/admin/signup-stats')
   });
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('menu-item-form');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); 
+
+    try {
+      const response = await fetch('/dashboard/admin/create_menuitem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          description: document.getElementById('description').value,
+          stock: parseInt(document.getElementById('stock').value),
+          price: parseFloat(document.getElementById('price').value),
+          category: document.getElementById('category').value,
+          allergens: document.getElementById('allergens').value
+            .split(',')
+            .map(a => a.trim())
+            .filter(a => a !== ''),
+          nutritionalInfo: {
+            calories: parseInt(document.getElementById('calories').value) || 0,
+            protein: parseInt(document.getElementById('protein').value) || 0
+          },
+          healthScore: parseInt(document.getElementById('healthScore').value) || 0
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        alert('Menu item created successfully!');
+      }
+    } catch (err) {
+      alert('Network or server error');
+    }
+  });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/dashboard/admin/menulist')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="text-align:left">${item.name}</td>
+                    <td style="text-align:left">${item.description}</td>
+                    <td style="text-align:center">${item.category}</td>
+                    <td style="text-align:right">${item.stock}</td>
+                    <td style="text-align:right">${item.price.toFixed(2)}</td>
+                    <td style="text-align:center">${item.available ? 'Yes' : 'No'}</td>
+                    <td style="text-align:left">${item.allergens.join(', ')}</td>
+                    <td style="text-align:right">Calories: ${item.nutritionalInfo.calories}</td>
+                    <td style="text-align:right">Protein: ${item.nutritionalInfo.protein}</td>
+                    <td style="text-align:right">${item.healthScore}</td>
+
+                `;
+                document.getElementById('menu-list').appendChild(row);
+            });
+        });
+});

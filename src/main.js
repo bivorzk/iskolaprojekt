@@ -31,15 +31,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 const limiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 1 hour)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 })
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 100, // Teszt célokra max 15 orankent
+  max: 50, // start blocking after 50 requests
   message: 'Too many accounts created from this IP, please try again after an hour'
 });
 
