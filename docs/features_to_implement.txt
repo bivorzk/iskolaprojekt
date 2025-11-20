@@ -1,0 +1,95 @@
+Admin Dashboard TODO List
+
+Existing Features
+
+-   Total users count
+-   Total orders count
+-   User list table
+-   Signup statistics chart
+-   Create menu item form
+-   Menu list table
+-   Total menu items count
+
+TODO Features to Add
+
+Inventory & Menu Management
+
+-   Edit & delete menu items
+-   Low-stock alerts
+-   Item availability auto-update when stock reaches 0
+-   Bulk import/export menu items (CSV/Excel)
+-   Weekly/Daily menu planner
+-   Allergen filter presets
+-   Nutrition information editor
+-   Healthy-item discount management
+
+Orders & Pickup Management
+
+-   Full order management panel (pending / preparing / ready /
+    completed)
+-   Real‑time order refresh
+-   Estimated pickup timer
+-   Pickup QR-code scanning system
+-   Heatmap of peak ordering times
+
+User & Account Management
+
+-   Parent–student account linking
+-   Spending limit controls
+-   Manual balance adjustments
+-   Freeze/unfreeze accounts
+-   Detailed user activity timeline
+-   Account verification tools
+
+Payments & Finance
+
+-   Full transaction history viewer
+-   Refund processing tool
+-   SZÉP/cafeteria transaction tracking
+-   Failed payment monitoring
+-   Export finance reports (PDF/CSV)
+
+Loyalty & Rewards
+
+-   Points management system
+-   Custom promotions & discounts
+-   Reward history tracking
+-   Gamification (badges, streaks)
+
+QR Code Tools
+
+-   Generate printable QR menus
+-   Generate student QR pickup codes
+-   Export QR sheets for classes
+
+Analytics & Insights
+
+-   Sales statistics (daily/weekly/monthly)
+-   Menu item popularity ranking
+-   Waste prediction analytics
+-   Healthy vs unhealthy purchase stats
+-   Top spenders, top savers
+-   Class-level ordering metrics
+
+Staff / Kitchen Tools
+
+-   Simplified “kitchen view”
+-   Automatic order grouping (e.g., 6x sandwiches)
+-   Ingredient usage tracking
+
+System & Security
+
+-   Role-based access control (Admin / Staff / Cashier)
+-   Admin activity log
+-   Session monitor (active logins)
+-   Error log viewer
+-   System health dashboard
+
+Extra Premium-Level Features
+
+-   Smart inventory reordering suggestions
+-   Offline failover mode (limited functionality)
+-   Multi-school support (if scaled nationwide)
+-   Announcement system (alerts for users)
+-   Feedback & comment moderation panel
+-   Exportable audit logs

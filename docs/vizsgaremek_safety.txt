@@ -3,7 +3,7 @@
 --> login? - password reset ✅
 --> login? - ip track? ✅
 -- > register+login+BODY OF THE SITE  - XSS attack prevention?
---> login - 2fa? 
+--> login - 2fa? ✅
 --> register - password blacklist ✅
 --> register - zxcvbn? password strength ✅
 (Input length limits) check ✅

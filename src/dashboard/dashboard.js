@@ -164,6 +164,14 @@ router.get('/admin/menulist', async (req, res) => {
   }
 });
 
+router.get('/admin/stockalerts', async (req, res) => {
+  try {
+    const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock');
+    res.json(lowStockItems);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 
