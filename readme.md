@@ -18,6 +18,7 @@ Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akk
 - nodemon@3.1.0  
 - paypal@1.0.1  
 - zxcvbn@4.4.2  
+- express-session
 
 ## Directory Structure
 
@@ -54,7 +55,7 @@ Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akk
 │   ├── database_queries.js
 │   └── hu.json
 ├── data/                   # Data files
-│   ├── disposable_email_list.json
+│   ├── disposable_email_li st.json
 │   ├── Most_used_passwords.json
 │   └── password_characters.json
 ├── docs/                   # Documentation

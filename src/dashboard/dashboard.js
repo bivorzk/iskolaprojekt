@@ -173,8 +173,6 @@ router.get('/admin/stockalerts', async (req, res) => {
   }
 });
 
-
-
 router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/dashboard/dashboard.html'));
 });

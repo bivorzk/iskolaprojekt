@@ -30,7 +30,7 @@ const PaymentScheme = new mongoose.Schema({
 const MenuItemsScheme = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
-    stock: { type: Number, required: true },
+    stock: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
     category: { type: String, required: true, enum: [ 'Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other' ], default: 'Other' },
     available: { type: Boolean, default: true },
@@ -69,7 +69,7 @@ const OrderScheme = new mongoose.Schema({
     status: { type: String, required: true, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending' },
     totalAmount: { type: Number, required: true },
     pickupTime: { type: Date, required: false },
-    notes: { type: String, required: false }
+    notes: { type: String, required: false, default: '' }
 });
 
 const UserLoyaltyScheme = new mongoose.Schema({
