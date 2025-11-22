@@ -14,10 +14,10 @@ TODO Features to Add
 
 Inventory & Menu Management
 
--   Edit & delete menu items
--   Low-stock alerts
--   Item availability auto-update when stock reaches 0
--   Bulk import/export menu items (CSV/Excel)
+-   Edit & delete menu items ✅
+-   Low-stock alerts ✅
+-   Item availability auto-update when stock reaches 0 ✅
+-   Bulk import/export menu items (CSV/Excel) ✅
 -   Weekly/Daily menu planner
 -   Allergen filter presets
 -   Nutrition information editor

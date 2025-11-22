@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Payment } = require('../../config/database_queries');
 
-// POST /api/payments/googlepay
+
 router.post('/googlepay', async (req, res) => {
     try {
         console.log('Incoming Google Pay payment:', req.body);

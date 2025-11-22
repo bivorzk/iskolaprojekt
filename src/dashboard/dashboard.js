@@ -127,6 +127,7 @@ router.get('/admin/itemcount', async (req, res) => {
 router.post('/admin/create_menuitem', async (req, res) => {
   try {
     const {
+      id,
       name,
       description,
       stock,
@@ -138,6 +139,7 @@ router.post('/admin/create_menuitem', async (req, res) => {
     } = req.body;
 
     await MenuItems.create({
+      _id: id,
       name,
       description,
       stock,
@@ -169,6 +171,86 @@ router.get('/admin/stockalerts', async (req, res) => {
     const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock');
     res.json(lowStockItems);
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update a menu item (PUT)
+router.put('/admin/menuitem/:id', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      stock,
+      price,
+      category,
+      allergens,
+      nutritionalInfo,
+      healthScore,
+      available
+    } = req.body;
+    const updatedItem = await MenuItems.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        description,
+        stock,
+        price,
+        category,
+        allergens,
+        nutritionalInfo,
+        healthScore,
+        available
+      },
+      { new: true }
+    );
+    if (!updatedItem) {
+      return res.status(404).json({ error: 'Menu item not found' });
+    }
+    res.json({ message: 'Menu item updated', item: updatedItem });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+router.get('/admin/delete_menuitem/:id', async (req, res) => {
+  try {
+    const deletedItem = await MenuItems.findByIdAndDelete(req.params.id);
+    if (!deletedItem) {
+      return res.status(404).json({ error: 'Menu item not found' });
+    }
+    res.json({ message: 'Menu item deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/admin/menuitem_export', async (req, res) => {
+  try {
+    const menuItems = await MenuItems.find({});
+    res.json(menuItems);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// REMINDER TO FIX THIS TO DIFFERENTIATE CURRENCIES 
+
+router.get('/admin/paymentstats', async (req, res) => {
+  try {
+    const paymentStats = await Payment.aggregate([
+      { $group: {
+          _id: "$paymentMethod",
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 },
+          currency: { $first: "$currency" }
+        }
+      }
+    ]);
+    res.json(paymentStats);
+  }
+  catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });

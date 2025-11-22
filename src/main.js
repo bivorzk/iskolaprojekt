@@ -15,6 +15,7 @@ const TwoFA = require('./auth/2fa');
 const dashboardRouter = require('./dashboard/dashboard');
 const logoutRouter = require('./logout');
 const admin = require('./admin/admin');
+const Order = require('./Orders/Order');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -93,6 +94,8 @@ app.use('/2fa', TwoFA);
 app.use('/dashboard', dashboardRouter);
 app.use('/', logoutRouter);
 app.use('/admin', admin);
+app.use('/Order', Order);
+
 
 // 404 handler
 app.use((req, res) => {
