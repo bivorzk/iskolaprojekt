@@ -315,9 +315,19 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
           totalAmount = 0;
          data.forEach(stat => {
+            if (stat._id === 'HUF') {
+              HUF = stat.totalAmount;
+            } else if (stat._id === 'USD') {
+              USD = stat.totalAmount;
+            }else if (stat._id === 'EUR') {
+              EUR = stat.totalAmount;
+            }
             totalAmount += stat.totalAmount;
          });
-         document.getElementById('payment-stats').textContent = `${totalAmount.toFixed(2)}$`;
+
+         document.getElementById('payment-stats').textContent = 
+         `${HUF}HUF
+         ${USD.toFixed(2)}$`;
           
         })
         .catch(error => {

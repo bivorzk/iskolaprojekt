@@ -45,6 +45,8 @@ const MenuItemsScheme = new mongoose.Schema({
     healthScore: { type: Number, default: 0 } // for discounts
 });
 
+
+
 MenuItemsScheme.pre('save', function(next) {
     if (this.stock <= 0) {
         this.available = false;
