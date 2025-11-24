@@ -112,6 +112,15 @@ const ParentChildScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+const SecurityLogsScheme = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+    action: { type: String, required: true }, // e.g., 'LOGIN_SUCCESS', 'LOGIN_FAILURE', 'PASSWORD_RESET'
+    type: { type: String, required: true }, // e.g., 'INFO', 'WARNING', 'ERROR'
+    ipAddress: { type: String, required: false },
+    Timestamp: { type: Date, default: Date.now },
+    details: { type: String, required: false } // Additional info if needed
+});
+
 
 const Payment = mongoose.model('Payment', PaymentScheme);
 const UserLoyalty = mongoose.model('UserLoyalty', UserLoyaltyScheme);
@@ -121,6 +130,7 @@ const OrderItems = mongoose.model('OrderItems', OrderItemsScheme);
 const Review = mongoose.model('Review', ReviewScheme);
 const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
 const ParentChild = mongoose.model('ParentChild', ParentChildScheme);
+const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
 
 module.exports = {
     Payment,
@@ -130,5 +140,6 @@ module.exports = {
     OrderItems,
     Review,
     DailyMenu,
-    ParentChild
+    ParentChild,
+    SecurityLogs
 };

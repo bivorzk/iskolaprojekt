@@ -235,7 +235,6 @@ router.get('/admin/menuitem_export', async (req, res) => {
 });
 
 
-// REMINDER TO FIX THIS TO DIFFERENTIATE CURRENCIES 
 
 router.get('/admin/paymentstats', async (req, res) => {
   try {
