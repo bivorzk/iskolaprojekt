@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", function () {
         table.appendChild(row);
       });
 
-      // If you want to support manual add to cart, keep this:
       const addToCartBtn = document.getElementById('addToCartBtn');
       if (addToCartBtn) {
         addToCartBtn.addEventListener('click', function() {
