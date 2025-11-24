@@ -30,41 +30,70 @@ const client = new Client({
 const ordersController = new OrdersController(client);
 const paymentsController = new PaymentsController(client);
 
-const createOrder = async (cart) => {
-   const collect = {
+const createOrder = async (cart, currency = "USD", amount = "0.00") => {
+    // PayPal sandbox works best with USD
+    const paypalCurrency = "USD";
+    
+    // Calculate total and map items
+    let total = 0;
+    let items = [];
+    if (Array.isArray(cart) && cart.length > 0) {
+        items = cart.map((item, index) => {
+            const price = parseFloat(item.price) || 0;
+            const quantity = parseInt(item.quantity) || 1;
+            total += price * quantity;
+            return {
+                name: item.name || `Item ${index + 1}`,
+                unitAmount: {
+                    currencyCode: paypalCurrency,
+                    value: price.toFixed(2),
+                },
+                quantity: quantity.toString(),
+                description: item.description || "",
+                sku: item.sku || `sku${index + 1}`,
+            };
+        });
+    }
+    // Use calculated total from items to ensure consistency
+    const orderAmount = total > 0 ? total : parseFloat(amount);
+    
+    // Ensure item total exactly matches sum of individual items
+    const itemTotalCalculated = items.reduce((sum, item) => {
+        return sum + (parseFloat(item.unitAmount.value) * parseInt(item.quantity));
+    }, 0);
+    
+    const finalAmount = itemTotalCalculated > 0 ? itemTotalCalculated : orderAmount;
+    
+    const collect = {
         body: {
             intent: "CAPTURE",
             purchaseUnits: [
                 {
                     amount: {
-                        currencyCode: "USD",
-                        value: "100",
+                        currencyCode: paypalCurrency,
+                        value: finalAmount.toFixed(2),
                         breakdown: {
                             itemTotal: {
-                                currencyCode: "USD",
-                                value: "100",
+                                currencyCode: paypalCurrency,
+                                value: finalAmount.toFixed(2),
                             },
                         },
                     },
-                    // lookup item details in `cart` from database
-                    items: [
-                        {
-                            name: "T-Shirt",
-                            unitAmount: {
-                                currencyCode: "USD",
-                                value: "100",
-                            },
-                            quantity: "1",
-                            description: "Super Fresh Shirt",
-                            sku: "sku01",
+                    items: items.length > 0 ? items : [{
+                        name: "Order Total",
+                        unitAmount: {
+                            currencyCode: paypalCurrency,
+                            value: finalAmount.toFixed(2),
                         },
-                    ],
+                        quantity: "1",
+                        description: "Total order amount",
+                        sku: "total01",
+                    }],
                 },
             ],
         },
         prefer: "return=minimal",
     };
-   
     try {
         const { body, ...httpResponse } = await ordersController.createOrder(
             collect
@@ -74,9 +103,11 @@ const createOrder = async (cart) => {
             httpStatusCode: httpResponse.statusCode,
         };
     } catch (error) {
+        console.error('PayPal createOrder backend error:', error);
         if (error instanceof ApiError) {
-            throw new Error(error.message);
+            throw new Error(`PayPal API Error: ${error.message}`);
         }
+        throw new Error(`Unknown PayPal error: ${error.message || error}`);
     }
 };
 
@@ -117,14 +148,20 @@ router.get('/current_user', (req, res) => {
 
 router.post('/orders', async (req, res) => {
     // Extract order details from request body
-    const { cart } = req.body;
+    const { cart, currency, amount } = req.body;
+    console.log('Creating PayPal order with:', { cart, currency, amount });
     try {
-        const { jsonResponse, httpStatusCode } = await createOrder(cart);
+        const { jsonResponse, httpStatusCode } = await createOrder(cart, currency, amount);
+        console.log('PayPal order created:', jsonResponse);
         res.status(httpStatusCode).json(jsonResponse);
     }
     catch (error) {
         console.error('Error creating order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ 
+            error: 'Internal Server Error',
+            message: error.message,
+            details: error.toString()
+        });
     }
 });
 
