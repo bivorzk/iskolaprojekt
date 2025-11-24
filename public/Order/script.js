@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
         cartList.innerHTML = '';
         cartItems.forEach((item, idx) => {
           const li = document.createElement('li');
-          li.textContent = `${item.name} - $${item.price.toFixed(2)}`;
+          li.textContent = `${item.name} - HUF ${item.price.toFixed(2)}`;
           // Remove button
           const removeBtn = document.createElement('button');
           removeBtn.textContent = 'Remove';

@@ -259,6 +259,14 @@ router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/dashboard/dashboard.html'));
 });
 
+router.get('/admin/welcome-message', (req, res) => {
+  try {
+    const username = req.session.user.username;
+    res.json({ message: `Welcome, ${username}` });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 module.exports = router;

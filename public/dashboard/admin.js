@@ -294,10 +294,10 @@ document.addEventListener("DOMContentLoaded", () => {
       fetch('/dashboard/admin/menuitem_export')
         .then(res => res.json())
         .then(data => {
-          let CS_V_Format = "Name ; Description ; Category ; Stock ; Price ; Available ; Allergens ; Calories ; Protein ; Health Score\n";
+          let CS_V_Format = "Name;Description;Category;Stock;Price;Available;Allergens;Calories;Protein;Health Score\n";
           data.forEach(item => {
 
-              CS_V_Format += item.name + " ; " + item.description + " ; " + item.category + " ; " + item.stock + " ; $" + item.price.toFixed(2) + " ; " + (item.available ? "Yes" : "No") + " ; " + item.allergens.join(', ') + " ; " + item.nutritionalInfo.calories + " ; " + item.nutritionalInfo.protein + "g ; " + item.healthScore + "\n";
+              CS_V_Format += item.name + ";" + item.description + ";" + item.category + ";" + item.stock + ";" + "HUF " + item.price.toFixed(2) + ";" + (item.available ? "Yes" : "No") + ";" + item.allergens.join(', ') + ";" + item.nutritionalInfo.calories + ";" + item.nutritionalInfo.protein + "g;" + item.healthScore + "\n";
           });
               const blob = new Blob([CS_V_Format + '\n'], { type: 'text/plain' });
               const link = document.createElement('a');
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
               link.click();
               document.body.removeChild(link);
           });
-          alert('Menu items exported to menu_items_export.txt');
+          alert('Menu items exported to menu_items_export.csv');
         });
       
       fetch('/dashboard/admin/paymentstats')
@@ -317,13 +317,18 @@ document.addEventListener("DOMContentLoaded", () => {
          data.forEach(stat => {
             totalAmount += stat.totalAmount;
          });
-         document.getElementById('payment-stats').textContent = `$${totalAmount.toFixed(2)}`;
+         document.getElementById('payment-stats').textContent = `${totalAmount.toFixed(2)}$`;
           
         })
         .catch(error => {
           console.error('Error fetching payment stats:', error);
         });
-      
+      fetch('/dashboard/admin/welcome-message')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('welcome-message').textContent = data.message;
+        });
+
       
 });
 
