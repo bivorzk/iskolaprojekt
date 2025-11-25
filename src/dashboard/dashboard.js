@@ -235,17 +235,20 @@ router.get('/admin/menuitem_export', async (req, res) => {
 });
 
 
-// REMINDER TO FIX THIS TO DIFFERENTIATE CURRENCIES 
 
 router.get('/admin/paymentstats', async (req, res) => {
   try {
     const paymentStats = await Payment.aggregate([
       { $group: {
-          _id: "$paymentMethod",
-          totalAmount: { $sum: "$amount" },
+          _id: "$paymentMethod", 
           count: { $sum: 1 },
           currency: { $first: "$currency" }
+        },
+        $group: {
+          _id: "$currency",
+           totalAmount: { $sum: "$amount" },
         }
+
       }
     ]);
     res.json(paymentStats);
