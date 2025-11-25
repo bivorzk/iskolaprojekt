@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const bcrypt = require('bcrypt');
+const app = express();
 const router = express.Router();
 const passwordStrength = require('zxcvbn');
 const sendVerificationEmail = require('./auth/email_verification');
@@ -9,6 +10,8 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // const fetch = require('node-fetch'); // if doesnt work realFetch use this one
 const realFetch = fetch.default || fetch;
+const { SecurityLogs } = require('../config/database_queries')
+
 
 // Banned words lists json files
 const banned_words_hu = require('../config/hu.json');
@@ -38,6 +41,20 @@ const secretKey = process.env.Server_Side_Captha;
 
 let lastRegisteredEmail = null;
 
+
+// Trust proxy for correct IP extraction
+app.set('trust proxy', true);
+
+// IP middleware
+app.use((req, res, next) => {
+  let ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (ip && ip.startsWith('::ffff:')) ip = ip.substring(7);
+  if (ip === '::1') ip = '127.0.0.1';
+  req.clientIp = ip;
+  next();
+});
+
+app.use(express.urlencoded({ extended: true }));
 router.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(dbUrl + dbName)
@@ -57,9 +74,13 @@ const userSchema =  new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Registration route
+
+// Registration route
 router.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
+    console.log('Registration attempt from IP:', req.clientIp);
+
 
     // Verify reCAPTCHA v3 first
     const captchaResponse = req.body['g-recaptcha-response'];
@@ -221,6 +242,19 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       usertype: req.body.usertype || 'child'
     });
     await user.save();
+
+    let logUser = await User.findOne({ username });
+    const log = new SecurityLogs({
+      userId: logUser ? logUser._id : null,
+      ipAddress: req.clientIp,
+      action: 'registration_attempt',
+      type: 'INFO',
+      Timestamp: Date.now(),
+      details: "--"
+    });
+    
+    await log.save();
+    
     console.log('User registered:', username);
     console.log('Email registered:', lastRegisteredEmail);
 
@@ -278,6 +312,21 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, username: user.username }, 'ourSecretKey');
     const decoded = jwt.verify(token, 'ourSecretKey');
     const currentUser = decoded;
+
+
+    ip = req.clientIp;
+    
+    if (ip != await SecurityLogs.findOne({ ipAddress })){
+
+        SecurityLogs({
+        userId: user._id,
+        ipAddress: ip,
+        action: 'ip_mismatch_login_attempt',
+        type: 'WARNING',
+        Timestamp: Date.now(),
+        details: `Login attempt from different IP address: ${ip}`
+      }).save();
+    }
     
     console.log('Login successful for:', username);
       req.session.user = {
@@ -312,6 +361,10 @@ console.log(lastRegisteredEmail);
 console.log(lastRegisteredEmail);
 console.log('======================================')
 
+
+// Attach router to app
+app.use(router);
+
+module.exports = app;
 module.exports.lastRegisteredEmail = lastRegisteredEmail;
-module.exports = router;
 module.exports.User = User;
