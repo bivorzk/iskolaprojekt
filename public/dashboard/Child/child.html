@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Dashboard</title>
+    <link rel="stylesheet" href="child.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <h2>Child Panel</h2>
+            <nav>
+                <ul>
+                    <li><a href="#users">Users</a></li>
+                    <li><a href="#stats">Statistics</a></li>
+                    <li><a href="#settings">Settings</a></li>
+                    <li><a href="#logout">Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header>
+                <h1 id="welcome-message">Welcome, Child</h1>
+            </header>
+            <section id="orders-made">
+                <h2>Your Orders</h2>
+                <div class="order-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align:left">Order ID</th>
+                                <th style="text-align:center">Date</th>
+                                <th style="text-align:right; padding: 0 10px;">Total Amount</th>
+                                <th style="text-align:right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-list"></tbody>
+                    </table>
+                </div>
+            </section>
+            <section id="stats">
+                <h2>Statistics</h2>
+                <div class="stats-cards">
+                    <div class="card">Total Users: <span id="total-users">--</span></div>
+                    <div class="card">Active Sessions: <span id="active-sessions">--</span></div>
+                    <div class="card">Orders Made: <span id="orders-made">--</span></div>
+                    <div class="card">Total Menu Items: <span id="total-menu-items">--</span></div>
+                    <div class="card">Payment Stats: <span id="payment-stats">--</span></div>
+                    <div id="stock-alerts" style="margin: 1rem 0;"></div>
+                </div>
+            </section>
+            <section id="settings">
+                <h2>Settings</h2>
+                <a href="/password_reset.html" class="btn">Change Password</a>
+            </section>
+        </main>
+    </div>
+    <section id="menu-items">
+        <h2>Menu Item Management</h2>
+        <form id="menu-item-form" class="menu-item-form">
+            <input type="hidden" id="item_id" name="id">
+            <label for="item_id">ID:</label>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" min="0" required>
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" required>
+            <label for="allergens">Allergens (comma separated):</label>
+            <input type="text" id="allergens" name="allergens">
+            <label for="calories">Calories:</label>
+            <input type="number" id="calories" name="calories" min="0">
+            <label for="protein">Protein:</label>
+            <input type="number" id="protein" name="protein" min="0">
+            <label for="healthScore">Health Score:</label>
+            <input type="number" id="healthScore" name="healthScore" min="0">
+            <button type="submit" id="menu-item-form" class="btn">Add Menu Item</button>
+        </form>
+
+    </section>
+    <script src="child.js"></script>
+
+
+<script>
+
+document.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('blur', () => validateField(el));
+});
+
+
+</script>
+
+</body>
+</html>

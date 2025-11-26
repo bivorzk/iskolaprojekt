@@ -37,7 +37,7 @@ router.use('/admin', requireAdmin);
 
 // Serve admin dashboard
 router.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/dashboard/admin.html'));
+  res.sendFile(path.join(__dirname, '../../public/dashboard/admin/admin.html'));
 });
 
 

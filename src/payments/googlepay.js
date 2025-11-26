@@ -3,10 +3,11 @@ const router = express.Router();
 const { Payment } = require('../../config/database_queries');
 
 
+// Legacy Google Pay payment endpoint (kept for backward compatibility)
 router.post('/googlepay', async (req, res) => {
     try {
-        console.log('Incoming Google Pay payment:', req.body);
-        const { paymentMethodData, amount, currency, merchantInfo } = req.body;
+        console.log('Incoming Google Pay payment (legacy):', req.body);
+        const { paymentMethodData, amount, currency, merchantInfo, orderId } = req.body;
         // You may want to get userId from session/auth middleware
         const userId = req.user ? req.user._id : null;
 
@@ -20,6 +21,7 @@ router.post('/googlepay', async (req, res) => {
             details: {
                 paymentMethodData,
                 merchantInfo,
+                orderId: orderId || null,
                 raw: req.body // Save raw for debugging
             }
         });

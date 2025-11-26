@@ -60,18 +60,19 @@ MenuItemsScheme.pre('save', function(next) {
 
 const OrderItemsScheme = new mongoose.Schema({
     menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems', required: true },
-    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: false },
     quantity: { type: Number, required: true, default: 1 },
 });
 
 const OrderScheme = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     items: [OrderItemsScheme],
     orderDate: { type: Date, default: Date.now },
     status: { type: String, required: true, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending' },
     totalAmount: { type: Number, required: true },
     pickupTime: { type: Date, required: false },
-    notes: { type: String, required: false, default: '' }
+    notes: { type: String, required: false, default: '' },
+    paypalOrderId: { type: String, required: false }
 });
 
 const UserLoyaltyScheme = new mongoose.Schema({

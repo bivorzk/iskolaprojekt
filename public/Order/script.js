@@ -34,11 +34,24 @@ document.addEventListener("DOMContentLoaded", function () {
         const total = getCartTotal();
         document.getElementById('price').value = total.toFixed(2);
         
+        // Save cart to localStorage for payment systems
+        localStorage.setItem('cart', JSON.stringify(window.getCart()));
+        
         await updateConvertedAmount();
       }
 
       function getCartTotal() {
         return cartItems.reduce((sum, item) => sum + item.price, 0);
+      }
+
+      // Global function to get cart for payment systems
+      window.getCart = function() {
+        return cartItems.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          sku: item.id || 'item_' + Math.random().toString(36).substr(2, 9)
+        }));
       }
 
       async function updateConvertedAmount() {

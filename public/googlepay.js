@@ -137,27 +137,85 @@ function onGooglePayButtonClicked() {
         return;
     }
     
-    const paymentDataRequest = getGooglePaymentDataRequest();
-
-    paymentsClient.loadPaymentData(paymentDataRequest)
-        .then(paymentData => {
+    // Get cart data
+    let cart = [];
+    try {
+        if (typeof getCart === 'function') {
+            cart = getCart();
+        } else if (localStorage.getItem('cart')) {
+            cart = JSON.parse(localStorage.getItem('cart'));
+        }
+    } catch (e) {
+        console.warn('Could not get cart data, proceeding with amount-only payment:', e);
+        // Create a simple cart item for amount-only payments
+        cart = [{
+            name: 'Order Total',
+            price: parseFloat(price),
+            quantity: 1,
+            sku: 'total01'
+        }];
+    }
+    
+    // Create order first
+    fetch('/api/orders/googlepay', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            cart: cart,
+            currency: currency,
+            amount: price
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(orderData => {
+        console.log('Order created for Google Pay:', orderData);
+        window.currentGooglePayOrderId = orderData.orderId;
+        
+        const paymentDataRequest = getGooglePaymentDataRequest();
+        return paymentsClient.loadPaymentData(paymentDataRequest);
+    })
+    .then(paymentData => {
             // Handle the payment data
             console.log('Payment successful!', paymentData);
             
             // Show success message to user
             alert('Payment completed successfully! This is a test transaction.');
 
-            // Send payment data to backend
-            fetch('/api/payments/googlepay', {
+            // Get cart data from global variable or localStorage
+            let cart = [];
+            try {
+                if (typeof getCart === 'function') {
+                    cart = getCart();
+                } else if (localStorage.getItem('cart')) {
+                    cart = JSON.parse(localStorage.getItem('cart'));
+                }
+            } catch (e) {
+                console.warn('Could not get cart data:', e);
+            }
+            
+            // Get current amount and currency
+            const { price, currency } = getGooglePayAmountAndCurrency();
+            
+            // Complete the Google Pay order
+            fetch('/api/orders/googlepay/complete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    orderId: window.currentGooglePayOrderId || null,
                     paymentMethodData: paymentData.paymentMethodData,
-                    amount: paymentDataRequest.transactionInfo.totalPrice,
-                    currency: paymentDataRequest.transactionInfo.currencyCode,
-                    merchantInfo: paymentDataRequest.merchantInfo,
+                    transactionId: paymentData.paymentMethodData.tokenizationData?.token || 'googlepay_' + Date.now(),
+                    cart: cart,
+                    amount: price,
+                    currency: currency,
                     timestamp: new Date().toISOString()
                 })
             })
@@ -176,10 +234,12 @@ function onGooglePayButtonClicked() {
             });
         })
         .catch(err => {
-            console.error('Payment error:', err);
+            console.error('Google Pay error:', err);
             
-            // Handle specific Google Pay errors
-            if (err.statusCode) {
+            // Handle specific errors
+            if (err.message && err.message.includes('HTTP error')) {
+                alert('Failed to create order. Please try again.');
+            } else if (err.statusCode) {
                 switch (err.statusCode) {
                     case 'CANCELED':
                         console.log('Payment was canceled by user');

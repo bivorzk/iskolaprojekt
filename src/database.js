@@ -7,6 +7,7 @@ const passwordStrength = require('zxcvbn');
 const sendVerificationEmail = require('./auth/email_verification');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // const fetch = require('node-fetch'); // if doesnt work realFetch use this one
 const realFetch = fetch.default || fetch;
@@ -243,10 +244,12 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
     });
     await user.save();
 
+    const hashedIP = crypto.createHash('sha256').update(req.clientIp).digest('hex');
+
     let logUser = await User.findOne({ username });
     const log = new SecurityLogs({
       userId: logUser ? logUser._id : null,
-      ipAddress: req.clientIp,
+      ipAddress: hashedIP,
       action: 'registration_attempt',
       type: 'INFO',
       Timestamp: Date.now(),
@@ -314,18 +317,37 @@ router.post('/login', async (req, res) => {
     const currentUser = decoded;
 
 
-    ip = req.clientIp;
-    
-    if (ip != await SecurityLogs.findOne({ ipAddress })){
+  const ip = req.clientIp;
+  const hashedIP = crypto.createHash('sha256').update(ip).digest('hex');
 
-        SecurityLogs({
+    
+    
+  const lastLog = await SecurityLogs.findOne({ userId: user._id })
+  .sort({ Timestamp: -1 }); // Get most recent log
+
+    // Check if this IP has been used before by comparing hashes
+    const ipMatches = lastLog && lastLog.ipAddress === hashedIP;
+    
+  
+    if (!ipMatches && lastLog) {
+      await SecurityLogs.create({
         userId: user._id,
-        ipAddress: ip,
+        ipAddress: hashedIP,
         action: 'ip_mismatch_login_attempt',
         type: 'WARNING',
         Timestamp: Date.now(),
-        details: `Login attempt from different IP address: ${ip}`
-      }).save();
+        details: `Login attempt from different IP address`
+      });
+    } else {
+      // Log successful login from known or new IP
+      await SecurityLogs.create({
+        userId: user._id,
+        ipAddress: hashedIP,
+        action: 'login_attempt',
+        type: 'INFO',
+        Timestamp: Date.now(),
+        details: ipMatches ? 'Login from known IP' : 'First login for user'
+      });
     }
     
     console.log('Login successful for:', username);
