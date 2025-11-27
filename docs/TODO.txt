@@ -200,13 +200,6 @@ PRIORITY 6 - INNOVATIVE FEATURES
     - Emergency dietary alerts (food recalls, contamination)
     - Parent-teacher nutrition conferences scheduling
 
-18. Smart Campus Integration
-    - Integration with school ID cards/badges
-    - Classroom delivery for teachers
-    - Integration with school schedule (auto-suggest meals based on PE days)
-    - Lost-and-found for lunch boxes/containers
-    - Table reservation system for busy periods
-    - Temperature monitoring for food safety
 
 PRIORITY 5 - SCALING FEATURES
 ============================

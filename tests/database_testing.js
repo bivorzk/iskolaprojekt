@@ -16,6 +16,7 @@ async function testDatabase() {
 
         const orders = mongoose.connection.collection('orders');
         const menuItems = mongoose.connection.collection('menuitems');
+        const users = mongoose.connection.collection('users');
 
        
         /*
@@ -28,7 +29,7 @@ async function testDatabase() {
         const updateResult = await menuItems.updateMany({price: {$lt: 500}}, { $set: {price: 1000} });
         console.log(`Updated ${updateResult.modifiedCount} documents in the menuitems collection.`);
         */
-
+/*
         const items = await menuItems.find({}).sort({ price: 1 }).toArray();
 //        console.log('Menu Items:', items);
 
@@ -52,8 +53,12 @@ async function testDatabase() {
             }
         ]).toArray();
 
-        console.log('Item Prices:', ItemPrice);
+        */
 
+        // console.log('Item Prices:', ItemPrice);
+
+        const childToStudent = await users.updateMany({ usertype: 'child' }, { $set: { usertype: 'student' } });
+        console.log(`Updated ${childToStudent.modifiedCount} documents from child to student usertype.`);
 
     } catch (err) {
         console.error('Database operation error:', err);
