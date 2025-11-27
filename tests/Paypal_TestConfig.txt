@@ -1,5 +1,20 @@
 email: sb-czavl33431774@business.example.com
 password: |iY+77N>
+type: business
+
+Email: sb-ots24333445997@personal.example.com
+Password: Al)21U6@
+type: personal
+
+Name: John Doe
+Phone: 3662825787
+Country: HU
+Account ID: AYAGAH2552E4L
+Status: Verified
+
+CARD DETAILS: 4017449093923557
+EXPIRY: 11/2029
+CVC: ANY
 
 
 Successful Card:

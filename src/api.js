@@ -243,6 +243,8 @@ router.post('/orders', async (req, res) => {
         // Create PayPal order
         const { jsonResponse, httpStatusCode } = await createOrder(cart, currency, amount);
         console.log('PayPal order created:', jsonResponse);
+
+        publicId = nanoID.nanoid(6);
         
         if (httpStatusCode === 201 && jsonResponse.id && dbOrderItems.length > 0) {
             // Create database order record
@@ -254,7 +256,7 @@ router.post('/orders', async (req, res) => {
                 totalAmount: totalAmount,
                 paypalOrderId: jsonResponse.id,
                 notes: '',
-                publicId: nanoID.nanoid(6)
+                publicID: publicId
             });
             
             await newOrder.save();
@@ -329,6 +331,8 @@ router.post('/orders/googlepay', async (req, res) => {
             }
         }
         
+
+
         if (dbOrderItems.length > 0) {
             // Create database order record for Google Pay
             const newOrder = new Order({
@@ -338,7 +342,8 @@ router.post('/orders/googlepay', async (req, res) => {
                 status: 'Pending',
                 totalAmount: totalAmount,
                 paypalOrderId: null, // No PayPal ID for Google Pay orders
-                notes: 'Google Pay Order'
+                notes: 'Google Pay Order',
+                publicID: publicId
             });
             
             await newOrder.save();
