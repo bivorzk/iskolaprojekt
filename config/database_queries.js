@@ -113,11 +113,11 @@ const DailyMenuScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Parent Child Schema
+// Parent Student Schema
 
-const ParentChildScheme = new mongoose.Schema({
+const ParentStudentScheme = new mongoose.Schema({
     parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    childId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -138,7 +138,7 @@ const Order = mongoose.model('Order', OrderScheme);
 const OrderItems = mongoose.model('OrderItems', OrderItemsScheme);
 const Review = mongoose.model('Review', ReviewScheme);
 const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
-const ParentChild = mongoose.model('ParentChild', ParentChildScheme);
+const ParentStudent = mongoose.model('ParentStudent', ParentStudentScheme);
 const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
 
 
@@ -151,6 +151,6 @@ module.exports = {
     OrderItems,
     Review,
     DailyMenu,
-    ParentChild,
+    ParentStudent,
     SecurityLogs
 };

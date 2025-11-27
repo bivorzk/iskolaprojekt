@@ -39,7 +39,7 @@ Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akk
 │   │   ├── googlepay.js
 │   │   └── paypal.js
 │   ├── profile/
-│   │   ├── children.js
+│   │   ├── student.js
 │   │   └── parent.js
 ├── public/                 # Static files served to client
 │   ├── index.html

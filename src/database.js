@@ -67,7 +67,7 @@ const userSchema =  new mongoose.Schema({
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true },
   isVerified: { type: Boolean, default: false }, // Email verification status
-  usertype: {type: String,enum:['admin', 'child', 'parent', 'teacher'], default: "child"}, // Defines user type e.g if they are admin, child,parent or anything else default = child
+  usertype: {type: String,enum:['admin', 'student', 'parent', 'teacher'], default: "student"}, // Defines user type e.g if they are admin, student,parent or anything else default = student
   createdAt: { type: Date, default: Date.now }, // Account creation date
   balance : { type: Number, default: 0 } // User balance for in-app purchases
 });
@@ -240,7 +240,7 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       username,
       password: hashedPassword,
       email,
-      usertype: req.body.usertype || 'child'
+      usertype: req.body.usertype || 'student'
     });
     await user.save();
 

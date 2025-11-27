@@ -31,26 +31,26 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
-function requireChildren(req, res, next) {
+function requireStudent(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
     return res.status(401).send('Unauthorized: No session available');
   }
-  req.session.user.usertype != 'children' || 'admin' ? next() : res.status(403).send('Access denied for children accounts');
+  req.session.user.usertype != 'student' || 'admin' ? next() : res.status(403).send('Access denied for student accounts');
 }
 
 
 // Apply middleware to all /admin routes
 router.use('/admin', requireAdmin);
-router.use('/children', requireChildren);
+router.use('/student', requireStudent);
 
 
 // Serve admin dashboard
 router.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/dashboard/admin/admin.html'));
 });
-// Serve children dashboard
-router.get('/children', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/dashboard/children/child.html'));
+// Serve student dashboard
+router.get('/student', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/dashboard/student/student.html'));
 });
 
 
@@ -286,10 +286,10 @@ router.get('/admin/welcome-message', (req, res) => {
 });
 
 
-// API endpoints for CHILDREN DASHBOARD
+// API endpoints for STUDENT DASHBOARD
 
 
-router.get('/children/welcome-message', (req, res) => {
+router.get('/student/welcome-message', (req, res) => {
   try {
     const username = req.session.user.username;
     res.json({ message: `Welcome, ${username}` });
@@ -298,14 +298,14 @@ router.get('/children/welcome-message', (req, res) => {
   }
 });
 
-router.get('/children/order_history' , async (req, res) => {
+router.get('/student/order_history' , async (req, res) => {
   try {
       const userId = req.session.user.id;
 
 
       const orders = await Order.find({ userId })
         .populate('items.menuItemId')
-        .select('OrderDate totalAmount status items'); 
+        .select('OrderDate totalAmount status items publicID orderDate'); 
 
       // Transform orders into a clean structure
       const orderData = orders.map(order => ({
@@ -313,6 +313,8 @@ router.get('/children/order_history' , async (req, res) => {
         OrderDate: order.OrderDate,
         totalAmount: order.totalAmount,
         status: order.status,
+        publicID: order.publicID,
+        OrderDate: order.orderDate,
         items: order.items.map(item => ({
           name: item.menuItemId.name, 
           quantity: item.quantity

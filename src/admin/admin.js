@@ -36,7 +36,7 @@ router.use('/', requireAdmin);
 // Update all test user to match TEST usertype
 router.get('/changeuser', async (req, res) => {
     try {
-      const filter = { child: req.query.child };
+      const filter = { student: req.query.student };
       const update = { $set: { usertype: "TEST" } };
       const result = await User.updateMany(filter, update);
       res.json(result);
