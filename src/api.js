@@ -6,6 +6,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
 const path = require('path');
+const nanoID = require('nanoid');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -252,7 +253,8 @@ router.post('/orders', async (req, res) => {
                 status: 'Pending',
                 totalAmount: totalAmount,
                 paypalOrderId: jsonResponse.id,
-                notes: ''
+                notes: '',
+                publicId: nanoID.nanoid(6)
             });
             
             await newOrder.save();

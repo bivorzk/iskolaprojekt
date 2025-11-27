@@ -31,14 +31,30 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
+function requireChildren(req, res, next) {
+  if (!req.session.user || !req.session.user.IsLoggedIn) {
+    return res.status(401).send('Unauthorized: No session available');
+  }
+  req.session.user.usertype != 'children' || 'admin' ? next() : res.status(403).send('Access denied for children accounts');
+}
+
 
 // Apply middleware to all /admin routes
 router.use('/admin', requireAdmin);
+router.use('/children', requireChildren);
+
 
 // Serve admin dashboard
 router.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/dashboard/admin/admin.html'));
 });
+// Serve children dashboard
+router.get('/children', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/dashboard/children/child.html'));
+});
+
+
+// API endpoints for ADMIN DASHBOARD
 
 
 router.get('/admin/usercount', async (req, res) => {
@@ -234,8 +250,6 @@ router.get('/admin/menuitem_export', async (req, res) => {
   }
 });
 
-
-
 router.get('/admin/paymentstats', async (req, res) => {
   try {
     const paymentStats = await Payment.aggregate([
@@ -271,5 +285,44 @@ router.get('/admin/welcome-message', (req, res) => {
   }
 });
 
+
+// API endpoints for CHILDREN DASHBOARD
+
+
+router.get('/children/welcome-message', (req, res) => {
+  try {
+    const username = req.session.user.username;
+    res.json({ message: `Welcome, ${username}` });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/children/order_history' , async (req, res) => {
+  try {
+      const userId = req.session.user._id;
+
+
+      const orders = await Order.find({ userId })
+        .populate('items.menuItemId')
+        .select('OrderDate totalAmount status items'); 
+
+      // Transform orders into a clean structure
+      const orderData = orders.map(order => ({
+        orderId: order._id,
+        OrderDate: order.OrderDate,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        items: order.items.map(item => ({
+          name: item.menuItemId.name, 
+          quantity: item.quantity
+        }))
+      }));
+
+    res.json(orderData);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;

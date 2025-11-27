@@ -72,7 +72,8 @@ const OrderScheme = new mongoose.Schema({
     totalAmount: { type: Number, required: true },
     pickupTime: { type: Date, required: false },
     notes: { type: String, required: false, default: '' },
-    paypalOrderId: { type: String, required: false }
+    paypalOrderId: { type: String, required: false },
+    publicID: { type: String, required: true, unique: true}
 });
 
 const UserLoyaltyScheme = new mongoose.Schema({

@@ -1,3 +1,38 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+
+   fetch('/dashboard/children/welcome-message')
+    .then(response => response.json())
+    .then(data => {
+      const welcomeMessage = document.getElementById('welcome-message');
+      welcomeMessage.textContent = data.message;
+    })
+    .catch(error => {
+      console.error('Error fetching welcome message:', error);
+    });
+
+    fetch('/dashboard/children/order_history')
+      .then(response => response.json())
+      .then(data => {
+        const orderHistoryList = document.getElementById('order-history-list');
+        data.forEach(order => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `Order ID: ${order.orderId}, Item: ${order.itemName}, Quantity: ${order.quantity}, Date: ${new Date(order.date).toLocaleDateString()}`;
+          orderHistoryList.appendChild(listItem);
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching order history:', error);
+      });
+
+
+    // end of DOMContentLoaded
+  });
+  
+
+
+
+
 function inputValidation() {
   let valid = true;
 

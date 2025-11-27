@@ -25,23 +25,57 @@
   font-size: 1rem;
   background: #f9f9f9;
 }
-.menu-list table {
+
+/* Order List Table Styles */
+.order-list table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1rem;
 }
-.menu-list th, .menu-list td {
+.order-list th, .order-list td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
+  text-align: left;
 }
-.menu-list th {
+.order-list th {
   background: #f4f6f8;
   font-weight: 600;
 }
-.menu-list td {
+.order-list td {
   background: #fff;
 }
-.menu-list tr:last-child td {
+.order-list tr:last-child td {
   border-bottom: none;
+}
+
+/* Menu Item Form Improvements */
+.menu-item-form {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  max-width: 700px;
+}
+.menu-item-form label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+  text-align: right;
+}
+.menu-item-form input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: #f9f9f9;
+  width: 100%;
+  box-sizing: border-box;
+}
+.menu-item-form button.btn {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+  width: 200px;
+  justify-self: center;
 }
 body {
   margin: 0;
@@ -138,6 +172,14 @@ section {
   .stats-cards {
     flex-direction: column;
     gap: 1rem;
+  }
+  .menu-item-form {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    max-width: 100%;
+  }
+  .menu-item-form label {
+    text-align: left;
   }
 }
 
