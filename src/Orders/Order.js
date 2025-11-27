@@ -80,7 +80,7 @@ router.post('/Order', async (req, res) => {
 
         // Create order in database
         const newOrder = new Order({
-            userId: req.session.user ? req.session.user._id : null,
+            userId: req.session.user ? req.session.user.id : null,
             items: orderItems,
             orderDate: new Date(),
             status: 'Pending',

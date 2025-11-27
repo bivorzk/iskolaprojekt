@@ -200,7 +200,8 @@ router.get('/test', (req, res) => {
 // Route to get current logged-in user
 router.get('/current_user', (req, res) => {
     if (req.session && req.session.user) {
-        res.json({ loggedIn: true });
+  //      userId = req.session.user._id;
+        res.json({ loggedIn: true, user: req.session.user });
     } else {
         res.json({ loggedIn: false });
     }
@@ -210,6 +211,17 @@ router.post('/orders', async (req, res) => {
     // Extract order details from request body
     const { cart, currency, amount } = req.body;
     console.log('Creating PayPal order with:', { cart, currency, amount });
+    
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    console.log('PayPal order - Session data:', { session: req.session, userId });
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to place an order'
+        });
+    }
     
     try {
         // Convert cart format from frontend (name/price) to database format (menuItemId/quantity)
@@ -243,13 +255,12 @@ router.post('/orders', async (req, res) => {
         // Create PayPal order
         const { jsonResponse, httpStatusCode } = await createOrder(cart, currency, amount);
         console.log('PayPal order created:', jsonResponse);
-
-        publicId = nanoID.nanoid(6);
         
         if (httpStatusCode === 201 && jsonResponse.id && dbOrderItems.length > 0) {
+            const publicId = nanoID.nanoid(6);
             // Create database order record
             const newOrder = new Order({
-                userId: req.session.user ? req.session.user._id : null,
+                userId: userId,
                 items: dbOrderItems,
                 orderDate: new Date(),
                 status: 'Pending',
@@ -303,6 +314,17 @@ router.post('/orders/googlepay', async (req, res) => {
     const { cart, currency, amount } = req.body;
     console.log('Creating Google Pay order with:', { cart, currency, amount });
     
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    console.log('Session data:', { session: req.session, userId });
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to place an order'
+        });
+    }
+    
     try {
         // Convert cart format from frontend (name/price) to database format (menuItemId/quantity)
         let dbOrderItems = [];
@@ -334,9 +356,11 @@ router.post('/orders/googlepay', async (req, res) => {
 
 
         if (dbOrderItems.length > 0) {
+            const publicId = nanoID.nanoid(6);
+            
             // Create database order record for Google Pay
             const newOrder = new Order({
-                userId: req.session.user ? req.session.user._id : null,
+                userId: userId,
                 items: dbOrderItems,
                 orderDate: new Date(),
                 status: 'Pending',
@@ -378,6 +402,17 @@ router.post('/orders/googlepay', async (req, res) => {
 router.post('/orders/googlepay/complete', async (req, res) => {
     const { orderId, paymentMethodData, transactionId } = req.body;
     
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    console.log('Google Pay completion - Session data:', { session: req.session, userId });
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to complete payment'
+        });
+    }
+    
     try {
         // Find the order and update it
         const order = await Order.findById(orderId).populate('items.menuItemId');
@@ -404,7 +439,7 @@ router.post('/orders/googlepay/complete', async (req, res) => {
         
         // Create payment record
         const payment = new Payment({
-            userId: order.userId,
+            userId: userId,
             amount: order.totalAmount,
             currency: 'USD',
             paymentMethod: 'GooglePay',
@@ -442,6 +477,17 @@ router.post('/orders/googlepay/complete', async (req, res) => {
 
 router.post('/orders/:orderID/capture', async (req, res) => {
     const { orderID } = req.params;
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    console.log('PayPal capture - Session data:', { session: req.session, userId });
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to complete payment'
+        });
+    }
+    
     try {
         const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
         
@@ -465,7 +511,7 @@ router.post('/orders/:orderID/capture', async (req, res) => {
                 
                 // Create payment record
                 const payment = new Payment({
-                    userId: order.userId,
+                    userId: userId,
                     amount: order.totalAmount,
                     currency: 'USD', // PayPal uses USD
                     paymentMethod: 'PayPal',

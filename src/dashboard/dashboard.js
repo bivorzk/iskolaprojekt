@@ -300,7 +300,7 @@ router.get('/children/welcome-message', (req, res) => {
 
 router.get('/children/order_history' , async (req, res) => {
   try {
-      const userId = req.session.user._id;
+      const userId = req.session.user.id;
 
 
       const orders = await Order.find({ userId })
@@ -309,7 +309,7 @@ router.get('/children/order_history' , async (req, res) => {
 
       // Transform orders into a clean structure
       const orderData = orders.map(order => ({
-        orderId: order._id,
+        orderId: order.publicID,
         OrderDate: order.OrderDate,
         totalAmount: order.totalAmount,
         status: order.status,

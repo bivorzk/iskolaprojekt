@@ -51,7 +51,7 @@ MenuItemsScheme.pre('save', function(next) {
     if (this.stock <= 0) {
         this.available = false;
     } else {
-        this.available = true; 
+        this.available = true;
     }
     next();
 });
@@ -65,7 +65,7 @@ const OrderItemsScheme = new mongoose.Schema({
 });
 
 const OrderScheme = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     items: [OrderItemsScheme],
     orderDate: { type: Date, default: Date.now },
     status: { type: String, required: true, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending' },
@@ -74,6 +74,13 @@ const OrderScheme = new mongoose.Schema({
     notes: { type: String, required: false, default: '' },
     paypalOrderId: { type: String, required: false },
     publicID: { type: String, required: true, unique: true}
+});
+
+OrderScheme.pre('save', function(next) {
+    if (this.orderDate.getTime() + 15 * 60000 < Date.now() && this.status === 'Pending') {
+        this.status = 'Cancelled';
+    }
+    next();
 });
 
 const UserLoyaltyScheme = new mongoose.Schema({
@@ -133,6 +140,8 @@ const Review = mongoose.model('Review', ReviewScheme);
 const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
 const ParentChild = mongoose.model('ParentChild', ParentChildScheme);
 const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
+
+
 
 module.exports = {
     Payment,
