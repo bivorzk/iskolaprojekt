@@ -18,20 +18,11 @@ PRIORITY 1 - IMMEDIATE IMPLEMENTATION NEEDED
    - Show estimated pickup time
    - Add order cancellation functionality (if within time limit)
 
-3. Create Kitchen/Staff View
-   - Build simplified 'kitchen view' for staff
-   - Show incoming orders in preparation queue
-   - Allow marking orders as preparing/ready/completed
-   - Add order grouping functionality (e.g., 6x sandwiches)
-   - Display order details and special instructions
-   - Add timer functionality for preparation estimates
 
 4. Add QR Pickup System
    - Generate unique QR codes for each order
    - Allow students to display QR code for pickup verification
-   - Create QR scanning interface for staff
    - Integrate with order status updates
-   - Add pickup confirmation system
 
 5. Implement Parent-Child Linking ⭐ CORE FEATURE
    - Allow parents to create accounts and link to student accounts

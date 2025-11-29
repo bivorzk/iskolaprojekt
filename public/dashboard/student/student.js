@@ -30,7 +30,48 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
 
+document.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('blur', () => validateField(el));
+});
 
+// Sync upload fields with payment script fields
+function syncPaymentFields() {
+    const uploadAmount = document.getElementById('uploadAmount');
+    const uploadCurrency = document.getElementById('uploadCurrency');
+    const priceField = document.getElementById('price');
+    const convertedAmountField = document.getElementById('convertedAmount');
+    const currencyField = document.getElementById('currency');
+    
+    if (uploadAmount && uploadCurrency && priceField && convertedAmountField && currencyField) {
+        const amount = uploadAmount.value || '0';
+        const currency = uploadCurrency.value || 'HUF';
+        
+        // Sync all payment fields
+        priceField.value = amount;
+        convertedAmountField.value = amount;
+        currencyField.value = currency;
+        
+        console.log('Synced payment fields:', { amount, currency });
+    }
+}
+
+// Add event listeners to sync fields when values change
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadAmount = document.getElementById('uploadAmount');
+    const uploadCurrency = document.getElementById('uploadCurrency');
+    
+    if (uploadAmount) {
+        uploadAmount.addEventListener('input', syncPaymentFields);
+        uploadAmount.addEventListener('change', syncPaymentFields);
+    }
+    
+    if (uploadCurrency) {
+        uploadCurrency.addEventListener('change', syncPaymentFields);
+    }
+    
+    // Initial sync
+    syncPaymentFields();
+});
 
 
 function inputValidation() {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Payment } = require('../../config/database_queries');
-
+const { Users } = require('../../database');
 // POST /api/payments/paypal
 router.post('/paypal', async (req, res) => {
     try {
@@ -21,6 +21,7 @@ router.post('/paypal', async (req, res) => {
         
         // You may want to get userId from session/auth middleware
         const userId = req.user ? req.user._id : null;
+        const referer = req.headers.referer || req.headers.referrer || null;
         console.log('User ID from session:', userId);
 
         // Save amount as number, fallback to 0 if invalid
@@ -48,10 +49,25 @@ router.post('/paypal', async (req, res) => {
                 raw: req.body // Save raw for debugging
             }
         };
+    
         
         console.log('Creating payment with data:', JSON.stringify(paymentData, null, 2));
         
         const payment = new Payment(paymentData);
+        
+        if (referer && referer.includes('/dashboard/student/') && userId) {
+            console.log('Payment from student dashboard - adding credits to wallet');
+            
+            await Users.updateOne(
+                { _id: userId },
+                { $inc: { credits: parseFloat(amountNum) || 0 } }
+            );
+            console.log(`Added ${amountNum} credits to user ${userId}`);
+            
+        } else if (referer && referer.includes('/order/')) {
+            console.log('Payment from order page');
+            // Handle order-related logic here
+        }
         
         console.log('Payment object created, attempting to save...');
         const savedPayment = await payment.save();

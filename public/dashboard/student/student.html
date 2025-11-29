@@ -55,45 +55,35 @@
                 <a href="/password_reset.html" class="btn">Change Password</a>
             </section>
         </main>
+            
+        <div class="money-upload-container">
+            <h2>Upload Money to Wallet</h2>
+            <div class="upload-input-row">
+                <label for="uploadAmount">Amount:</label>
+                <input type="number" id="uploadAmount" placeholder="Enter amount">
+                <label for="uploadCurrency">Currency:</label>
+                <select id="uploadCurrency">
+                    <option value="HUF">HUF</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                </select>
+                
+                <!-- Hidden fields for payment integration -->
+                <input type="hidden" id="price" value="">
+                <input type="hidden" id="convertedAmount" value="">
+                <input type="hidden" id="currency" value="">
+            </div>
+            <button id="googlePayBtn" onclick="initializeGooglePay()">Pay with Google Pay</button>
+            <div id="gpay-container"></div>
+            <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+            <div id="paypal-button-container"></div>
+            <ul id="cart-list"></ul>
+        </div>
     </div>
-    <section id="menu-items">
-        <h2>Menu Item Management</h2>
-        <form id="menu-item-form" class="menu-item-form">
-            <input type="hidden" id="item_id" name="id">
-            <label for="item_id">ID:</label>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
-            <label for="description">Description:</label>
-            <input type="text" id="description" name="description" required>
-            <label for="stock">Stock:</label>
-            <input type="number" id="stock" name="stock" min="0" required>
-            <label for="price">Price:</label>
-            <input type="number" id="price" name="price" step="0.01" required>
-            <label for="category">Category:</label>
-            <input type="text" id="category" name="category" required>
-            <label for="allergens">Allergens (comma separated):</label>
-            <input type="text" id="allergens" name="allergens">
-            <label for="calories">Calories:</label>
-            <input type="number" id="calories" name="calories" min="0">
-            <label for="protein">Protein:</label>
-            <input type="number" id="protein" name="protein" min="0">
-            <label for="healthScore">Health Score:</label>
-            <input type="number" id="healthScore" name="healthScore" min="0">
-            <button type="submit" id="menu-item-form" class="btn">Add Menu Item</button>
-        </form>
-
-    </section>
+ 
     <script src="student.js"></script>
-
-
-<script>
-
-document.querySelectorAll('input, textarea, select').forEach(el => {
-    el.addEventListener('blur', () => validateField(el));
-});
-
-
-</script>
+    <script src="../../googlepay.js"></script>
+    <script src="../../paypal.js"></script>
 
 </body>
 </html>

@@ -30,10 +30,7 @@ const banned_passwords = require('../data/Most_used_passwords.json');
 // https://www.google.com/recaptcha/api/siteverify (POST request) 
 
 
-/*
-const dbUrl = 'mongodb+srv://bzkugli_db_user:P5HxcxzhTC24DCt2@cluster0.kkpdosb.mongodb.net/';
-const dbName = 'Projekt_vizsgaremek'; 
-*/
+
 
 const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
