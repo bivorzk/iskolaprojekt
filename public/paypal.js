@@ -68,7 +68,7 @@ function renderPayPalButtons() {
                         usdAmount = hufAmount * 0.003; // Fallback conversion rate
                     }
                 }
-                // Store USD amount for later use in onApprove
+                // Store USD amount for (onApprove use)
                 cachedUsdAmount = usdAmount;
                 
                 // Convert cart prices to USD
@@ -77,7 +77,7 @@ function renderPayPalButtons() {
                     price: currency === 'HUF' ? item.price * (usdAmount / hufAmount) : item.price
                 }));
 
-                // Call backend to create PayPal order (always use USD for PayPal)
+                // Create PayPal order (always use USD for PayPal)
                 const response = await fetch('/api/orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

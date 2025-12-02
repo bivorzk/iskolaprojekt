@@ -288,6 +288,50 @@ router.get('/admin/welcome-message', (req, res) => {
 
 // API endpoints for STUDENT DASHBOARD
 
+router.get('/')
+
+router.get('/student/freeze_account', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    await User.findByIdAndUpdate(userId, { accountFrozen: true });
+    res.json({ message: 'Account has been frozen' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/student/parent/link', async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const { parentEmail } = req.body;
+    const parentUser = await User.findOne({ email: parentEmail, usertype: 'parent' });
+    if (!parentUser) {
+      return res.status(404).json({ error: 'Parent user not found' });
+    }
+    const existingLink = await ParentStudent.findOne({ parentId: parentUser._id, studentId });
+    if (existingLink) {
+      return res.status(400).json({ error: 'Link already exists' });
+    }
+    await ParentStudent.create({ parentId: parentUser._id, studentId });
+    res.json({ message: 'Parent linked successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/student/parent', async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const parentStudentLink = await ParentStudent.findOne({ studentId }).populate('parentId', 'username email');
+
+    if (!parentStudentLink) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
+    res.json({ parent: parentStudentLink.parentId });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 router.get('/student/welcome-message', (req, res) => {
   try {

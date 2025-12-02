@@ -34,7 +34,7 @@ Orders & Pickup Management
 
 User & Account Management
 
--   Parent–student account linking
+-   Parent–student account linking ☑️backend only
 -   Spending limit controls
 -   Manual balance adjustments
 -   Freeze/unfreeze accounts
