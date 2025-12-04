@@ -64,7 +64,7 @@ const userSchema =  new mongoose.Schema({
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true, match: [/^\S+@\S+\.\S+$/, 'Invalid email format'], trim: true },
   isVerified: { type: Boolean, default: false }, // Email verification status
-  usertype: {type: String,enum:['admin', 'student', 'parent', 'teacher'], default: "student"}, // Defines user type e.g if they are admin, student,parent or anything else default = student
+  usertype: {type: String,enum:['admin', 'student', 'parent', 'teacher','frozen'], default: "student"}, // Defines user type e.g if they are admin, student,parent or anything else default = student
   createdAt: { type: Date, default: Date.now }, // Account creation date
   balance : { type: Number, default: 0 } // User balance for in-app purchases
 });
