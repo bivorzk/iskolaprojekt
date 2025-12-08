@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Payment } = require('../../config/database_queries');
-const { Users } = require('../../database');
+const { Users } = require('../database');
 // POST /api/payments/paypal
 router.post('/paypal', async (req, res) => {
     try {

@@ -17,7 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const orderHistoryList = document.getElementById('order-history-list');
         data.forEach(order => {
           const listItem = document.createElement('li');
-          listItem.textContent = `Order ID: ${order.publicID}, Item: ${order.items[0].name}, Quantity: ${order.items[0].quantity}, Price: $${order.totalAmount}, Status: ${order.status}, Date: ${new Date(order.OrderDate).toLocaleDateString()} : ${new Date(order.OrderDate).getHours()}:${new Date(order.OrderDate).getMinutes()}:${new Date(order.OrderDate).getSeconds()}`;
+          listItem.textContent = `Order ID: ${order.publicID},
+           Item: ${order.items[0].name}, 
+           Quantity: ${order.items[0].quantity},
+            Price: $${order.totalAmount},
+             Status: ${order.status}, Date: ${new Date(order.OrderDate).toLocaleDateString()} : ${new Date(order.OrderDate).getHours()}:${new Date(order.OrderDate).getMinutes()}:${new Date(order.OrderDate).getSeconds()}`;
           orderHistoryList.appendChild(listItem);
         });
       })
