@@ -1,44 +1,49 @@
 ## Gitignore file tartalma:
->>.vscode/settings.json
->>node_modules/faker
->>config/exports
->>config/sql.js
->>config/users.sql
->>node_modules/react
+
+```
+.vscode/settings.json
+node_modules/faker
+config/exports
+config/sql.js
+config/users.sql
+node_modules/react
+```
 
 # npm list
 
-Jelenleg a projekt ezeket a node modulokat tartalmazza ha valami nem mukodik akkor a 
-verzioval egyutt toltsetek le 
 
-├── @google-cloud/recaptcha-enterprise@6.3.0
-├── @paypal/paypal-server-sdk@1.1.0
-├── badwords-list@2.0.1-4
-├── bcrypt@6.0.0
-├── crypto@1.0.1
-├── dotenv@17.2.3
-├── ejs@3.1.10
-├── express-rate-limit@8.1.0
-├── express-session@1.18.2
-├── express@4.21.2
-├── jsonwebtoken@9.0.2
-├── mongodb@6.20.0
-├── mongoose@8.18.2
-├── nanoid@5.1.6
-├── node-fetch@2.7.0
-├── nodemailer@7.0.9
-├── nodemon@3.1.0
-├── paypal@1.0.1
-├── react@19.2.1
-├── simple-statistics@7.8.8
-└── zxcvbn@4.4.2
+Jelenleg a projekt ezeket a node modulokat tartalmazza. Ha valami nem működik, akkor a verzióval együtt töltsétek le:
+
+```
+@google-cloud/recaptcha-enterprise@6.3.0
+@paypal/paypal-server-sdk@1.1.0
+badwords-list@2.0.1-4
+bcrypt@6.0.0
+crypto@1.0.1
+dotenv@17.2.3
+ejs@3.1.10
+express-rate-limit@8.1.0
+express-session@1.18.2
+express@4.21.2
+jsonwebtoken@9.0.2
+mongodb@6.20.0
+mongoose@8.18.2
+nanoid@5.1.6
+node-fetch@2.7.0
+nodemailer@7.0.9
+nodemon@3.1.0
+paypal@1.0.1
+react@19.2.1
+simple-statistics@7.8.8
+zxcvbn@4.4.2
+```
 
 
 # Starting the app
-
->node src/main.js
->npm start __this is should be used mainly__
-
+>```
+node src/main.js
+npm start __this is should be used mainly__
+```
 
 ## Directory Structure
 
