@@ -1,3 +1,5 @@
+const { post } = require("../../../src/logout");
+
 document.addEventListener('DOMContentLoaded', () => {
 
 
@@ -29,13 +31,34 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error fetching order history:', error);
       });
 
-
-    // end of DOMContentLoaded
-
-
       // TODO: Implement: transactions, parent-link parent unlink, freeze account, 2fa
 
-  });
+    fetch('/dashboard/student/transactions')
+      .then(response => response.json())
+      .then(data => {
+        const transactionsList = document.getElementById('transactions-list');
+        data.forEach(tx => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `Transaction ID: ${tx._id}, Amount: $${tx.amount},Payment Method: ${tx.paymentMethod},Date: ${new Date(tx.createdAt).toLocaleDateString()} : ${new Date(tx.createdAt).getHours()}:${new Date(tx.createdAt).getMinutes()}:${new Date(tx.createdAt).getSeconds()}`;
+          transactionsList.appendChild(listItem);
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching transactions:', error);
+      });
+    
+    fetch('/dashboard/student/parent')
+    post.then(response => response.json())
+    .then(data => {
+      const parentLinkStatus = document.getElementById('parent-link-status');
+      if (data.linked) {
+        parentLinkStatus.textContent = `Linked to parent account: ${data.parentEmail}`;
+      } else {
+        parentLinkStatus.textContent = 'No parent account linked.';
+      }
+    
+    });
+  
   
 
 document.querySelectorAll('input, textarea, select').forEach(el => {

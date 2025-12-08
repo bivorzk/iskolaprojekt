@@ -15,6 +15,7 @@ router.use(express.json());
 
 const { User } = require('../../src/database');
 const { Payment, LoyaltyProgram, MenuItems, Order, OrderItems } = require('../../config/database_queries');
+const { get } = require('http');
 
 mongoose.connect(dbUrl + dbName)
   .then(() => console.log('Connected to MongoDB for dashboard'))
@@ -60,7 +61,7 @@ router.get('/student', (req, res) => {
 router.get('/admin/usercount', async (req, res) => {
   try {
     const count = await User.countDocuments({});
-    res.json({ total: count });
+      res.status(202).json({ total: count });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -69,7 +70,7 @@ router.get('/admin/usercount', async (req, res) => {
 router.get('/admin/userlist', async (req, res) => {
   try {
     const users = await User.find({}, 'username email usertype createdAt');
-    res.json(users);
+      res.status(202).json({ users });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -84,7 +85,7 @@ router.get('/admin/stats', async (req, res) => {
       median: stats.median(creationDates),
       standardDeviation: stats.standardDeviation(creationDates)
     };
-    res.json(statsData);
+      res.status(202).json(statsData);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -123,7 +124,7 @@ router.get('/admin/orders', async (req, res) => {
 router.get('/admin/soldout', async (req, res) => {
   try {
     const soldOutItems = await MenuItems.find({ available: false }, 'name available');
-    res.json(soldOutItems);
+      res.status(202).json({ soldOutItems });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -134,7 +135,7 @@ router.get('/admin/soldout', async (req, res) => {
 router.get('/admin/itemcount', async (req, res) => {
   try {
     const count = await MenuItems.countDocuments({});
-    res.json({ total: count });
+      res.status(202).json({ total: count });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -166,7 +167,7 @@ router.post('/admin/create_menuitem', async (req, res) => {
       healthScore
     });
 
-    res.json({ message: 'Menu item created' });
+      res.status(202).json({ message: 'Menu item created' });
   } catch (error) {
     console.error('Error creating menu item:', error);
     res.status(500).json({ error: error.message || 'Server error' });
@@ -176,7 +177,7 @@ router.post('/admin/create_menuitem', async (req, res) => {
 router.get('/admin/menulist', async (req, res) => {
   try {
     const menuItems = await MenuItems.find({});
-    res.json(menuItems);
+      res.status(202).json({ menuItems });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -223,7 +224,7 @@ router.put('/admin/menuitem/:id', async (req, res) => {
     if (!updatedItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
-    res.json({ message: 'Menu item updated', item: updatedItem });
+      res.status(202).json({ message: 'Menu item updated', item: updatedItem });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Server error' });
   }
@@ -279,12 +280,22 @@ router.get('/', (req, res) => {
 router.get('/admin/welcome-message', (req, res) => {
   try {
     const username = req.session.user.username;
-    res.json({ message: `Welcome, ${username}` });
+      res.status(202).json({ message: `Welcome, ${username}` });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
+// Health check endpoint for admin dashboard
+router.get('/admin/health', async (req, res) => {
+  try {
+    // Optional: check MongoDB connection
+    await mongoose.connection.db.admin().ping();
+    res.status(200).json({ status: 'ok', message: 'Admin dashboard is healthy' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Database not reachable' });
+  }
+});
 
 // API endpoints for STUDENT DASHBOARD
 
@@ -294,7 +305,7 @@ router.get('/student/freeze_account', async (req, res) => {
   try {
     const userId = req.session.user.id;
     await User.findByIdAndUpdate(userId, { user_type: 'frozen' });
-    res.json({ message: 'Account has been frozen' });
+      res.status(202).json({ message: 'Account has been frozen' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -315,14 +326,14 @@ router.post('/student/parent/link', async (req, res) => {
       return res.status(400).json({ error: 'Link already exists' });
     }
     await ParentStudent.create({ parentId: parentUser._id, studentId });
-    res.json({ message: 'Parent linked successfully' });
+      res.status(202).json({ message: 'Parent linked successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-
-router.get('/student/parent', async (req, res) => {
+// not sure 
+router.post('/student/parent', async (req, res) => {
   try {
     const studentId = req.session.user.id;
     const parentStudentLink = await ParentStudent.findOne({ studentId }).populate('parentId', 'username email');
@@ -330,7 +341,7 @@ router.get('/student/parent', async (req, res) => {
     if (!parentStudentLink) {
       return res.status(404).json({ error: 'Parent not found' });
     }
-    res.json({ parent: parentStudentLink.parentId });
+      res.status(202).json({ parent: parentStudentLink.parentId });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -340,7 +351,7 @@ router.get('/student/parent/unlink', async (req, res) => {
   try {
     const studentId = req.session.user.id;
     await ParentStudent.findOneAndDelete({ studentId });
-    res.json({ message: 'Parent unlinked successfully' });
+      res.status(202).json({ message: 'Parent unlinked successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -350,7 +361,7 @@ router.get('/student/transactions', async (req, res) => {
   try {
     const userId = req.session.user.id;
     const transactions = await Payment.find({ userId }).sort({ date: -1 });
-    res.json(transactions);
+      res.status(202).json({ transactions });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -359,7 +370,7 @@ router.get('/student/transactions', async (req, res) => {
 router.get('/student/welcome-message', (req, res) => {
   try {
     const username = req.session.user.username;
-    res.json({ message: `Welcome, ${username}` });
+      res.status(202).json({ message: `Welcome, ${username}` });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -369,10 +380,9 @@ router.get('/student/order_history' , async (req, res) => {
   try {
       const userId = req.session.user.id;
 
-
       const orders = await Order.find({ userId })
         .populate('items.menuItemId')
-        .select('OrderDate totalAmount status items publicID orderDate'); 
+        .select('OrderDate totalAmount status items publicID orderDate');
 
       // Transform orders into a clean structure
       const orderData = orders.map(order => ({
@@ -388,10 +398,16 @@ router.get('/student/order_history' , async (req, res) => {
         }))
       }));
 
-    res.json(orderData);
+    res.status(202).json({ orderData });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+router.get('/student/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Student dashboard is healthy' });
+});
+
+
 
 module.exports = router;

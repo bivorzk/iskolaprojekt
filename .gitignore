@@ -3,3 +3,4 @@ node_modules/faker
 config/exports
 config/sql.js
 config/users.sql
+node_modules/react
