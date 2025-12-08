@@ -293,12 +293,14 @@ router.get('/')
 router.get('/student/freeze_account', async (req, res) => {
   try {
     const userId = req.session.user.id;
-    await User.findByIdAndUpdate(userId, { accountFrozen: true });
+    await User.findByIdAndUpdate(userId, { user_type: 'frozen' });
     res.json({ message: 'Account has been frozen' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
 
 router.post('/student/parent/link', async (req, res) => {
   try {
@@ -319,6 +321,7 @@ router.post('/student/parent/link', async (req, res) => {
   }
 });
 
+
 router.get('/student/parent', async (req, res) => {
   try {
     const studentId = req.session.user.id;
@@ -328,6 +331,26 @@ router.get('/student/parent', async (req, res) => {
       return res.status(404).json({ error: 'Parent not found' });
     }
     res.json({ parent: parentStudentLink.parentId });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/student/parent/unlink', async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    await ParentStudent.findOneAndDelete({ studentId });
+    res.json({ message: 'Parent unlinked successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/student/transactions', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const transactions = await Payment.find({ userId }).sort({ date: -1 });
+    res.json(transactions);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

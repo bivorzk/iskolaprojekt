@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // end of DOMContentLoaded
 
 
-      
+      // TODO: Implement: transactions, parent-link parent unlink, freeze account, 2fa
 
   });
   
