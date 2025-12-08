@@ -40,7 +40,7 @@ zxcvbn@4.4.2
 
 
 # Starting the app
->```
+```
 node src/main.js
 npm start __this is should be used mainly__
 ```
