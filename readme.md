@@ -1,3 +1,10 @@
+## Starting the app
+```
+node src/main.js
+npm start this is should be used mainly
+
+```
+
 ## Gitignore file tartalma:
 
 ```
@@ -9,10 +16,10 @@ config/users.sql
 node_modules/react
 ```
 
-# npm list
+## npm list
 
 
-Jelenleg a projekt ezeket a node modulokat tartalmazza. Ha valami nem működik, akkor a verzióval együtt töltsétek le:
+These are the current node modules that are needed to run the application
 
 ```
 @google-cloud/recaptcha-enterprise@6.3.0
@@ -39,16 +46,10 @@ zxcvbn@4.4.2
 ```
 
 
-# Starting the app
-```
-node src/main.js
-npm start __this is should be used mainly__
-```
-
 ## Directory Structure
 
 ```
-├── src/                     # Server-side source code
+├── src/                     # Server-side source code (backend)
 │   ├── main.js
 │   ├── database.js
 │   ├── api.js
@@ -66,7 +67,7 @@ npm start __this is should be used mainly__
 │   ├── profile/
 │   │   ├── student.js
 │   │   └── parent.js
-├── public/                  # Static files served to client
+├── public/                  # Static files served to client (Frontend should be here)
 │   ├── index.html
 │   ├── register.html
 │   ├── pay.html
@@ -77,18 +78,16 @@ npm start __this is should be used mainly__
 │   └── css/
 │       └── register.css
 ├── config/                  # Configuration files
-│   ├── database_queries.js
+│   ├── database_queries.js     # Database tables are created here expect Users table
 │   └── hu.json
 ├── data/                    # Data files
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
 │   └── password_characters.json
 ├── docs/                    # Documentation
-│   ├── readme.md
 │   ├── Paypal_TestDetails.txt
 │   ├── sourcefor_security_checks.txt
 │   ├── vizsgaremek_safety.txt
-│   └── npm_list.txt
 ├── tests/                   # Test files
 │   ├── creating_test_users.js
 │   ├── Paypal_TestConfig.txt
