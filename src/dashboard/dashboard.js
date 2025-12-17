@@ -130,7 +130,7 @@ router.get('/admin/soldout', async (req, res) => {
   }
 });
 
-// REMINDER TO Implement this in admin route 
+
 
 router.get('/admin/itemcount', async (req, res) => {
   try {

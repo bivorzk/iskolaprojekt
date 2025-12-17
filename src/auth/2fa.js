@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
@@ -23,7 +24,8 @@ router.post('/2fa', async (req, res) => {
         return res.status(404).send('User not found');
     }
 
-    const random = Math.floor(Math.random() * 90) + 10;
+    // UPDATE RANDOM TO NOT INTEGRATE MATH.RANDOM 
+    const random = crypto.randomInt(10, 100);
     console.log(random);
 
     const TwoFA = {

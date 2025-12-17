@@ -52,7 +52,7 @@ zxcvbn@4.4.2
 ├── src/                       # Server-side source code (backend)
 │   ├── main.js
 │   ├── database.js
-│   ├── database_backup.js # same as below only its a modifed version 
+│   ├── database_backup.js # same as below only its a modifed version
 │   ├── database_original.js # original database.js can be rolled back if needed
 │   ├── api.js
 │   ├── chapta.js
