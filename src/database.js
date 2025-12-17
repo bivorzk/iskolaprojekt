@@ -237,7 +237,7 @@ if (!hasUppercase || !hasDigit || !hasSpecial) {
       username,
       password: hashedPassword,
       email,
-      usertype: req.body.usertype || 'student'
+      usertype: 'student'
     });
     await user.save();
 

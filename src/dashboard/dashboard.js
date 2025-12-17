@@ -384,16 +384,15 @@ router.get('/student/order_history' , async (req, res) => {
         .populate('items.menuItemId')
         .select('OrderDate totalAmount status items publicID orderDate');
 
-      // Transform orders into a clean structure
+
+      // Transform orders into a clean structure with correct fields
       const orderData = orders.map(order => ({
         orderId: order.publicID,
-        OrderDate: order.OrderDate,
+        orderDate: order.OrderDate || order.orderDate,
         totalAmount: order.totalAmount,
         status: order.status,
-        publicID: order.publicID,
-        OrderDate: order.orderDate,
         items: order.items.map(item => ({
-          name: item.menuItemId.name, 
+          name: item.menuItemId?.name || '',
           quantity: item.quantity
         }))
       }));

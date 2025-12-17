@@ -1,8 +1,6 @@
 const { post } = require("../../../src/logout");
 
 document.addEventListener('DOMContentLoaded', () => {
-
-
    fetch('/dashboard/student/welcome-message')
     .then(response => response.json())
     .then(data => {
@@ -58,13 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     
     });
-  
-  
+
+}); 
+
 
 document.querySelectorAll('input, textarea, select').forEach(el => {
     el.addEventListener('blur', () => validateField(el));
 });
-
 // Sync upload fields with payment script fields
 function syncPaymentFields() {
     const uploadAmount = document.getElementById('uploadAmount');
