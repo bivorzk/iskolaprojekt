@@ -49,25 +49,37 @@ zxcvbn@4.4.2
 ## Directory Structure
 
 ```
-├── src/                     # Server-side source code (backend)
+├── src/                       # Server-side source code (backend)
 │   ├── main.js
 │   ├── database.js
+│   ├── database_backup.js # same as below only its a modifed version 
+│   ├── database_original.js # original database.js can be rolled back if needed
 │   ├── api.js
 │   ├── chapta.js
+│   ├── logout.js
 │   ├── auth/
 │   │   ├── 2fa.js
 │   │   ├── email_verification.js
+│   │   ├── index.js
+│   │   ├── login.js
+│   │   ├── middleware.js
 │   │   ├── password_reset.js
-│   │   └── passwordhash.js
+│   │   ├── passwordhash.js
+│   │   ├── register.js
+│   │   ├── security.js
+│   │   └── validation.js
 │   ├── dashboard/
 │   │   └── dashboard.js
+│   ├── models/
+│   │   └── User.js
+│   ├── Orders/
+│   │   └── Order.js
 │   ├── payments/
 │   │   ├── googlepay.js
 │   │   └── paypal.js
 │   ├── profile/
-│   │   ├── student.js
-│   │   └── parent.js
-├── public/                  # Static files served to client (Frontend should be here)
+│   │   └── student.js
+├── public/                    # Static files served to client (Frontend)
 │   ├── index.html
 │   ├── register.html
 │   ├── pay.html
@@ -75,23 +87,48 @@ zxcvbn@4.4.2
 │   ├── password_reset.html
 │   ├── paypal.js
 │   ├── googlepay.js
-│   └── css/
-│       └── register.css
-├── config/                  # Configuration files
-│   ├── database_queries.js     # Database tables are created here expect Users table
+│   ├── css/
+│   │   └── register.css
+│   ├── dashboard/
+│   │   ├── admin/
+│   │   │   ├── admin.css
+│   │   │   ├── admin.html
+│   │   │   └── admin.js
+│   │   └── student/
+│   │       ├── student.css
+│   │       ├── student.html
+│   │       └── student.js
+│   └── Order/
+│       ├── index.css
+│       ├── index.html
+│       └── script.js
+├── config/                    # Configuration files
+│   ├── database_queries.js
 │   └── hu.json
-├── data/                    # Data files
+├── data/                      # Data files
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
-│   └── password_characters.json
-├── docs/                    # Documentation
+│   ├── password_characters.json
+│   └── database_test/
+│       ├── Food_Items.json
+│       └── menu_items.json
+├── docs/                      # Documentation
+│   ├── database.png
+│   ├── features_to_implement.txt
 │   ├── Paypal_TestDetails.txt
+│   ├── security_features.md
 │   ├── sourcefor_security_checks.txt
-│   ├── vizsgaremek_safety.txt
-├── tests/                   # Test files
+│   ├── TODO.txt
+│   └── vizsgaremek_safety.txt
+├── tests/                     # Test files
 │   ├── creating_test_users.js
+│   ├── database_testing.js
+│   ├── fake_data.py
+│   ├── Jest/
+│   ├── menu_items.json
 │   ├── Paypal_TestConfig.txt
 │   └── register_testing.py
-├── package.json             # Node.js dependencies and scripts
-└── readme.md                # Project documentation
+├── package.json               # Node.js dependencies and scripts
+├── package-lock.json
+└── readme.md                  # Project documentation
 ```

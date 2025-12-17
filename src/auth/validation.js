@@ -7,12 +7,7 @@ const password_characters = require('../../data/password_characters.json');
 const disposable_email_list = require('../../data/disposable_email_list.json');
 const banned_passwords = require('../../data/Most_used_passwords.json');
 
-/**
- * Validates username format and content
- * @param {string} username - The username to validate
- * @param {string} password - The password to compare against
- * @returns {string|null} Error message or null if valid
- */
+
 function validateUsername(username, password) {
   // Length validation
   if (username.length < 3 || username.length > 40) {
@@ -56,11 +51,7 @@ function validateUsername(username, password) {
   return null;
 }
 
-/**
- * Validates password strength and security requirements
- * @param {string} password - The password to validate
- * @returns {string|null} Error message or null if valid
- */
+
 function validatePassword(password) {
   // Length validation
   if (password.length < 8 || password.length > 50) {
@@ -120,11 +111,7 @@ function validatePassword(password) {
   return null;
 }
 
-/**
- * Validates email address
- * @param {string} email - The email to validate
- * @returns {string|null} Error message or null if valid
- */
+
 function validateEmail(email) {
   if (disposable_email_list.includes(email)) {
     return 'This type of email is not allowed please use another email';
@@ -132,12 +119,7 @@ function validateEmail(email) {
   return null;
 }
 
-/**
- * Verifies reCAPTCHA response
- * @param {string} captchaResponse - The reCAPTCHA response token
- * @param {string} secretKey - The reCAPTCHA secret key
- * @returns {Promise<Object>} Object with success status and optional error
- */
+
 async function verifyCaptcha(captchaResponse, secretKey) {
   if (!captchaResponse) {
     return { success: false, error: 'Please complete the CAPTCHA verification' };
