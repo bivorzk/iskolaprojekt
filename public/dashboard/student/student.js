@@ -1,5 +1,3 @@
-const { post } = require("../../../src/logout");
-
 document.addEventListener('DOMContentLoaded', () => {
    fetch('/dashboard/student/welcome-message')
     .then(response => response.json())
@@ -15,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => response.json())
       .then(data => {
         const orderHistoryList = document.getElementById('order-history-list');
-        data.forEach(order => {
+        data.orderData.forEach(order => {
           const listItem = document.createElement('li');
           listItem.textContent = `Order ID: ${order.publicID},
            Item: ${order.items[0].name}, 
@@ -35,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => response.json())
       .then(data => {
         const transactionsList = document.getElementById('transactions-list');
-        data.forEach(tx => {
+        data.transactions.forEach(tx => {
           const listItem = document.createElement('li');
-          listItem.textContent = `Transaction ID: ${tx._id}, Amount: $${tx.amount},Payment Method: ${tx.paymentMethod},Date: ${new Date(tx.createdAt).toLocaleDateString()} : ${new Date(tx.createdAt).getHours()}:${new Date(tx.createdAt).getMinutes()}:${new Date(tx.createdAt).getSeconds()}`;
+          listItem.textContent = `Transaction ID: ${tx._id}, Amount: $${tx.amount},Payment Method: ${tx.paymentMethod},Date: ${new Date(tx.date).toLocaleDateString()} : ${new Date(tx.date).getHours()}:${new Date(tx.date).getMinutes()}:${new Date(tx.date).getSeconds()}`;
           transactionsList.appendChild(listItem);
         });
       })
@@ -46,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     
     fetch('/dashboard/student/parent')
-    post.then(response => response.json())
+    .then(response => response.json())
     .then(data => {
       const parentLinkStatus = document.getElementById('parent-link-status');
       if (data.linked) {

@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(res => res.json())
     .then(data => {
       const table = document.getElementById('user-list');
-      data.forEach(user => {
+      data.users.forEach(user => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td style="text-align:left">${user.username}</td>
@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(res => res.json())
     .then(data => {
       const table = document.getElementById('menu-list');
-      data.forEach(item => {
+      data.menuItems.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td id="ItemName" style="text-align:left" data-id="${item._id}">${item.name}</td>
