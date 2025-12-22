@@ -131,4 +131,5 @@ zxcvbn@4.4.2
 ├── package.json               # Node.js dependencies and scripts
 ├── package-lock.json
 └── readme.md                  # Project documentation
+
 ```
