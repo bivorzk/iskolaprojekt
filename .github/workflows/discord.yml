@@ -11,11 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send message to Discord
+      - name: Send commit info to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
+          COMMITS=$(jq -r '.commits[] | "- **\(.message)** — \(.author.name)"' <<< '${{ toJson(github.event) }}' | head -n 10)
+
+          PAYLOAD=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg commits "$COMMITS" \
+            '{
+              embeds: [{
+                title: "🚀 New Push",
+                description: "**Repository:** \($repo)\n**Branch:** \($branch)\n\n**Commits:**\n\($commits)",
+                color: 5814783
+              }]
+            }')
+
           curl -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"content\":\"🚀 New push to **${{ github.repository }}** on branch **${{ github.ref_name }}**\"}" \
+            -d "$PAYLOAD" \
             $DISCORD_WEBHOOK
