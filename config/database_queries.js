@@ -121,6 +121,9 @@ const ParentStudentScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+
+// might expand 
+
 const SecurityLogsScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     action: { type: String, required: true }, // e.g., 'LOGIN_SUCCESS', 'LOGIN_FAILURE', 'PASSWORD_RESET'

@@ -1,9 +1,6 @@
 const express = require('express');
 
-/**
- * Configure Express middleware for authentication routes
- * @param {Object} app - Express application instance
- */
+
 function configureAuthMiddleware(app) {
   // Trust proxy for correct IP extraction
   app.set('trust proxy', true);

@@ -3,4 +3,6 @@ December 17 of 2025 - Kugli Balázs
 -- TODO for 2fa Math.Random 
 -- Implement IP security features
 
+-- qr code? 
+
 -- Refactor everything to fit SOLID principles 
