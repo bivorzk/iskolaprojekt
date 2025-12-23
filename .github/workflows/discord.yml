@@ -1,0 +1,35 @@
+name: Discord Notification
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send commit info to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          COMMITS=$(jq -r '.commits[] | "- **\(.message)** — \(.author.name)"' <<< '${{ toJson(github.event) }}' | head -n 10)
+
+          PAYLOAD=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg commits "$COMMITS" \
+            '{
+              embeds: [{
+                title: "🚀 New Push",
+                description: "**Repository:** \($repo)\n**Branch:** \($branch)\n\n**Commits:**\n\($commits)",
+                color: 5814783
+              }]
+            }')
+
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            $DISCORD_WEBHOOK
