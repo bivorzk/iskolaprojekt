@@ -14,6 +14,7 @@
     "@paypal/paypal-server-sdk": "^1.1.0",
     "badwords-list": "^2.0.1-4",
     "bcrypt": "^6.0.0",
+    "connect-redis": "^9.0.0",
     "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "ejs": "^3.1.9",
@@ -28,6 +29,7 @@
     "nodemailer": "^7.0.9",
     "paypal": "^1.0.1",
     "react": "^19.2.1",
+    "redis": "^5.10.0",
     "simple-statistics": "^7.8.8",
     "zxcvbn": "^4.4.2"
   },
