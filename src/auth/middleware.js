@@ -1,5 +1,6 @@
 const express = require('express');
 
+
 function configureAuthMiddleware(app) {
   // Trust proxy for correct IP extraction
   app.set('trust proxy', true);
