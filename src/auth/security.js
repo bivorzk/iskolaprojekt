@@ -17,6 +17,9 @@ async function createSecurityLog({ userId, ipAddress, action, type, details }) {
   await log.save();
 }
 
+
+
+
 module.exports = {
   createSecurityLog
 };

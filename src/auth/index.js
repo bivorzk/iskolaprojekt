@@ -13,10 +13,7 @@ authRouter.use(express.urlencoded({ extended: true }));
 authRouter.use('/', registerRouter);
 authRouter.use('/', loginRouter);
 
-/**
- * Creates and configures the complete authentication system
- * @returns {Object} Object containing the auth router and helper functions
- */
+
 function createAuthSystem() {
   const app = express();
   
