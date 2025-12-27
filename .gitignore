@@ -9,3 +9,4 @@ node_modules/redis
 node_modules/@redis
 node_modules/connect-redis
 node_modules/cluster-key-slot
+node_modules/
