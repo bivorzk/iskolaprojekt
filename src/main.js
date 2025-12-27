@@ -7,6 +7,7 @@ const database = require('./database');
 const path = require('path');
 const emailverification = require('./auth/email_verification');
 const api = require('./api');
+const redis = require('redis');
 const googlepayRouter = require('./payments/googlepay');
 const paypalRouter = require('./payments/paypal');
 const password_reset = require('./auth/password_reset');
@@ -18,6 +19,18 @@ const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+
+
+
+const client = redis.createClient({
+  url: process.env.REDIS_HOST
+});
+client.on('error', (err) => console.log('Redis Client Error', err));
+client.connect().then(() => {
+  console.log('Redis connected');
+});
+
 
 // Add session middleware
 app.use(session({
