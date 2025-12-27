@@ -1,1 +1,15 @@
---record --key a9_gadvrtt9everueqz09slpmn5rbx4h28y
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 100
+scenarios:
+  - name: "Register route performance test"
+    flow:
+      - post:
+          url: "/register"
+          json:
+            username: "testuser{{ $randomInt }}"
+            email: "test{{ $randomInt }}@example.com"
+            password: "@StrongP4ssw0rd123!"
+            confirmPassword: "@StrongP4ssw0rd123!"

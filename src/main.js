@@ -8,6 +8,7 @@ const path = require('path');
 const emailverification = require('./auth/email_verification');
 const api = require('./api');
 const redis = require('redis');
+const { RedisStore } = require('rate-limit-redis');
 const googlepayRouter = require('./payments/googlepay');
 const paypalRouter = require('./payments/paypal');
 const password_reset = require('./auth/password_reset');
@@ -21,15 +22,22 @@ const Order = require('./Orders/Order');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 
-
+let redisAvailable = false;
 
 const client = redis.createClient({
   url: process.env.REDIS_HOST
 });
+
 client.on('error', (err) => console.log('Redis Client Error', err));
-client.connect().then(() => {
-  console.log('Redis connected');
-});
+(async () => {
+  try {
+    await client.connect();
+    console.log('Redis connected');
+    redisAvailable = true;
+  } catch (err) {
+    console.log('Failed to connect to Redis using regular connection method', err);
+  }
+})();
 
 
 // Add session middleware
@@ -44,23 +52,33 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+
+const createStore = () => redisAvailable ? new RedisStore({
+  sendCommand: async (command, ...args) => await client.sendCommand([command, ...args]),
+}) : undefined;
+
+// Rate limiter for all non-sensitive routes
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 100, // Limit each IP to 100 requests per `window` (here, per 1 hour)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  store: createStore(),
 })
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 50, // start blocking after 50 requests
-  message: 'Too many accounts created from this IP, please try again after an hour'
+  max: 50000, // start blocking after 50 requests
+  message: 'Too many accounts created from this IP, please try again after an hour',
+  store: createStore(),
 });
+
 
 const LoginLimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 20  minutes window 
   max: 35,
-  message: 'Too many login attempts from this IP, please try again after 20 minutes'
+  message: 'Too many login attempts from this IP, please try again after 20 minutes',
+  store: createStore(),
 });
 
 
@@ -69,6 +87,13 @@ app.use('/passwordhash', limiter);
 app.use('/database', limiter);
 app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
+app.use('/api', limiter);
+app.use('/dashboard', limiter);
+app.use('/admin', limiter);
+app.use('/Order', limiter);
+app.use('/2fa', limiter);
+app.use('/email-verification', limiter);
+app.use('/pay', limiter);
 
 
 
