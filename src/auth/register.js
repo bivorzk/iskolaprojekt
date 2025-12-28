@@ -8,13 +8,11 @@ const User = require('../models/User');
 const { validateUsername, validatePassword, validateEmail, verifyCaptcha } = require('./validation');
 const { createSecurityLog } = require('./security');
 const sendVerificationEmail = require('./email_verification');
+const { setVerificationCode } = require('../verificationStore');
 
 // Environment configuration
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const secretKey = process.env.Server_Side_Captha;
-
-// Global variable to track last registered email
-let lastRegisteredEmail = null;
 
 /**
  * User Registration Route
@@ -72,8 +70,12 @@ router.post('/register', async (req, res) => {
 
     // Send verification email
     try {
-      await sendVerificationEmail.sendVerificationEmail(email);
-      lastRegisteredEmail = email;
+      // Generate verification code
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Store in verification store (Redis or memory)
+      await setVerificationCode(email, verificationCode);
+      
+      await sendVerificationEmail.sendVerificationEmail(email, verificationCode);
       console.log('Verification email sent to:', email);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
@@ -88,7 +90,8 @@ router.post('/register', async (req, res) => {
       username,
       password: hashedPassword,
       email,
-      usertype: userType
+      usertype: userType,
+      isVerified: false
     });
     
     await user.save();
@@ -103,10 +106,9 @@ router.post('/register', async (req, res) => {
     });
     
     console.log('User registered:', username);
-    console.log('Email registered:', lastRegisteredEmail);
     console.log('reCAPTCHA verification SUCCESS, score:', captchaResult.score);
 
-    return res.status(200).json({ message: 'Registration successful!' });
+    return res.status(200).json({ message: 'Registration successful! Check your email for verification code.' });
     
   } catch (err) {
     console.error('Registration error:', err);
@@ -115,6 +117,5 @@ router.post('/register', async (req, res) => {
 });
 
 module.exports = {
-  router,
-  getLastRegisteredEmail: () => lastRegisteredEmail
+  router
 };

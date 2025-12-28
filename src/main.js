@@ -23,21 +23,16 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 
 let redisAvailable = false;
+const { redisClient, isRedisAvailable } = require('./redis');
 
-const client = redis.createClient({
-  url: process.env.REDIS_HOST
+redisClient.on('connect', () => {
+  console.log('Redis connected in main.js');
+  redisAvailable = true;
 });
-
-client.on('error', (err) => console.log('Redis Client Error', err));
-(async () => {
-  try {
-    await client.connect();
-    console.log('Redis connected');
-    redisAvailable = true;
-  } catch (err) {
-    console.log('Failed to connect to Redis using regular connection method', err);
-  }
-})();
+redisClient.on('error', (err) => {
+  console.log('Redis Client Error in main.js', err);
+  redisAvailable = false;
+});
 
 
 // Add session middleware
@@ -54,7 +49,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 const createStore = () => redisAvailable ? new RedisStore({
-  sendCommand: async (command, ...args) => await client.sendCommand([command, ...args]),
+  sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
 }) : undefined;
 
 // Rate limiter for all non-sensitive routes
