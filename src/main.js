@@ -9,6 +9,7 @@ const emailverification = require('./auth/email_verification');
 const api = require('./api');
 const redis = require('redis');
 const { RedisStore } = require('rate-limit-redis');
+const favicon = require('serve-favicon');
 const googlepayRouter = require('./payments/googlepay');
 const paypalRouter = require('./payments/paypal');
 const password_reset = require('./auth/password_reset');
@@ -18,6 +19,7 @@ const dashboardRouter = require('./dashboard/dashboard');
 const logoutRouter = require('./logout');
 const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
+
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -46,6 +48,7 @@ app.use(session({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
 
 
 const createStore = () => redisAvailable ? new RedisStore({
@@ -63,7 +66,7 @@ const limiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 50000, // start blocking after 50 requests
+  max: 100, // start blocking after 100 requests
   message: 'Too many accounts created from this IP, please try again after an hour',
   store: createStore(),
 });
