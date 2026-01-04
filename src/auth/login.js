@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const router = express.Router();
 
-// Import dependencies
 const User = require('../models/User');
 const { createSecurityLog } = require('./security');
 const { SecurityLogs } = require('../../config/database_queries');

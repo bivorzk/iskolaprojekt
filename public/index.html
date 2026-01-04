@@ -3,266 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - School Project</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+    <title>Login - SnapTray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#FFC857',
+                        accent: '#FFE5DC',
+                        gray: '#6C757D',
+                    },
+                },
+            },
         }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="password"], input[type="email"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0,123,255,0.3);
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .links {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .links a {
-            color: #007bff;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            display: none;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .forgot-password-section {
-            display: none;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <div class="container">
-        <h2>Login</h2>
-        
-        <!-- Login Form -->
-        <div id="loginSection">
-            <form id="loginForm" action="/login" method="POST">
-                <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            
-            <div class="links">
-                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-                <a href="register.html">Don't have an account? Register</a>
-            </div>
-        </div>
+    <div id="root"></div>
 
-        <!-- Forgot Password Section -->
-        <div id="forgotPasswordSection" class="forgot-password-section">
-            <h3>Reset Your Password</h3>
-            <p>Enter your email address and we'll send you a link to reset your password.</p>
-            <form id="forgotPasswordForm">
-                <div class="form-group">
-                    <label for="resetEmail">Email:</label>
-                    <input type="email" id="resetEmail" name="email" required>
-                </div>
-                <button type="submit">Send Reset Link</button>
-                <button type="button" id="backToLogin">Back to Login</button>
-            </form>
-        </div>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-        <div id="message" class="message"></div>
-    </div>
+    <script type="text/babel">
+        const { useState } = React;
 
-    <script>
-        // Handle login form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            
-            // Show loading state
-            submitBtn.textContent = 'Logging in...';
-            submitBtn.disabled = true;
-            
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        const Login = () => {
+            const [isLogin, setIsLogin] = useState(true);
+            const [loginData, setLoginData] = useState({
+                username: '',
+                password: '',
+            });
+            const [resetData, setResetData] = useState({
+                email: '',
+            });
+            const [loading, setLoading] = useState(false);
+            const [message, setMessage] = useState({ text: '', type: '' });
+
+            const handleLoginChange = (e) => {
+                const { name, value } = e.target;
+                setLoginData({
+                    ...loginData,
+                    [name]: value,
                 });
-                
-                const data = await response.text();
-                
-                if (response.ok) {
-                    showMessage('Login successful! Welcome back!', 'success');
-                    // You can uncomment and adjust the redirect URL as needed
-                    // setTimeout(() => {
-                    //     window.location.href = '/dashboard';
-                    // }, 1500);
-                } else {
-                    showMessage(data, 'error');
-                }
-            } catch (error) {
-                showMessage('Login failed. Please try again.', 'error');
-            } finally {
-                // Reset button state
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        });
+            };
 
-        // Handle forgot password link click
-        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('forgotPasswordSection').style.display = 'block';
-            hideMessage();
-        });
-
-        // Handle back to login button
-        document.getElementById('backToLogin').addEventListener('click', function() {
-            document.getElementById('forgotPasswordSection').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('forgotPasswordForm').reset();
-            hideMessage();
-        });
-
-        // Handle forgot password form submission
-        document.getElementById('forgotPasswordForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('resetEmail').value;
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            
-            // Show loading state
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-            
-            try {
-                const response = await fetch('/forgot-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email }),
+            const handleResetChange = (e) => {
+                const { name, value } = e.target;
+                setResetData({
+                    ...resetData,
+                    [name]: value,
                 });
-                
-                const data = await response.text();
-                
-                if (response.ok) {
-                    showMessage(data, 'success');
-                    document.getElementById('forgotPasswordForm').reset();
-                } else {
-                    showMessage(data, 'error');
+            };
+
+            const handleLoginSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setMessage({ text: '', type: '' });
+
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams(loginData),
+                    });
+
+                    const data = await response.text();
+
+                    if (response.ok) {
+                        setMessage({ text: 'Login successful! Welcome back!', type: 'success' });
+                        // Uncomment to redirect after successful login
+                        // setTimeout(() => {
+                        //     window.location.href = '/dashboard';
+                        // }, 1500);
+                    } else {
+                        setMessage({ text: data, type: 'error' });
+                    }
+                } catch (error) {
+                    setMessage({ text: 'Login failed. Please try again.', type: 'error' });
+                } finally {
+                    setLoading(false);
                 }
-            } catch (error) {
-                showMessage('Error sending reset request. Please try again.', 'error');
-            } finally {
-                // Reset button state
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        });
+            };
 
-        // Utility functions for showing/hiding messages
-        function showMessage(message, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = message;
-            messageDiv.style.display = 'block';
-            
-            // Auto-hide success messages after 5 seconds
-            if (type === 'success') {
-                setTimeout(() => {
-                    hideMessage();
-                }, 5000);
-            }
-        }
+            const handleResetSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setMessage({ text: '', type: '' });
 
-        function hideMessage() {
-            const messageDiv = document.getElementById('message');
-            messageDiv.style.display = 'none';
-        }
+                try {
+                    const response = await fetch('/forgot-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(resetData),
+                    });
 
-        // Clear messages when switching between forms
-        document.addEventListener('click', function(e) {
-            if (e.target.tagName === 'INPUT') {
-                hideMessage();
-            }
-        });
+                    const data = await response.text();
+
+                    if (response.ok) {
+                        setMessage({ text: data, type: 'success' });
+                        setResetData({ email: '' });
+                    } else {
+                        setMessage({ text: data, type: 'error' });
+                    }
+                } catch (error) {
+                    setMessage({ text: 'Error sending reset request. Please try again.', type: 'error' });
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const switchToForgotPassword = () => {
+                setIsLogin(false);
+                setMessage({ text: '', type: '' });
+            };
+
+            const switchToLogin = () => {
+                setIsLogin(true);
+                setResetData({ email: '' });
+                setMessage({ text: '', type: '' });
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-md w-full space-y-8">
+                        {/* Logo */}
+                        <div className="text-center">
+                            <svg viewBox="0 0 500 140" className="mx-auto h-16 w-auto">
+                                {/* Tray base */}
+                                <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
+                                {/* Tray compartments */}
+                                <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
+                                <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
+                                {/* Lightning/Snap element */}
+                                <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
+                                {/* Text */}
+                                <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="56" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
+                                <text x="150" y="105" fontFamily="system-ui, -apple-system, sans-serif" fontSize="14" fill="#6C757D" letterSpacing="2">SCHOOL CAFETERIA ORDERING</text>
+                            </svg>
+                        </div>
+
+                        <div className="bg-white shadow-2xl rounded-lg p-8">
+                            {isLogin ? (
+                                <>
+                                    <h2 className="text-3xl font-bold text-center text-primary mb-8">Login</h2>
+                                    <form onSubmit={handleLoginSubmit} className="space-y-6">
+                                        <div>
+                                            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                                Username
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="username"
+                                                name="username"
+                                                value={loginData.username}
+                                                onChange={handleLoginChange}
+                                                required
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                                Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                id="password"
+                                                name="password"
+                                                value={loginData.password}
+                                                onChange={handleLoginChange}
+                                                required
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                        >
+                                            {loading ? 'Logging in...' : 'Login'}
+                                        </button>
+                                    </form>
+
+                                    <div className="mt-6 text-center space-y-2">
+                                        <button
+                                            onClick={switchToForgotPassword}
+                                            className="text-sm text-primary hover:text-secondary font-medium"
+                                        >
+                                            Forgot Password?
+                                        </button>
+                                        <div>
+                                            <a href="register.html" className="text-sm text-gray-600 hover:text-primary">
+                                                Don't have an account? Register
+                                            </a>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-3xl font-bold text-center text-primary mb-8">Reset Password</h2>
+                                    <p className="text-sm text-gray-600 text-center mb-6">
+                                        Enter your email address and we'll send you a link to reset your password.
+                                    </p>
+                                    <form onSubmit={handleResetSubmit} className="space-y-6">
+                                        <div>
+                                            <label htmlFor="resetEmail" className="block text-sm font-medium text-gray-700">
+                                                Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="resetEmail"
+                                                name="email"
+                                                value={resetData.email}
+                                                onChange={handleResetChange}
+                                                required
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                            >
+                                                {loading ? 'Sending...' : 'Send Reset Link'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={switchToLogin}
+                                                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                                            >
+                                                Back to Login
+                                            </button>
+                                        </div>
+                                    </form>
+                                </>
+                            )}
+
+                            {message.text && (
+                                <div className={`mt-6 p-4 rounded-md ${
+                                    message.type === 'success'
+                                        ? 'bg-green-50 border border-green-200 text-green-700'
+                                        : 'bg-red-50 border border-red-200 text-red-700'
+                                }`}>
+                                    {message.text}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<Login />, document.getElementById('root'));
     </script>
 </body>
 </html>

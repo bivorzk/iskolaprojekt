@@ -7,7 +7,6 @@ const database = require('./database');
 const path = require('path');
 const emailverification = require('./auth/email_verification');
 const api = require('./api');
-const redis = require('redis');
 const { RedisStore } = require('rate-limit-redis');
 const favicon = require('serve-favicon');
 const googlepayRouter = require('./payments/googlepay');
