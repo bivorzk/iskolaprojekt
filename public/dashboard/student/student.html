@@ -3,87 +3,377 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
-    <link rel="stylesheet" href="student.css">
+    <title>Student Dashboard - SnapTray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#FFC857',
+                        accent: '#FFE5DC',
+                        gray: '#6C757D',
+                    },
+                },
+            },
+        }
+    </script>
 </head>
 <body>
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <h2>Student Panel</h2>
-            <nav>
-                <ul>
-                    <li><a href="#users">Users</a></li>
-                    <li><a href="#stats">Statistics</a></li>
-                    <li><a href="#settings">Settings</a></li>
-                    <li><a href="#logout">Logout</a></li>
-                </ul>
-            </nav>
-        </aside>
-        <main class="main-content">
-            <header>
-                <h1 id="welcome-message">Welcome, Student</h1>
-            </header>
-            <section id="orders-made">
-                <h2>Your Orders</h2>
-                <div class="order-history-list">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="text-align:left">Order ID</th>
-                                <th style="text-align:center">Date</th>
-                                <th style="text-align:right; padding: 0 10px;">Total Amount</th>
-                                <th style="text-align:right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="order-history-list"></tbody>
-                    </table>
-                </div>
-            </section>
-            <section id="stats">
-                <h2>Statistics</h2>
-                <div class="stats-cards">
-                    <div class="card">Total Users: <span id="total-users">--</span></div>
-                    <div class="card">Active Sessions: <span id="active-sessions">--</span></div>
-                    <div class="card">Orders Made: <span id="orders-made">--</span></div>
-                    <div class="card">Total Menu Items: <span id="total-menu-items">--</span></div>
-                    <div class="card">Payment Stats: <span id="payment-stats">--</span></div>
-                    <div id="stock-alerts" style="margin: 1rem 0;"></div>
-                </div>
-            </section>
-            <section id="settings">
-                <h2>Settings</h2>
-                <a href="/password_reset.html" class="btn">Change Password</a>
-            </section>
-        </main>
-            
-        <div class="money-upload-container">
-            <h2>Upload Money to Wallet</h2>
-            <div class="upload-input-row">
-                <label for="uploadAmount">Amount:</label>
-                <input type="number" id="uploadAmount" placeholder="Enter amount">
-                <label for="uploadCurrency">Currency:</label>
-                <select id="uploadCurrency">
-                    <option value="HUF">HUF</option>
-                    <option value="EUR">EUR</option>
-                    <option value="USD">USD</option>
-                </select>
-                
-                <!-- Hidden fields for payment integration -->
-                <input type="hidden" id="price" value="">
-                <input type="hidden" id="convertedAmount" value="">
-                <input type="hidden" id="currency" value="">
-            </div>
-            <button id="googlePayBtn" onclick="initializeGooglePay()">Pay with Google Pay</button>
-            <div id="gpay-container"></div>
-            <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
-            <div id="paypal-button-container"></div>
-            <ul id="cart-list"></ul>
-        </div>
-    </div>
- 
-    <script src="student.js"></script>
-    <script src="../../googlepay.js"></script>
-    <script src="../../paypal.js"></script>
+    <div id="root"></div>
 
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const StudentDashboard = () => {
+            const [activeSection, setActiveSection] = useState('orders');
+            const [orders, setOrders] = useState([]);
+            const [stats, setStats] = useState({
+                totalUsers: '--',
+                activeSessions: '--',
+                ordersMade: '--',
+                totalMenuItems: '--',
+                paymentStats: '--'
+            });
+            const [walletAmount, setWalletAmount] = useState(0);
+            const [uploadForm, setUploadForm] = useState({
+                amount: '',
+                currency: 'HUF'
+            });
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                loadDashboardData();
+            }, []);
+
+            const loadDashboardData = async () => {
+                try {
+                    const [ordersRes, userCountRes, menuItemsRes] = await Promise.all([
+                        fetch('/dashboard/student/orders'),
+                        fetch('/dashboard/admin/usercount'),
+                        fetch('/api/menu-items')
+                    ]);
+
+                    const [ordersData, userCount, menuData] = await Promise.all([
+                        ordersRes.json(),
+                        userCountRes.json(),
+                        menuItemsRes.json()
+                    ]);
+
+                    setOrders(ordersData.orders || []);
+                    setStats({
+                        totalUsers: userCount.total,
+                        activeSessions: '--',
+                        ordersMade: ordersData.total || 0,
+                        totalMenuItems: menuData.length,
+                        paymentStats: '--'
+                    });
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleUploadFormChange = (e) => {
+                const { name, value } = e.target;
+                setUploadForm({
+                    ...uploadForm,
+                    [name]: value
+                });
+            };
+
+            const handleWalletUpload = async () => {
+                if (!uploadForm.amount || uploadForm.amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+
+                // Here you would integrate with your payment system
+                alert(`Processing payment of ${uploadForm.amount} ${uploadForm.currency} to wallet`);
+                // After successful payment, you would update the wallet balance
+                // setWalletAmount(prev => prev + parseFloat(uploadForm.amount));
+                setUploadForm({ amount: '', currency: 'HUF' });
+            };
+
+            const getStatusColor = (status) => {
+                switch (status?.toLowerCase()) {
+                    case 'completed':
+                    case 'delivered':
+                        return 'bg-green-100 text-green-800';
+                    case 'pending':
+                    case 'processing':
+                        return 'bg-yellow-100 text-yellow-800';
+                    case 'cancelled':
+                        return 'bg-red-100 text-red-800';
+                    default:
+                        return 'bg-gray-100 text-gray-800';
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading dashboard...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-accent to-white">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b border-gray-200">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center py-4">
+                                <div className="flex items-center space-x-4">
+                                    <svg viewBox="0 0 500 140" className="h-10 w-auto">
+                                        <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
+                                        <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
+                                        <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                        <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                        <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
+                                        <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
+                                        <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
+                                        <text x="150" y="100" fontFamily="system-ui, -apple-system, sans-serif" fontSize="10" fill="#6C757D" letterSpacing="2">STUDENT PANEL</text>
+                                    </svg>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <div className="text-right">
+                                        <div className="text-sm text-gray-600">Wallet Balance</div>
+                                        <div className="text-lg font-semibold text-primary">${walletAmount.toFixed(2)}</div>
+                                    </div>
+                                    <span className="text-gray-700">Welcome, Student</span>
+                                    <a href="/logout" className="text-primary hover:text-secondary font-medium">Logout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="flex">
+                        {/* Sidebar */}
+                        <aside className="w-64 bg-white shadow-lg min-h-screen">
+                            <nav className="mt-8">
+                                <div className="px-4 space-y-2">
+                                    <button
+                                        onClick={() => setActiveSection('orders')}
+                                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                                            activeSection === 'orders'
+                                                ? 'bg-primary text-white'
+                                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                                        }`}
+                                    >
+                                        My Orders
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveSection('wallet')}
+                                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                                            activeSection === 'wallet'
+                                                ? 'bg-primary text-white'
+                                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                                        }`}
+                                    >
+                                        Wallet
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveSection('stats')}
+                                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                                            activeSection === 'stats'
+                                                ? 'bg-primary text-white'
+                                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                                        }`}
+                                    >
+                                        Statistics
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveSection('settings')}
+                                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                                            activeSection === 'settings'
+                                                ? 'bg-primary text-white'
+                                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                                        }`}
+                                    >
+                                        Settings
+                                    </button>
+                                </div>
+                            </nav>
+                        </aside>
+
+                        {/* Main Content */}
+                        <main className="flex-1 p-8">
+                            {activeSection === 'orders' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-primary mb-6">My Orders</h2>
+                                    {orders.length === 0 ? (
+                                        <div className="bg-white p-8 rounded-lg shadow text-center">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                            </svg>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+                                            <p className="text-gray-600 mb-4">Start ordering from the cafeteria to see your order history here.</p>
+                                            <a
+                                                href="/Order/"
+                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                                            >
+                                                Start Ordering
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white rounded-lg shadow overflow-hidden">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {orders.map((order, index) => (
+                                                        <tr key={index} className="hover:bg-gray-50">
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                #{order.id || order._id}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                                {new Date(order.createdAt || order.date).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                                                ${order.total?.toFixed(2) || order.amount?.toFixed(2) || '0.00'}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                                                    {order.status || 'Pending'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeSection === 'wallet' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-primary mb-6">Wallet Management</h2>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        {/* Current Balance */}
+                                        <div className="bg-white p-6 rounded-lg shadow">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Balance</h3>
+                                            <div className="text-3xl font-bold text-primary mb-2">${walletAmount.toFixed(2)}</div>
+                                            <p className="text-gray-600">Available for cafeteria purchases</p>
+                                        </div>
+
+                                        {/* Add Money */}
+                                        <div className="bg-white p-6 rounded-lg shadow">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Money to Wallet</h3>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                                                    <input
+                                                        type="number"
+                                                        name="amount"
+                                                        value={uploadForm.amount}
+                                                        onChange={handleUploadFormChange}
+                                                        min="0"
+                                                        step="0.01"
+                                                        placeholder="Enter amount"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                                    <select
+                                                        name="currency"
+                                                        value={uploadForm.currency}
+                                                        onChange={handleUploadFormChange}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                                                    >
+                                                        <option value="HUF">HUF</option>
+                                                        <option value="EUR">EUR</option>
+                                                        <option value="USD">USD</option>
+                                                    </select>
+                                                </div>
+                                                <button
+                                                    onClick={handleWalletUpload}
+                                                    className="w-full bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                                                >
+                                                    Add to Wallet
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Payment Integration Placeholders */}
+                                    <div className="mt-8 bg-white p-6 rounded-lg shadow">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div id="gpay-container" className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                                <p className="text-gray-600">Google Pay integration will appear here</p>
+                                            </div>
+                                            <div id="paypal-button-container" className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                                <p className="text-gray-600">PayPal integration will appear here</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeSection === 'stats' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-primary mb-6">Statistics</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="bg-white p-6 rounded-lg shadow">
+                                            <div className="text-2xl font-bold text-primary">{stats.totalUsers}</div>
+                                            <div className="text-gray-600">Total Users</div>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-lg shadow">
+                                            <div className="text-2xl font-bold text-primary">{stats.ordersMade}</div>
+                                            <div className="text-gray-600">Your Orders</div>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-lg shadow">
+                                            <div className="text-2xl font-bold text-primary">{stats.totalMenuItems}</div>
+                                            <div className="text-gray-600">Menu Items Available</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeSection === 'settings' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-primary mb-6">Settings</h2>
+                                    <div className="bg-white p-6 rounded-lg shadow">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="text-lg font-medium text-gray-900 mb-2">Account Settings</h3>
+                                                <a
+                                                    href="/password_reset.html"
+                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                                                >
+                                                    Change Password
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<StudentDashboard />, document.getElementById('root'));
+    </script>
 </body>
 </html>

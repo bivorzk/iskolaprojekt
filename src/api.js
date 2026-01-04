@@ -207,6 +207,17 @@ router.get('/current_user', (req, res) => {
     }
 });
 
+// Route to get available menu items for ordering
+router.get('/menu-items', async (req, res) => {
+    try {
+        const menuItems = await MenuItems.find({ available: true });
+        res.json(menuItems);
+    } catch (error) {
+        console.error('Error fetching menu items:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 router.post('/orders', async (req, res) => {
     // Extract order details from request body
     const { cart, currency, amount } = req.body;

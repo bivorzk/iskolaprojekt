@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Page</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div id="menu-list"></div>
+    <div class="cart-container">
+        <h2>Your Cart</h2>
+        <div class="cart-input-row">
+            <label for="Cart">Add to Cart:</label>
+            <input type="text" id="Cart" placeholder="Enter item name">
+            <button id="addToCartBtn">Add</button>
+            <label for="currency">Currency:</label>
+            <select id="currency">
+                <option value="HUF">HUF</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+            </select>
+        </div>
+        <div class="cart-summary-row">
+            <label for="price">Total:</label>
+            <input type="text" id="price" readonly value="0.00">
+            <label for="convertedAmount">Converted:</label>
+            <input type="text" id="convertedAmount" readonly value="0.00">
+        </div>
+        <button id="googlePayBtn" onclick="initializeGooglePay()">Pay with Google Pay</button>
+        <div id="gpay-container"></div>
+        <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+        
+        <div id="paypal-button-container"></div>
+       <ul id="cart-list"></ul>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <script src="../googlepay.js"></script>
+    <script src="../paypal.js"></script>
+</body>
+</html>
