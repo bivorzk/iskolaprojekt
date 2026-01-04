@@ -14,6 +14,12 @@ config/exports
 config/sql.js
 config/users.sql
 node_modules/react
+node_modules/artillery
+node_modules/redis
+node_modules/@redis
+node_modules/connect-redis
+node_modules/cluster-key-slot
+node_modules/
 ```
 
 ## npm list
