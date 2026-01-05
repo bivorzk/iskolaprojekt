@@ -299,8 +299,6 @@ router.get('/admin/health', async (req, res) => {
 
 // API endpoints for STUDENT DASHBOARD
 
-router.get('/')
-
 router.get('/student/freeze_account', async (req, res) => {
   try {
     const userId = req.session.user.id;

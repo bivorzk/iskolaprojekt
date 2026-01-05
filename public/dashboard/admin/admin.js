@@ -32,33 +32,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // ----- Signup Stats Chart -----
-  fetch('/dashboard/admin/signup-stats')
-    .then(res => res.json())
-    .then(data => {
-      const labels = data.map(item => `${item._id.year}-${item._id.month}-${item._id.day}`);
-      const counts = data.map(item => item.count);
+let signupChart; // Declare chart variable to manage instance
+fetch('/dashboard/admin/signup-stats')
+  .then(res => res.json())
+  .then(data => {
+    // Destroy existing chart if it exists
+    if (signupChart) {
+      signupChart.destroy();
+    }
+    const labels = data.map(item => `${item._id.year}-${item._id.month}-${item._id.day}`);
+    const counts = data.map(item => item.count);
 
-      const ctx = document.getElementById('signupChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Registrations',
-            data: counts,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: true,
-          }]
+    const ctx = document.getElementById('signupChart').getContext('2d');
+    signupChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Registrations',
+          data: counts,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'User Registrations Over Time'
+          }
         },
-        options: {
-          scales: {
-            x: { title: { display: true, text: 'Date' } },
-            y: { title: { display: true, text: 'Registrations' }, beginAtZero: true }
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Registrations'
+            },
+            beginAtZero: true
           }
         }
-      });
+      }
     });
+  });
 
   // ----- Create Menu Item -----
   const form = document.getElementById('menu-item-form');
