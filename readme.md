@@ -166,3 +166,112 @@ Dev Dependencies:
 
 ```
 
+## Router Routes
+
+### Main Application Routes (Static Pages)
+```
+GET  /login                    # Login page
+GET  /register                 # Registration page  
+GET  /password-reset/:token    # Password reset page
+GET  /pay                      # Payment page
+```
+
+### Authentication Routes
+```
+POST /register                 # User registration
+POST /login                    # User login
+POST /logout                   # User logout
+GET  /logout                   # Logout confirmation
+POST /2fa                      # Two-factor authentication
+```
+
+### Email Verification Routes
+```
+POST /email-verification/verify-code    # Verify email code
+GET  /email-verification/verify/:token  # Verify email with token
+```
+
+### Password Reset Routes  
+```
+POST /password-reset/          # Request password reset
+GET  /password-reset/:token    # Password reset form
+POST /password-reset/:token    # Submit new password
+POST /forgot-password/         # Forgot password request
+```
+
+### Dashboard Routes
+```
+GET  /dashboard/               # Main dashboard
+GET  /dashboard/admin          # Admin dashboard page
+GET  /dashboard/student        # Student dashboard page
+```
+
+### Admin Dashboard API Routes
+```
+GET  /dashboard/admin/usercount        # Get user count
+GET  /dashboard/admin/userlist         # Get list of users
+GET  /dashboard/admin/stats            # Get admin statistics
+GET  /dashboard/admin/signup-stats     # Get signup statistics
+GET  /dashboard/admin/orders           # Get orders data
+GET  /dashboard/admin/soldout          # Get sold out items
+GET  /dashboard/admin/itemcount        # Get item count
+GET  /dashboard/admin/menulist         # Get menu items list
+GET  /dashboard/admin/stockalerts      # Get stock alerts
+GET  /dashboard/admin/paymentstats     # Get payment statistics
+GET  /dashboard/admin/welcome-message  # Get welcome message
+GET  /dashboard/admin/health           # System health check
+GET  /dashboard/admin/menuitem_export  # Export menu items
+GET  /dashboard/admin/delete_menuitem/:id  # Delete menu item
+
+POST /dashboard/admin/create_menuitem  # Create new menu item
+PUT  /dashboard/admin/menuitem/:id     # Update menu item
+```
+
+### Student Dashboard Routes
+```
+GET  /dashboard/student/freeze_account # Freeze student account
+POST /dashboard/student/parent/link    # Link parent account
+```
+
+### Order Management Routes
+```
+GET  /Order/                   # Order page
+GET  /Order/menu_items         # Get menu items for ordering
+GET  /Order/:orderID           # Get specific order details
+POST /Order/Order              # Create new order
+PUT  /Order/:orderID/status    # Update order status
+POST /Order/:orderID/capture   # Capture order payment
+```
+
+### Admin Management Routes
+```
+GET  /admin/changeuser         # Change user permissions
+```
+
+## API Routes
+
+### General API Routes
+```
+GET  /api/test                 # API test endpoint
+GET  /api/current_user         # Get current logged-in user
+GET  /api/menu-items           # Get available menu items
+```
+
+### Order API Routes
+```
+POST /api/orders               # Create PayPal order
+POST /api/orders/:orderID/capture    # Capture PayPal payment
+```
+
+### Google Pay API Routes
+```
+POST /api/orders/googlepay           # Create Google Pay order
+POST /api/orders/googlepay/complete  # Complete Google Pay transaction
+```
+
+### Payment Integration Routes
+```
+POST /api/payments/paypal      # PayPal payment processing
+POST /api/payments/googlepay   # Google Pay payment processing
+```
+
