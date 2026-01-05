@@ -28,7 +28,6 @@ router.post('/logout', (req, res) => {
   }
 });
 
-// GET route for logout (alternative method)
 router.get('/logout', (req, res) => {
   try {
     // Check if user is logged in

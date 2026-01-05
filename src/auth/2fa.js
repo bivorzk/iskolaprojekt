@@ -24,9 +24,7 @@ router.post('/2fa', async (req, res) => {
         return res.status(404).send('User not found');
     }
 
-    // UPDATE RANDOM TO NOT INTEGRATE MATH.RANDOM 
     const random = crypto.randomInt(10, 100);
-    console.log(random);
 
     const TwoFA = {
         userId: user._id,

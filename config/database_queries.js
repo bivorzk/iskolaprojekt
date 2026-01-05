@@ -130,7 +130,14 @@ const SecurityLogsScheme = new mongoose.Schema({
     type: { type: String, required: true }, // e.g., 'INFO', 'WARNING', 'ERROR'
     ipAddress: { type: String, required: false },
     Timestamp: { type: Date, default: Date.now },
-    details: { type: String, required: false } // Additional info if needed
+    details: { type: String, required: false }, // Additional info if needed
+    country: { type: String, required: false },
+    CountryCode: { type: String, required: false },
+    currency: { type: String, required: false },
+    Continent: { type: String, required: false },
+    IsVPN: { type: Boolean, required: false },
+    isTor: { type: Boolean, required: false },
+    isProxy: { type: Boolean, required: false },
 });
 
 

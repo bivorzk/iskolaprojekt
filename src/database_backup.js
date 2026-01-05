@@ -282,11 +282,7 @@ async function verifyCaptcha(captchaResponse) {
   }
 }
 
-/**
- * Creates a security log entry
- * @param {Object} params - Log parameters
- * @returns {Promise<void>}
- */
+
 async function createSecurityLog({ userId, ipAddress, action, type, details }) {
   const hashedIP = crypto.createHash('sha256').update(ipAddress).digest('hex');
   

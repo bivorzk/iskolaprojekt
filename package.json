@@ -27,6 +27,7 @@
     "mongoose": "^8.18.2",
     "nanoid": "^5.1.6",
     "node-fetch": "^2.7.0",
+    "node-iplocate": "^2.0.1",
     "nodemailer": "^7.0.9",
     "paypal": "^1.0.1",
     "rate-limit-redis": "^4.3.1",

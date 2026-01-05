@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const router = express.Router();
+const redis = require('redis');
+const crypto = require('crypto');
 
 // Import dependencies
 const User = require('../models/User');
@@ -71,7 +73,7 @@ router.post('/register', async (req, res) => {
     // Send verification email
     try {
       // Generate verification code
-      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
       // Store in verification store (Redis or memory)
       await setVerificationCode(email, verificationCode);
       
@@ -102,7 +104,14 @@ router.post('/register', async (req, res) => {
       ipAddress: req.clientIp,
       action: 'registration_attempt',
       type: 'INFO',
-      details: "--"
+      details: "--",
+      country: "--",
+      CountryCode: "--",
+      currency: "--",
+      Continent: "--",
+      IsVPN: false,
+      isTor: false,
+      isProxy: false
     });
     
     console.log('User registered:', username);
