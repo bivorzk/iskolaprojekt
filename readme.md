@@ -170,108 +170,108 @@ Dev Dependencies:
 
 ### Main Application Routes (Static Pages)
 ```
-GET  /login                    # Login page
-GET  /register                 # Registration page  
-GET  /password-reset/:token    # Password reset page
-GET  /pay                      # Payment page
+![GET](https://img.shields.io/badge/GET-blue)  /login                    # Login page
+![GET](https://img.shields.io/badge/GET-blue)  /register                 # Registration page  
+![GET](https://img.shields.io/badge/GET-blue)  /password-reset/:token    # Password reset page
+![GET](https://img.shields.io/badge/GET-blue)  /pay                      # Payment page
 ```
 
 ### Authentication Routes
 ```
-POST /register                 # User registration
-POST /login                    # User login
-POST /logout                   # User logout
-GET  /logout                   # Logout confirmation
-POST /2fa                      # Two-factor authentication
+![POST](https://img.shields.io/badge/POST-green) /register                 # User registration
+![POST](https://img.shields.io/badge/POST-green) /login                    # User login
+![POST](https://img.shields.io/badge/POST-green) /logout                   # User logout
+![GET](https://img.shields.io/badge/GET-blue)   /logout                   # Logout confirmation
+![POST](https://img.shields.io/badge/POST-green) /2fa                      # Two-factor authentication
 ```
 
 ### Email Verification Routes
 ```
-POST /email-verification/verify-code    # Verify email code
-GET  /email-verification/verify/:token  # Verify email with token
+![POST](https://img.shields.io/badge/POST-green) /email-verification/verify-code    # Verify email code
+![GET](https://img.shields.io/badge/GET-blue)   /email-verification/verify/:token  # Verify email with token
 ```
 
 ### Password Reset Routes  
 ```
-POST /password-reset/          # Request password reset
-GET  /password-reset/:token    # Password reset form
-POST /password-reset/:token    # Submit new password
-POST /forgot-password/         # Forgot password request
+![POST](https://img.shields.io/badge/POST-green) /password-reset/          # Request password reset
+![GET](https://img.shields.io/badge/GET-blue)   /password-reset/:token    # Password reset form
+![POST](https://img.shields.io/badge/POST-green) /password-reset/:token    # Submit new password
+![POST](https://img.shields.io/badge/POST-green) /forgot-password/         # Forgot password request
 ```
 
 ### Dashboard Routes
 ```
-GET  /dashboard/               # Main dashboard
-GET  /dashboard/admin          # Admin dashboard page
-GET  /dashboard/student        # Student dashboard page
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/               # Main dashboard
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin          # Admin dashboard page
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/student        # Student dashboard page
 ```
 
 ### Admin Dashboard API Routes
 ```
-GET  /dashboard/admin/usercount        # Get user count
-GET  /dashboard/admin/userlist         # Get list of users
-GET  /dashboard/admin/stats            # Get admin statistics
-GET  /dashboard/admin/signup-stats     # Get signup statistics
-GET  /dashboard/admin/orders           # Get orders data
-GET  /dashboard/admin/soldout          # Get sold out items
-GET  /dashboard/admin/itemcount        # Get item count
-GET  /dashboard/admin/menulist         # Get menu items list
-GET  /dashboard/admin/stockalerts      # Get stock alerts
-GET  /dashboard/admin/paymentstats     # Get payment statistics
-GET  /dashboard/admin/welcome-message  # Get welcome message
-GET  /dashboard/admin/health           # System health check
-GET  /dashboard/admin/menuitem_export  # Export menu items
-GET  /dashboard/admin/delete_menuitem/:id  # Delete menu item
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/usercount        # Get user count
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/userlist         # Get list of users
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/stats            # Get admin statistics
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/signup-stats     # Get signup statistics
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/orders           # Get orders data
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/soldout          # Get sold out items
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/itemcount        # Get item count
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/menulist         # Get menu items list
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/stockalerts      # Get stock alerts
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/paymentstats     # Get payment statistics
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/welcome-message  # Get welcome message
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/health           # System health check
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/menuitem_export  # Export menu items
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/admin/delete_menuitem/:id  # Delete menu item
 
-POST /dashboard/admin/create_menuitem  # Create new menu item
-PUT  /dashboard/admin/menuitem/:id     # Update menu item
+![POST](https://img.shields.io/badge/POST-green) /dashboard/admin/create_menuitem  # Create new menu item
+![PUT](https://img.shields.io/badge/PUT-orange)  /dashboard/admin/menuitem/:id     # Update menu item
 ```
 
 ### Student Dashboard Routes
 ```
-GET  /dashboard/student/freeze_account # Freeze student account
-POST /dashboard/student/parent/link    # Link parent account
+![GET](https://img.shields.io/badge/GET-blue)   /dashboard/student/freeze_account # Freeze student account
+![POST](https://img.shields.io/badge/POST-green) /dashboard/student/parent/link    # Link parent account
 ```
 
 ### Order Management Routes
 ```
-GET  /Order/                   # Order page
-GET  /Order/menu_items         # Get menu items for ordering
-GET  /Order/:orderID           # Get specific order details
-POST /Order/Order              # Create new order
-PUT  /Order/:orderID/status    # Update order status
-POST /Order/:orderID/capture   # Capture order payment
+![GET](https://img.shields.io/badge/GET-blue)   /Order/                   # Order page
+![GET](https://img.shields.io/badge/GET-blue)   /Order/menu_items         # Get menu items for ordering
+![GET](https://img.shields.io/badge/GET-blue)   /Order/:orderID           # Get specific order details
+![POST](https://img.shields.io/badge/POST-green) /Order/Order              # Create new order
+![PUT](https://img.shields.io/badge/PUT-orange)  /Order/:orderID/status    # Update order status
+![POST](https://img.shields.io/badge/POST-green) /Order/:orderID/capture   # Capture order payment
 ```
 
 ### Admin Management Routes
 ```
-GET  /admin/changeuser         # Change user permissions
+![GET](https://img.shields.io/badge/GET-blue)   /admin/changeuser         # Change user permissions
 ```
 
 ## API Routes
 
 ### General API Routes
 ```
-GET  /api/test                 # API test endpoint
-GET  /api/current_user         # Get current logged-in user
-GET  /api/menu-items           # Get available menu items
+![GET](https://img.shields.io/badge/GET-blue)   /api/test                 # API test endpoint
+![GET](https://img.shields.io/badge/GET-blue)   /api/current_user         # Get current logged-in user
+![GET](https://img.shields.io/badge/GET-blue)   /api/menu-items           # Get available menu items
 ```
 
 ### Order API Routes
 ```
-POST /api/orders               # Create PayPal order
-POST /api/orders/:orderID/capture    # Capture PayPal payment
+![POST](https://img.shields.io/badge/POST-green) /api/orders               # Create PayPal order
+![POST](https://img.shields.io/badge/POST-green) /api/orders/:orderID/capture    # Capture PayPal payment
 ```
 
 ### Google Pay API Routes
 ```
-POST /api/orders/googlepay           # Create Google Pay order
-POST /api/orders/googlepay/complete  # Complete Google Pay transaction
+![POST](https://img.shields.io/badge/POST-green) /api/orders/googlepay           # Create Google Pay order
+![POST](https://img.shields.io/badge/POST-green) /api/orders/googlepay/complete  # Complete Google Pay transaction
 ```
 
 ### Payment Integration Routes
 ```
-POST /api/payments/paypal      # PayPal payment processing
-POST /api/payments/googlepay   # Google Pay payment processing
+![POST](https://img.shields.io/badge/POST-green) /api/payments/paypal      # PayPal payment processing
+![POST](https://img.shields.io/badge/POST-green) /api/payments/googlepay   # Google Pay payment processing
 ```
 
