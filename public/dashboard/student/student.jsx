@@ -16,33 +16,125 @@ const StudentDashboard = () => {
         currency: 'HUF'
     });
     const [loading, setLoading] = useState(true);
+    const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [transactions, setTransactions] = useState([]);
+    const [parentLinkStatus, setParentLinkStatus] = useState({ linked: false, parentEmail: '' });
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     useEffect(() => {
         loadDashboardData();
+        // Load Google Pay script
+        loadGooglePayScript();
     }, []);
+
+    const loadGooglePayScript = () => {
+        // Load Google Pay SDK first
+        const googlePayScript = document.createElement('script');
+        googlePayScript.src = 'https://pay.google.com/gp/p/js/pay.js';
+        googlePayScript.onload = () => {
+            // Then load the local googlepay.js file
+            const localGooglePayScript = document.createElement('script');
+            localGooglePayScript.src = '/googlepay.js';
+            localGooglePayScript.onload = () => {
+                // Wait for the DOM element to be available before initializing
+                const checkForContainer = () => {
+                    const container = document.getElementById('gpay-container');
+                    if (container && window.initializeGooglePay) {
+                        console.log('Initializing Google Pay...');
+                        window.initializeGooglePay();
+                    } else if (container) {
+                        // Container exists but initializeGooglePay is not available
+                        console.error('Google Pay initialization function not found');
+                        container.innerHTML = '<p class="text-red-600">Google Pay initialization failed</p>';
+                    } else {
+                        // Container doesn't exist yet, try again in 100ms
+                        setTimeout(checkForContainer, 100);
+                    }
+                };
+                
+                // Start checking for container
+                checkForContainer();
+            };
+            document.head.appendChild(localGooglePayScript);
+        };
+        googlePayScript.onerror = () => {
+            console.error('Failed to load Google Pay script');
+            // Use a timeout to ensure the container exists before setting error message
+            setTimeout(() => {
+                const container = document.getElementById('gpay-container');
+                if (container) {
+                    container.innerHTML = '<p class="text-red-600">Failed to load Google Pay</p>';
+                }
+            }, 1000);
+        };
+        document.head.appendChild(googlePayScript);
+        
+        // Also load PayPal script
+        loadPayPalScript();
+    };
+    
+    const loadPayPalScript = () => {
+        const paypalScript = document.createElement('script');
+        paypalScript.src = '/paypal.js';
+        paypalScript.onload = () => {
+            console.log('PayPal script loaded');
+        };
+        paypalScript.onerror = () => {
+            console.error('Failed to load PayPal script');
+        };
+        document.head.appendChild(paypalScript);
+    };
 
     const loadDashboardData = async () => {
         try {
-            const [ordersRes, menuItemsRes] = await Promise.all([
-                fetch('/dashboard/student/order_history'),
-                fetch('/api/menu-items')
-            ]);
+            // Helper function to safely fetch and parse JSON
+            const safeFetch = async (url, fallbackData = null) => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.warn(`API endpoint ${url} returned ${response.status}`);
+                        return fallbackData;
+                    }
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.warn(`Failed to fetch ${url}:`, error.message);
+                    return fallbackData;
+                }
+            };
 
-            const [ordersData, menuData] = await Promise.all([
-                ordersRes.json(),
-                menuItemsRes.json()
-            ]);
+            // Fetch data with fallbacks
+            const ordersData = await safeFetch('/dashboard/student/order_history', { orderData: [] });
+            const menuData = await safeFetch('/api/menu-items', []);
+            const welcomeData = await safeFetch('/dashboard/student/welcome-message', { message: 'Welcome, Student' });
+            const transactionsData = await safeFetch('/dashboard/student/transactions', { transactions: [] });
+            const parentData = await safeFetch('/dashboard/student/parent', { linked: false, parentEmail: '' });
 
             setOrders(ordersData.orderData || []);
+            setWelcomeMessage(welcomeData.message || 'Welcome, Student');
+            setTransactions(transactionsData.transactions || []);
+            setParentLinkStatus(parentData);
             setStats({
                 totalUsers: '--',
                 activeSessions: '--',
                 ordersMade: ordersData.orderData?.length || 0,
-                totalMenuItems: menuData.length,
+                totalMenuItems: menuData.length || 0,
                 paymentStats: '--'
             });
         } catch (error) {
             console.error('Error loading dashboard data:', error);
+            // Set fallback data
+            setOrders([]);
+            setWelcomeMessage('Welcome, Student');
+            setTransactions([]);
+            setParentLinkStatus({ linked: false, parentEmail: '' });
+            setStats({
+                totalUsers: '--',
+                activeSessions: '--',
+                ordersMade: 0,
+                totalMenuItems: 0,
+                paymentStats: '--'
+            });
         } finally {
             setLoading(false);
         }
@@ -54,19 +146,234 @@ const StudentDashboard = () => {
             ...uploadForm,
             [name]: value
         });
+        // Sync with hidden fields that googlepay.js expects
+        syncPaymentFields(name === 'amount' ? value : uploadForm.amount, name === 'currency' ? value : uploadForm.currency);
+    };
+
+    const validateNumber = (value, min = 0, max = 100000) => {
+        const num = Number(value);
+        if (isNaN(num)) return false;
+        if (!isFinite(num)) return false;
+        if (num < min) return false;
+        if (num > max) return false;
+        return true;
+    };
+
+    const inputValidation = (elements) => {
+        let valid = true;
+        
+        elements.forEach(el => {
+            const value = el.value ? el.value.trim() : '';
+            const type = el.getAttribute('data-type');
+            let errorCode = null;
+
+            // Required field check
+            if (el.hasAttribute('data-required') && !value) {
+                valid = false;
+                errorCode = 'REQUIRED';
+            }
+            // Type-specific validation
+            else if (type === 'text') {
+                const regex = /^[a-zA-Z0-9\s.,'-]*$/;
+                if (!regex.test(value)) {
+                    valid = false;
+                    errorCode = 'INVALID_TEXT';
+                }
+            } 
+            else if (type === 'number') {
+                const min = parseFloat(el.getAttribute('data-min')) || 0;
+                const max = parseFloat(el.getAttribute('data-max')) || 100000;
+                if (!validateNumber(value, min, max)) {
+                    valid = false;
+                    errorCode = 'INVALID_NUMBER';
+                }
+            }
+
+            // Dangerous string check
+            if (
+                value.includes("<") || value.includes(">") ||
+                value.includes("'") || value.includes('"') ||
+                value.includes(";") || value.includes("--") ||
+                value.includes('<script>') || value.includes('</script>') ||
+                value.includes('$ne') || value.includes('$gt') ||
+                value.includes('$lt')
+            ) {
+                valid = false;
+                errorCode = 'INVALID_CHAR';
+            }
+
+            // Apply error class and store custom code
+            if (errorCode) {
+                el.classList.add('input-error');
+                el.setAttribute('data-error', errorCode);
+            } else {
+                el.classList.remove('input-error');
+                el.removeAttribute('data-error');
+            }
+        });
+
+        return valid;
+    };
+
+    const syncPaymentFields = (amount, currency) => {
+        // Update hidden fields that googlepay.js expects
+        const priceField = document.getElementById('price');
+        const convertedAmountField = document.getElementById('convertedAmount');
+        const currencyField = document.getElementById('currency');
+        
+        if (priceField) priceField.value = amount || '0';
+        if (convertedAmountField) convertedAmountField.value = amount || '0';
+        if (currencyField) currencyField.value = currency || 'HUF';
+        
+        console.log('Synced payment fields:', { amount, currency });
     };
 
     const handleWalletUpload = async () => {
-        if (!uploadForm.amount || uploadForm.amount <= 0) {
+        if (!uploadForm.amount || uploadForm.amount <= 0 || (uploadForm.currency === 'HUF' && uploadForm.amount < 300)) {
             alert('Please enter a valid amount');
             return;
         }
-
-        // Here you would integrate with your payment system
-        alert(`Processing payment of ${uploadForm.amount} ${uploadForm.currency} to wallet`);
-        // After successful payment, you would update the wallet balance
-        // setWalletAmount(prev => prev + parseFloat(uploadForm.amount));
-        setUploadForm({ amount: '', currency: 'HUF' });
+        
+        // Show payment method selection modal
+        setShowPaymentModal(true);
+    };
+    
+    const handlePaymentMethodSelect = (method) => {
+        setShowPaymentModal(false);
+        
+        // Update hidden fields for payment scripts
+        syncPaymentFields(uploadForm.amount, uploadForm.currency);
+        
+        if (method === 'googlepay') {
+            handleGooglePayPayment();
+        } else if (method === 'paypal') {
+            handlePayPalPayment();
+        }
+    };
+    
+    const handleGooglePayPayment = async () => {
+        try {
+            const amount = parseFloat(uploadForm.amount);
+            const currency = uploadForm.currency;
+            
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // For wallet deposits, we'll create a simpler Google Pay integration
+            // that doesn't rely on the complex order system
+            if (window.google && window.google.payments) {
+                const paymentsClient = new google.payments.api.PaymentsClient({
+                    environment: 'TEST'
+                });
+                
+                const allowedPaymentMethods = [{
+                    type: 'CARD',
+                    parameters: {
+                        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                        allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
+                    },
+                    tokenizationSpecification: {
+                        type: 'PAYMENT_GATEWAY',
+                        parameters: {
+                            gateway: 'example',
+                            gatewayMerchantId: 'exampleGatewayMerchantId'
+                        }
+                    }
+                }];
+                
+                // Convert to USD for Google Pay (required)
+                const convertedAmount = currency === 'USD' ? amount : (amount * 0.0027);
+                
+                const paymentDataRequest = {
+                    apiVersion: 2,
+                    apiVersionMinor: 0,
+                    allowedPaymentMethods: allowedPaymentMethods,
+                    transactionInfo: {
+                        totalPriceStatus: 'FINAL',
+                        totalPrice: convertedAmount.toFixed(2),
+                        currencyCode: 'USD'
+                    },
+                    merchantInfo: {
+                        merchantName: 'SnapTray Wallet'
+                    }
+                };
+                
+                console.log('Starting Google Pay for wallet deposit:', paymentDataRequest);
+                
+                try {
+                    const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest);
+                    console.log('Google Pay payment successful:', paymentData);
+                    
+                    // Simulate successful wallet deposit
+                    setWalletAmount(prev => prev + amount);
+                    setUploadForm({ amount: '', currency: 'HUF' });
+                    setShowPaymentModal(false);
+                    
+                    alert(`Successfully added ${amount} ${currency} to your wallet! (Test transaction)`);
+                } catch (paymentError) {
+                    console.error('Google Pay payment error:', paymentError);
+                    if (paymentError.statusCode === 'CANCELED') {
+                        console.log('Payment was canceled by user');
+                    } else {
+                        alert('Payment failed. Please try again.');
+                    }
+                }
+            } else {
+                alert('Google Pay is not available. Please try again or use PayPal.');
+            }
+        } catch (error) {
+            console.error('Google Pay initialization error:', error);
+            alert('Google Pay failed to initialize. Please try again.');
+        }
+    };
+    
+    const handlePayPalPayment = async () => {
+        try {
+            // Initialize PayPal for wallet if not already done
+            if (window.loadPayPalSDK && window.renderPayPalButtons) {
+                const paypalContainer = document.getElementById('paypal-button-container');
+                if (paypalContainer) {
+                    paypalContainer.innerHTML = '';
+                    window.loadPayPalSDK(() => {
+                        window.renderPayPalButtons();
+                        // Show the PayPal container temporarily for payment
+                        paypalContainer.style.display = 'block';
+                        paypalContainer.style.position = 'fixed';
+                        paypalContainer.style.top = '50%';
+                        paypalContainer.style.left = '50%';
+                        paypalContainer.style.transform = 'translate(-50%, -50%)';
+                        paypalContainer.style.zIndex = '9999';
+                        paypalContainer.style.backgroundColor = 'white';
+                        paypalContainer.style.padding = '20px';
+                        paypalContainer.style.border = '2px solid #ccc';
+                        paypalContainer.style.borderRadius = '8px';
+                        paypalContainer.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                        
+                        // Add close button
+                        const closeBtn = document.createElement('button');
+                        closeBtn.innerHTML = '×';
+                        closeBtn.style.position = 'absolute';
+                        closeBtn.style.top = '10px';
+                        closeBtn.style.right = '15px';
+                        closeBtn.style.background = 'none';
+                        closeBtn.style.border = 'none';
+                        closeBtn.style.fontSize = '24px';
+                        closeBtn.style.cursor = 'pointer';
+                        closeBtn.onclick = () => {
+                            paypalContainer.style.display = 'none';
+                        };
+                        paypalContainer.appendChild(closeBtn);
+                    });
+                }
+            } else {
+                alert('PayPal is not ready. Please try again.');
+            }
+        } catch (error) {
+            console.error('PayPal error:', error);
+            alert('PayPal failed. Please try again.');
+        }
     };
 
     const getStatusColor = (status) => {
@@ -118,7 +425,7 @@ const StudentDashboard = () => {
                                 <div className="text-sm text-gray-600">Wallet Balance</div>
                                 <div className="text-lg font-semibold text-primary">${walletAmount.toFixed(2)}</div>
                             </div>
-                            <span className="text-gray-700">Welcome, Student</span>
+                            <span className="text-gray-700">{welcomeMessage || 'Welcome, Student'}</span>
                             <a href="/logout" className="text-primary hover:text-secondary font-medium">Logout</a>
                         </div>
                     </div>
@@ -149,6 +456,16 @@ const StudentDashboard = () => {
                                 }`}
                             >
                                 Wallet
+                            </button>
+                            <button
+                                onClick={() => setActiveSection('transactions')}
+                                className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                                    activeSection === 'transactions'
+                                        ? 'bg-primary text-white'
+                                        : 'text-gray-700 hover:bg-accent hover:text-primary'
+                                }`}
+                            >
+                                Transactions
                             </button>
                             <button
                                 onClick={() => setActiveSection('stats')}
@@ -253,9 +570,17 @@ const StudentDashboard = () => {
                                                 name="amount"
                                                 value={uploadForm.amount}
                                                 onChange={handleUploadFormChange}
+                                                onBlur={(e) => {
+                                                    const elements = [e.target];
+                                                    inputValidation(elements);
+                                                }}
                                                 min="0"
                                                 step="0.01"
                                                 placeholder="Enter amount"
+                                                data-required="true"
+                                                data-type="number"
+                                                data-min="0"
+                                                data-max="100000"
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                                             />
                                         </div>
@@ -276,24 +601,76 @@ const StudentDashboard = () => {
                                             onClick={handleWalletUpload}
                                             className="w-full bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
                                         >
-                                            Add to Wallet
+                                            Choose Payment Method
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Payment Integration Placeholders */}
+                            {/* Payment Integration */}
                             <div className="mt-8 bg-white p-6 rounded-lg shadow">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
+                                
+                                {/* Hidden fields that googlepay.js expects */}
+                                <input type="hidden" id="price" value={uploadForm.amount || '0'} />
+                                <input type="hidden" id="convertedAmount" value={uploadForm.amount || '0'} />
+                                <input type="hidden" id="currency" value={uploadForm.currency || 'HUF'} />
+                                
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div id="gpay-container" className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                                        <p className="text-gray-600">Google Pay integration will appear here</p>
+                                    <div id="gpay-container" className="hidden">
+                                        <p className="text-gray-600">Loading Google Pay...</p>
                                     </div>
-                                    <div id="paypal-button-container" className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <div id="paypal-button-container" className="hidden">
                                         <p className="text-gray-600">PayPal integration will appear here</p>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {activeSection === 'transactions' && (
+                        <div>
+                            <h2 className="text-2xl font-bold text-primary mb-6">Transaction History</h2>
+                            {transactions.length === 0 ? (
+                                <div className="bg-white p-8 rounded-lg shadow text-center">
+                                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                    </svg>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
+                                    <p className="text-gray-600">Your payment transactions will appear here.</p>
+                                </div>
+                            ) : (
+                                <div className="bg-white rounded-lg shadow overflow-hidden">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {transactions.map((tx, index) => (
+                                                <tr key={index} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {tx._id}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                        {new Date(tx.date).toLocaleDateString()} {new Date(tx.date).getHours()}:{new Date(tx.date).getMinutes().toString().padStart(2, '0')}:{new Date(tx.date).getSeconds().toString().padStart(2, '0')}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                                        ${tx.amount?.toFixed(2) || '0.00'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                        {tx.paymentMethod || 'N/A'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -320,23 +697,87 @@ const StudentDashboard = () => {
                     {activeSection === 'settings' && (
                         <div>
                             <h2 className="text-2xl font-bold text-primary mb-6">Settings</h2>
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="text-lg font-medium text-gray-900 mb-2">Account Settings</h3>
-                                        <a
-                                            href="/password_reset.html"
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
-                                        >
-                                            Change Password
-                                        </a>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Account Settings</h3>
+                                            <a
+                                                href="/password_reset.html"
+                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                                            >
+                                                Change Password
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">Parent Account Link</h3>
+                                    <div className="text-sm text-gray-600">
+                                        {parentLinkStatus.linked ? (
+                                            <p className="text-green-600">
+                                                <span className="font-medium">Linked to parent account:</span><br/>
+                                                {parentLinkStatus.parentEmail}
+                                            </p>
+                                        ) : (
+                                            <p className="text-gray-500">No parent account linked.</p>
+                                        )}
+                                    </div>
+                                    <div className="mt-4">
+                                        <p className="text-xs text-gray-500">Contact administration to manage parent account linking.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </main>
+                    )}                </main>
             </div>
+            
+            {/* Payment Method Selection Modal */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Payment Method</h3>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Add {uploadForm.amount} {uploadForm.currency} to your wallet using:
+                        </p>
+                        
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => handlePaymentMethodSelect('googlepay')}
+                                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded mr-3 flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold">G</span>
+                                    </div>
+                                    <span className="font-medium">Google Pay</span>
+                                </div>
+                            </button>
+                            
+                            <button
+                                onClick={() => handlePaymentMethodSelect('paypal')}
+                                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-8 h-8 bg-blue-600 rounded mr-3 flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold">PP</span>
+                                    </div>
+                                    <span className="font-medium">PayPal</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setShowPaymentModal(false)}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
