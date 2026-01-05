@@ -1,8 +1,8 @@
 ## Starting the app
 ```
-node src/main.js
-npm start this is should be used mainly
-
+npm start    # Recommended - runs the application
+npm run dev  # Development mode with nodemon for auto-restart
+node src/main.js  # Direct execution
 ```
 
 ## Gitignore file tartalma:
@@ -30,12 +30,13 @@ These are the current node modules that are needed to run the application
 ```
 ├── @google-cloud/recaptcha-enterprise@6.3.0
 ├── @paypal/paypal-server-sdk@1.1.0
+├── artillery@2.0.27
 ├── badwords-list@2.0.1-4
 ├── bcrypt@6.0.0
 ├── connect-redis@9.0.0
 ├── crypto@1.0.1
 ├── dotenv@17.2.3
-├── ejs@3.1.10
+├── ejs@3.1.9
 ├── express-rate-limit@8.1.0
 ├── express-session@1.18.2
 ├── express@4.21.2
@@ -44,13 +45,21 @@ These are the current node modules that are needed to run the application
 ├── mongoose@8.18.2
 ├── nanoid@5.1.6
 ├── node-fetch@2.7.0
+├── node-iplocate@2.0.1
 ├── nodemailer@7.0.9
-├── nodemon@3.1.0
 ├── paypal@1.0.1
+├── rate-limit-redis@4.3.1
 ├── react@19.2.1
 ├── redis@5.10.0
+├── serve-favicon@2.5.1
 ├── simple-statistics@7.8.8
 └── zxcvbn@4.4.2
+
+Dev Dependencies:
+├── autoprefixer@10.4.23
+├── nodemon@3.0.1
+├── postcss@8.5.6
+└── tailwindcss@4.1.18
 ```
 
 
@@ -65,6 +74,9 @@ These are the current node modules that are needed to run the application
 │   ├── api.js
 │   ├── chapta.js
 │   ├── logout.js
+│   ├── redis.js
+│   ├── Register.jsx
+│   ├── verificationStore.js
 │   ├── auth/
 │   │   ├── 2fa.js
 │   │   ├── email_verification.js
@@ -87,6 +99,8 @@ These are the current node modules that are needed to run the application
 │   │   └── paypal.js
 │   ├── profile/
 │   │   └── student.js
+│   ├── admin/
+│   │   └── admin.js
 ├── public/                    # Static files served to client (Frontend)
 │   ├── index.html
 │   ├── register.html
@@ -96,17 +110,23 @@ These are the current node modules that are needed to run the application
 │   ├── paypal.js
 │   ├── googlepay.js
 │   ├── css/
-│   │   └── register.css
+│   │   ├── register.css
+│   │   └── tailwind.css
 │   ├── dashboard/
 │   │   ├── admin/
+│   │   │   ├── admin_old.html # not used
 │   │   │   ├── admin.css
 │   │   │   ├── admin.html
-│   │   │   └── admin.js
+│   │   │   ├── admin.js # not used
+│   │   │   └── admin.jsx
 │   │   └── student/
+│   │       ├── student_old.html # not used
 │   │       ├── student.css
 │   │       ├── student.html
-│   │       └── student.js
+│   │       ├── student.js # not used
+│   │       └── student.jsx
 │   └── Order/
+│       ├── index_old.html
 │       ├── index.css
 │       ├── index.html
 │       └── script.js
@@ -122,7 +142,7 @@ These are the current node modules that are needed to run the application
 │       └── menu_items.json
 ├── docs/                      # Documentation
 │   ├── database.png
-│   ├── features_to_implement.txt
+│   ├── next_implementation_list.txt
 │   ├── Paypal_TestDetails.txt
 │   ├── security_features.md
 │   ├── sourcefor_security_checks.txt
@@ -135,9 +155,13 @@ These are the current node modules that are needed to run the application
 │   ├── Jest/
 │   ├── menu_items.json
 │   ├── Paypal_TestConfig.txt
-│   └── register_testing.py
+│   ├── register_testing.py
+│   └── performance_tests/
+│       └── artillery.yml
 ├── package.json               # Node.js dependencies and scripts
 ├── package-lock.json
+├── postcss.config.js         # PostCSS configuration
+├── tailwind.config.js        # Tailwind CSS configuration
 └── readme.md                  # Project documentation
 
 ```
