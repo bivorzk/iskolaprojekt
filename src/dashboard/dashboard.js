@@ -36,7 +36,12 @@ function requireStudent(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
     return res.status(401).send('Unauthorized: No session available');
   }
-  req.session.user.usertype != 'student' || 'admin' ? next() : res.status(403).send('Access denied for student accounts');
+  // Allow both students and admins to access student routes
+  if (req.session.user.usertype === 'student' || req.session.user.usertype === 'admin') {
+    next();
+  } else {
+    res.status(403).send('Access denied: Student or Admin access required');
+  }
 }
 
 
@@ -403,6 +408,166 @@ router.get('/student/order_history' , async (req, res) => {
 
 router.get('/student/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Student dashboard is healthy' });
+});
+
+// Debug endpoint to check database and session
+router.get('/student/debug', async (req, res) => {
+  try {
+    const session = req.session.user;
+    const dbConnection = mongoose.connection.readyState;
+    
+    let userFromDb = null;
+    if (session && session.id) {
+      userFromDb = await User.findById(session.id);
+    }
+    
+    res.status(200).json({
+      session: session ? { id: session.id, username: session.username, usertype: session.usertype } : null,
+      dbConnection: dbConnection === 1 ? 'connected' : 'disconnected',
+      userExists: !!userFromDb,
+      userBalance: userFromDb ? userFromDb.walletBalance : null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get wallet balance
+router.get('/student/wallet/balance', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    console.log('Getting balance for user:', userId);
+    
+    const user = await User.findById(userId).select('balance');
+    
+    if (!user) {
+      console.log('User not found for balance request');
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log('User balance retrieved:', user.balance);
+    
+    // Initialize balance if it doesn't exist
+    if (user.balance === undefined || user.balance === null) {
+      user.balance = 0;
+      await user.save();
+      console.log('Initialized user balance to 0');
+    }
+    
+    res.status(200).json({ 
+      balance: user.balance || 0,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error fetching wallet balance:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Add money to wallet
+router.post('/student/wallet/add', async (req, res) => {
+  try {
+    // Check session first
+    if (!req.session.user || !req.session.user.id) {
+      console.log('No valid session found');
+      return res.status(401).json({ error: 'No valid session' });
+    }
+    
+    const userId = req.session.user.id;
+    const { amount, currency, paymentMethod, transactionId } = req.body;
+    
+    console.log('Wallet add request:', { userId, amount, currency, paymentMethod, transactionId });
+    console.log('Session user:', req.session.user);
+    
+    // Validate input
+    if (!amount || amount <= 0) {
+      console.log('Invalid amount:', amount);
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+    
+    if (!paymentMethod) {
+      console.log('Missing payment method');
+      return res.status(400).json({ error: 'Payment method required' });
+    }
+    
+    // Convert amount to USD for storage (if needed)
+    let usdAmount = parseFloat(amount);
+    if (currency === 'HUF') {
+      usdAmount = amount * 0.0027; // Simple conversion rate
+    } else if (currency === 'EUR') {
+      usdAmount = amount * 1.1; // Simple conversion rate
+    }
+    
+    console.log('Converted amount:', { original: amount, currency, usd: usdAmount });
+    
+    // Check if user exists first
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      console.log('User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log('User found:', { id: existingUser._id, currentBalance: existingUser.balance });
+    
+    // Ensure balance field exists, initialize if needed
+    if (existingUser.balance === undefined || existingUser.balance === null) {
+      console.log('Balance field missing, initializing to 0');
+      await User.findByIdAndUpdate(userId, { balance: 0 });
+      existingUser.balance = 0;
+    }
+    
+    // Update user wallet balance
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { balance: usdAmount } },
+      { new: true, upsert: false }
+    );
+    
+    console.log('User wallet updated:', { userId, newBalance: user.balance });
+    
+    // Verify the update by reading the user again
+    const verifyUser = await User.findById(userId).select('balance');
+    console.log('Verification after update:', { userId, verifiedBalance: verifyUser.balance });
+    
+    // Create payment record
+    try {
+      const paymentData = {
+        userId,
+        amount: usdAmount,
+        currency: 'USD',
+        paymentMethod,
+        transactionId: transactionId || 'wallet_' + Date.now(),
+        status: 'Completed'
+      };
+      
+      console.log('Creating payment record:', paymentData);
+      
+      const paymentRecord = await Payment.create(paymentData);
+      console.log('Payment record created successfully:', paymentRecord._id);
+    } catch (paymentError) {
+      console.error('Error creating payment record:', paymentError);
+      // Continue even if payment record fails, wallet is already updated
+    }
+    
+    res.status(200).json({ 
+      message: 'Money added successfully',
+      newBalance: verifyUser.balance || 0,
+      addedAmount: usdAmount,
+      success: true,
+      debug: {
+        originalAmount: amount,
+        convertedAmount: usdAmount,
+        currency: currency,
+        finalBalance: verifyUser.balance
+      }
+    });
+  } catch (error) {
+    console.error('Error adding money to wallet:', error);
+    res.status(500).json({ 
+      error: 'Server error: ' + error.message,
+      success: false
+    });
+  }
 });
 
 

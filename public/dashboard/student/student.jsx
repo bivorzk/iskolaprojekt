@@ -26,6 +26,18 @@ const StudentDashboard = () => {
         // Load Google Pay script
         loadGooglePayScript();
     }, []);
+    
+    // Periodic wallet balance refresh
+    useEffect(() => {
+        // Refresh balance every 30 seconds when the wallet section is active
+        const interval = setInterval(() => {
+            if (activeSection === 'wallet') {
+                refreshWalletBalance();
+            }
+        }, 30000);
+        
+        return () => clearInterval(interval);
+    }, [activeSection]);
 
     const loadGooglePayScript = () => {
         // Load Google Pay SDK first
@@ -109,6 +121,14 @@ const StudentDashboard = () => {
             const welcomeData = await safeFetch('/dashboard/student/welcome-message', { message: 'Welcome, Student' });
             const transactionsData = await safeFetch('/dashboard/student/transactions', { transactions: [] });
             const parentData = await safeFetch('/dashboard/student/parent', { linked: false, parentEmail: '' });
+            
+            // Get wallet balance using the dedicated function
+            const currentBalance = await refreshWalletBalance();
+            if (currentBalance === null) {
+                // Fallback to direct API call if refreshWalletBalance fails
+                const walletData = await safeFetch('/dashboard/student/wallet/balance', { balance: 0 });
+                setWalletAmount(walletData.balance || 0);
+            }
 
             setOrders(ordersData.orderData || []);
             setWelcomeMessage(welcomeData.message || 'Welcome, Student');
@@ -227,6 +247,24 @@ const StudentDashboard = () => {
         
         console.log('Synced payment fields:', { amount, currency });
     };
+    
+    const refreshWalletBalance = async () => {
+        try {
+            const balanceResponse = await fetch('/dashboard/student/wallet/balance');
+            if (balanceResponse.ok) {
+                const balanceData = await balanceResponse.json();
+                setWalletAmount(balanceData.balance || 0);
+                console.log('Wallet balance refreshed:', balanceData.balance);
+                return balanceData.balance;
+            } else {
+                console.warn('Failed to refresh wallet balance');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error refreshing wallet balance:', error);
+            return null;
+        }
+    };
 
     const handleWalletUpload = async () => {
         if (!uploadForm.amount || uploadForm.amount <= 0 || (uploadForm.currency === 'HUF' && uploadForm.amount < 300)) {
@@ -306,12 +344,70 @@ const StudentDashboard = () => {
                     const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest);
                     console.log('Google Pay payment successful:', paymentData);
                     
-                    // Simulate successful wallet deposit
-                    setWalletAmount(prev => prev + amount);
-                    setUploadForm({ amount: '', currency: 'HUF' });
-                    setShowPaymentModal(false);
+                    // Save transaction to database
+                    try {
+                        const saveResponse = await fetch('/dashboard/student/wallet/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                amount: amount,
+                                currency: currency,
+                                paymentMethod: 'GooglePay',
+                                transactionId: paymentData.paymentMethodData?.tokenizationData?.token || 'gpay_' + Date.now()
+                            })
+                        });
+                        
+                        console.log('Save response status:', saveResponse.status);
+                        
+                        if (saveResponse.ok) {
+                            const saveResult = await saveResponse.json();
+                            console.log('Transaction saved successfully:', saveResult);
+                            
+                            // Fetch fresh balance from backend
+                            try {
+                                const balanceResponse = await fetch('/dashboard/student/wallet/balance');
+                                if (balanceResponse.ok) {
+                                    const balanceData = await balanceResponse.json();
+                                    setWalletAmount(balanceData.balance || 0);
+                                } else {
+                                    console.warn('Failed to fetch updated balance');
+                                    // Fallback to server response if balance fetch fails
+                                    setWalletAmount(saveResult.newBalance || walletAmount);
+                                }
+                            } catch (balanceError) {
+                                console.warn('Error fetching balance:', balanceError);
+                                // Fallback to server response if balance fetch fails
+                                setWalletAmount(saveResult.newBalance || walletAmount);
+                            }
+                            
+                            setUploadForm({ amount: '', currency: 'HUF' });
+                            
+                            alert(`Successfully added ${amount} ${currency} to your wallet!`);
+                            
+                            // Refresh transactions list
+                            try {
+                                const transactionsData = await fetch('/dashboard/student/transactions');
+                                if (transactionsData.ok) {
+                                    const txData = await transactionsData.json();
+                                    setTransactions(txData.transactions || []);
+                                }
+                            } catch (txError) {
+                                console.warn('Failed to refresh transactions:', txError);
+                            }
+                        } else {
+                            const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }));
+                            console.error('Failed to save transaction:', errorData);
+                            alert(`Payment successful but failed to update wallet: ${errorData.error}. Please contact support.`);
+                        }
+                    } catch (saveError) {
+                        console.error('Error saving transaction:', saveError);
+                        alert('Payment successful but failed to update wallet. Please contact support.');
+                    }
                     
-                    alert(`Successfully added ${amount} ${currency} to your wallet! (Test transaction)`);
+                    // Close modal
+                    setShowPaymentModal(false);
                 } catch (paymentError) {
                     console.error('Google Pay payment error:', paymentError);
                     if (paymentError.statusCode === 'CANCELED') {
@@ -331,40 +427,196 @@ const StudentDashboard = () => {
     
     const handlePayPalPayment = async () => {
         try {
+            // Store amount and currency for use in PayPal callback
+            window.walletDepositData = {
+                amount: parseFloat(uploadForm.amount),
+                currency: uploadForm.currency
+            };
+            
             // Initialize PayPal for wallet if not already done
             if (window.loadPayPalSDK && window.renderPayPalButtons) {
                 const paypalContainer = document.getElementById('paypal-button-container');
                 if (paypalContainer) {
                     paypalContainer.innerHTML = '';
+                    
+                    // Create wrapper with proper DOM structure
+                    const wrapper = document.createElement('div');
+                    wrapper.style.padding = '20px';
+                    wrapper.style.maxWidth = '400px';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = 'PayPal Payment';
+                    title.style.margin = '0 0 15px 0';
+                    title.style.color = '#333';
+                    
+                    const description = document.createElement('p');
+                    description.textContent = `Adding ${uploadForm.amount} ${uploadForm.currency} to wallet`;
+                    description.style.margin = '0 0 15px 0';
+                    description.style.color = '#666';
+                    
+                    const buttonsWrapper = document.createElement('div');
+                    buttonsWrapper.id = 'paypal-buttons-wrapper';
+                    
+                    wrapper.appendChild(title);
+                    wrapper.appendChild(description);
+                    wrapper.appendChild(buttonsWrapper);
+                    paypalContainer.appendChild(wrapper);
+                    
+                    // Show the PayPal container
+                    paypalContainer.style.display = 'block';
+                    paypalContainer.style.position = 'fixed';
+                    paypalContainer.style.top = '50%';
+                    paypalContainer.style.left = '50%';
+                    paypalContainer.style.transform = 'translate(-50%, -50%)';
+                    paypalContainer.style.zIndex = '9999';
+                    paypalContainer.style.backgroundColor = 'white';
+                    paypalContainer.style.padding = '20px';
+                    paypalContainer.style.border = '2px solid #ccc';
+                    paypalContainer.style.borderRadius = '8px';
+                    paypalContainer.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                    
+                    // Add close button
+                    const closeBtn = document.createElement('button');
+                    closeBtn.innerHTML = '×';
+                    closeBtn.style.position = 'absolute';
+                    closeBtn.style.top = '10px';
+                    closeBtn.style.right = '15px';
+                    closeBtn.style.background = 'none';
+                    closeBtn.style.border = 'none';
+                    closeBtn.style.fontSize = '24px';
+                    closeBtn.style.cursor = 'pointer';
+                    closeBtn.onclick = () => {
+                        paypalContainer.style.display = 'none';
+                    };
+                    paypalContainer.appendChild(closeBtn);
+                    
+                    // Now load PayPal SDK and render buttons
                     window.loadPayPalSDK(() => {
-                        window.renderPayPalButtons();
-                        // Show the PayPal container temporarily for payment
-                        paypalContainer.style.display = 'block';
-                        paypalContainer.style.position = 'fixed';
-                        paypalContainer.style.top = '50%';
-                        paypalContainer.style.left = '50%';
-                        paypalContainer.style.transform = 'translate(-50%, -50%)';
-                        paypalContainer.style.zIndex = '9999';
-                        paypalContainer.style.backgroundColor = 'white';
-                        paypalContainer.style.padding = '20px';
-                        paypalContainer.style.border = '2px solid #ccc';
-                        paypalContainer.style.borderRadius = '8px';
-                        paypalContainer.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-                        
-                        // Add close button
-                        const closeBtn = document.createElement('button');
-                        closeBtn.innerHTML = '×';
-                        closeBtn.style.position = 'absolute';
-                        closeBtn.style.top = '10px';
-                        closeBtn.style.right = '15px';
-                        closeBtn.style.background = 'none';
-                        closeBtn.style.border = 'none';
-                        closeBtn.style.fontSize = '24px';
-                        closeBtn.style.cursor = 'pointer';
-                        closeBtn.onclick = () => {
-                            paypalContainer.style.display = 'none';
-                        };
-                        paypalContainer.appendChild(closeBtn);
+                        // Wait a moment for DOM to be ready
+                        setTimeout(() => {
+                            // Verify element exists before rendering
+                            const targetElement = document.getElementById('paypal-buttons-wrapper');
+                            if (!targetElement) {
+                                console.error('PayPal wrapper element not found');
+                                alert('PayPal initialization failed. Please try again.');
+                                return;
+                            }
+                            
+                            // Custom PayPal configuration for wallet deposit
+                            const paypalButtons = paypal.Buttons({
+                                style: {
+                                    shape: "rect",
+                                    layout: "vertical",
+                                    color: "gold",
+                                    label: "paypal",
+                                },
+                                createOrder: function(data, actions) {
+                                    const depositData = window.walletDepositData;
+                                    const convertedAmount = depositData.currency === 'USD' ? depositData.amount : (depositData.amount * 0.003);
+                                    
+                                    return actions.order.create({
+                                        purchase_units: [{
+                                            amount: {
+                                                value: convertedAmount.toFixed(2),
+                                                currency_code: 'USD'
+                                            },
+                                            description: `Wallet Deposit - ${depositData.amount} ${depositData.currency}`
+                                        }]
+                                    });
+                                },
+                                onApprove: async function(data, actions) {
+                                    try {
+                                        const details = await actions.order.capture();
+                                        console.log('PayPal payment successful:', details);
+                                        
+                                        const depositData = window.walletDepositData;
+                                        console.log('Saving PayPal transaction:', {
+                                            amount: depositData.amount,
+                                            currency: depositData.currency,
+                                            paymentMethod: 'PayPal',
+                                            transactionId: details.id
+                                        });
+                                        
+                                        // Save transaction to database
+                                        const saveResponse = await fetch('/dashboard/student/wallet/add', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                amount: depositData.amount,
+                                                currency: depositData.currency,
+                                                paymentMethod: 'PayPal',
+                                                transactionId: details.id
+                                            })
+                                        });
+                                        
+                                        console.log('PayPal save response status:', saveResponse.status);
+                                        
+                                        if (saveResponse.ok) {
+                                            const saveResult = await saveResponse.json();
+                                            console.log('PayPal transaction saved successfully:', saveResult);
+                                            
+                                            // Fetch fresh balance from backend
+                                            try {
+                                                const balanceResponse = await fetch('/dashboard/student/wallet/balance');
+                                                if (balanceResponse.ok) {
+                                                    const balanceData = await balanceResponse.json();
+                                                    setWalletAmount(balanceData.balance || 0);
+                                                } else {
+                                                    console.warn('Failed to fetch updated balance');
+                                                    // Fallback to server response if balance fetch fails
+                                                    setWalletAmount(saveResult.newBalance || walletAmount);
+                                                }
+                                            } catch (balanceError) {
+                                                console.warn('Error fetching balance:', balanceError);
+                                                // Fallback to server response if balance fetch fails
+                                                setWalletAmount(saveResult.newBalance || walletAmount);
+                                            }
+                                            
+                                            setUploadForm({ amount: '', currency: 'HUF' });
+                                            
+                                            alert(`Successfully added ${depositData.amount} ${depositData.currency} to your wallet!`);
+                                            
+                                            // Refresh transactions list
+                                            try {
+                                                const transactionsData = await fetch('/dashboard/student/transactions');
+                                                if (transactionsData.ok) {
+                                                    const txData = await transactionsData.json();
+                                                    setTransactions(txData.transactions || []);
+                                                }
+                                            } catch (txError) {
+                                                console.warn('Failed to refresh transactions:', txError);
+                                            }
+                                            
+                                            // Close PayPal modal
+                                            paypalContainer.style.display = 'none';
+                                        } else {
+                                            const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }));
+                                            console.error('PayPal save failed:', errorData);
+                                            alert(`Payment successful but failed to update wallet: ${errorData.error}. Please contact support.`);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error processing PayPal payment:', error);
+                                        alert('Payment completed but failed to update wallet. Please contact support.');
+                                    }
+                                },
+                                onError: function(err) {
+                                    console.error('PayPal error:', err);
+                                    alert('Payment failed. Please try again.');
+                                },
+                                onCancel: function(data) {
+                                    console.log('PayPal payment cancelled');
+                                    paypalContainer.style.display = 'none';
+                                }
+                            });
+                            
+                            // Render the buttons
+                            paypalButtons.render('#paypal-buttons-wrapper').catch(function(err) {
+                                console.error('PayPal render error:', err);
+                                alert('Failed to load PayPal. Please try again.');
+                            });
+                        }, 100);
                     });
                 }
             } else {
