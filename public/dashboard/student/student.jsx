@@ -939,6 +939,9 @@ const StudentDashboard = () => {
                                             >
                                                 Change Password
                                             </a>
+                                            <br />
+                                            <br />
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">test</h3>
                                         </div>
                                     </div>
                                 </div>

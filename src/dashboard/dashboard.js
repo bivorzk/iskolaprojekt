@@ -17,9 +17,26 @@ const { User } = require('../../src/database');
 const { Payment, LoyaltyProgram, MenuItems, Order, OrderItems } = require('../../config/database_queries');
 const { get } = require('http');
 
+
 mongoose.connect(dbUrl + dbName)
   .then(() => console.log('Connected to MongoDB for dashboard'))
   .catch(err => console.error('Could not connect to MongoDB for user auth', err));
+
+
+let redisClient = null 
+console.log('Dashboard.js module loaded - checking Redis connection...');
+try {
+  const { redisClient: client } = require('../redis');
+  redisClient = client;
+} catch (error) {
+  console.log('Redis not available in dashboard.js:', error.message);
+}
+
+// Function to check if Redis is currently available
+function isRedisAvailable() {
+  return redisClient && redisClient.isOpen;
+}
+
 
 
 // Admin permission middleware
@@ -56,6 +73,7 @@ router.get('/admin', (req, res) => {
 });
 // Serve student dashboard
 router.get('/student', (req, res) => {
+  console.log('Student dashboard accessed - Redis status:', { isRedisAvailable: isRedisAvailable(), hasClient: !!redisClient });
   res.sendFile(path.join(__dirname, '../../public/dashboard/student/student.html'));
 });
 
@@ -65,8 +83,19 @@ router.get('/student', (req, res) => {
 
 router.get('/admin/usercount', async (req, res) => {
   try {
+    const cacheKey = 'admin:usercount';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const count = await User.countDocuments({});
-      res.status(202).json({ total: count });
+    const data = { total: count };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -74,8 +103,19 @@ router.get('/admin/usercount', async (req, res) => {
 
 router.get('/admin/userlist', async (req, res) => {
   try {
+    const cacheKey = 'admin:userlist';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const users = await User.find({}, 'username email usertype createdAt');
-      res.status(202).json({ users });
+    const data = { users };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data));
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -83,6 +123,13 @@ router.get('/admin/userlist', async (req, res) => {
 
 router.get('/admin/stats', async (req, res) => {
   try {
+    const cacheKey = 'admin:stats';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const users = await User.find({}, 'createdAt');
     const creationDates = users.map(user => user.createdAt.getTime());
     const statsData = {
@@ -90,6 +137,9 @@ router.get('/admin/stats', async (req, res) => {
       median: stats.median(creationDates),
       standardDeviation: stats.standardDeviation(creationDates)
     };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(statsData));
+    }
       res.status(202).json(statsData);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -98,6 +148,13 @@ router.get('/admin/stats', async (req, res) => {
 
 router.get('/admin/signup-stats', async (req, res) => {
   try {
+    const cacheKey = 'admin:signup-stats';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const stats = await User.aggregate([
       {
         $group: {
@@ -111,6 +168,9 @@ router.get('/admin/signup-stats', async (req, res) => {
       },
       { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
     ]);
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(stats));
+    }
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -119,8 +179,19 @@ router.get('/admin/signup-stats', async (req, res) => {
 
 router.get('/admin/orders', async (req, res) => {
   try {
+    const cacheKey = 'admin:orders';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const count = await Order.countDocuments({});
-    res.json({ total: count });
+    const data = { total: count };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data));
+    }
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -128,8 +199,19 @@ router.get('/admin/orders', async (req, res) => {
 
 router.get('/admin/soldout', async (req, res) => {
   try {
+    const cacheKey = 'admin:soldout';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const soldOutItems = await MenuItems.find({ available: false }, 'name available');
-      res.status(202).json({ soldOutItems });
+    const data = { soldOutItems };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data));
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -139,8 +221,19 @@ router.get('/admin/soldout', async (req, res) => {
 
 router.get('/admin/itemcount', async (req, res) => {
   try {
+    const cacheKey = 'admin:itemcount';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const count = await MenuItems.countDocuments({});
-      res.status(202).json({ total: count });
+    const data = { total: count };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data));
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -172,6 +265,11 @@ router.post('/admin/create_menuitem', async (req, res) => {
       healthScore
     });
 
+    // Invalidate caches
+    if (isRedisAvailable()) {
+      await redisClient.del(['admin:menulist', 'admin:itemcount', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
+    }
+
       res.status(202).json({ message: 'Menu item created' });
   } catch (error) {
     console.error('Error creating menu item:', error);
@@ -181,8 +279,19 @@ router.post('/admin/create_menuitem', async (req, res) => {
 
 router.get('/admin/menulist', async (req, res) => {
   try {
+    const cacheKey = 'admin:menulist';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const menuItems = await MenuItems.find({});
-      res.status(202).json({ menuItems });
+    const data = { menuItems };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data));
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -190,7 +299,17 @@ router.get('/admin/menulist', async (req, res) => {
 
 router.get('/admin/stockalerts', async (req, res) => {
   try {
+    const cacheKey = 'admin:stockalerts';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.json(JSON.parse(cached));
+      }
+    }
     const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock');
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(lowStockItems));
+    }
     res.json(lowStockItems);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -229,6 +348,10 @@ router.put('/admin/menuitem/:id', async (req, res) => {
     if (!updatedItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
+    // Invalidate caches
+    if (isRedisAvailable()) {
+      await redisClient.del(['admin:menulist', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
+    }
       res.status(202).json({ message: 'Menu item updated', item: updatedItem });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Server error' });
@@ -241,6 +364,10 @@ router.get('/admin/delete_menuitem/:id', async (req, res) => {
     if (!deletedItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
+    // Invalidate caches
+    if (isRedisAvailable()) {
+      await redisClient.del(['admin:menulist', 'admin:itemcount', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
+    }
     res.json({ message: 'Menu item deleted' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -249,7 +376,17 @@ router.get('/admin/delete_menuitem/:id', async (req, res) => {
 
 router.get('/admin/menuitem_export', async (req, res) => {
   try {
+    const cacheKey = 'admin:menuitem_export';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.json(JSON.parse(cached));
+      }
+    }
     const menuItems = await MenuItems.find({});
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(menuItems));
+    }
     res.json(menuItems);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -258,6 +395,13 @@ router.get('/admin/menuitem_export', async (req, res) => {
 
 router.get('/admin/paymentstats', async (req, res) => {
   try {
+    const cacheKey = 'admin:paymentstats';
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.json(JSON.parse(cached));
+      }
+    }
     const paymentStats = await Payment.aggregate([
       { $group: {
           _id: "$paymentMethod", 
@@ -271,6 +415,9 @@ router.get('/admin/paymentstats', async (req, res) => {
 
       }
     ]);
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(paymentStats));
+    }
     res.json(paymentStats);
   }
   catch (error) {
