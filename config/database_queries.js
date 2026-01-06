@@ -73,6 +73,8 @@ const OrderScheme = new mongoose.Schema({
     pickupTime: { type: Date, required: false },
     notes: { type: String, required: false, default: '' },
     paypalOrderId: { type: String, required: false },
+    paymentMethod: { type: String, required: false },
+    transactionId: { type: String, required: false },
     publicID: { type: String, required: true, unique: true}
 });
 

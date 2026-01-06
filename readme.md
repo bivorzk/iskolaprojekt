@@ -169,13 +169,13 @@ Dev Dependencies:
 ## Router Routes
 
 ### Main Application Routes (Static Pages)
-![GET](https://img.shields.io/badge/GET-blue) /login                    # Login page
+![GET](https://img.shields.io/badge/GET-blue)  /login                    # Login page
 
-![GET](https://img.shields.io/badge/GET-blue) /register                 # Registration page
+![GET](https://img.shields.io/badge/GET-blue)  /register                 # Registration page
 
-![GET](https://img.shields.io/badge/GET-blue) /password-reset/:token    # Password reset page
+![GET](https://img.shields.io/badge/GET-blue)  /password-reset/:token    # Password reset page
 
-![GET](https://img.shields.io/badge/GET-blue) /pay                      # Payment page
+![GET](https://img.shields.io/badge/GET-blue)  /pay                      # Payment page
 
 ### Authentication Routes
 ![POST](https://img.shields.io/badge/POST-green) /register                 # User registration

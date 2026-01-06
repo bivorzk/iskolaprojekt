@@ -658,28 +658,26 @@ const StudentDashboard = () => {
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center space-x-4">
-                            <svg viewBox="0 0 500 140" className="h-10 w-auto">
-                                <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
-                                <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
-                                <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
-                                <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
-                                <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
-                                <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
-                                <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
-                                <text x="150" y="100" fontFamily="system-ui, -apple-system, sans-serif" fontSize="10" fill="#6C757D" letterSpacing="2">STUDENT PANEL</text>
-                            </svg>
+                <div className="flex justify-between items-center py-4 w-full">
+                    <div className="flex items-center space-x-4 px-4 sm:px-6 lg:px-8">
+                        <svg viewBox="0 0 500 140" className="h-20 w-auto">
+                            <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
+                            <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
+                            <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                            <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                            <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
+                            <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
+                            <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
+                            <text x="150" y="105" fontFamily="system-ui, -apple-system, sans-serif" fontSize="20" fill="#6C757D" letterSpacing="2">STUDENT PANEL</text>
+                        </svg>
+                    </div>
+                    <div className="flex items-center space-x-4 pr-4 sm:pr-6 lg:pr-8">
+                        <div className="text-right">
+                            <div className="text-sm text-gray-600">Wallet Balance</div>
+                            <div className="text-lg font-semibold text-primary">${walletAmount.toFixed(2)}</div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                                <div className="text-sm text-gray-600">Wallet Balance</div>
-                                <div className="text-lg font-semibold text-primary">${walletAmount.toFixed(2)}</div>
-                            </div>
-                            <span className="text-gray-700">{welcomeMessage || 'Welcome, Student'}</span>
-                            <a href="/logout" className="text-primary hover:text-secondary font-medium">Logout</a>
-                        </div>
+                        <span className="text-gray-700">{welcomeMessage || 'Welcome, Student'}</span>
+                        <a href="/logout" className="text-primary hover:text-secondary font-medium">Logout</a>
                     </div>
                 </div>
             </header>
@@ -855,25 +853,6 @@ const StudentDashboard = () => {
                                         >
                                             Choose Payment Method
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Payment Integration */}
-                            <div className="mt-8 bg-white p-6 rounded-lg shadow">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
-                                
-                                {/* Hidden fields that googlepay.js expects */}
-                                <input type="hidden" id="price" value={uploadForm.amount || '0'} />
-                                <input type="hidden" id="convertedAmount" value={uploadForm.amount || '0'} />
-                                <input type="hidden" id="currency" value={uploadForm.currency || 'HUF'} />
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div id="gpay-container" className="hidden">
-                                        <p className="text-gray-600">Loading Google Pay...</p>
-                                    </div>
-                                    <div id="paypal-button-container" className="hidden">
-                                        <p className="text-gray-600">PayPal integration will appear here</p>
                                     </div>
                                 </div>
                             </div>

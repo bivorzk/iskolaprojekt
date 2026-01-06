@@ -234,6 +234,21 @@ router.post('/orders', async (req, res) => {
         });
     }
     
+    // Validate input data
+    if (!Array.isArray(cart) || cart.length === 0) {
+        return res.status(400).json({
+            error: 'Invalid Cart',
+            message: 'Cart is required and must contain at least one item'
+        });
+    }
+    
+    if (!currency) {
+        return res.status(400).json({
+            error: 'Invalid Currency',
+            message: 'Currency is required'
+        });
+    }
+    
     try {
         // Convert cart format from frontend (name/price) to database format (menuItemId/quantity)
         let dbOrderItems = [];
@@ -316,6 +331,93 @@ router.post('/orders', async (req, res) => {
         }
         
         res.status(statusCode).json(errorResponse);
+    }
+});
+
+// Route to save completed orders (after payment is done)
+router.post('/save-order', async (req, res) => {
+    const { items, total, currency, paymentMethod, transactionId } = req.body;
+    console.log('Saving completed order:', { items, total, currency, paymentMethod, transactionId });
+    
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to place an order'
+        });
+    }
+    
+    try {
+        // Convert cart format from frontend to database format
+        let dbOrderItems = [];
+        let calculatedTotal = 0;
+        
+        if (Array.isArray(items) && items.length > 0) {
+            for (const cartItem of items) {
+                // Find menu item by _id (frontend sends full item objects)
+                const menuItem = await MenuItems.findById(cartItem._id);
+                if (menuItem) {
+                    const quantity = cartItem.quantity || 1;
+                    
+                    dbOrderItems.push({
+                        menuItemId: menuItem._id,
+                        quantity: quantity
+                    });
+                    calculatedTotal += menuItem.price * quantity;
+                    
+                    // Reduce stock
+                    menuItem.stock = Math.max(0, menuItem.stock - quantity);
+                    await menuItem.save();
+                }
+            }
+        }
+        
+        if (dbOrderItems.length === 0) {
+            return res.status(400).json({
+                error: 'Invalid Order',
+                message: 'No valid items found in the order'
+            });
+        }
+        
+        const publicId = nanoID.nanoid(6);
+        
+        // Create database order record
+        const newOrder = new Order({
+            userId: userId,
+            items: dbOrderItems,
+            orderDate: new Date(),
+            status: 'Completed', // Since payment is already done
+            totalAmount: calculatedTotal,
+            paymentMethod: paymentMethod,
+            transactionId: transactionId,
+            notes: '',
+            publicID: publicId
+        });
+        
+        await newOrder.save();
+        console.log('Order saved successfully:', newOrder._id);
+        
+        res.status(201).json({
+            success: true,
+            orderId: newOrder.publicID,
+            message: 'Order placed successfully',
+            orderDetails: {
+                id: newOrder.publicID,
+                total: calculatedTotal,
+                currency: currency,
+                paymentMethod: paymentMethod,
+                items: dbOrderItems
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error saving order:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to save order to database'
+        });
     }
 });
 

@@ -134,7 +134,9 @@ app.use('/Order', Order);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send('Page not found 😀');
+  res.sendFile(path.join(__dirname, '../public/404/404.html'));
+
+//  res.status(404).send('Page not found 😀');
 });
 
 app.listen(port, () => {
