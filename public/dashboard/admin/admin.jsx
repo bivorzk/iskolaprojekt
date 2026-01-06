@@ -151,16 +151,45 @@ const AdminDashboard = () => {
 
     const handleMenuFormSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate health score
+        const healthScore = parseInt(menuForm.healthScore) || 0;
+        if (healthScore < 0 || healthScore > 100) {
+            alert('Health Score must be between 0 and 100');
+            return;
+        }
+
         try {
             const method = menuForm.id ? 'PUT' : 'POST';
-            const url = menuForm.id ? `/api/menu-items/${menuForm.id}` : '/api/menu-items';
+            const url = menuForm.id ? `/dashboard/admin/menuitem/${menuForm.id}` : '/dashboard/admin/create_menuitem';
+
+            // Prepare the data in the format expected by the backend
+            const submitData = {
+                name: menuForm.name,
+                description: menuForm.description,
+                stock: parseInt(menuForm.stock) || 0,
+                price: parseFloat(menuForm.price) || 0,
+                category: menuForm.category,
+                allergens: menuForm.allergens ? menuForm.allergens.split(',').map(item => item.trim()) : [],
+                nutritionalInfo: {
+                    calories: parseInt(menuForm.calories) || 0,
+                    protein: parseInt(menuForm.protein) || 0
+                },
+                healthScore: parseInt(menuForm.healthScore) || 0,
+                available: parseInt(menuForm.stock) > 0
+            };
+
+            // Only include _id for updates, not for new items
+            if (menuForm.id) {
+                submitData._id = menuForm.id;
+            }
 
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(menuForm),
+                body: JSON.stringify(submitData),
             });
 
             if (response.ok) {
@@ -177,9 +206,14 @@ const AdminDashboard = () => {
                     healthScore: ''
                 });
                 loadDashboardData(); // Reload menu items
+                alert(menuForm.id ? 'Menu item updated successfully!' : 'Menu item created successfully!');
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error || 'Failed to save menu item'}`);
             }
         } catch (error) {
             console.error('Error saving menu item:', error);
+            alert('Error saving menu item. Please try again.');
         }
     };
 
@@ -446,14 +480,26 @@ const AdminDashboard = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="category"
                                             value={menuForm.category}
                                             onChange={handleMenuFormChange}
                                             required
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
-                                        />
+                                        >
+                                            <option value="">Select a category</option>
+                                            <option value="Soup">Soup</option>
+                                            <option value="Salad">Salad</option>
+                                            <option value="MainDish">Main Dish</option>
+                                            <option value="SideDish">Side Dish</option>
+                                            <option value="Snack">Snack</option>
+                                            <option value="Dessert">Dessert</option>
+                                            <option value="Drink">Drink</option>
+                                            <option value="Healthy">Healthy</option>
+                                            <option value="SpecialDiet">Special Diet</option>
+                                            <option value="DailySpecial">Daily Special</option>
+                                            <option value="Other">Other</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Allergens</label>
@@ -487,6 +533,9 @@ const AdminDashboard = () => {
                                             min="0"
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                                         />
+                                        {(parseInt(menuForm.protein) < 0) && (
+                                            <p className="mt-1 text-sm text-red-600">Protein cannot be negative</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Health Score</label>
@@ -496,8 +545,12 @@ const AdminDashboard = () => {
                                             value={menuForm.healthScore}
                                             onChange={handleMenuFormChange}
                                             min="0"
+                                            max="100"
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                                         />
+                                        {(parseInt(menuForm.healthScore) < 0 || parseInt(menuForm.healthScore) > 100) && menuForm.healthScore !== '' && (
+                                            <p className="mt-1 text-sm text-red-600">Health Score must be between 0 and 100</p>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="mt-6 flex space-x-4">

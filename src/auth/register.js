@@ -11,6 +11,7 @@ const { validateUsername, validatePassword, validateEmail, verifyCaptcha } = req
 const { createSecurityLog } = require('./security');
 const sendVerificationEmail = require('./email_verification');
 const { setVerificationCode } = require('../verificationStore');
+const { redisClient, isRedisAvailable } = require('../redis');
 
 // Environment configuration
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
@@ -23,7 +24,27 @@ const secretKey = process.env.Server_Side_Captha;
 router.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
-    console.log('Registration attempt from IP:', req.clientIp);
+    const clientIp = req.clientIp || req.ip || 'unknown';
+
+    // Rate limiting to prevent brute-force and spam
+    if (isRedisAvailable) {
+      try {
+        const rateLimitKey = `reg_attempts:${clientIp}`;
+        const attempts = await redisClient.get(rateLimitKey);
+        const attemptCount = attempts ? parseInt(attempts) : 0;
+        
+        if (attemptCount >= 5) { // Max 5 attempts per hour
+          return res.status(429).send('Too many registration attempts. Please try again later.');
+        }
+        
+        await redisClient.setEx(rateLimitKey, 3600, (attemptCount + 1).toString()); // Expire in 1 hour
+      } catch (redisError) {
+        console.error('Redis rate limiting error:', redisError);
+        // Continue without rate limiting if Redis fails
+      }
+    }
+
+    console.log('Registration attempt from IP:', clientIp);
 
     // Basic input validation
     if (!username || !password) {
@@ -59,62 +80,63 @@ router.post('/register', async (req, res) => {
       return res.status(400).send(emailError);
     }
 
-    // Check for existing users
+    // Check for existing users (but don't reveal existence to prevent enumeration)
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).send('User already exists');
-    }
-    
     const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).send('Email already in use');
+    
+    let shouldCreateUser = !existingUser && !existingEmail;
+    let shouldSendEmail = shouldCreateUser || (existingEmail && !existingEmail.isVerified);
+
+    // Send verification email if appropriate
+    if (shouldSendEmail) {
+      try {
+        // Generate verification code
+        const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+        // Store in verification store (Redis or memory)
+        await setVerificationCode(email, verificationCode);
+        
+        await sendVerificationEmail.sendVerificationEmail(email, verificationCode);
+        console.log('Verification email sent to:', email);
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Continue with registration even if email fails
+      }
     }
 
-    // Send verification email
-    try {
-      // Generate verification code
-      const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-      // Store in verification store (Redis or memory)
-      await setVerificationCode(email, verificationCode);
+    // Create new user only if doesn't exist
+    if (shouldCreateUser) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const userType = req.body.isParent === 'true' ? 'parent' : 'student';    
+      const user = new User({
+        username,
+        password: hashedPassword,
+        email,
+        usertype: userType,
+        isVerified: false
+      });
       
-      await sendVerificationEmail.sendVerificationEmail(email, verificationCode);
-      console.log('Verification email sent to:', email);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // Continue with registration even if email fails
+      await user.save();
+
+      // Create security log
+      await createSecurityLog({
+        userId: user._id,
+        ipAddress: clientIp,
+        action: 'registration_attempt',
+        type: 'INFO',
+        details: "--",
+        country: "--",
+        CountryCode: "--",
+        currency: "--",
+        Continent: "--",
+        IsVPN: false,
+        isTor: false,
+        isProxy: false
+      });
+      
+      console.log('User registered:', username);
+    } else {
+      console.log('Registration attempt for existing user/email:', username, email);
     }
-
-    // Create new user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const userType = req.body.isParent ? 'parent' : 'student';
-    
-    const user = new User({
-      username,
-      password: hashedPassword,
-      email,
-      usertype: userType,
-      isVerified: false
-    });
-    
-    await user.save();
-
-    // Create security log
-    await createSecurityLog({
-      userId: user._id,
-      ipAddress: req.clientIp,
-      action: 'registration_attempt',
-      type: 'INFO',
-      details: "--",
-      country: "--",
-      CountryCode: "--",
-      currency: "--",
-      Continent: "--",
-      IsVPN: false,
-      isTor: false,
-      isProxy: false
-    });
-    
-    console.log('User registered:', username);
     console.log('reCAPTCHA verification SUCCESS, score:', captchaResult.score);
 
     return res.status(200).json({ message: 'Registration successful! Check your email for verification code.' });

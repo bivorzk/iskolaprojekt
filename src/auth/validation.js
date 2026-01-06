@@ -36,7 +36,7 @@ function validateUsername(username, password) {
   }
 
   // Banned words validation
-  for (const word of Object.values(banned_words_hu)) {
+  for (const word of banned_words_hu.banned) {
     if (username.toLowerCase().includes(word)) {
       return 'Username contains banned words';
     }
@@ -79,8 +79,10 @@ function validatePassword(password) {
 
   // Password strength check
   const strengthResult = passwordStrength(password);
-  if (strengthResult.score <= 3) {
-    return `Password is too weak, choose a stronger one ${strengthResult.feedback.warning} ${strengthResult.guesses}`;
+  const warning = strengthResult.feedback.warning  ? ` (${strengthResult.feedback.warning})` : "";
+  const MIN_STRENGTH_SCORE = 3;
+  if (strengthResult.score < MIN_STRENGTH_SCORE) {
+    return `Password is too weak, choose a stronger one ${warning} + it takes ${strengthResult.guesses.toLocaleString()} to guess password `;
   }
 
   // Dangerous characters check
@@ -96,7 +98,7 @@ function validatePassword(password) {
   }
 
   // Banned words validation
-  for (const word of Object.values(banned_words_hu)) {
+  for (const word of banned_words_hu.banned) {
     if (password.toLowerCase().includes(word)) {
       return 'Password contains banned words';
     }
@@ -113,7 +115,8 @@ function validatePassword(password) {
 
 
 function validateEmail(email) {
-  if (disposable_email_list.includes(email)) {
+  const domain = email.split('@')[1];
+  if (domain && disposable_email_list.includes(domain.toLowerCase())) {
     return 'This type of email is not allowed please use another email';
   }
   return null;
