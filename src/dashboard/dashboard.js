@@ -482,7 +482,7 @@ router.post('/student/parent/link', async (req, res) => {
   }
 });
 
-// not sure 
+
 router.post('/student/parent', async (req, res) => {
   try {
     const studentId = req.session.user.id;
