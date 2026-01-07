@@ -891,7 +891,7 @@ const StudentDashboard = () => {
                                                         {tx._id}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                       {new Date(tx.date).toLocaleDateString()}
+                                                       {tx.date && !isNaN(new Date(tx.date).getTime()) ? new Date(tx.date).toLocaleDateString() : 'N/A'}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                                         ${tx.amount?.toFixed(2) || '0.00'}
@@ -947,11 +947,11 @@ const StudentDashboard = () => {
                                             </div> 
                                             <h3 className="text-lg font-medium text-gray-900 mb-2">Account details - WIP</h3>
                                             <div className="text-sm text-gray-600">
-                                                <p><span className="font-medium">Email:</span> {userData.user?.email}</p>
-                                                <p><span className="font-medium">Full Name:</span> {userData.user?.username}</p>
-                                                <p><span className="font-medium">Student ID:</span> {userData.user?.username}</p>
-                                                <p><span className="font-medium">Email verification status </span>{userData.user?.isVerified ? 'Verified' : 'Not Verified'}</p>
-                                                <p><span className="font-medium">Account Creation date</span>{userData.user?.createdAt ? new Date(userData.user.createdAt).toLocaleDateString() : 'N/A'} </p>
+                                                <p><span className="font-medium">Email:</span> {userData.email}</p>
+                                                <p><span className="font-medium">Full Name:</span> {userData.fullName}</p>
+                                                <p><span className="font-medium">Student ID:</span> {userData.studentId}</p>
+                                                <p><span className="font-medium">Email verification status </span>{userData.IsVerified}</p>
+                                                <p><span className="font-medium">Account Creation date</span>{userData.createdAt && !isNaN(new Date(userData.createdAt).getTime()) ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'} </p>
                                         </div>
                                     </div>
                                 </div>
