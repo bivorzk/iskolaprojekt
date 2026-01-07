@@ -46,6 +46,9 @@ app.use(session({
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/home_page/home_page.html'));
+});
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
 
@@ -105,6 +108,8 @@ app.use('/dashboard', (req, res, next) => {
 
 
 // Serve HTML
+
+
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });

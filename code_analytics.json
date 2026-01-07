@@ -1,0 +1,47 @@
+{
+    "global": {
+        "total_files": 74,
+        "total_lines": 17188,
+        "non_empty_lines": 15920,
+        "total_characters": 559837
+    },
+    "by_extension": {
+        ".json": {
+            "files": 9,
+            "lines": 6388,
+            "chars": 121301
+        },
+        ".js": {
+            "files": 36,
+            "lines": 5703,
+            "chars": 192882
+        },
+        ".html": {
+            "files": 14,
+            "lines": 1262,
+            "chars": 56203
+        },
+        ".jsx": {
+            "files": 7,
+            "lines": 2939,
+            "chars": 168891
+        },
+        ".css": {
+            "files": 5,
+            "lines": 620,
+            "chars": 11401
+        },
+        ".py": {
+            "files": 3,
+            "lines": 276,
+            "chars": 9159
+        }
+    },
+    "special_totals": {
+        ".js": 5703,
+        ".jsx": 2939,
+        ".html": 1262,
+        ".css": 620,
+        ".py": 276
+    }
+}

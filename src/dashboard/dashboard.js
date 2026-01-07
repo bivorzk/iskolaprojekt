@@ -42,22 +42,22 @@ function isRedisAvailable() {
 // Admin permission middleware
 function requireAdmin(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.status(401).send('Unauthorized: No session available');
+    return res.sendFile(path.join(__dirname, '../../public/no_perm/index.html'));
   }
   if (req.session.user.usertype !== 'admin') {
-    return res.status(403).send('No admin rights');
+    return res.sendFile(path.join(__dirname, '../../public/no_perm/index.html'));
   }
   next();
 }
 function requireStudent(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.status(401).send('Unauthorized: No session available');
+    return res.sendFile(path.join(__dirname, '../../public/no_perm/index.html'));
   }
   // Allow both students and admins to access student routes
   if (req.session.user.usertype === 'student' || req.session.user.usertype === 'admin') {
     next();
   } else {
-    res.status(403).send('Access denied: Student or Admin access required');
+    return res.sendFile(path.join(__dirname, '../../public/no_perm/index.html'));
   }
 }
 
