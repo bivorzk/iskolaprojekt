@@ -888,7 +888,7 @@ const StudentDashboard = () => {
                                                         {tx._id}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                        {new Date(tx.date).toLocaleDateString()} {new Date(tx.date).getHours()}:{new Date(tx.date).getMinutes().toString().padStart(2, '0')}:{new Date(tx.date).getSeconds().toString().padStart(2, '0')}
+                                                       {new Date(tx.date).toLocaleDateString()}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                                         ${tx.amount?.toFixed(2) || '0.00'}

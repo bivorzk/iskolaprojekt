@@ -15,7 +15,7 @@ router.use(express.json());
 
 const { User } = require('../../src/database');
 const { Payment, LoyaltyProgram, MenuItems, Order, OrderItems } = require('../../config/database_queries');
-const { get } = require('http');
+
 
 
 mongoose.connect(dbUrl + dbName)

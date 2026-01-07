@@ -10,41 +10,56 @@ config:
   defaults:
     headers:
       'Content-Type': 'application/json'
-      'Cookie': 'connect.sid=your-session-cookie-here'  # You'll need a valid session
+      'Cookie': 'connect.sid=09ABCLyOG1eK6-L7h-lbee2KJcTYGMwMriP4FhQCzIuVKj6uZSzUKeaQ_zWJNoFYytpbW911dJo8Y-KE1Ws2zfbzE2B0lnpHbsHdnY2JEovOIVPhEWIQGLULaP1f6C8XxJ'  # You'll need a valid session
 
 scenarios:
   - name: "Health Check Test"
     weight: 30
     flow:
+      - post:
+          url: "/login"
+          json:
+            username: "KBalazs"
+            password: "S-b%%W_TgGM7NR"
       - get:
           url: "/dashboard/admin/health"
           expect:
-            - statusCode: [200, 401, 403]
+            - statusCode: 200
       - think: 2
 
   - name: "Basic Dashboard Performance Test"
     weight: 50
     flow:
+      - post:
+          url: "/login"
+          json:
+            username: "KBalazs"
+            password: "S-b%%W_TgGM7NR"
       - get:
           url: "/dashboard/admin/usercount"
           expect:
-            - statusCode: [200, 202, 401, 403]
+            - statusCode: 200
       - think: 3
       - get:
           url: "/dashboard/admin/orders"
           expect:
-            - statusCode: [200, 202, 401, 403]
+            - statusCode: 200
       - think: 2
 
   - name: "Light Cache Performance Test"
     weight: 20
     flow:
+      - post:
+          url: "/login"
+          json:
+            username: "KBalazs"
+            password: "S-b%%W_TgGM7NR"
       - get:
           url: "/dashboard/admin/health"
           expect:
-            - statusCode: [200, 401, 403]
+            - statusCode: 200
       - think: 1
       - get:
           url: "/dashboard/admin/health"
           expect:
-            - statusCode: [200, 401, 403]
+            - statusCode: 200

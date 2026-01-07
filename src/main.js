@@ -57,7 +57,7 @@ const createStore = () => redisAvailable ? new RedisStore({
 // Rate limiter for all non-sensitive routes
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 1 hour)
+  max: 250, // Limit each IP to 250
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   store: createStore(),
@@ -78,6 +78,12 @@ const LoginLimiter = rateLimit({
   store: createStore(),
 });
 
+const dashboardLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  max: 1000, // start blocking after 1000 requests
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  store: createStore(),
+});
 
 // Apply the rate limiting middleware to all requests
 app.use('/passwordhash', limiter);
@@ -85,13 +91,17 @@ app.use('/database', limiter);
 app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
 app.use('/api', limiter);
-app.use('/dashboard', limiter);
+app.use('/dashboard', dashboardLimiter);
 app.use('/admin', limiter);
 app.use('/Order', limiter);
 app.use('/2fa', limiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
 
+app.use('/dashboard', (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+  next();
+});
 
 
 // Serve HTML
