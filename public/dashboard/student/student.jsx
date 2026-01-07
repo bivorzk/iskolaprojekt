@@ -20,6 +20,7 @@ const StudentDashboard = () => {
     const [transactions, setTransactions] = useState([]);
     const [parentLinkStatus, setParentLinkStatus] = useState({ linked: false, parentEmail: '' });
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [userData, setUserData] = useState({});
 
     useEffect(() => {
         loadDashboardData();
@@ -121,7 +122,7 @@ const StudentDashboard = () => {
             const welcomeData = await safeFetch('/dashboard/student/welcome-message', { message: 'Welcome, Student' });
             const transactionsData = await safeFetch('/dashboard/student/transactions', { transactions: [] });
             const parentData = await safeFetch('/dashboard/student/parent', { linked: false, parentEmail: '' });
-            
+            const userData = await safeFetch('/dashboard/student/userinfo', { username: 'Student' });
             // Get wallet balance using the dedicated function
             const currentBalance = await refreshWalletBalance();
             if (currentBalance === null) {
@@ -134,6 +135,7 @@ const StudentDashboard = () => {
             setWelcomeMessage(welcomeData.message || 'Welcome, Student');
             setTransactions(transactionsData.transactions || []);
             setParentLinkStatus(parentData);
+            setUserData(userData);
             setStats({
                 totalUsers: '--',
                 activeSessions: '--',
@@ -148,6 +150,7 @@ const StudentDashboard = () => {
             setWelcomeMessage('Welcome, Student');
             setTransactions([]);
             setParentLinkStatus({ linked: false, parentEmail: '' });
+            setUserData({ username: 'Student' });
             setStats({
                 totalUsers: '--',
                 activeSessions: '--',
@@ -941,7 +944,14 @@ const StudentDashboard = () => {
                                             </a>
                                             <br />
                                             <br />
-                                            <h3 className="text-lg font-medium text-gray-900 mb-2">test</h3>
+                                            </div> 
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Account details - WIP</h3>
+                                            <div className="text-sm text-gray-600">
+                                                <p><span className="font-medium">Email:</span> {userData.user?.email}</p>
+                                                <p><span className="font-medium">Full Name:</span> {userData.user?.username}</p>
+                                                <p><span className="font-medium">Student ID:</span> {userData.user?.username}</p>
+                                                <p><span className="font-medium">Email verification status </span>{userData.user?.isVerified ? 'Verified' : 'Not Verified'}</p>
+                                                <p><span className="font-medium">Account Creation date</span>{userData.user?.createdAt ? new Date(userData.user.createdAt).toLocaleDateString() : 'N/A'} </p>
                                         </div>
                                     </div>
                                 </div>

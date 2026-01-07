@@ -718,5 +718,18 @@ router.post('/student/wallet/add', async (req, res) => {
 });
 
 
+router.get('/student/userinfo', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId).select('username email usertype createdAt isVerified');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+      res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 module.exports = router;
