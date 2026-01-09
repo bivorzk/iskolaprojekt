@@ -439,7 +439,7 @@ const { useState, useEffect } = React;
                     body: JSON.stringify({
                         items: cart,
                         total: getCartTotal(),
-                        currency: currency
+                        currency: currencyz
                     })
                 }).then(response => response.json())
                 .then(data => {
@@ -449,7 +449,7 @@ const { useState, useEffect } = React;
                         saveCartToStorage([]);
                     } else {
                         alert('Payment failed: ' + data.message);
-            }
+                    }
                 }).catch(error => {
                     console.error('Error processing balance payment:', error);
                     alert('Payment failed due to a network error. Please try again.');

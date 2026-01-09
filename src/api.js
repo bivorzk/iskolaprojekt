@@ -676,52 +676,141 @@ router.post('/orders/:orderID/capture', async (req, res) => {
 });
 
 // Order from balance
-
-router.post('/pay-with-balance/', async (req, res) => {
- 
-    User.findById(req.session.user.id).then(user => {
-        if (user.balance >= req.query.amount) {
-            const newOrder = new Order({
-                userId: req.session.user.id,
-                items: JSON.parse(req.query.items),
-                orderDate: new Date(),
-                status: 'Completed',
-                totalAmount: req.query.amount,
-                paypalOrderId: null,
-                notes: 'Order paid from balance',
-                publicID: nanoID.nanoid(6)
+router.post('/pay-with-balance', async (req, res) => {
+    const { items, total, currency } = req.body;
+    console.log('Paying with balance:', { items, total, currency });
+    
+    const userId = req.session && req.session.user ? req.session.user.id : null;
+    
+    // Check if user is logged in
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'You must be logged in to place an order'
+        });
+    }
+    
+    try {
+        // Get user and check balance
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(401).json({
+                error: 'Unauthorized',
+                message: 'User not found'
             });
-            newOrder.save().then(async order => {
-                // Deduct balance
-                user.balance -= req.query.amount;
-                await user.save();
-
-                res.status(201).json({
-                    success: true,
-                    orderId: order.publicID,
-                    message: 'Order placed successfully from balance',
-                    orderDetails: {
-                        id: order.publicID,
-                        total: order.totalAmount,
-                        currency: 'USD',
-                        paymentMethod: 'Balance',
-                        items: order.items
-                    }
-                });
-            }).catch(err => {
-                console.error('Error saving order from balance:', err);
-                res.status(500).json({
-                    error: 'Internal Server Error',
-                    message: 'Failed to save order to database'
-                });
-            });
+        }
+        
+        // Convert total to USD for balance check (balance is stored in USD)
+        let totalInUSD = total;
+        if (currency === 'HUF') {
+            totalInUSD = total * 0.0027; // Approximate HUF to USD rate
+        } else if (currency === 'EUR') {
+            totalInUSD = total * 1.1; // Approximate EUR to USD rate
+        } else if (currency === 'USD') {
+            totalInUSD = total; // Already in USD
         } else {
-            res.status(400).json({
+            return res.status(400).json({
+                error: 'Unsupported Currency',
+                message: 'Currency not supported for balance payment'
+            });
+        }
+        
+        if (user.balance < totalInUSD) {
+            return res.status(400).json({
                 error: 'Insufficient Balance',
                 message: 'Your account balance is insufficient to place this order'
             });
         }
-    });
+        
+        // Convert cart format from frontend to database format
+        let dbOrderItems = [];
+        let calculatedTotal = 0;
+        
+        if (Array.isArray(items) && items.length > 0) {
+            for (const cartItem of items) {
+                // Find menu item by _id (frontend sends full item objects)
+                const menuItem = await MenuItems.findById(cartItem._id);
+                if (menuItem) {
+                    const quantity = cartItem.quantity || 1;
+                    
+                    if (menuItem.stock < quantity) {
+                        return res.status(400).json({
+                            error: 'Insufficient Stock',
+                            message: `${menuItem.name} has insufficient stock. Available: ${menuItem.stock}, Requested: ${quantity}`
+                        });
+                    }
+                    
+                    dbOrderItems.push({
+                        menuItemId: menuItem._id,
+                        quantity: quantity
+                    });
+                    calculatedTotal += menuItem.price * quantity;
+                    
+                    // Reduce stock
+                    menuItem.stock = Math.max(0, menuItem.stock - quantity);
+                    await menuItem.save();
+                }
+            }
+        }
+        
+        if (dbOrderItems.length === 0) {
+            return res.status(400).json({
+                error: 'Invalid Order',
+                message: 'No valid items found in the order'
+            });
+        }
+        
+        // Verify calculated total matches requested total (with small tolerance for floating point)
+        if (Math.abs(calculatedTotal - total) > 0.01) {
+            return res.status(400).json({
+                error: 'Price Mismatch',
+                message: 'Order total does not match calculated amount'
+            });
+        }
+        
+        const publicId = nanoID.nanoid(6);
+        
+        // Create database order record
+        const newOrder = new Order({
+            userId: userId,
+            items: dbOrderItems,
+            orderDate: new Date(),
+            status: 'Completed', // Since payment is already done
+            totalAmount: calculatedTotal,
+            paymentMethod: 'Balance',
+            transactionId: 'balance_' + Date.now(),
+            notes: '',
+            publicID: publicId
+        });
+        
+        await newOrder.save();
+        
+        // Deduct balance (in USD)
+        user.balance -= totalInUSD;
+        await user.save();
+        
+        console.log('Order saved successfully from balance:', newOrder._id);
+        
+        res.status(201).json({
+            success: true,
+            orderId: newOrder.publicID,
+            message: 'Order placed successfully',
+            orderDetails: {
+                id: newOrder.publicID,
+                total: calculatedTotal,
+                currency: currency,
+                paymentMethod: 'Balance',
+                items: dbOrderItems
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error processing balance payment:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to process balance payment'
+        });
+    }
 });
 
 module.exports = router;
