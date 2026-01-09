@@ -430,6 +430,33 @@ const { useState, useEffect } = React;
                 }
             };
 
+            const handleBalancePayment = async () => {
+                fetch('/api/pay-with-balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        items: cart,
+                        total: getCartTotal(),
+                        currency: currency
+                    })
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Payment successful! Your order has been placed.');
+                        setCart([]);
+                        saveCartToStorage([]);
+                    } else {
+                        alert('Payment failed: ' + data.message);
+            }
+                }).catch(error => {
+                    console.error('Error processing balance payment:', error);
+                    alert('Payment failed due to a network error. Please try again.');
+                });
+            };
+
+
             const filteredMenuItems = menuItems.filter(item => {
                 const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                     item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -655,6 +682,13 @@ const { useState, useEffect } = React;
                                                         className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-colors font-medium"
                                                     >
                                                         Pay with PayPal
+                                                    </button>
+
+                                                    <button
+                                                        onClick={handleBalancePayment}
+                                                        className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 transition-colors font-medium">
+                                                    
+                                                        Pay with Account Balance
                                                     </button>
                                                 </div>
                                             </div>

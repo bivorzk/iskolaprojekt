@@ -673,6 +673,55 @@ router.post('/orders/:orderID/capture', async (req, res) => {
         
         res.status(statusCode).json(errorResponse);
     }
-}); 
+});
+
+// Order from balance
+
+router.post('/pay-with-balance/', async (req, res) => {
+ 
+    User.findById(req.session.user.id).then(user => {
+        if (user.balance >= req.query.amount) {
+            const newOrder = new Order({
+                userId: req.session.user.id,
+                items: JSON.parse(req.query.items),
+                orderDate: new Date(),
+                status: 'Completed',
+                totalAmount: req.query.amount,
+                paypalOrderId: null,
+                notes: 'Order paid from balance',
+                publicID: nanoID.nanoid(6)
+            });
+            newOrder.save().then(async order => {
+                // Deduct balance
+                user.balance -= req.query.amount;
+                await user.save();
+
+                res.status(201).json({
+                    success: true,
+                    orderId: order.publicID,
+                    message: 'Order placed successfully from balance',
+                    orderDetails: {
+                        id: order.publicID,
+                        total: order.totalAmount,
+                        currency: 'USD',
+                        paymentMethod: 'Balance',
+                        items: order.items
+                    }
+                });
+            }).catch(err => {
+                console.error('Error saving order from balance:', err);
+                res.status(500).json({
+                    error: 'Internal Server Error',
+                    message: 'Failed to save order to database'
+                });
+            });
+        } else {
+            res.status(400).json({
+                error: 'Insufficient Balance',
+                message: 'Your account balance is insufficient to place this order'
+            });
+        }
+    });
+});
 
 module.exports = router;

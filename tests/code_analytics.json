@@ -1,0 +1,32 @@
+{
+    "global": {
+        "total_files": 6,
+        "total_lines": 755,
+        "non_empty_lines": 685,
+        "total_characters": 22285
+    },
+    "by_extension": {
+        ".py": {
+            "files": 3,
+            "lines": 276,
+            "chars": 9159
+        },
+        ".js": {
+            "files": 2,
+            "lines": 87,
+            "chars": 2697
+        },
+        ".json": {
+            "files": 1,
+            "lines": 392,
+            "chars": 10429
+        }
+    },
+    "special_totals": {
+        ".js": 87,
+        ".jsx": 0,
+        ".html": 0,
+        ".css": 0,
+        ".py": 276
+    }
+}
