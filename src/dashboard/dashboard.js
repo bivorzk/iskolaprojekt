@@ -455,6 +455,10 @@ router.get('/student/freeze_account', async (req, res) => {
   try {
     const userId = req.session.user.id;
     await User.findByIdAndUpdate(userId, { user_type: 'frozen' });
+    // Invalidate userinfo cache
+    if (isRedisAvailable()) {
+      await redisClient.del(`student:userinfo:${userId}`);
+    }
       res.status(202).json({ message: 'Account has been frozen' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -476,6 +480,10 @@ router.post('/student/parent/link', async (req, res) => {
       return res.status(400).json({ error: 'Link already exists' });
     }
     await ParentStudent.create({ parentId: parentUser._id, studentId });
+    // Invalidate userinfo cache
+    if (isRedisAvailable()) {
+      await redisClient.del(`student:userinfo:${studentId}`);
+    }
       res.status(202).json({ message: 'Parent linked successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -501,6 +509,10 @@ router.get('/student/parent/unlink', async (req, res) => {
   try {
     const studentId = req.session.user.id;
     await ParentStudent.findOneAndDelete({ studentId });
+    // Invalidate userinfo cache
+    if (isRedisAvailable()) {
+      await redisClient.del(`student:userinfo:${studentId}`);
+    }
       res.status(202).json({ message: 'Parent unlinked successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -510,8 +522,19 @@ router.get('/student/parent/unlink', async (req, res) => {
 router.get('/student/transactions', async (req, res) => {
   try {
     const userId = req.session.user.id;
+    const cacheKey = `student:transactions:${userId}`;
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(202).json(JSON.parse(cached));
+      }
+    }
     const transactions = await Payment.find({ userId }).sort({ date: -1 });
-      res.status(202).json({ transactions });
+    const data = { transactions };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
+    }
+      res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -529,6 +552,13 @@ router.get('/student/welcome-message', (req, res) => {
 router.get('/student/order_history' , async (req, res) => {
   try {
       const userId = req.session.user.id;
+      const cacheKey = `student:order_history:${userId}`;
+      if (isRedisAvailable()) {
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+          return res.status(202).json(JSON.parse(cached));
+        }
+      }
 
       const orders = await Order.find({ userId })
         .populate('items.menuItemId')
@@ -547,7 +577,11 @@ router.get('/student/order_history' , async (req, res) => {
         }))
       }));
 
-    res.status(202).json({ orderData });
+      const data = { orderData };
+      if (isRedisAvailable()) {
+        await redisClient.setEx(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
+      }
+    res.status(202).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -584,6 +618,13 @@ router.get('/student/wallet/balance', async (req, res) => {
   try {
     const userId = req.session.user.id;
     console.log('Getting balance for user:', userId);
+    const cacheKey = `student:wallet_balance:${userId}`;
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(200).json(JSON.parse(cached));
+      }
+    }
     
     const user = await User.findById(userId).select('balance');
     
@@ -601,10 +642,14 @@ router.get('/student/wallet/balance', async (req, res) => {
       console.log('Initialized user balance to 0');
     }
     
-    res.status(200).json({ 
+    const data = { 
       balance: user.balance || 0,
       success: true
-    });
+    };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
+    }
+    res.status(200).json(data);
   } catch (error) {
     console.error('Error fetching wallet balance:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
@@ -676,6 +721,11 @@ router.post('/student/wallet/add', async (req, res) => {
     const verifyUser = await User.findById(userId).select('balance');
     console.log('Verification after update:', { userId, verifiedBalance: verifyUser.balance });
     
+    // Invalidate balance cache
+    if (isRedisAvailable()) {
+      await redisClient.del(`student:wallet_balance:${userId}`);
+    }
+    
     // Create payment record
     try {
       const paymentData = {
@@ -691,6 +741,11 @@ router.post('/student/wallet/add', async (req, res) => {
       
       const paymentRecord = await Payment.create(paymentData);
       console.log('Payment record created successfully:', paymentRecord._id);
+      
+      // Invalidate transactions cache
+      if (isRedisAvailable()) {
+        await redisClient.del(`student:transactions:${userId}`);
+      }
     } catch (paymentError) {
       console.error('Error creating payment record:', paymentError);
       // Continue even if payment record fails, wallet is already updated
@@ -721,17 +776,28 @@ router.post('/student/wallet/add', async (req, res) => {
 router.get('/student/userinfo', async (req, res) => {
   try {
     const userId = req.session.user.id;
+    const cacheKey = `student:userinfo:${userId}`;
+    if (isRedisAvailable()) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(200).json(JSON.parse(cached));
+      }
+    }
     const user = await User.findById(userId).select('username email usertype createdAt isVerified');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.status(200).json({
+    const data = {
       email: user.email,
       fullName: user.username,
       studentId: user.username, // Using username as student ID for now
       IsVerified: user.isVerified,
       createdAt: user.createdAt
-    });
+    };
+    if (isRedisAvailable()) {
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
+    }
+    res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
