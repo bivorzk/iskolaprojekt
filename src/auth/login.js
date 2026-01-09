@@ -7,6 +7,7 @@ const User = require('../models/User');
 const { createSecurityLog } = require('./security');
 const { SecurityLogs } = require('../../config/database_queries');
 const { default: IPLocate } = require('node-iplocate');
+const { redisClient, isRedisAvailable } = require('../redis');
 require('dotenv').config();
 
 /**
@@ -16,9 +17,27 @@ require('dotenv').config();
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    const clientIp = req.clientIp || req.ip || 'unknown';
 
-    const IPClient = new IPLocate(process.env.GEOIP);
-    const ip = req.clientIp;
+    // Rate limiting to prevent brute-force attacks
+    if (isRedisAvailable) {
+      try {
+        const rateLimitKey = `login_attempts:${clientIp}`;
+        const attempts = await redisClient.get(rateLimitKey);
+        const attemptCount = attempts ? parseInt(attempts) : 0;
+        
+        if (attemptCount >= 5) { // Max 5 attempts per hour
+          return res.status(429).send('Too many login attempts. Please try again later.');
+        }
+        
+        await redisClient.setEx(rateLimitKey, 3600, (attemptCount + 1).toString()); // Expire in 1 hour
+      } catch (redisError) {
+        console.error('Redis rate limiting error:', redisError);
+        // Continue without rate limiting if Redis fails
+      }
+    }
+
+    console.log('Login attempt from IP:', clientIp);
 
     console.log('Username received:', username);
     console.log('Password received:', password ? '***' : 'undefined');
@@ -48,14 +67,14 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, username: user.username }, 'ourSecretKey');
     const decoded = jwt.verify(token, 'ourSecretKey');
 
-
-    const geo = await IPClient.lookup(ip);
-    console.log('Login attempt from IP:', ip, 'Location:', geo.country);
+    const IPClient = new IPLocate(process.env.GEOIP);
+    const geo = await IPClient.lookup(clientIp);
+    console.log('Login attempt from IP:', clientIp, 'Location:', geo.country);
   
 
 
     // Security logging with IP tracking
-    const hashedIP = crypto.createHash('sha256').update(req.clientIp).digest('hex');
+    const hashedIP = crypto.createHash('sha256').update(clientIp).digest('hex');
     const lastLog = await SecurityLogs.findOne({ userId: user._id })
       .sort({ Timestamp: -1 });
 
@@ -67,7 +86,7 @@ router.post('/login', async (req, res) => {
       // Different IP detected - security warning
       await createSecurityLog({
         userId: user._id,
-        ipAddress: req.clientIp,
+        ipAddress: clientIp,
         action: 'ip_mismatch_login_attempt',
         type: 'WARNING',
         details: 'Login attempt from different IP address'
@@ -76,7 +95,7 @@ router.post('/login', async (req, res) => {
       // Normal login from known or new IP
       await createSecurityLog({
         userId: user._id,
-        ipAddress: req.clientIp,
+        ipAddress: clientIp,
         action: 'login_attempt',
         type: 'INFO',
         details: ipMatches ? 'Login from known IP' : 'First login for user'
