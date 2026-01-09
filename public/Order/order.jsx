@@ -439,7 +439,7 @@ const { useState, useEffect } = React;
                     body: JSON.stringify({
                         items: cart,
                         total: getCartTotal(),
-                        currency: currencyz
+                        currency: currency
                     })
                 }).then(response => response.json())
                 .then(data => {
