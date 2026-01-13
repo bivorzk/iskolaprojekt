@@ -4,193 +4,31 @@ const { User } = require('./database');
 const { Payment, UserLoyalty, MenuItems, Order, OrderItems } = require('../config/database_queries');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
-const path = require('path');
-const nanoID = require('nanoid');
 
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+// Import services
+const paypalService = require('./services/paypal-service');
+const googlePayService = require('./services/googlepay-service');
+const orderService = require('./services/order-service');
 
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+// Import security middleware
+const {
+    securityMiddleware,
+    limiter,
+    authLimiter,
+    paymentLimiter,
+    corsOptions,
+    validateOrderInput,
+    validatePaymentInput
+} = require('./middleware/security');
 
-// Paypal configuration
-const client = new Client({
-    clientCredentialsAuthCredentials: {
-        oAuthClientId: PAYPAL_CLIENT_ID,
-        oAuthClientSecret: PAYPAL_CLIENT_SECRET,
-    },
-    timeout: 0,
-    environment: Environment.Sandbox,
-    logging: {
-        logLevel: LogLevel.Info,
-        logRequest: { logBody: true },
-        logResponse: { logHeaders: true },
-    },
-});
+// Apply security middleware
+router.use(securityMiddleware);
+router.use(require('cors')(corsOptions));
 
-const ordersController = new OrdersController(client);
-const paymentsController = new PaymentsController(client);
+// Apply general rate limiting
+router.use('/orders', limiter);
+router.use('/pay-with-balance', paymentLimiter);
 
-
-const isRetryableError = (error) => {
-    if (!error.statusCode) return false;
-    return error.statusCode >= 500 || error.statusCode === 429;
-};
-
-// Helper function to wait with exponential backoff
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const createOrder = async (cart, currency = "USD", amount = "0.00", maxRetries = 3) => {
-    // PayPal sandbox works best with USD
-    const paypalCurrency = "USD";
-    
-    // Calculate total and map items
-    let total = 0;
-    let items = [];
-    if (Array.isArray(cart) && cart.length > 0) {
-        items = cart.map((item, index) => {
-            const price = parseFloat(item.price) || 0;
-            const quantity = parseInt(item.quantity) || 1;
-            total += price * quantity;
-            return {
-                name: item.name || `Item ${index + 1}`,
-                unitAmount: {
-                    currencyCode: paypalCurrency,
-                    value: price.toFixed(2),
-                },
-                quantity: quantity.toString(),
-                description: item.description || "",
-                sku: item.sku || `sku${index + 1}`,
-            };
-        });
-    }
-    // Use calculated total from items to ensure consistency
-    const orderAmount = total > 0 ? total : parseFloat(amount);
-    
-    // Ensure item total exactly matches sum of individual items
-    const itemTotalCalculated = items.reduce((sum, item) => {
-        return sum + (parseFloat(item.unitAmount.value) * parseInt(item.quantity));
-    }, 0);
-    
-    const finalAmount = itemTotalCalculated > 0 ? itemTotalCalculated : orderAmount;
-    
-    const collect = {
-        body: {
-            intent: "CAPTURE",
-            purchaseUnits: [
-                {
-                    amount: {
-                        currencyCode: paypalCurrency,
-                        value: finalAmount.toFixed(2),
-                        breakdown: {
-                            itemTotal: {
-                                currencyCode: paypalCurrency,
-                                value: finalAmount.toFixed(2),
-                            },
-                        },
-                    },
-                    items: items.length > 0 ? items : [{
-                        name: "Order Total",
-                        unitAmount: {
-                            currencyCode: paypalCurrency,
-                            value: finalAmount.toFixed(2),
-                        },
-                        quantity: "1",
-                        description: "Total order amount",
-                        sku: "total01",
-                    }],
-                },
-            ],
-        },
-        prefer: "return=minimal",
-    };
-
-    let lastError;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            const { body, ...httpResponse } = await ordersController.createOrder(
-                collect
-            );
-            return {
-                jsonResponse: JSON.parse(body),
-                httpStatusCode: httpResponse.statusCode,
-            };
-        } catch (error) {
-            lastError = error;
-            console.error(`PayPal createOrder attempt ${attempt + 1} failed:`, {
-                statusCode: error.statusCode,
-                message: error.message,
-                debugId: error.headers?.['paypal-debug-id'] || 'N/A'
-            });
-            
-            // If this is the last attempt or error is not retryable, don't retry
-            if (attempt === maxRetries || !isRetryableError(error)) {
-                break;
-            }
-            
-            // Calculate delay with exponential backoff: 1s, 2s, 4s
-            const delay = Math.pow(2, attempt) * 1000;
-            console.log(`Retrying PayPal createOrder in ${delay}ms...`);
-            await wait(delay);
-        }
-    }
-
-    // All retries failed, throw the last error
-    console.error('PayPal createOrder failed after all retries:', lastError);
-    if (lastError instanceof ApiError) {
-        const errorMessage = lastError.statusCode === 503 
-            ? 'PayPal service is temporarily unavailable. Please try again in a few minutes.'
-            : `PayPal API Error: ${lastError.message}`;
-        throw new Error(errorMessage);
-    }
-    throw new Error(`Unknown PayPal error: ${lastError.message || lastError}`);
-};
-
-const captureOrder = async (orderID, maxRetries = 3) => {
-    const collect = {
-        id: orderID,
-        prefer: "return=minimal",
-    };
-
-    let lastError;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            const { body, ...httpResponse } = await ordersController.captureOrder(
-                collect
-            );
-            return {
-                jsonResponse: JSON.parse(body),
-                httpStatusCode: httpResponse.statusCode,
-            };
-        } catch (error) {
-            lastError = error;
-            console.error(`PayPal captureOrder attempt ${attempt + 1} failed:`, {
-                statusCode: error.statusCode,
-                message: error.message,
-                debugId: error.headers?.['paypal-debug-id'] || 'N/A'
-            });
-            
-            // If this is the last attempt or error is not retryable, don't retry
-            if (attempt === maxRetries || !isRetryableError(error)) {
-                break;
-            }
-            
-            // Calculate delay with exponential backoff
-            const delay = Math.pow(2, attempt) * 1000;
-            console.log(`Retrying PayPal captureOrder in ${delay}ms...`);
-            await wait(delay);
-        }
-    }
-
-    // All retries failed
-    if (lastError instanceof ApiError) {
-        const errorMessage = lastError.statusCode === 503 
-            ? 'PayPal service is temporarily unavailable. Please try again in a few minutes.'
-            : `PayPal API Error: ${lastError.message}`;
-        throw new Error(errorMessage);
-    }
-    throw new Error(`Unknown PayPal error: ${lastError.message || lastError}`);
-};
 
 // api/orders
 router.get('/test', (req, res) => {
@@ -200,7 +38,6 @@ router.get('/test', (req, res) => {
 // Route to get current logged-in user
 router.get('/current_user', (req, res) => {
     if (req.session && req.session.user) {
-  //      userId = req.session.user._id;
         res.json({ loggedIn: true, user: req.session.user });
     } else {
         res.json({ loggedIn: false });
@@ -218,14 +55,11 @@ router.get('/menu-items', async (req, res) => {
     }
 });
 
-router.post('/orders', async (req, res) => {
-    // Extract order details from request body
+router.post('/orders', validateOrderInput, async (req, res) => {
     const { cart, currency, amount } = req.body;
-    console.log('Creating PayPal order with:', { cart, currency, amount });
-    
+
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    console.log('PayPal order - Session data:', { session: req.session, userId });
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -233,91 +67,46 @@ router.post('/orders', async (req, res) => {
             message: 'You must be logged in to place an order'
         });
     }
-    
-    // Validate input data
-    if (!Array.isArray(cart) || cart.length === 0) {
-        return res.status(400).json({
-            error: 'Invalid Cart',
-            message: 'Cart is required and must contain at least one item'
-        });
-    }
-    
-    if (!currency) {
-        return res.status(400).json({
-            error: 'Invalid Currency',
-            message: 'Currency is required'
-        });
-    }
-    
+
     try {
-        // Convert cart format from frontend (name/price) to database format (menuItemId/quantity)
-        let dbOrderItems = [];
-        let totalAmount = 0;
-        
-        if (Array.isArray(cart) && cart.length > 0) {
-            // Frontend sends cart with name and price, we need to find matching menu items
-            for (const cartItem of cart) {
-                // Try to find menu item by name (this is a simplified approach)
-                const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true });
-                if (menuItem) {
-                    const quantity = cartItem.quantity || 1;
-                    
-                    if (menuItem.stock < quantity) {
-                        return res.status(400).json({
-                            error: 'Insufficient Stock',
-                            message: `${menuItem.name} has insufficient stock. Available: ${menuItem.stock}, Requested: ${quantity}`
-                        });
-                    }
-                    
-                    dbOrderItems.push({
-                        menuItemId: menuItem._id,
-                        quantity: quantity
-                    });
-                    totalAmount += menuItem.price * quantity;
-                }
+        // Validate stock before creating PayPal order
+        await orderService.validateOrderStock(cart);
+
+        // Create PayPal order
+        const { jsonResponse, httpStatusCode } = await paypalService.createOrder(cart, currency, amount);
+
+        if (httpStatusCode === 201 && jsonResponse.id) {
+            const { dbOrderItems, totalAmount } = await orderService.convertCartToDbFormat(cart);
+
+            if (dbOrderItems.length > 0) {
+                const newOrder = await orderService.createOrderRecord(
+                    userId,
+                    dbOrderItems,
+                    totalAmount,
+                    jsonResponse.id
+                );
+                console.log('Database order created for user:', userId, '- Order ID:', newOrder._id);
             }
         }
-        
-        // Create PayPal order
-        const { jsonResponse, httpStatusCode } = await createOrder(cart, currency, amount);
-        console.log('PayPal order created:', jsonResponse);
-        
-        if (httpStatusCode === 201 && jsonResponse.id && dbOrderItems.length > 0) {
-            const publicId = nanoID.nanoid(6);
-            // Create database order record
-            const newOrder = new Order({
-                userId: userId,
-                items: dbOrderItems,
-                orderDate: new Date(),
-                status: 'Pending',
-                totalAmount: totalAmount,
-                paypalOrderId: jsonResponse.id,
-                notes: '',
-                publicID: publicId
-            });
-            
-            await newOrder.save();
-            console.log('Database order created:', newOrder._id);
-        }
-        
+
         res.status(httpStatusCode).json(jsonResponse);
     }
     catch (error) {
-        console.error('Error creating order:', error);
-        
+        console.error('Error creating PayPal order for user:', userId, '- Error:', error.message);
+
         let statusCode = 500;
         let errorResponse = {
             error: 'Internal Server Error',
             message: 'An unexpected error occurred while processing your payment',
             timestamp: new Date().toISOString()
         };
-        
+
         if (error.message.includes('temporarily unavailable')) {
             statusCode = 503;
             errorResponse = {
                 error: 'Service Unavailable',
                 message: 'PayPal service is temporarily unavailable. Please try again in a few minutes.',
-                retryAfter: 60, // seconds
+                retryAfter: 60,
                 timestamp: new Date().toISOString()
             };
             res.set('Retry-After', '60');
@@ -328,19 +117,25 @@ router.post('/orders', async (req, res) => {
                 message: 'There was an issue communicating with PayPal. Please try again.',
                 timestamp: new Date().toISOString()
             };
+        } else if (error.message.includes('insufficient stock')) {
+            statusCode = 400;
+            errorResponse = {
+                error: 'Insufficient Stock',
+                message: error.message,
+                timestamp: new Date().toISOString()
+            };
         }
-        
+
         res.status(statusCode).json(errorResponse);
     }
 });
 
 // Route to save completed orders (after payment is done)
-router.post('/save-order', async (req, res) => {
+router.post('/save-order', validatePaymentInput, async (req, res) => {
     const { items, total, currency, paymentMethod, transactionId } = req.body;
-    console.log('Saving completed order:', { items, total, currency, paymentMethod, transactionId });
-    
+
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -348,72 +143,23 @@ router.post('/save-order', async (req, res) => {
             message: 'You must be logged in to place an order'
         });
     }
-    
+
     try {
-        // Convert cart format from frontend to database format
-        let dbOrderItems = [];
-        let calculatedTotal = 0;
-        
-        if (Array.isArray(items) && items.length > 0) {
-            for (const cartItem of items) {
-                // Find menu item by _id (frontend sends full item objects)
-                const menuItem = await MenuItems.findById(cartItem._id);
-                if (menuItem) {
-                    const quantity = cartItem.quantity || 1;
-                    
-                    dbOrderItems.push({
-                        menuItemId: menuItem._id,
-                        quantity: quantity
-                    });
-                    calculatedTotal += menuItem.price * quantity;
-                    
-                    // Reduce stock
-                    menuItem.stock = Math.max(0, menuItem.stock - quantity);
-                    await menuItem.save();
-                }
-            }
-        }
-        
-        if (dbOrderItems.length === 0) {
-            return res.status(400).json({
-                error: 'Invalid Order',
-                message: 'No valid items found in the order'
-            });
-        }
-        
-        const publicId = nanoID.nanoid(6);
-        
-        // Create database order record
-        const newOrder = new Order({
-            userId: userId,
-            items: dbOrderItems,
-            orderDate: new Date(),
-            status: 'Completed', // Since payment is already done
-            totalAmount: calculatedTotal,
-            paymentMethod: paymentMethod,
-            transactionId: transactionId,
-            notes: '',
-            publicID: publicId
-        });
-        
-        await newOrder.save();
-        console.log('Order saved successfully:', newOrder._id);
-        
+        const { orderId, orderDetails } = await orderService.saveCompletedOrder(
+            userId, items, total, currency, paymentMethod, transactionId
+        );
+
+        console.log('Order saved successfully for user:', userId, '- Order ID:', orderId);
+
         res.status(201).json({
             success: true,
-            orderId: newOrder.publicID,
+            orderId: orderId,
             message: 'Order placed successfully',
-            orderDetails: {
-                id: newOrder.publicID,
-                total: calculatedTotal,
-                currency: currency,
-                paymentMethod: paymentMethod,
-                items: dbOrderItems
-            }
+            orderDetails: orderDetails
         });
-        
+
     } catch (error) {
-        console.error('Error saving order:', error);
+        console.error('Error saving order for user:', userId, '- Error:', error.message);
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Failed to save order to database'
@@ -422,14 +168,11 @@ router.post('/save-order', async (req, res) => {
 });
 
 // Google Pay order creation endpoint
-router.post('/orders/googlepay', async (req, res) => {
-    // Extract order details from request body
+router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
     const { cart, currency, amount } = req.body;
-    console.log('Creating Google Pay order with:', { cart, currency, amount });
-    
+
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    console.log('Session data:', { session: req.session, userId });
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -437,87 +180,53 @@ router.post('/orders/googlepay', async (req, res) => {
             message: 'You must be logged in to place an order'
         });
     }
-    
+
     try {
-        // Convert cart format from frontend (name/price) to database format (menuItemId/quantity)
-        let dbOrderItems = [];
-        let totalAmount = 0;
-        
-        if (Array.isArray(cart) && cart.length > 0) {
-            for (const cartItem of cart) {
+        const orderResult = await googlePayService.createGooglePayOrder(userId, cart);
 
-                const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true });
-                if (menuItem) {
-                    const quantity = cartItem.quantity || 1;
-                    
-                    if (menuItem.stock < quantity) {
-                        return res.status(400).json({
-                            error: 'Insufficient Stock',
-                            message: `${menuItem.name} has insufficient stock. Available: ${menuItem.stock}, Requested: ${quantity}`
-                        });
-                    }
-                    
-                    dbOrderItems.push({
-                        menuItemId: menuItem._id,
-                        quantity: quantity
-                    });
-                    totalAmount += menuItem.price * quantity;
-                }
-            }
-        }
-        
+        console.log('Google Pay order created for user:', userId, '- Order ID:', orderResult.orderId);
 
-
-        if (dbOrderItems.length > 0) {
-            const publicId = nanoID.nanoid(6);
-            
-            // Create database order record for Google Pay
-            const newOrder = new Order({
-                userId: userId,
-                items: dbOrderItems,
-                orderDate: new Date(),
-                status: 'Pending',
-                totalAmount: totalAmount,
-                paypalOrderId: null, // No PayPal ID for Google Pay orders
-                notes: 'Google Pay Order',
-                publicID: publicId
-            });
-            
-            await newOrder.save();
-            console.log('Database order created for Google Pay:', newOrder._id);
-            
-            // Return order details for Google Pay processing
-            res.status(200).json({
-                success: true,
-                orderId: newOrder._id.toString(),
-                amount: totalAmount.toFixed(2),
-                currency: 'USD',
-                items: cart
-            });
-        } else {
-            res.status(400).json({
-                error: 'Invalid Cart',
-                message: 'No valid items found in cart'
-            });
-        }
+        res.status(200).json({
+            success: true,
+            ...orderResult
+        });
     }
     catch (error) {
-        console.error('Error creating Google Pay order:', error);
-        res.status(500).json({
+        console.error('Error creating Google Pay order for user:', userId, '- Error:', error.message);
+
+        let statusCode = 500;
+        let errorResponse = {
             error: 'Internal Server Error',
             message: 'An unexpected error occurred while processing your order',
             timestamp: new Date().toISOString()
-        });
+        };
+
+        if (error.message.includes('insufficient stock')) {
+            statusCode = 400;
+            errorResponse = {
+                error: 'Insufficient Stock',
+                message: error.message,
+                timestamp: new Date().toISOString()
+            };
+        } else if (error.message.includes('No valid items')) {
+            statusCode = 400;
+            errorResponse = {
+                error: 'Invalid Cart',
+                message: error.message,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        res.status(statusCode).json(errorResponse);
     }
 });
 
 // Google Pay payment completion endpoint
 router.post('/orders/googlepay/complete', async (req, res) => {
     const { orderId, paymentMethodData, transactionId } = req.body;
-    
+
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    console.log('Google Pay completion - Session data:', { session: req.session, userId });
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -525,64 +234,41 @@ router.post('/orders/googlepay/complete', async (req, res) => {
             message: 'You must be logged in to complete payment'
         });
     }
-    
+
+    // Validate orderId
+    if (!orderId || typeof orderId !== 'string' || orderId.length > 50) {
+        return res.status(400).json({
+            error: 'Invalid Order ID',
+            message: 'Order ID is required and must be valid'
+        });
+    }
+
     try {
-        // Find the order and update it
-        const order = await Order.findById(orderId).populate('items.menuItemId');
-        
-        if (!order) {
-            return res.status(404).json({
-                error: 'Order Not Found',
-                message: 'Order not found or already processed'
-            });
-        }
-        
-        // Update order status
-        order.status = 'Completed';
-        order.pickupTime = new Date();
-        await order.save();
-        
-        // Update stock for each menu item
-        for (const item of order.items) {
-            await MenuItems.findByIdAndUpdate(
-                item.menuItemId._id,
-                { $inc: { stock: -item.quantity } }
-            );
-        }
-        
-        // Create payment record
-        const payment = new Payment({
-            userId: userId,
-            amount: order.totalAmount,
-            currency: 'USD',
-            paymentMethod: 'GooglePay',
-            status: 'Completed',
-            transactionId: transactionId || 'googlepay_' + Date.now(),
-            details: {
-                paymentMethodData: paymentMethodData,
-                orderId: orderId
-            }
-        });
-        await payment.save();
-        
-        console.log('Google Pay order completed and payment recorded:', {
-            orderId: order._id,
-            paymentId: payment._id,
-            transactionId: payment.transactionId
-        });
-        
+        const result = await googlePayService.completeGooglePayOrder(
+            userId, orderId, paymentMethodData, transactionId
+        );
+
+        console.log('Google Pay order completed for user:', userId, '- Order ID:', orderId);
+
         res.status(200).json({
             success: true,
-            orderId: order._id,
-            paymentId: payment._id,
-            message: 'Payment completed successfully'
+            ...result
         });
     }
     catch (error) {
-        console.error('Error completing Google Pay order:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'An unexpected error occurred while completing your payment',
+        console.error('Error completing Google Pay order for user:', userId, '- Order ID:', orderId, '- Error:', error.message);
+
+        let statusCode = 500;
+        let errorMessage = 'An unexpected error occurred while completing your payment';
+
+        if (error.message.includes('not found')) {
+            statusCode = 404;
+            errorMessage = error.message;
+        }
+
+        res.status(statusCode).json({
+            error: 'Error',
+            message: errorMessage,
             timestamp: new Date().toISOString()
         });
     }
@@ -591,8 +277,7 @@ router.post('/orders/googlepay/complete', async (req, res) => {
 router.post('/orders/:orderID/capture', async (req, res) => {
     const { orderID } = req.params;
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    console.log('PayPal capture - Session data:', { session: req.session, userId });
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -600,59 +285,36 @@ router.post('/orders/:orderID/capture', async (req, res) => {
             message: 'You must be logged in to complete payment'
         });
     }
-    
+
+    // Validate orderID parameter
+    if (!orderID || typeof orderID !== 'string' || orderID.length > 50) {
+        return res.status(400).json({
+            error: 'Invalid Order ID',
+            message: 'Order ID is required and must be valid'
+        });
+    }
+
     try {
-        const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
-        
+        const { jsonResponse, httpStatusCode } = await paypalService.captureOrder(orderID);
+
         if (httpStatusCode === 201) {
             // Payment successful, update database order
-            const order = await Order.findOne({ paypalOrderId: orderID }).populate('items.menuItemId');
-            
-            if (order) {
-                // Update order status
-                order.status = 'Completed';
-                order.pickupTime = new Date();
-                await order.save();
-                
-                // Update stock for each menu item
-                for (const item of order.items) {
-                    await MenuItems.findByIdAndUpdate(
-                        item.menuItemId._id,
-                        { $inc: { stock: -item.quantity } }
-                    );
-                }
-                
-                // Create payment record
-                const payment = new Payment({
-                    userId: userId,
-                    amount: order.totalAmount,
-                    currency: 'USD', // PayPal uses USD
-                    paymentMethod: 'PayPal',
-                    status: 'Completed',
-                    transactionId: jsonResponse.id
-                });
-                await payment.save();
-                
-                console.log('Order completed and payment recorded:', {
-                    orderId: order._id,
-                    paymentId: payment._id,
-                    transactionId: jsonResponse.id
-                });
-            }
+            await orderService.completePaypalOrder(userId, orderID, jsonResponse);
+            console.log('PayPal order captured for user:', userId, '- Order ID:', orderID);
         }
-        
+
         res.status(httpStatusCode).json(jsonResponse);
     }
     catch (error) {
-        console.error('Error capturing order:', error);
-        
+        console.error('Error capturing PayPal order for user:', userId, '- Order ID:', orderID, '- Error:', error.message);
+
         let statusCode = 500;
         let errorResponse = {
             error: 'Internal Server Error',
             message: 'An unexpected error occurred while capturing your payment',
             timestamp: new Date().toISOString()
         };
-        
+
         if (error.message.includes('temporarily unavailable')) {
             statusCode = 503;
             errorResponse = {
@@ -670,18 +332,17 @@ router.post('/orders/:orderID/capture', async (req, res) => {
                 timestamp: new Date().toISOString()
             };
         }
-        
+
         res.status(statusCode).json(errorResponse);
     }
 });
 
 // Order from balance
-router.post('/pay-with-balance', async (req, res) => {
+router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
     const { items, total, currency } = req.body;
-    console.log('Paying with balance:', { items, total, currency });
-    
+
     const userId = req.session && req.session.user ? req.session.user.id : null;
-    
+
     // Check if user is logged in
     if (!userId) {
         return res.status(401).json({
@@ -689,126 +350,43 @@ router.post('/pay-with-balance', async (req, res) => {
             message: 'You must be logged in to place an order'
         });
     }
-    
+
     try {
-        // Get user and check balance
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(401).json({
-                error: 'Unauthorized',
-                message: 'User not found'
-            });
-        }
-        
-        // Convert total to USD for balance check (balance is stored in USD)
-        let totalInUSD = total;
-        if (currency === 'HUF') {
-            totalInUSD = total * 0.0027; // Approximate HUF to USD rate
-        } else if (currency === 'EUR') {
-            totalInUSD = total * 1.1; // Approximate EUR to USD rate
-        } else if (currency === 'USD') {
-            totalInUSD = total; // Already in USD
-        } else {
-            return res.status(400).json({
-                error: 'Unsupported Currency',
-                message: 'Currency not supported for balance payment'
-            });
-        }
-        
-        if (user.balance < totalInUSD) {
-            return res.status(400).json({
-                error: 'Insufficient Balance',
-                message: 'Your account balance is insufficient to place this order'
-            });
-        }
-        
-        // Convert cart format from frontend to database format
-        let dbOrderItems = [];
-        let calculatedTotal = 0;
-        
-        if (Array.isArray(items) && items.length > 0) {
-            for (const cartItem of items) {
-                // Find menu item by _id (frontend sends full item objects)
-                const menuItem = await MenuItems.findById(cartItem._id);
-                if (menuItem) {
-                    const quantity = cartItem.quantity || 1;
-                    
-                    if (menuItem.stock < quantity) {
-                        return res.status(400).json({
-                            error: 'Insufficient Stock',
-                            message: `${menuItem.name} has insufficient stock. Available: ${menuItem.stock}, Requested: ${quantity}`
-                        });
-                    }
-                    
-                    dbOrderItems.push({
-                        menuItemId: menuItem._id,
-                        quantity: quantity
-                    });
-                    calculatedTotal += menuItem.price * quantity;
-                    
-                    // Reduce stock
-                    menuItem.stock = Math.max(0, menuItem.stock - quantity);
-                    await menuItem.save();
-                }
-            }
-        }
-        
-        if (dbOrderItems.length === 0) {
-            return res.status(400).json({
-                error: 'Invalid Order',
-                message: 'No valid items found in the order'
-            });
-        }
-        
-        // Verify calculated total matches requested total (with small tolerance for floating point)
-        if (Math.abs(calculatedTotal - total) > 0.01) {
-            return res.status(400).json({
-                error: 'Price Mismatch',
-                message: 'Order total does not match calculated amount'
-            });
-        }
-        
-        const publicId = nanoID.nanoid(6);
-        
-        // Create database order record
-        const newOrder = new Order({
-            userId: userId,
-            items: dbOrderItems,
-            orderDate: new Date(),
-            status: 'Completed', // Since payment is already done
-            totalAmount: calculatedTotal,
-            paymentMethod: 'Balance',
-            transactionId: 'balance_' + Date.now(),
-            notes: '',
-            publicID: publicId
-        });
-        
-        await newOrder.save();
-        
-        // Deduct balance (in USD)
-        user.balance -= totalInUSD;
-        await user.save();
-        
-        console.log('Order saved successfully from balance:', newOrder._id);
-        
+        const { orderId, orderDetails } = await orderService.processBalancePayment(
+            userId, items, total, currency
+        );
+
+        console.log('Balance payment processed for user:', userId, '- Order ID:', orderId);
+
         res.status(201).json({
             success: true,
-            orderId: newOrder.publicID,
+            orderId: orderId,
             message: 'Order placed successfully',
-            orderDetails: {
-                id: newOrder.publicID,
-                total: calculatedTotal,
-                currency: currency,
-                paymentMethod: 'Balance',
-                items: dbOrderItems
-            }
+            orderDetails: orderDetails
         });
-        
+
     } catch (error) {
-        console.error('Error processing balance payment:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Failed to process balance payment'
+        console.error('Error processing balance payment for user:', userId, '- Error:', error.message);
+
+        let statusCode = 500;
+        let errorMessage = 'Failed to process balance payment';
+
+        if (error.message.includes('not found')) {
+            statusCode = 401;
+            errorMessage = error.message;
+        } else if (error.message.includes('insufficient')) {
+            statusCode = 400;
+            errorMessage = error.message;
+        } else if (error.message.includes('Currency not supported') ||
+                   error.message.includes('No valid items') ||
+                   error.message.includes('total does not match')) {
+            statusCode = 400;
+            errorMessage = error.message;
+        }
+
+        res.status(statusCode).json({
+            error: statusCode === 401 ? 'Unauthorized' : 'Error',
+            message: errorMessage
         });
     }
 });

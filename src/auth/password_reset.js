@@ -45,7 +45,7 @@
         const token = jwt.sign({
             userId: userId,
             email: email
-        }, 'ourSecretKey', { expiresIn: '15m' });
+        }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
         // Log token to console for testing purposes
         console.log('=== PASSWORD RESET TOKEN GENERATED ===');
@@ -83,7 +83,7 @@
             return res.status(400).send('Token is required');
         }
         try {
-            const decoded = jwt.verify(token, 'ourSecretKey');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             console.log('Decoded token:', decoded);
             
             // Verify user still exists in database

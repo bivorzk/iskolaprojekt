@@ -21,12 +21,12 @@ const transport = nodemailer.createTransport({
 
 const token = jwt.sign({
     data: 'Token Data'
-    }, 'ourSecretKey', { expiresIn: '15m' }
+    }, process.env.JWT_EMAIL_SECRET, { expiresIn: '15m' }
 );
 
 function sendVerificationEmail(email, verificationCode) {
     // Generate JWT token with email (expires in 20 minutes)
-    const token = jwt.sign({ email }, 'ourSecretKey', { expiresIn: '20m' });
+    const token = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET, { expiresIn: '20m' });
     
     const mailConfig = {
         from: process.env.EMAIL_USER,
@@ -89,7 +89,7 @@ router.get('/verify/:token', async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, 'ourSecretKey');
+        const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
         const email = decoded.email;
 
         const User = require('../models/User');

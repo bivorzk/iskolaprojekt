@@ -57,9 +57,12 @@ const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
 }) : undefined;
 
+const hour = 60 * 60 * 1000;
+const quarterHour = 15 * 60 * 1000;
+
 // Rate limiter for all non-sensitive routes
 const limiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: hour, // 1 hour
   max: 250, // Limit each IP to 250
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -67,7 +70,7 @@ const limiter = rateLimit({
 })
 
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour window
+  windowMs: hour, // 1 hour window
   max: 100, // start blocking after 100 requests
   message: 'Too many accounts created from this IP, please try again after an hour',
   store: createStore(),
@@ -82,7 +85,7 @@ const LoginLimiter = rateLimit({
 });
 
 const dashboardLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes window
+  windowMs: quarterHour, // 15 minutes window
   max: 1000, // start blocking after 1000 requests
   message: 'Too many requests from this IP, please try again after 15 minutes',
   store: createStore(),

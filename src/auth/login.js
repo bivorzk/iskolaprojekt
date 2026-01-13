@@ -64,8 +64,8 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign({ id: user.id, username: user.username }, 'ourSecretKey');
-    const decoded = jwt.verify(token, 'ourSecretKey');
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_LOGIN_SECRET, { expiresIn: '2h' });
+    const decoded = jwt.verify(token, process.env.JWT_LOGIN_SECRET);
 
     const IPClient = new IPLocate(process.env.GEOIP);
     const geo = await IPClient.lookup(clientIp);
