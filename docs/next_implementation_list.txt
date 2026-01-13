@@ -1,8 +1,0 @@
-December 17 of 2025 - Kugli Balázs
--- TODO in student.js // TODO: Implement: transactions, parent-link parent unlink, freeze account, 2fa
--- TODO for 2fa Math.Random 
--- Implement IP security features
-
--- qr code? 
-
--- Refactor everything to fit SOLID principles 

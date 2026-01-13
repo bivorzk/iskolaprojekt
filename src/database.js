@@ -11,7 +11,6 @@ const { createAuthSystem, getLastRegisteredEmail } = require('./auth/index');
 const { app } = createAuthSystem();
 
 // Export the app and User model for backward compatibility
-// This ensures existing imports like require('./database').User still work
 module.exports = app;
 module.exports.User = User;
 

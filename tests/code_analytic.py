@@ -15,7 +15,7 @@ EXCLUDE_DIRS = {
 }
 EXCLUDE_FILES = {"cargo.lock", ".env", "package-lock.json", ".gitignore"}
 # Extensions to track specifically
-TRACKED_EXTENSIONS = {".js", ".jsx", ".html", ".css", ".py", ".json"}  # Added .jsx and .json for workspace files
+TRACKED_EXTENSIONS = {".js", ".jsx", ".html", ".css", ".py"}  # Added .jsx for workspace files
 
 def analyze_codebase():
     stats = {
