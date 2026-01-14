@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const path = require('path');
 const stats = require('simple-statistics');
+const {body,query, validationResult} = require('express-validator');
 
 // Connect to MongoDB
 
@@ -239,43 +240,70 @@ router.get('/admin/itemcount', async (req, res) => {
   }
 });
 
-router.post('/admin/create_menuitem', async (req, res) => {
-  try {
-    const {
-      id,
-      name,
-      description,
-      stock,
-      price,
-      category,
-      allergens,
-      nutritionalInfo,
-      healthScore
-    } = req.body;
+const { body, validationResult } = require('express-validator');
 
-    await MenuItems.create({
-      _id: id,
-      name,
-      description,
-      stock,
-      price,
-      category,
-      allergens,
-      nutritionalInfo,
-      healthScore
-    });
-
-    // Invalidate caches
-    if (isRedisAvailable()) {
-      await redisClient.del(['admin:menulist', 'admin:itemcount', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
+router.post(
+  '/admin/create_menuitem',
+  [
+    body('id').trim().notEmpty(),
+    body('name').trim().escape().isLength({ min: 1, max: 100 }),
+    body('description').trim().escape().isLength({ max: 500 }),
+    body('stock').isInt({ min: 0 }).toInt(),
+    body('price').isFloat({ min: 0 }).toFloat(),
+    body('category').trim().escape(),
+    body('allergens').optional().isArray(),
+    body('nutritionalInfo').optional().isObject(),
+    body('healthScore').optional().isInt({ min: 0, max: 100 }).toInt()
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
+    try {
+      const {
+        id,
+        name,
+        description,
+        stock,
+        price,
+        category,
+        allergens,
+        nutritionalInfo,
+        healthScore
+      } = req.body;
+
+      await MenuItems.create({
+        _id: id,
+        name,
+        description,
+        stock,
+        price,
+        category,
+        allergens,
+        nutritionalInfo,
+        healthScore
+      });
+
+      if (isRedisAvailable()) {
+        await redisClient.del([
+          'admin:menulist',
+          'admin:itemcount',
+          'admin:menuitem_export',
+          'admin:stockalerts',
+          'admin:soldout'
+        ]);
+      }
+
       res.status(202).json({ message: 'Menu item created' });
-  } catch (error) {
-    console.error('Error creating menu item:', error);
-    res.status(500).json({ error: error.message || 'Server error' });
+    } catch (error) {
+      console.error('Error creating menu item:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
   }
-});
+);
+
 
 router.get('/admin/menulist', async (req, res) => {
   try {
@@ -467,7 +495,12 @@ router.get('/student/freeze_account', async (req, res) => {
 
 
 
-router.post('/student/parent/link', async (req, res) => {
+router.post('/student/parent/link', [
+  body('parentEmail').isEmail().normalizeEmail()], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const studentId = req.session.user.id;
     const { parentEmail } = req.body;
@@ -657,7 +690,12 @@ router.get('/student/wallet/balance', async (req, res) => {
 });
 
 // Add money to wallet
-router.post('/student/wallet/add', async (req, res) => {
+router.post('/student/wallet/add',
+  [body('amount').isFloat({ gt: 0 }),
+    body('currency').isIn(['USD', 'HUF', 'EUR']),
+    body('paymentMethod').notEmpty(),
+    body('transactionId').optional().isString()
+  ], async (req, res) => {
   try {
     // Check session first
     if (!req.session.user || !req.session.user.id) {
