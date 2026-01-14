@@ -7,7 +7,10 @@ const AdminDashboard = () => {
         activeSessions: '--',
         ordersMade: '--',
         totalMenuItems: '--',
-        paymentStats: '--'
+        paymentStats: '--',
+        mostBoughtItems: [],
+        mostBoughtItemsLastWeek: [],
+        revenueLastMonth: {}
     });
     const [users, setUsers] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
@@ -40,13 +43,17 @@ const AdminDashboard = () => {
 
     const loadDashboardData = async () => {
         try {
-            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, welcomeRes] = await Promise.all([
+            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes] = await Promise.all([
                 fetch('/dashboard/admin/usercount'),
                 fetch('/dashboard/admin/orders'),
                 fetch('/dashboard/admin/userlist'),
                 fetch('/dashboard/admin/signup-stats'),
                 fetch('/dashboard/admin/menulist'),
-                fetch('/dashboard/admin/welcome-message')
+                fetch('/dashboard/admin/welcome-message'),
+                fetch('/dashboard/admin/stats/most_bought_items'),
+                fetch('/dashboard/admin/stats/most_bought_items-lastweek'),
+                fetch('/dashboard/admin/stats/revenue-lastmonth'),
+                fetch('/dashboard/admin/stats/average-order-value')
             ]);
 
             // Check if all responses are ok
@@ -56,24 +63,36 @@ const AdminDashboard = () => {
             if (!signupStatsRes.ok) console.error('signup-stats failed:', signupStatsRes.status);
             if (!menuItemsRes.ok) console.error('menulist failed:', menuItemsRes.status);
             if (!welcomeRes.ok) console.error('welcome-message failed:', welcomeRes.status);
+            if (!mostBoughtItemsRes.ok) console.error('most_bought_items failed:', mostBoughtItemsRes.status);
+            if (!mostBoughtItemsLastWeekRes.ok) console.error('most_bought_items_lastweek failed:', mostBoughtItemsLastWeekRes.status);
+            if (!revenueLastMonthRes.ok) console.error('revenue_lastmonth failed:', revenueLastMonthRes.status);
+            if (!averageOrderValueRes.ok) console.error('average_order_value failed:', averageOrderValueRes.status);
 
-            const [userCount, orders, userList, signupStats, menuData, welcome] = await Promise.all([
+            const [userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue] = await Promise.all([
                 userCountRes.json(),
                 ordersRes.json(),
                 userListRes.json(),
                 signupStatsRes.json(),
                 menuItemsRes.json(),
-                welcomeRes.json()
+                welcomeRes.json(),
+                mostBoughtItemsRes.json(),
+                mostBoughtItemsLastWeekRes.json(),
+                revenueLastMonthRes.json(),
+                averageOrderValueRes.json()
             ]);
 
-            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, welcome });
+            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth });
 
             setStats({
                 totalUsers: userCount.total || '--',
                 activeSessions: '--', // This might need a separate endpoint
                 ordersMade: orders.total || '--',
                 totalMenuItems: menuData.menuItems ? menuData.menuItems.length : '--',
-                paymentStats: '--' // This might need a separate endpoint
+                paymentStats: '--', // This might need a separate endpoint
+                mostBoughtItems: mostBoughtItems || [],
+                mostBoughtItemsLastWeek: mostBoughtItemsLastWeek || [],
+                revenueLastMonth: revenueLastMonth || {} || '--',
+                averageOrderValue: averageOrderValue || {} || '--'
             });
 
             setUsers(userList.users || []);
@@ -88,7 +107,11 @@ const AdminDashboard = () => {
                 activeSessions: '--',
                 ordersMade: '--',
                 totalMenuItems: '--',
-                paymentStats: '--'
+                paymentStats: '--',
+                mostBoughtItems: [],
+                mostBoughtItemsLastWeek: [],
+                revenueLastMonth: {},
+                averageOrderValue: {}
             });
         } finally {
             setLoading(false);
@@ -417,6 +440,60 @@ const AdminDashboard = () => {
                                     <div className="text-2xl font-bold text-primary">{stats.paymentStats}</div>
                                     <div className="text-gray-600">Payment Stats</div>
                                 </div>
+                                
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <div className="text-2xl font-bold text-primary">{
+                                        Array.isArray(stats.revenueLastMonth) && stats.revenueLastMonth.length > 0
+                                            ? stats.revenueLastMonth[0].totalRevenue
+                                            : '--'
+                                    }</div>
+                                    <div className="text-gray-600">Revenue Last Month</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-lg shadow mb-8">
+                                <h3 className="text-lg font-semibold text-primary mb-4">Most Bought Items All Time</h3>
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu Item</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Times Bought</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {stats.mostBoughtItems && stats.mostBoughtItems.map((item, index) => (
+                                            <tr key={index} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.itemName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.totalQuantity}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-lg shadow mb-8">
+                                <h3 className="text-lg font-semibold text-primary mb-4">Most Bought Items Last Week</h3>
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu Item</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Times Bought</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {stats.mostBoughtItemsLastWeek && stats.mostBoughtItemsLastWeek.map((item, index) => (
+                                            <tr key={index} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.itemName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.totalQuantity}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-lg shadow mb-8">
+                                <h3 className="text-lg font-semibold text-primary mb-4">Average Order Value</h3>
+                                <p className="text-2xl font-bold text-gray-900">{stats.averageOrderValue || '--'}</p>
                             </div>
 
                             <div className="bg-white p-6 rounded-lg shadow">
