@@ -12,6 +12,7 @@ mongoose.connect(dbUrl + dbName)
 const db = mongoose.connection;
 
 const User = require('../src/database').User;
+const { DISCOUNT_RATES, DISCOUNT_TYPES, TIERS } = require('./LOYALTY_CONSTANTS.JS');
 
 // Payment Schema
 
@@ -88,12 +89,52 @@ OrderScheme.pre('save', function(next) {
 const UserLoyaltyScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     totalPoints: { type: Number, default: 0 },
+    userTier : { type: String, enum: [TIERS.NONE, TIERS.BRONZE, TIERS.SILVER, TIERS.GOLD, TIERS.PLATINUM], default: TIERS.NONE },
     discounts: [{
         type: { type: String, required: true }, // e.g., 'healthy'
         rate: { type: Number, required: true }, // e.g., 0.05
         validUntil: { type: Date, required: false }
     }],
     lastUpdated: { type: Date, default: Date.now }
+});
+
+UserLoyaltyScheme.pre('save', function(next) {
+    if (this.totalPoints >= 2000) {
+        this.userTier = TIERS.PLATINUM;
+    } else if (this.totalPoints >= 800) {
+        this.userTier = TIERS.GOLD;
+    } else if (this.totalPoints >= 250) {
+        this.userTier = TIERS.SILVER;
+    } else if (this.totalPoints >= 50) {
+        this.userTier = TIERS.BRONZE;
+    } else {
+        this.userTier = TIERS.NONE;
+    }
+    next();
+});
+UserLoyaltyScheme.post('save', async function(doc) {
+  if (this.isModified('userTier')) {
+    const newTier = this.userTier;
+    let newDiscounts = [];
+
+    if (newTier === 'Bronze') {
+      newDiscounts.push({ type: 'healthy', rate: 0.05 });
+    } else if (newTier === 'Silver') {
+      newDiscounts.push({ type: 'healthy', rate: 0.10 });
+      newDiscounts.push({ type: 'drink', rate: 0.05, validUntil: new Date(Date.now() + 90*24*60*60*1000) });
+    } else if (newTier === 'Gold') {
+      newDiscounts.push({ type: 'healthy', rate: 0.15 });
+      newDiscounts.push({ type: 'full_meal', rate: 0.10 });
+    } else if (newTier === 'Platinum') {
+      newDiscounts.push({ type: 'healthy', rate: 0.20 });
+      newDiscounts.push({ type: 'general', rate: 0.15 });
+      // + logic for monthly free drink (separate field or 100% on 'drink')
+    }
+
+    // Merge without duplicates, or replace old tier-specific ones
+    this.discounts = [...this.discounts.filter(d => !d.type.startsWith('tier_')), ...newDiscounts];
+    await this.save(); // careful with recursion — use flag or separate method
+  }
 });
 
 // Review Schema

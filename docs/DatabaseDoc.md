@@ -2,9 +2,9 @@
 
 ## Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása
 
-Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált.
+Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. A rendszer Redis-t használ gyorsítótárazáshoz a teljesítmény növelése érdekében.
 
-Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries).
+Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Kiegészítőként Redis in-memory adatbázis gyorsítótárazáshoz.
 
 ## Adatbázis-terv és séma
 
@@ -21,13 +21,13 @@ A rendszer fő entitásai és kapcsolataik:
 - **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük.
 - **ParentStudent** (Szülő-Diák kapcsolat): Szülők és diákok összekapcsolása.
 - **SecurityLogs** (Biztonsági naplók): Események naplózása.
-- **UserLoyalty** (Hűségprogram): Felhasználók pontjai és kedvezményei.
+- **UserLoyalty** (Hűségprogram): Felhasználók pontjai, kedvezményei és hűségszintje.
 
 Kapcsolatok:
 - User 1:N Payment, Order, Review, SecurityLogs, UserLoyalty.
 - User 1:N ParentStudent (szülőként vagy diákként).
-- MenuItems 1:N OrderItems, Review.
-- Order 1:N OrderItems.
+- MenuItems 1:N OrderItems (beágyazott Order-ben), Review.
+- Order 1:N OrderItems (beágyazott).
 - DailyMenu 1:N MenuItems (referenciákon keresztül).
 
 Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok referenciákon alapulnak (ObjectId-k).
@@ -78,29 +78,33 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 | nutritionalInfo.carbs | Number | Szénhidrát | Opcionális |
 | nutritionalInfo.fat | Number | Zsír | Opcionális |
 
-Üzleti szabályok: A készlet nem lehet negatív; kategóriák alapján szűrhető.
+Üzleti szabályok: A készlet nem lehet negatív; kategóriák alapján szűrhető. Pre-save hook: Ha a készlet <= 0, akkor available = false, különben true.
 
 #### Order (Rendelések)
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
 |-----------|-------|-----------------|---------------|
 | userId | ObjectId (ref: User) | Rendelő felhasználó | Kötelező |
+| items | [OrderItemsScheme] | Rendelés tételei | Kötelező |
+| orderDate | Date | Rendelés dátuma | Alapértelmezett: jelenlegi idő |
+| status | String | Státusz (Pending, InProgress, Completed, Cancelled) | Kötelező, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], alapértelmezett: 'Pending' |
 | totalAmount | Number | Teljes összeg | Kötelező |
-| status | String | Státusz (Pending, Confirmed, stb.) | Kötelező, enum: ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivered', 'Cancelled'] |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-| publicID | String | Nyilvános azonosító | Opcionális |
+| pickupTime | Date | Átvétel ideje | Opcionális |
+| notes | String | Megjegyzések | Opcionális, alapértelmezett: '' |
+| paypalOrderId | String | PayPal rendelés azonosító | Opcionális |
+| paymentMethod | String | Fizetési mód | Opcionális |
+| transactionId | String | Tranzakció azonosító | Opcionális |
+| publicID | String | Nyilvános azonosító | Kötelező, egyedi |
 
-Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; státusz változások követik az üzleti folyamatot.
+Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; státusz változások követik az üzleti folyamatot. Pre-save hook: Ha a rendelés 'Pending' státuszban van és több mint 15 perc telt el a létrehozás óta, automatikusan 'Cancelled'-re változik.
 
 #### OrderItems (Rendelés tételek)
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
 |-----------|-------|-----------------|---------------|
-| orderId | ObjectId (ref: Order) | Rendelés azonosító | Kötelező |
 | menuItemId | ObjectId (ref: MenuItems) | Menüelem azonosító | Kötelező |
-| quantity | Number | Mennyiség | Kötelező |
-| priceAtPurchase | Number | Vásárláskori ár | Kötelező |
-| specialInstructions | String | Speciális utasítások | Opcionális |
+| orderId | ObjectId (ref: Order) | Rendelés azonosító | Opcionális |
+| quantity | Number | Mennyiség | Kötelező, alapértelmezett: 1 |
 
-Üzleti szabályok: Minden tétel egy rendeléshez és menüelemhez tartozik; mennyiség pozitív egész szám.
+Üzleti szabályok: Minden tétel egy menüelemhez tartozik; mennyiség pozitív egész szám. Ez a séma be van ágyazva az Order séma items mezőjébe.
 
 #### Review (Értékelések)
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
@@ -138,7 +142,7 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 | userId | ObjectId (ref: User) | Felhasználó | Opcionális |
 | action | String | Akció (pl. LOGIN_SUCCESS) | Kötelező |
 | type | String | Típus (INFO, WARNING, ERROR) | Kötelező |
-| ipAddress | String | IP cím | Opcionális |
+| ipAddress | String | IP cím (Hashelt) | Opcionális |
 | Timestamp | Date | Időbélyeg | Alapértelmezett: jelenlegi idő |
 | details | String | További információk | Opcionális |
 | country | String | Ország | Opcionális |
@@ -156,16 +160,18 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 |-----------|-------|-----------------|---------------|
 | userId | ObjectId (ref: User) | Felhasználó | Kötelező |
 | totalPoints | Number | Összes pont | Alapértelmezett: 0 |
+| userTier | String | Felhasználó hűségszintje | Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none' |
 | discounts | [{type: String, rate: Number, validUntil: Date}] | Kedvezmények listája | - |
 | lastUpdated | Date | Utolsó frissítés | Alapértelmezett: jelenlegi idő |
 
-Üzleti szabályok: Pontok vásárlások alapján gyűlnek.
+Üzleti szabályok: Pontok vásárlások alapján gyűlnek. A hűségszint automatikusan frissül a pontok alapján (50 ponttól Bronze, 250-től Silver, 800-tól Gold, 2000-tól Platinum). Pre-save hook: Tier frissítése a totalPoints alapján. Post-save hook: Ha a tier változott, új kedvezmények hozzáadása a tier alapján (Bronze: 5% healthy; Silver: 10% healthy, 5% drink 90 napig; Gold: 15% healthy, 10% full_meal; Platinum: 20% healthy, 15% general).
 
 ## Fizikai és logikai szerkezet
 
 - **Táblák/Nézetek**: MongoDB kollekciók (collections) a fenti sémák alapján.
 - **Indexek**: Nincs explicit említés, de alapértelmezett indexek az _id-re és egyedi mezőkre (pl. username, email).
 - **Tárolt eljárások/Függvények**: Nincs (JavaScript backend kezel mindent).
+- **Gyorsítótárazás (Cache)**: Redis in-memory adatbázis használata a teljesítmény növelésére, különösen a dashboard adatok gyors eléréséhez (pl. felhasználók listája, statisztikák), 5 perces lejárattal.
 
 ## Használati esetek (Use Cases) és forgatókönyvek
 
@@ -175,7 +181,7 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 - **Értékelés**: Felhasználók Review-t adnak MenuItems-hez.
 - **Hűségprogram**: Vásárlások után UserLoyalty frissül.
 - **Biztonság**: Minden akció SecurityLogs-ban naplózódik.
-- **Admin műveletek**: Felhasználók listázása, statisztikák (User, Order stb. alapján).
+- **Admin műveletek**: Felhasználók listázása, statisztikák (User, Order stb. alapján), Redis cache-ből gyorsítottan.
 
 ## Biztonság és hozzáférés
 
@@ -186,8 +192,8 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 
 ## Karbantartás és üzemeltetés
 
-- **Biztonsági mentési eljárások**: MongoDB dump/export rendszeres mentéshez.
-- **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on.
-- **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül.
+- **Biztonsági mentési eljárások**: MongoDB dump/export rendszeres mentéshez; Redis esetében adatok ideiglenesek, így külön mentés nem szükséges.
+- **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében.
+- **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.
 - **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
-````
+``
