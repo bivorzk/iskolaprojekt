@@ -83,18 +83,7 @@ Dev Dependencies:
 ├── config/                     # Configuration files
 │   ├── database_queries.js
 │   ├── hu.json
-│   └── exports/                # SQL export files
-│       ├── daily_menu.sql
-│       ├── database_creation.sql
-│       ├── menu_items.sql
-│       ├── order_items.sql
-│       ├── orders.sql
-│       ├── parent_child.sql
-│       ├── payments.sql
-│       ├── reviews.sql
-│       ├── sql.js
-│       ├── user_loyalty.sql
-│       └── users.sql
+│   └── LOYALTY_CONSTANTS.JS
 ├── data/                       # Data files
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
@@ -103,12 +92,10 @@ Dev Dependencies:
 │       ├── Food_Items.json
 │       └── menu_items.json
 ├── docs/                       # Documentation
-│   ├── next_implementation_list.txt
+│   ├── database.png
+│   ├── DatabaseDoc.md
 │   ├── Paypal_TestDetails.txt
-│   ├── security_features.md
-│   ├── sourcefor_security_checks.txt
-│   ├── TODO.txt
-│   └── vizsgaremek_safety.txt
+│   └── sourcefor_security_checks.txt
 ├── public/                     # Static files served to client (Frontend)
 │   ├── googlepay.js
 │   ├── index.html
@@ -120,32 +107,53 @@ Dev Dependencies:
 │   ├── 404/                    # 404 error pages
 │   │   ├── 404.html
 │   │   └── 404.jsx
+│   ├── 429/                    # 429 error pages
+│   │   ├── 429.html
+│   │   └── 429.jsx
 │   ├── css/                    # Stylesheets
 │   │   ├── register.css
 │   │   └── tailwind.css
 │   ├── dashboard/              # Dashboard pages
 │   │   ├── admin/
-│   │   │   ├── admin_old.html  # Old admin page (not used)
 │   │   │   ├── admin.css
 │   │   │   ├── admin.html
-│   │   │   ├── admin.js        # Not used
-│   │   │   └── admin.jsx
+│   │   │   ├── admin.js
+│   │   │   ├── admin.jsx
+│   │   │   ├── AdminHeader.jsx
+│   │   │   ├── AdminSidebar.jsx
+│   │   │   ├── admin_old.html
+│   │   │   ├── MenuItemsSection.jsx
+│   │   │   ├── SettingsSection.jsx
+│   │   │   ├── StatsSection.jsx
+│   │   │   ├── useAdminData.js
+│   │   │   └── UsersSection.jsx
 │   │   └── student/
-│   │       ├── student_old.html # Old student page (not used)
+│   │       ├── OrdersSection.jsx
+│   │       ├── SettingsSection.jsx
+│   │       ├── StatsSection.jsx
 │   │       ├── student.css
 │   │       ├── student.html
-│   │       ├── student.js      # Not used
-│   │       └── student.jsx
+│   │       ├── student.js
+│   │       ├── student.jsx
+│   │       ├── StudentHeader.jsx
+│   │       ├── StudentSidebar.jsx
+│   │       ├── student_old.html
+│   │       ├── TransactionsSection.jsx
+│   │       ├── useStudentData.js
+│   │       └── WalletSection.jsx
 │   ├── home_page/              # Home page files
 │   │   ├── home_page.html
 │   │   └── home_page.jsx
+│   ├── information/            # Information pages
+│   │   ├── index.html
+│   │   └── information.jsx
 │   ├── no_perm/                # No permission pages
 │   │   ├── index.html
 │   │   └── no_perm.jsx
 │   └── Order/                  # Order pages
-│       ├── index_old.html
 │       ├── index.css
 │       ├── index.html
+│       ├── index_old.html
 │       ├── order.jsx
 │       └── script.js
 ├── src/                        # Server-side source code (backend)
@@ -173,7 +181,17 @@ Dev Dependencies:
 │   │   ├── security.js
 │   │   └── validation.js
 │   ├── dashboard/
-│   │   └── dashboard.js
+│   │   ├── dashboard.js
+│   │   ├── admin/
+│   │   │   └── admin.js
+│   │   ├── middleware/
+│   │   │   └── auth-middleware.js
+│   │   ├── services/
+│   │   │   └── cache-service.js
+│   │   ├── statistics/
+│   │   │   └── statistics.js
+│   │   └── student/
+│   │       └── student.js
 │   ├── middleware/
 │   │   └── security.js
 │   ├── models/
@@ -183,9 +201,6 @@ Dev Dependencies:
 │   ├── payments/
 │   │   ├── googlepay.js
 │   │   └── paypal.js
-│   ├── profile/
-│   │   └── student.js
-│   ├── routes/                 # Route definitions
 │   └── services/               # Service modules
 │       ├── googlepay-service.js
 │       ├── order-service.js
@@ -199,10 +214,10 @@ Dev Dependencies:
 │   ├── menu_items.json
 │   ├── Paypal_TestConfig.txt
 │   ├── register_testing.py
-│   └── performance_tests/       # Performance test files
+│   ├── Jest/                   # Jest test directory
+│   └── performance_tests/      # Performance test files
 │       └── artillery.yml
 └── readme.md                   # Project documentation
-
 ```
 
 ## Router Routes
