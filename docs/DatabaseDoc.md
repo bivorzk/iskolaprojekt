@@ -161,15 +161,43 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 | userId | ObjectId (ref: User) | Felhasználó | Kötelező |
 | totalPoints | Number | Összes pont | Alapértelmezett: 0 |
 | userTier | String | Felhasználó hűségszintje | Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none' |
-| discounts | [{type: String, rate: Number, validUntil: Date}] | Kedvezmények listája | - |
+| discounts | String | Kedvezmények listája | [Lásd tábla alatt]: |
 | lastUpdated | Date | Utolsó frissítés | Alapértelmezett: jelenlegi idő |
 
 Üzleti szabályok: Pontok vásárlások alapján gyűlnek. A hűségszint automatikusan frissül a pontok alapján (50 ponttól Bronze, 250-től Silver, 800-tól Gold, 2000-tól Platinum). Pre-save hook: Tier frissítése a totalPoints alapján. Post-save hook: Ha a tier változott, új kedvezmények hozzáadása a tier alapján (Bronze: 5% healthy; Silver: 10% healthy, 5% drink 90 napig; Gold: 15% healthy, 10% full_meal; Platinum: 20% healthy, 15% general).
 
+A `discounts` mező részletei (tömb elemei):
+
+```javascript
+discounts: [{
+    type: { type: String, enum: Object.values(DISCOUNT_TYPES), required: true }, // e.g., DISCOUNT_TYPES.HEALTHY
+    rate: { type: Number, enum: Object.values(DISCOUNT_RATES), required: true }, // e.g., DISCOUNT_RATES.FIVE
+    validUntil: { type: Date, required: false }
+}],
+
+const DISCOUNT_RATES = {
+  FIVE: 0.05,
+  TEN: 0.10,
+  FIFTEEN: 0.15,
+  TWENTY: 0.20,
+  TWENTY_FIVE: 0.25,
+};
+
+const DISCOUNT_TYPES = {
+  HEALTHY: 'healthy',
+  VEGETARIAN: 'vegetarian',
+  FULL_MEAL: 'full_meal',
+  DRINK: 'drink',
+  DESSERT: 'dessert',
+  GENERAL: 'general',
+};
+
+```
+
 ## Fizikai és logikai szerkezet
 
 - **Táblák/Nézetek**: MongoDB kollekciók (collections) a fenti sémák alapján.
-- **Indexek**: Nincs explicit említés, de alapértelmezett indexek az _id-re és egyedi mezőkre (pl. username, email).
+- **Indexek**: alapértelmezett indexek az _id-re és egyedi mezőkre (pl. username, email).
 - **Tárolt eljárások/Függvények**: Nincs (JavaScript backend kezel mindent).
 - **Gyorsítótárazás (Cache)**: Redis in-memory adatbázis használata a teljesítmény növelésére, különösen a dashboard adatok gyors eléréséhez (pl. felhasználók listája, statisztikák), 5 perces lejárattal.
 
@@ -196,4 +224,5 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 - **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében.
 - **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.
 - **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
-``
+
+![Database Diagram](database.png)

@@ -9,8 +9,6 @@ mongoose.connect(dbUrl + dbName)
     .then(() => console.log('Connected to MongoDB for database queries'))
     .catch(err => console.error('Could not connect to MongoDB for database queries', err));
 
-const db = mongoose.connection;
-
 const User = require('../src/database').User;
 const { DISCOUNT_RATES, DISCOUNT_TYPES, TIERS } = require('./LOYALTY_CONSTANTS.JS');
 
@@ -91,8 +89,8 @@ const UserLoyaltyScheme = new mongoose.Schema({
     totalPoints: { type: Number, default: 0 },
     userTier : { type: String, enum: [TIERS.NONE, TIERS.BRONZE, TIERS.SILVER, TIERS.GOLD, TIERS.PLATINUM], default: TIERS.NONE },
     discounts: [{
-        type: { type: String, required: true }, // e.g., 'healthy'
-        rate: { type: Number, required: true }, // e.g., 0.05
+        type: { type: String, enum: Object.values(DISCOUNT_TYPES), required: true }, // e.g., DISCOUNT_TYPES.HEALTHY
+        rate: { type: Number, enum: Object.values(DISCOUNT_RATES), required: true }, // e.g., DISCOUNT_RATES.FIVE
         validUntil: { type: Date, required: false }
     }],
     lastUpdated: { type: Date, default: Date.now }
@@ -113,27 +111,31 @@ UserLoyaltyScheme.pre('save', function(next) {
     next();
 });
 UserLoyaltyScheme.post('save', async function(doc) {
-  if (this.isModified('userTier')) {
+  // Prevent infinite recursion by checking if we're already updating discounts due to tier change
+  if (this.isModified('userTier') && !this._updatingDiscounts) {
+    this._updatingDiscounts = true; // Set flag to prevent re-triggering this hook
     const newTier = this.userTier;
     let newDiscounts = [];
 
-    if (newTier === 'Bronze') {
-      newDiscounts.push({ type: 'healthy', rate: 0.05 });
-    } else if (newTier === 'Silver') {
-      newDiscounts.push({ type: 'healthy', rate: 0.10 });
-      newDiscounts.push({ type: 'drink', rate: 0.05, validUntil: new Date(Date.now() + 90*24*60*60*1000) });
-    } else if (newTier === 'Gold') {
-      newDiscounts.push({ type: 'healthy', rate: 0.15 });
-      newDiscounts.push({ type: 'full_meal', rate: 0.10 });
-    } else if (newTier === 'Platinum') {
-      newDiscounts.push({ type: 'healthy', rate: 0.20 });
-      newDiscounts.push({ type: 'general', rate: 0.15 });
-      // + logic for monthly free drink (separate field or 100% on 'drink')
+    // Assign discounts based on the new loyalty tier
+    if (newTier === TIERS.BRONZE) {
+      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIVE });
+    } else if (newTier === TIERS.SILVER) {
+      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TEN });
+      newDiscounts.push({ type: DISCOUNT_TYPES.DRINK, rate: DISCOUNT_RATES.FIVE, validUntil: new Date(Date.now() + 90*24*60*60*1000) }); // 90 days validity
+    } else if (newTier === TIERS.GOLD) {
+      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIFTEEN });
+      newDiscounts.push({ type: DISCOUNT_TYPES.FULL_MEAL, rate: DISCOUNT_RATES.TEN });
+    } else if (newTier === TIERS.PLATINUM) {
+      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TWENTY });
+      newDiscounts.push({ type: DISCOUNT_TYPES.GENERAL, rate: DISCOUNT_RATES.FIFTEEN });
+      // TODO: Implement logic for monthly free drink (separate field or 100% discount on 'drink')
     }
 
-    // Merge without duplicates, or replace old tier-specific ones
+    // Merge discounts: filter out any existing tier-specific discounts (if prefixed with 'tier_') and add new tier discounts
     this.discounts = [...this.discounts.filter(d => !d.type.startsWith('tier_')), ...newDiscounts];
-    await this.save(); // careful with recursion — use flag or separate method
+    await this.save(); // Save the updated discounts
+    this._updatingDiscounts = false; // Reset flag after save
   }
 });
 
