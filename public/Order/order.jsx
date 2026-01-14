@@ -581,12 +581,21 @@ const { useState, useEffect } = React;
                                                     </div>
                                                 )}
 
-                                                <button
-                                                    onClick={() => addToCart(item)}
-                                                    className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
-                                                >
-                                                    Add to Cart
-                                                </button>
+                                                <div className="flex items-center justify-between mt-4">
+                                                    <button
+                                                        onClick={() => window.location.href = `/Order/item_information/${encodeURIComponent(item.name)}`}
+                                                        className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        title="More information"
+                                                    >
+                                                        i
+                                                    </button>
+                                                    <button
+                                                        onClick={() => addToCart(item)}
+                                                        className="flex-1 ml-4 bg-primary text-white py-2 px-4 rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                                                    >
+                                                        Add to Cart
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

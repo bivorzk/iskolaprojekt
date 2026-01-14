@@ -41,7 +41,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set to true if using HTTPS
+  cookie: { secure: false } 
 }));
 
 app.use(express.urlencoded({ extended: true }));
@@ -127,8 +127,6 @@ app.get('/password-reset/:token', (req, res) => {
 app.get('/pay', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/pay.html'));
 });
-
-
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'verify.html'));

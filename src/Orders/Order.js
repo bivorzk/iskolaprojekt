@@ -35,6 +35,10 @@ router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/Order/index.html'));
 });
 
+router.get('/item_information/:itemName', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/information/index.html'));
+});
+
 
 router.get('/menu_items', async (req, res) => {
     try {
@@ -242,6 +246,17 @@ router.get('/:orderID', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }); 
+
+router.get('/DailyMenu', async (req, res) => {
+    try {
+        const menuItems = await MenuItems.find({ available: true });
+        res.json(menuItems);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 
 module.exports = router;
 
