@@ -10,7 +10,7 @@ mongoose.connect(dbUrl + dbName)
     .catch(err => console.error('Could not connect to MongoDB for database queries', err));
 
 const User = require('../src/database').User;
-const { DISCOUNT_RATES, DISCOUNT_TYPES, TIERS } = require('./LOYALTY_CONSTANTS.JS');
+const { DISCOUNT_RATES, DISCOUNT_TYPES, TIERS } = require('./DATABASE_CONSTANTS.JS');
 
 // Payment Schema
 
@@ -84,60 +84,79 @@ OrderScheme.pre('save', function(next) {
     next();
 });
 
+
+
 const UserLoyaltyScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    totalPoints: { type: Number, default: 0 },
+    totalPoints: { type: Number, default: 0 }, // Total accumulated points
     userTier : { type: String, enum: [TIERS.NONE, TIERS.BRONZE, TIERS.SILVER, TIERS.GOLD, TIERS.PLATINUM], default: TIERS.NONE },
     discounts: [{
         type: { type: String, enum: Object.values(DISCOUNT_TYPES), required: true }, // e.g., DISCOUNT_TYPES.HEALTHY
         rate: { type: Number, enum: Object.values(DISCOUNT_RATES), required: true }, // e.g., DISCOUNT_RATES.FIVE
         validUntil: { type: Date, required: false }
     }],
-    lastUpdated: { type: Date, default: Date.now }
+    lastUpdated: { type: Date, default: Date.now },
+    lastDecay: { type: Date, default: Date.now },
+    pointHistory: [{ date: { type: Date, default: Date.now }, amount: Number, reason: String }], // For logging
+    milestonesAchieved: [{ type: String }] // e.g., 'BRONZE_FIRST', 'SILVER_FIRST'
+    
 });
 
 UserLoyaltyScheme.pre('save', function(next) {
-    if (this.totalPoints >= 2000) {
-        this.userTier = TIERS.PLATINUM;
-    } else if (this.totalPoints >= 800) {
-        this.userTier = TIERS.GOLD;
-    } else if (this.totalPoints >= 250) {
-        this.userTier = TIERS.SILVER;
-    } else if (this.totalPoints >= 50) {
-        this.userTier = TIERS.BRONZE;
-    } else {
-        this.userTier = TIERS.NONE;
+    const SIX_MONTHS = 6 * 30 * 24 * 60 * 60 * 1000;
+    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Enhanced decay: Skip if recently active, tier-based rate
+    if (now - this.lastUpdated.getTime() < NINETY_DAYS) return next();
+    if (now - this.lastDecay.getTime() > SIX_MONTHS) {
+        const decayRate = this.userTier === TIERS.PLATINUM ? 0.3 : 0.5;
+        this.totalPoints = Math.max(0, Math.floor(this.totalPoints * (1 - decayRate)));
+        this.lastDecay = new Date();
+        // Log decay in history
+        this.pointHistory.push({ amount: -Math.floor(this.totalPoints * decayRate), reason: 'decay' });
     }
+
+    // Tier determination with downgrade support
+    const oldTier = this.userTier;
+    if (this.totalPoints >= 40000) this.userTier = TIERS.PLATINUM;
+    else if (this.totalPoints >= 15000) this.userTier = TIERS.GOLD;
+    else if (this.totalPoints >= 5000) this.userTier = TIERS.SILVER;
+    else if (this.totalPoints >= 1200) this.userTier = TIERS.BRONZE;
+    else this.userTier = TIERS.NONE;
+
+    if (oldTier !== this.userTier) {
+        const newDiscounts = [];
+        switch (this.userTier) {
+            case TIERS.BRONZE:
+                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIVE });
+                break;
+            case TIERS.SILVER:
+                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TEN });
+                newDiscounts.push({ type: DISCOUNT_TYPES.DRINK, rate: DISCOUNT_RATES.FIVE, validUntil: new Date(now + NINETY_DAYS) });
+                break;
+            case TIERS.GOLD:
+                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIFTEEN });
+                newDiscounts.push({ type: DISCOUNT_TYPES.FULL_MEAL, rate: DISCOUNT_RATES.TEN });
+                break;
+            case TIERS.PLATINUM:
+                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TWENTY });
+                newDiscounts.push({ type: DISCOUNT_TYPES.GENERAL, rate: DISCOUNT_RATES.FIFTEEN });
+                break;
+        }
+        this.discounts = newDiscounts;
+        if (!this.milestonesAchieved.includes(`${this.userTier}_FIRST`)) {
+            this.milestonesAchieved.push(`${this.userTier}_FIRST`);
+        }
+    }
+
+    if (this.isModified('totalPoints')) {
+        this.lastUpdated = new Date();
+    }
+
     next();
 });
-UserLoyaltyScheme.post('save', async function(doc) {
-  // Prevent infinite recursion by checking if we're already updating discounts due to tier change
-  if (this.isModified('userTier') && !this._updatingDiscounts) {
-    this._updatingDiscounts = true; // Set flag to prevent re-triggering this hook
-    const newTier = this.userTier;
-    let newDiscounts = [];
 
-    // Assign discounts based on the new loyalty tier
-    if (newTier === TIERS.BRONZE) {
-      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIVE });
-    } else if (newTier === TIERS.SILVER) {
-      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TEN });
-      newDiscounts.push({ type: DISCOUNT_TYPES.DRINK, rate: DISCOUNT_RATES.FIVE, validUntil: new Date(Date.now() + 90*24*60*60*1000) }); // 90 days validity
-    } else if (newTier === TIERS.GOLD) {
-      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIFTEEN });
-      newDiscounts.push({ type: DISCOUNT_TYPES.FULL_MEAL, rate: DISCOUNT_RATES.TEN });
-    } else if (newTier === TIERS.PLATINUM) {
-      newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TWENTY });
-      newDiscounts.push({ type: DISCOUNT_TYPES.GENERAL, rate: DISCOUNT_RATES.FIFTEEN });
-      // TODO: Implement logic for monthly free drink (separate field or 100% discount on 'drink')
-    }
-
-    // Merge discounts: filter out any existing tier-specific discounts (if prefixed with 'tier_') and add new tier discounts
-    this.discounts = [...this.discounts.filter(d => !d.type.startsWith('tier_')), ...newDiscounts];
-    await this.save(); // Save the updated discounts
-    this._updatingDiscounts = false; // Reset flag after save
-  }
-});
 
 // Review Schema
 

@@ -57,37 +57,50 @@ const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
 }) : undefined;
 
-const hour = 60 * 60 * 1000;
-const quarterHour = 15 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+const QUARTERHOUR = 15 * 60 * 1000;
 
 // Rate limiter for all non-sensitive routes
 const limiter = rateLimit({
-  windowMs: hour, // 1 hour
+  windowMs: HOUR, // 1 hour
   max: 250, // Limit each IP to 250
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   store: createStore(),
+    handler: (req, res) => {
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+  },
 })
 
 const registerLimiter = rateLimit({
-  windowMs: hour, // 1 hour window
+  windowMs: HOUR, // 1 hour window
   max: 100, // start blocking after 100 requests
-  message: 'Too many accounts created from this IP, please try again after an hour',
+  handler: (req, res) => {
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+  },
   store: createStore(),
 });
 
 
 const LoginLimiter = rateLimit({
-  windowMs: 20 * 60 * 1000, // 20  minutes window 
+  windowMs: QUARTERHOUR, // 15 minutes window 
   max: 35,
-  message: 'Too many login attempts from this IP, please try again after 20 minutes',
+  handler: (req, res) => {
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+  },
   store: createStore(),
 });
 
 const dashboardLimiter = rateLimit({
-  windowMs: quarterHour, // 15 minutes window
+  windowMs: QUARTERHOUR, // 15 minutes window
   max: 1000, // start blocking after 1000 requests
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  handler: (req, res) => {
+     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+  },
   store: createStore(),
 });
 
