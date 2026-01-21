@@ -231,6 +231,6 @@ router.get('/stats/total-revenue', cacheResult('admin:total_revenue', 300), asyn
   }
 });
 
-router.get('/stats/loya')
+
 
 module.exports = router;

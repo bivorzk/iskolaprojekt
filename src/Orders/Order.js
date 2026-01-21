@@ -2,10 +2,20 @@ const express = require('express');
 // Import User model and other database models
 const { User } = require('../database');
 const { Payment, UserLoyalty, MenuItems, Order, OrderItems } = require('../../config/database_queries');
+const { ConvertPoints, getHealthLevel } = require('../LoyaltySystem/loyalty-service');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
 const path = require('path');
+
+// Import cache service for invalidation
+let invalidateCache = null;
+try {
+  const { invalidateCache: invalidate } = require('../dashboard/services/cache-service');
+  invalidateCache = invalidate;
+} catch (error) {
+  console.log('Cache service not available in orders:', error.message);
+}
 
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -209,6 +219,30 @@ router.post('/:orderID/capture', async (req, res) => {
                 transactionId: paypalCapture.jsonResponse.id
             });
             await payment.save();
+
+            // Award loyalty points if user is logged in
+            if (order.userId) {
+                const userLoyalty = await UserLoyalty.findOne({ userId: order.userId });
+                let currentTier = 'NONE';
+                if (userLoyalty) {
+                    currentTier = userLoyalty.userTier;
+                }
+                
+                let totalPoints = 0;
+                for (const item of order.items) {
+                    const menuItem = item.menuItemId;
+                    const healthLevel = getHealthLevel(menuItem.healthScore);
+                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    totalPoints += points;
+                }
+                
+                await UserLoyalty.updatePointsAtomically(order.userId, totalPoints, 'order_completion');
+                
+                // Invalidate loyalty cache
+                if (invalidateCache) {
+                    invalidateCache([`student:loyalty:${order.userId}`]);
+                }
+            }
 
             // Return the PayPal capture response (frontend expects this format)
             res.json(paypalCapture.jsonResponse);

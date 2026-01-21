@@ -3,7 +3,10 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 
 const { User } = require('../../../src/database');
-const { Payment, ParentStudent, Order } = require('../../../config/database_queries');
+const { Payment, ParentStudent, Order, UserLoyalty } = require('../../../config/database_queries');
+
+// Import loyalty service
+const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-service');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
@@ -161,7 +164,6 @@ router.get('/health', (req, res) => {
 router.get('/debug', async (req, res) => {
   try {
     const session = req.session.user;
-    const mongoose = require('mongoose');
     const dbConnection = mongoose.connection.readyState;
 
     let userFromDb = null;
@@ -208,6 +210,41 @@ router.get('/wallet/balance', cacheResult((req) => `student:wallet_balance:${req
     });
   } catch (error) {
     console.error('Error fetching wallet balance:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Get loyalty information
+router.get('/loyalty', cacheResult((req) => `student:loyalty:${req.session.user.id}`, 300), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    const userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
+    
+    if (!userLoyalty) {
+      // Return default values for users without loyalty record
+      return res.status(200).json({
+        totalPoints: 0,
+        userTier: 'NONE',
+        discounts: [],
+        lastUpdated: null,
+        pointHistory: [],
+        milestonesAchieved: [],
+        success: true
+      });
+    }
+
+    res.status(200).json({
+      totalPoints: userLoyalty.totalPoints,
+      userTier: userLoyalty.userTier,
+      discounts: userLoyalty.discounts,
+      lastUpdated: userLoyalty.lastUpdated,
+      pointHistory: userLoyalty.pointHistory.slice(-10), // Last 10 entries
+      milestonesAchieved: userLoyalty.milestonesAchieved,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error fetching loyalty information:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
@@ -306,6 +343,28 @@ router.post('/wallet/add',
     } catch (paymentError) {
       console.error('Error creating payment record:', paymentError);
       // Continue even if payment record fails, wallet is already updated
+    }
+
+    // Award loyalty points for wallet top-up
+    try {
+      const userLoyalty = await UserLoyalty.findOne({ userId });
+      let currentTier = 'NONE';
+      if (userLoyalty) {
+        currentTier = userLoyalty.userTier;
+      }
+      
+      // Calculate points based on amount added (1 point per dollar)
+      const pointsToAward = Math.floor(usdAmount);
+      
+      if (pointsToAward > 0) {
+        await UserLoyalty.updatePointsAtomically(userId, pointsToAward, 'wallet_topup');
+        
+        // Invalidate loyalty cache
+        invalidateCache([`student:loyalty:${userId}`]);
+      }
+    } catch (loyaltyError) {
+      console.error('Error awarding loyalty points for wallet top-up:', loyaltyError);
+      // Continue even if loyalty update fails, wallet is already updated
     }
 
     res.status(200).json({
