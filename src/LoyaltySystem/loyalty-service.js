@@ -21,6 +21,7 @@ function getHealthLevel(healthScore) {
     return HEALTH_LEVELS.NONE;
 }
 
+
 function monthlyFreeDrinkPoints(tier) {
     switch (tier) {
         case TIER.BRONZE:
@@ -78,6 +79,18 @@ function ConvertPoints(amount, tier, healthLevel, date) {
     return Math.floor(total);
 }
 
+
+
+/*
+
+TODO implement integration with order processing to award points based on order details
+order route, student dashboard payment route....
+
+*/
+
+
+// Testing
+
 function getRandomDateIn2026() {
     const start = new Date(Date.UTC(2026, 0, 1));
     const end = new Date(Date.UTC(2026, 11, 31));
@@ -86,7 +99,7 @@ function getRandomDateIn2026() {
 
 
 async function runLoyaltyTest() {
-    const menuItems = await MenuItems.find({}).limit(35); // Limit to 10 for testing
+    const menuItems = await MenuItems.find({}).limit(35); 
 
     for (let tier of Object.values(TIER)) {
         const tierDisplay = Object.keys(TIER).find(key => TIER[key] === tier);

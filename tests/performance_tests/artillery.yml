@@ -1,12 +1,12 @@
 config:
   target: 'http://localhost:3000'  # Replace with your server URL
   phases:
-    - duration: 30
-      arrivalRate: 2
     - duration: 60
-      arrivalRate: 5
-    - duration: 30
-      arrivalRate: 3
+      arrivalRate: 500
+    - duration: 60
+      arrivalRate: 500
+    - duration: 60
+      arrivalRate: 500
   defaults:
     headers:
       'Content-Type': 'application/json'
