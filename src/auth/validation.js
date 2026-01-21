@@ -85,6 +85,12 @@ function validatePassword(password) {
     return `Password is too weak, choose a stronger one ${warning} + it takes ${strengthResult.guesses.toLocaleString()} to guess password `;
   }
 
+
+  if (typeof password !== 'string') {
+    return 'Invalid password format';
+  }
+
+
   // Dangerous characters check
   const dangerousPatterns = [
     '(', ')', '[', ']', '{', '}', '<', '>', '"', "'", '`', '\\', '/', '$'

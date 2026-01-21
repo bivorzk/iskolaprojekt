@@ -67,9 +67,15 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_LOGIN_SECRET, { expiresIn: '2h' });
     const decoded = jwt.verify(token, process.env.JWT_LOGIN_SECRET);
 
-    const IPClient = new IPLocate(process.env.GEOIP);
-    const geo = await IPClient.lookup(clientIp);
-    console.log('Login attempt from IP:', clientIp, 'Location:', geo.country);
+    // Optional geo lookup for logging
+    let geo = null;
+    try {
+      const IPClient = new IPLocate(process.env.GEOIP);
+      geo = await IPClient.lookup(clientIp);
+    } catch (geoError) {
+      console.warn('Geo lookup failed:', geoError.message);
+    }
+    console.log('Login attempt from IP:', clientIp, geo ? `Location: ${geo.country}` : 'Location: unknown');
   
 
 
