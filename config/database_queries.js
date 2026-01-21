@@ -24,6 +24,10 @@ const PaymentScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now } 
 });
 
+PaymentScheme.index({ userId: 1 });
+PaymentScheme.index({ status: 1 });
+PaymentScheme.index({ paymentMethod: 1, currency: 1 });
+
 // Menu Items Schema
 
 const MenuItemsScheme = new mongoose.Schema({
@@ -54,6 +58,10 @@ MenuItemsScheme.pre('save', function(next) {
     }
     next();
 });
+
+MenuItemsScheme.index({ available: 1 });
+MenuItemsScheme.index({ stock: 1 });
+MenuItemsScheme.index({ category: 1 });
 
 // Order Item Schema
 
@@ -86,6 +94,10 @@ OrderScheme.pre('save', function(next) {
 
 
 
+OrderScheme.index({ userId: 1 });
+OrderScheme.index({ status: 1 });
+OrderScheme.index({ orderDate: 1 });
+
 const UserLoyaltyScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     totalPoints: { type: Number, default: 0 }, // Total accumulated points
@@ -102,60 +114,137 @@ const UserLoyaltyScheme = new mongoose.Schema({
     
 });
 
-UserLoyaltyScheme.pre('save', function(next) {
+UserLoyaltyScheme.index({ userId: 1 });
+
+// Add a static method for atomic point updates
+UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, pointsToAdd, reason) {
+    const now = new Date();
     const SIX_MONTHS = 6 * 30 * 24 * 60 * 60 * 1000;
     const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
-    const now = Date.now();
 
-    // Enhanced decay: Skip if recently active, tier-based rate
-    if (now - this.lastUpdated.getTime() < NINETY_DAYS) return next();
-    if (now - this.lastDecay.getTime() > SIX_MONTHS) {
-        const decayRate = this.userTier === TIERS.PLATINUM ? 0.3 : 0.5;
-        this.totalPoints = Math.max(0, Math.floor(this.totalPoints * (1 - decayRate)));
-        this.lastDecay = new Date();
-        // Log decay in history
-        this.pointHistory.push({ amount: -Math.floor(this.totalPoints * decayRate), reason: 'decay' });
+    // Use MongoDB transactions for true atomicity
+    const session = await mongoose.startSession();
+    
+    try {
+        let result;
+        
+        await session.withTransaction(async () => {
+            // Find and lock the document
+            const current = await this.findOne({ userId }).session(session);
+            if (!current) {
+                throw new Error(`UserLoyalty document not found for userId: ${userId}`);
+            }
+
+            // Calculate points after potential decay (apply decay to current points, not new total)
+            let pointsAfterDecay = current.totalPoints;
+            let decayAmount = 0;
+            let shouldUpdateDecay = false;
+
+            // Check if decay should be applied
+            if (now - current.lastUpdated.getTime() >= NINETY_DAYS && 
+                now - current.lastDecay.getTime() > SIX_MONTHS) {
+                const decayRate = current.userTier === TIERS.PLATINUM ? 0.3 : 0.5;
+                decayAmount = Math.floor(current.totalPoints * decayRate);
+                pointsAfterDecay = Math.max(0, current.totalPoints - decayAmount);
+                shouldUpdateDecay = true;
+            }
+
+            // Calculate final points (decay first, then add new points)
+            const finalPoints = pointsAfterDecay + pointsToAdd;
+
+            // Determine new tier based on final points
+            let newTier = TIERS.NONE;
+            if (finalPoints >= 40000) newTier = TIERS.PLATINUM;
+            else if (finalPoints >= 15000) newTier = TIERS.GOLD;
+            else if (finalPoints >= 5000) newTier = TIERS.SILVER;
+            else if (finalPoints >= 1200) newTier = TIERS.BRONZE;
+
+            // Prepare point history entries
+            const historyEntries = [];
+            
+            // Add decay entry if applicable
+            if (shouldUpdateDecay && decayAmount > 0) {
+                historyEntries.push({
+                    date: now,
+                    amount: -decayAmount,
+                    reason: 'decay'
+                });
+            }
+            
+            // Add the new points entry
+            historyEntries.push({
+                date: now,
+                amount: pointsToAdd,
+                reason
+            });
+
+            // Prepare update operations
+            const updateOps = {
+                $set: {
+                    totalPoints: finalPoints,
+                    userTier: newTier,
+                    lastUpdated: now
+                },
+                $push: {
+                    pointHistory: { $each: historyEntries }
+                }
+            };
+
+            // Update decay timestamp if needed
+            if (shouldUpdateDecay) {
+                updateOps.$set.lastDecay = now;
+            }
+
+            // Handle tier changes and discounts
+            if (newTier !== current.userTier) {
+                const discounts = [];
+                switch (newTier) {
+                    case TIERS.BRONZE:
+                        discounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIVE });
+                        break;
+                    case TIERS.SILVER:
+                        discounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TEN });
+                        discounts.push({ 
+                            type: DISCOUNT_TYPES.DRINK, 
+                            rate: DISCOUNT_RATES.FIVE, 
+                            validUntil: new Date(now.getTime() + NINETY_DAYS) 
+                        });
+                        break;
+                    case TIERS.GOLD:
+                        discounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIFTEEN });
+                        discounts.push({ type: DISCOUNT_TYPES.FULL_MEAL, rate: DISCOUNT_RATES.TEN });
+                        break;
+                    case TIERS.PLATINUM:
+                        discounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TWENTY });
+                        discounts.push({ type: DISCOUNT_TYPES.GENERAL, rate: DISCOUNT_RATES.FIFTEEN });
+                        break;
+                }
+                
+                updateOps.$set.discounts = discounts;
+
+                // Add first-time tier achievement milestone
+                const milestoneKey = `${newTier}_FIRST`;
+                if (!current.milestonesAchieved.includes(milestoneKey)) {
+                    updateOps.$addToSet = { milestonesAchieved: milestoneKey };
+                }
+            }
+
+            // Perform the atomic update
+            result = await this.findOneAndUpdate(
+                { userId }, 
+                updateOps, 
+                { new: true, session }
+            );
+        });
+
+        return result;
+        
+    } catch (error) {
+        throw new Error(`Failed to update points atomically: ${error.message}`);
+    } finally {
+        await session.endSession();
     }
-
-    // Tier determination with downgrade support
-    const oldTier = this.userTier;
-    if (this.totalPoints >= 40000) this.userTier = TIERS.PLATINUM;
-    else if (this.totalPoints >= 15000) this.userTier = TIERS.GOLD;
-    else if (this.totalPoints >= 5000) this.userTier = TIERS.SILVER;
-    else if (this.totalPoints >= 1200) this.userTier = TIERS.BRONZE;
-    else this.userTier = TIERS.NONE;
-
-    if (oldTier !== this.userTier) {
-        const newDiscounts = [];
-        switch (this.userTier) {
-            case TIERS.BRONZE:
-                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIVE });
-                break;
-            case TIERS.SILVER:
-                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TEN });
-                newDiscounts.push({ type: DISCOUNT_TYPES.DRINK, rate: DISCOUNT_RATES.FIVE, validUntil: new Date(now + NINETY_DAYS) });
-                break;
-            case TIERS.GOLD:
-                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.FIFTEEN });
-                newDiscounts.push({ type: DISCOUNT_TYPES.FULL_MEAL, rate: DISCOUNT_RATES.TEN });
-                break;
-            case TIERS.PLATINUM:
-                newDiscounts.push({ type: DISCOUNT_TYPES.HEALTHY, rate: DISCOUNT_RATES.TWENTY });
-                newDiscounts.push({ type: DISCOUNT_TYPES.GENERAL, rate: DISCOUNT_RATES.FIFTEEN });
-                break;
-        }
-        this.discounts = newDiscounts;
-        if (!this.milestonesAchieved.includes(`${this.userTier}_FIRST`)) {
-            this.milestonesAchieved.push(`${this.userTier}_FIRST`);
-        }
-    }
-
-    if (this.isModified('totalPoints')) {
-        this.lastUpdated = new Date();
-    }
-
-    next();
-});
+};
 
 
 // Review Schema
@@ -168,6 +257,10 @@ const ReviewScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+ReviewScheme.index({ userId: 1 });
+
+ReviewScheme.index({ menuItemId: 1 });
+
 // Daily Menu Schema
 
 const DailyMenuScheme = new mongoose.Schema({
@@ -177,6 +270,10 @@ const DailyMenuScheme = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+DailyMenuScheme.index({ date: 1 });
+
+DailyMenuScheme.index({ schoolPeriod: 1 });
+
 // Parent Student Schema
 
 const ParentStudentScheme = new mongoose.Schema({
@@ -184,6 +281,8 @@ const ParentStudentScheme = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now }
 });
+ParentStudentScheme.index({ parentId: 1 });
+ParentStudentScheme.index({ studentId: 1 });
 
 
 // might expand 
@@ -203,6 +302,9 @@ const SecurityLogsScheme = new mongoose.Schema({
     isTor: { type: Boolean, required: false },
     isProxy: { type: Boolean, required: false },
 });
+SecurityLogsScheme.index({ userId: 1 });
+SecurityLogsScheme.index({ action: 1 });
+SecurityLogsScheme.index({ Timestamp: -1 });
 
 
 const Payment = mongoose.model('Payment', PaymentScheme);

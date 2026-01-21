@@ -95,7 +95,14 @@ router.post('/login', async (req, res) => {
         ipAddress: clientIp,
         action: 'ip_mismatch_login_attempt',
         type: 'WARNING',
-        details: 'Login attempt from different IP address'
+        details: 'Login attempt from different IP address' || 'First login for user',
+        country: geo ? geo.country : 'unknown' || 'unknown',
+        CountryCode: geo ? geo.countryCode : 'unknown' || 'unknown',
+        currency: geo ? geo.currency : 'unknown' || 'unknown',
+        Continent: geo ? geo.continent : 'unknown' || 'unknown',
+        IsVPN: geo ? geo.isVPN : false || false,
+        isTor: geo ? geo.isTor : false || false,
+        isProxy: geo ? geo.isProxy : false || false
       });
     } else {
       // Normal login from known or new IP
@@ -104,7 +111,15 @@ router.post('/login', async (req, res) => {
         ipAddress: clientIp,
         action: 'login_attempt',
         type: 'INFO',
-        details: ipMatches ? 'Login from known IP' : 'First login for user'
+        details: ipMatches ? 'Login from known IP' : 'First login for user',
+        country: geo ? geo.country : 'unknown' || 'unknown',
+        CountryCode: geo ? geo.countryCode : 'unknown' || 'unknown',
+        currency: geo ? geo.currency : 'unknown' || 'unknown',
+        Continent: geo ? geo.continent : 'unknown' || 'unknown',
+        IsVPN: geo ? geo.isVPN : false || false,
+        isTor: geo ? geo.isTor : false || false,
+        isProxy: geo ? geo.isProxy : false || false
+        
       });
     }
     
