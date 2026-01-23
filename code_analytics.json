@@ -1,25 +1,25 @@
 {
     "global": {
-        "total_files": 65,
-        "total_lines": 11057,
-        "non_empty_lines": 9760,
-        "total_characters": 448126
+        "total_files": 92,
+        "total_lines": 11849,
+        "non_empty_lines": 10513,
+        "total_characters": 474642
     },
     "by_extension": {
         ".js": {
-            "files": 36,
-            "lines": 5926,
-            "chars": 200811
+            "files": 46,
+            "lines": 6368,
+            "chars": 214754
         },
         ".html": {
-            "files": 14,
-            "lines": 1262,
-            "chars": 56203
+            "files": 16,
+            "lines": 1345,
+            "chars": 59279
         },
         ".jsx": {
-            "files": 7,
-            "lines": 2973,
-            "chars": 170571
+            "files": 22,
+            "lines": 3240,
+            "chars": 180068
         },
         ".css": {
             "files": 5,
@@ -33,9 +33,9 @@
         }
     },
     "special_totals": {
-        ".js": 5926,
-        ".jsx": 2973,
-        ".html": 1262,
+        ".js": 6368,
+        ".jsx": 3240,
+        ".html": 1345,
         ".css": 620,
         ".py": 276
     }
