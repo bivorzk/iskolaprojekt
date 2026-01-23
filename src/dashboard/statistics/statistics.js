@@ -231,6 +231,4 @@ router.get('/stats/total-revenue', cacheResult('admin:total_revenue', 300), asyn
   }
 });
 
-
-
 module.exports = router;

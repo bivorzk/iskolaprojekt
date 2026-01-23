@@ -1,7 +1,7 @@
 // 6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk
+require('dotenv').config();
 
-
-const RECAPTCHA_SITE_KEY = '6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk'
+const RECAPTCHA_SITE_KEY = process.env.Client_Side_Captha;
         
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission

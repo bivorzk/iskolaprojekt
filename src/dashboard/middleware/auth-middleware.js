@@ -1,6 +1,7 @@
 const path = require('path');
 
 
+
 function requireAdmin(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
     return res.sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
