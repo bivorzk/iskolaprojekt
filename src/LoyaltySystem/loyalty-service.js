@@ -113,7 +113,7 @@ async function runLoyaltyTest() {
     }
 }
 
-runLoyaltyTest().catch(console.error);
+// runLoyaltyTest().catch(console.error);
 
 
 module.exports = {

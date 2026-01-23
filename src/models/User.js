@@ -50,9 +50,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-User.index({ username: 1 });
-User.index({ email: 1 });
-User.index({ createdAt: 1 });
 
 const User = mongoose.model('User', userSchema);
 

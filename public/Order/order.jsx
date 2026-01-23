@@ -1,12 +1,5 @@
 const { useState, useEffect } = React;
 
-        // Import components
-        const Header = require('./Header.jsx').default || require('./Header.jsx');
-        const MenuItem = require('./MenuItem.jsx').default || require('./MenuItem.jsx');
-        const Cart = require('./Cart.jsx').default || require('./Cart.jsx');
-        const useCart = require('./useCart.js').default || require('./useCart.js');
-        const { loadGooglePayScript, loadPayPalScript, handleGooglePayPayment, handlePayPalPayment, handleBalancePayment } = require('./paymentHandlers.js');
-
         const OrderPage = () => {
             const [menuItems, setMenuItems] = useState([]);
             const [currency, setCurrency] = useState('HUF');
