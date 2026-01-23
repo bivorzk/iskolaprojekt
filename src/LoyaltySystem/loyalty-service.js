@@ -113,7 +113,7 @@ async function runLoyaltyTest() {
     }
 }
 
-runLoyaltyTest().catch(console.error).finally(() => process.exit(0));
+runLoyaltyTest().catch(console.error);
 
 
 module.exports = {
