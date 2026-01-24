@@ -11,6 +11,9 @@ const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-s
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
 
+// Import Redis Lua service for atomic operations
+const redisLuaService = require('../../services/redis-lua-service');
+
 let redisClient = null;
 try {
   const { redisClient: client } = require('../../redis');
@@ -23,25 +26,50 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
+// Rate limiting middleware using Redis Lua service
+async function rateLimit(req, res, next) {
+  try {
+    const key = `ratelimit:student:${req.session.user?.id || req.ip}`;
+    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 60); // 60 requests per minute for students
+
+    if (!rateLimitResult.allowed) {
+      return res.status(429).sendFile(path.join(__dirname, '../../../public/429/429.html'));
+    }
+
+    // Add rate limit headers
+    res.set({
+      'X-RateLimit-Limit': '60',
+      'X-RateLimit-Remaining': Math.max(0, 59 - rateLimitResult.currentCount),
+      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
+    });
+
+    next();
+  } catch (error) {
+    console.log('Rate limiting failed, allowing request:', error.message);
+    next(); // Allow request if rate limiting fails
+  }
+}
+
 // Student permission middleware
 function requireStudent(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
   }
   // Allow both students and admins to access student routes
   if (req.session.user.usertype === 'student' || req.session.user.usertype === 'admin') {
     next();
   } else {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
   }
 }
 
 // Apply middleware to all student routes
 router.use('/', requireStudent);
+router.use('/', rateLimit); // Apply rate limiting to all student routes
 
 // Serve student dashboard
 router.get('/', (req, res) => {
-  res.sendFile(require('path').join(__dirname, '../../../public/dashboard/student/student.html'));
+  res.status(200).sendFile(path.join(__dirname, '../../../public/dashboard/student/student.html'));
 });
 
 // API endpoints for STUDENT DASHBOARD
@@ -188,24 +216,42 @@ router.get('/wallet/balance', cacheResult((req) => `student:wallet_balance:${req
     const userId = req.session.user.id;
     console.log('Getting balance for user:', userId);
 
-    const user = await User.findById(userId).select('balance');
+    // First try to get balance from Redis (faster)
+    const walletKey = `wallet:user:${userId}`;
+    let balance = null;
 
-    if (!user) {
-      console.log('User not found for balance request');
-      return res.status(404).json({ error: 'User not found' });
+    try {
+      balance = await redisLuaService.getWalletBalance(walletKey);
+      console.log('Balance from Redis:', balance);
+    } catch (redisError) {
+      console.log('Redis not available for balance, falling back to database');
     }
 
-    console.log('User balance retrieved:', user.balance);
+    // If Redis balance is null or Redis failed, get from database and sync to Redis
+    if (balance === null || balance === undefined) {
+      const user = await User.findById(userId).select('balance');
 
-    // Initialize balance if it doesn't exist
-    if (user.balance === undefined || user.balance === null) {
-      user.balance = 0;
-      await user.save();
-      console.log('Initialized user balance to 0');
+      if (!user) {
+        console.log('User not found for balance request');
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      balance = user.balance || 0;
+
+      // Sync to Redis for future requests
+      try {
+        if (balance > 0) {
+          await redisLuaService.updateWalletBalance(walletKey, balance - balance); // Set to exact amount
+        }
+      } catch (syncError) {
+        console.log('Failed to sync balance to Redis:', syncError.message);
+      }
     }
+
+    console.log('Final balance:', balance);
 
     res.status(200).json({
-      balance: user.balance || 0,
+      balance: balance,
       success: true
     });
   } catch (error) {
@@ -299,25 +345,38 @@ router.post('/wallet/add',
 
     console.log('User found:', { id: existingUser._id, currentBalance: existingUser.balance });
 
-    // Ensure balance field exists, initialize if needed
-    if (existingUser.balance === undefined || existingUser.balance === null) {
-      console.log('Balance field missing, initializing to 0');
-      await User.findByIdAndUpdate(userId, { balance: 0 });
-      existingUser.balance = 0;
+    // Use Redis Lua service for atomic wallet update
+    const walletKey = `wallet:user:${userId}`;
+    let newBalance;
+
+    try {
+      // Update balance atomically in Redis
+      newBalance = await redisLuaService.updateWalletBalance(walletKey, usdAmount);
+      console.log('Redis wallet updated successfully:', newBalance);
+
+      // Update database balance to match Redis
+      await User.findByIdAndUpdate(userId, { balance: newBalance });
+
+    } catch (redisError) {
+      console.log('Redis wallet update failed, falling back to database:', redisError.message);
+
+      // Fallback to database update
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $inc: { balance: usdAmount } },
+        { new: true, upsert: false }
+      );
+      newBalance = user.balance;
+
+      // Try to sync to Redis
+      try {
+        await redisLuaService.updateWalletBalance(walletKey, newBalance - newBalance); // Set exact amount
+      } catch (syncError) {
+        console.log('Failed to sync to Redis after fallback:', syncError.message);
+      }
     }
 
-    // Update user wallet balance
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $inc: { balance: usdAmount } },
-      { new: true, upsert: false }
-    );
-
-    console.log('User wallet updated:', { userId, newBalance: user.balance });
-
-    // Verify the update by reading the user again
-    const verifyUser = await User.findById(userId).select('balance');
-    console.log('Verification after update:', { userId, verifiedBalance: verifyUser.balance });
+    console.log('Final wallet balance:', newBalance);
 
     // Invalidate balance cache
     invalidateCache([`student:wallet_balance:${userId}`]);
@@ -369,14 +428,14 @@ router.post('/wallet/add',
 
     res.status(200).json({
       message: 'Money added successfully',
-      newBalance: verifyUser.balance || 0,
+      newBalance: newBalance,
       addedAmount: usdAmount,
       success: true,
       debug: {
         originalAmount: amount,
         convertedAmount: usdAmount,
         currency: currency,
-        finalBalance: verifyUser.balance
+        finalBalance: newBalance
       }
     });
   } catch (error) {

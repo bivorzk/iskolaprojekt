@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const rateLimit = require('express-rate-limit');
-const session = require('express-session'); // Add this line
+const session = require('express-session'); 
 const database = require('./database');
 const path = require('path');
 const emailverification = require('./auth/email_verification');
@@ -18,7 +18,7 @@ const dashboardRouter = require('./dashboard/dashboard');
 const logoutRouter = require('./logout');
 const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
-
+const redisLuaService = require('./services/redis-lua-service');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -26,9 +26,16 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 let redisAvailable = false;
 const { redisClient, isRedisAvailable } = require('./redis');
 
-redisClient.on('connect', () => {
+redisClient.on('connect', async () => {
   console.log('Redis connected in main.js');
   redisAvailable = true;
+
+  // Initialize Redis Lua service
+  try {
+    await redisLuaService.initialize();
+  } catch (error) {
+    console.error('Failed to initialize Redis Lua service:', error);
+  }
 });
 redisClient.on('error', (err) => {
   console.log('Redis Client Error in main.js', err);

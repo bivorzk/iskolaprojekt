@@ -3,6 +3,12 @@
 npm start    # Recommended - runs the application
 npm run dev  # Development mode with nodemon for auto-restart
 node src/main.js  # Direct execution
+
+
+After cloning the app you have to go to discord channel #general view <strong>pinned messages</strong>
+and copy the .env into a file called .env which should be at the root directory after this you can start the server if you encounter redis error you can ignore it or download redis via a docker/chocolatey
+
+
 ```
 
 ## Gitignore file tartalma:
@@ -28,41 +34,42 @@ node_modules/
 These are the current node modules that are needed to run the application
 
 ```
-├── @google-cloud/recaptcha-enterprise@6.3.0
-├── @paypal/paypal-server-sdk@1.1.0
-├── artillery@2.0.27
-├── autoprefixer@10.4.23
-├── badwords-list@2.0.1-4
-├── bcrypt@6.0.0
-├── connect-redis@9.0.0
-├── cors@2.8.5
-├── crypto@1.0.1
-├── dotenv@17.2.3
-├── ejs@3.1.10
-├── express-mongo-sanitize@2.2.0
-├── express-rate-limit@8.1.0
-├── express-session@1.18.2
-├── express@4.21.2
-├── helmet@8.1.0
-├── hpp@0.2.3
-├── jsonwebtoken@9.0.2
-├── mongodb@6.20.0
-├── mongoose@8.18.2
-├── nanoid@5.1.6
-├── node-fetch@2.7.0
-├── node-iplocate@2.0.1
-├── nodemailer@7.0.9
-├── nodemon@3.1.0
-├── paypal@1.0.1
-├── postcss@8.5.6
-├── rate-limit-redis@4.3.1
-├── react@19.2.1
-├── redis@5.10.0
-├── serve-favicon@2.5.1
-├── simple-statistics@7.8.8
-├── tailwindcss@4.1.18
-├── xss-clean@0.1.4
-└── zxcvbn@4.4.2
++-- @google-cloud/recaptcha-enterprise@6.3.0
++-- @paypal/paypal-server-sdk@1.1.0
++-- artillery@2.0.27
++-- autoprefixer@10.4.23
++-- badwords-list@2.0.1-4
++-- bcrypt@6.0.0
++-- connect-redis@9.0.0
++-- cors@2.8.5
++-- crypto@1.0.1
++-- dotenv@17.2.3
++-- ejs@3.1.10
++-- express-mongo-sanitize@2.2.0
++-- express-rate-limit@8.1.0
++-- express-session@1.18.2
++-- express-validator@7.3.1
++-- express@4.21.2
++-- helmet@8.1.0
++-- hpp@0.2.3
++-- jsonwebtoken@9.0.2
++-- mongodb@6.20.0
++-- mongoose@8.18.2
++-- nanoid@5.1.6
++-- node-fetch@2.7.0
++-- node-iplocate@2.0.1
++-- nodemailer@7.0.9
++-- nodemon@3.1.0
++-- paypal@1.0.1
++-- postcss@8.5.6
++-- rate-limit-redis@4.3.1
++-- react@19.2.1
++-- redis@5.10.0
++-- serve-favicon@2.5.1
++-- simple-statistics@7.8.8
++-- tailwindcss@4.1.18
++-- xss-clean@0.1.4
++-- zxcvbn@4.4.2
 
 Dev Dependencies:
 ├── autoprefixer@10.4.23

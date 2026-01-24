@@ -15,7 +15,7 @@ EXCLUDE_DIRS = {
 }
 EXCLUDE_FILES = {"cargo.lock", ".env", "package-lock.json", ".gitignore"}
 # Extensions to track specifically
-TRACKED_EXTENSIONS = {".js", ".jsx", ".html", ".css", ".py"}  # Added .jsx for workspace files
+TRACKED_EXTENSIONS = {".js", ".jsx", ".html", ".css", ".py", ".lua"}  # Added .jsx for workspace files
 
 def analyze_codebase():
     stats = {
@@ -32,6 +32,7 @@ def analyze_codebase():
             ".html": 0,
             ".css": 0,
             ".py": 0,
+            ".lua": 0,
         },  # Row counts for specific types
     }
 
@@ -107,3 +108,4 @@ if __name__ == "__main__":
     print(f"HTML (.html) Lines: {results['special_totals'].get('.html', 0)}")
     print(f"CSS (.css) Lines: {results['special_totals'].get('.css', 0)}")
     print(f"Python (.py) Lines: {results['special_totals'].get('.py', 0)}")
+    print(f"Lua (.lua) Lines: {results['special_totals'].get('.lua', 0)}")

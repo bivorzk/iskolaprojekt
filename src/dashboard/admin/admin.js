@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
-
+const path = require('path');
 const { User } = require('../../../src/database');
 const { Payment, MenuItems, Order } = require('../../../config/database_queries');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
+
+// Import Redis Lua service for atomic operations and rate limiting
+const redisLuaService = require('../../services/redis-lua-service');
 
 let redisClient = null;
 try {
@@ -21,23 +24,48 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
+// Rate limiting middleware using Redis Lua service
+async function rateLimit(req, res, next) {
+  try {
+    const key = `ratelimit:admin:${req.session.user?.id || req.ip}`;
+    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 30); // 30 requests per minute
+
+    if (!rateLimitResult.allowed) {
+      return res.status(429).sendFile(path.join(__dirname, '../../../public/429/429.html'));
+    }
+
+    // Add rate limit headers
+    res.set({
+      'X-RateLimit-Limit': '30',
+      'X-RateLimit-Remaining': Math.max(0, 29 - rateLimitResult.currentCount),
+      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
+    });
+
+    next();
+  } catch (error) {
+    console.log('Rate limiting failed, allowing request:', error.message);
+    next(); // Allow request if rate limiting fails
+  }
+}
+
 // Admin permission middleware
 function requireAdmin(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
   }
   if (req.session.user.usertype !== 'admin') {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
   }
   next();
 }
 
 // Apply middleware to all admin routes
 router.use('/', requireAdmin);
+router.use('/', rateLimit); // Apply rate limiting to all admin routes
 
 // Serve admin dashboard
 router.get('/', (req, res) => {
-  res.sendFile(require('path').join(__dirname, '../../../public/dashboard/admin/admin.html'));
+  res.status(200).sendFile(path.join(__dirname, '../../../public/dashboard/admin/admin.html'));
 });
 
 // API endpoints for ADMIN DASHBOARD
@@ -63,7 +91,7 @@ router.get('/userlist', cacheResult('admin:userlist', 300), async (req, res) => 
 router.get('/orders', cacheResult('admin:orders', 300), async (req, res) => {
   try {
     const count = await Order.countDocuments({});
-    res.json({ total: count });
+    res.status(202).json({ total: count });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

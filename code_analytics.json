@@ -1,42 +1,43 @@
 {
     "global": {
-        "total_files": 92,
-        "total_lines": 11849,
-        "non_empty_lines": 10513,
-        "total_characters": 474642
+        "total_files": 93,
+        "total_lines": 11279,
+        "non_empty_lines": 9915,
+        "total_characters": 450454
     },
     "by_extension": {
         ".js": {
-            "files": 46,
-            "lines": 6368,
-            "chars": 214754
+            "files": 49,
+            "lines": 6957,
+            "chars": 233416
         },
         ".html": {
-            "files": 16,
-            "lines": 1345,
-            "chars": 59279
+            "files": 13,
+            "lines": 1091,
+            "chars": 48595
         },
         ".jsx": {
-            "files": 22,
-            "lines": 3240,
-            "chars": 180068
+            "files": 25,
+            "lines": 2845,
+            "chars": 156350
         },
-        ".css": {
-            "files": 5,
-            "lines": 620,
-            "chars": 11401
+        ".lua": {
+            "files": 3,
+            "lines": 108,
+            "chars": 2848
         },
         ".py": {
             "files": 3,
-            "lines": 276,
-            "chars": 9140
+            "lines": 278,
+            "chars": 9245
         }
     },
     "special_totals": {
-        ".js": 6368,
-        ".jsx": 3240,
-        ".html": 1345,
-        ".css": 620,
-        ".py": 276
+        ".js": 6957,
+        ".jsx": 2845,
+        ".html": 1091,
+        ".css": 0,
+        ".py": 278,
+        ".lua": 108
     }
 }
