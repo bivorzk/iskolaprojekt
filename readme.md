@@ -5,7 +5,7 @@ npm run dev  # Development mode with nodemon for auto-restart
 node src/main.js  # Direct execution
 
 
-After cloning the app you have to go to discord channel #general view <strong>pinned messages</strong>
+After cloning the app you have to go to discord channel #general view pinned messages
 and copy the .env into a file called .env which should be at the root directory after this you can start the server if you encounter redis error you can ignore it or download redis via a docker/chocolatey
 
 
