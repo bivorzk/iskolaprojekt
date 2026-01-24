@@ -34,7 +34,7 @@ This is a web-based application for school cafeterias, allowing students to orde
 ## Installation
 
 1. Clone the repository: `git clone <repo-url>`
-2. Navigate to the directory: `cd iskolaprojekt-1`
+2. Navigate to the directory: `cd iskolaprojekt`
 3. Install dependencies: `npm install`
 4. Set up environment variables (see below)
 5. Start Redis
@@ -395,11 +395,7 @@ Dev Dependencies:
 
 ![POST](https://img.shields.io/badge/POST-green) /api/payments/googlepay   # Google Pay payment processing
 
-## Development
 
-- Run in development mode: `npm run dev`
-- Build for production: `npm start`
-- Lint code: (Add linting command if available)
 
 ## Testing
 
