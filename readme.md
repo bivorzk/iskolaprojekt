@@ -13,6 +13,9 @@ After cloning the app, follow these steps:
 4. If you encounter a Redis error, you can ignore it or download Redis via Docker/Chocolatey.
 ```
 
+## Technologies 
+![Tech Stack](snaptraySTACK.png)
+
 ## Gitignore file tartalma:
 
 ```
