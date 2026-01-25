@@ -1,6 +1,7 @@
 -- Lua script for processing orders with inventory check
 -- KEYS: [1] inventory_key, [2] wallet_key, [3] order_key
 -- ARGV: [1] item_quantity, [2] item_price, [3] user_id
+---@diagnostic disable: undefined-global -- Disable undefined global warnings
 
 local inventory_key = KEYS[1]
 local wallet_key = KEYS[2]

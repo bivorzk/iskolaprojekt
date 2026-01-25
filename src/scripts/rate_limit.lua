@@ -1,6 +1,7 @@
 -- Lua script for advanced rate limiting
 -- KEYS: [1] rate_limit_key
 -- ARGV: [1] window_size_seconds, [2] max_requests, [3] current_timestamp
+---@diagnostic disable: undefined-global -- Disable undefined global warnings
 
 local key = KEYS[1]
 local window = tonumber(ARGV[1])

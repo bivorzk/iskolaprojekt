@@ -1,6 +1,7 @@
 -- Lua script for atomic wallet balance update
 -- KEYS: [1] wallet_key
 -- ARGV: [1] amount_to_add (can be negative for deduction)
+---@diagnostic disable: undefined-global -- Disable undefined global warnings
 
 local wallet_key = KEYS[1]
 local amount = tonumber(ARGV[1])
