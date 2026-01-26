@@ -63,12 +63,20 @@ function isHolidaySeason(date) {
     return false;
 }
 
-function ConvertPoints(amount, tier, healthLevel, date) {
+function ConvertPoints(dollarAmount, tier, healthLevel, date) {
     let total = 0;
 
-    for (let i = 0; i < amount; i++) {
+    // Calculate base points (4-9 points per dollar)
+    for (let i = 0; i < Math.floor(dollarAmount); i++) {
+        total += Math.floor(Math.random() * 6) + 4; // 4-9 points per dollar
+    }
+    
+    // Handle fractional dollars (e.g., $1.50 gets 50% chance of extra points)
+    const fractionalPart = dollarAmount - Math.floor(dollarAmount);
+    if (fractionalPart > 0 && Math.random() < fractionalPart) {
         total += Math.floor(Math.random() * 6) + 4;
     }
+    
     if (isHoliday(date)) total *= 1.5;
     else if (isHolidaySeason(date)) total *= 1.2; // 20% increase during holiday season
     total *= 1 + (healthLevel * 0.2); // 0%, 20%, 40% bonus

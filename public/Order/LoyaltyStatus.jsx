@@ -18,6 +18,8 @@ const LoyaltyStatus = () => {
             if (response.ok) {
                 const data = await response.json();
                 setLoyaltyData(data);
+            } else {
+                console.log('Failed to fetch loyalty data, user might not be logged in');
             }
         } catch (error) {
             console.log('Could not fetch loyalty data:', error);
@@ -26,15 +28,36 @@ const LoyaltyStatus = () => {
         }
     };
 
+    // Auto-refresh loyalty data every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchLoyaltyData();
+        }, 30000);
+        
+        return () => clearInterval(interval);
+    }, []);
+    
+    // Listen for order completion events to refresh loyalty data
+    useEffect(() => {
+        const handleOrderComplete = () => {
+            setTimeout(() => {
+                fetchLoyaltyData();
+            }, 2000); // Wait 2 seconds after order to ensure backend processing is complete
+        };
+        
+        window.addEventListener('orderComplete', handleOrderComplete);
+        return () => window.removeEventListener('orderComplete', handleOrderComplete);
+    }, []);
+
     const getTierInfo = (tier) => {
         switch (tier) {
-            case 'FIVE':
+            case 'Bronze':
                 return { name: 'Bronze', color: '#CD7F32', icon: '🥉' };
-            case 'TEN':
+            case 'Silver':
                 return { name: 'Silver', color: '#C0C0C0', icon: '🥈' };
-            case 'FIFTEEN':
+            case 'Gold':
                 return { name: 'Gold', color: '#FFD700', icon: '🥇' };
-            case 'TWENTY':
+            case 'Platinum':
                 return { name: 'Platinum', color: '#E5E4E2', icon: '💎' };
             default:
                 return { name: 'None', color: '#6C757D', icon: '⭐' };
@@ -76,7 +99,7 @@ const LoyaltyStatus = () => {
                         Earn points with every order!
                     </div>
                     <div className="text-xs text-accent opacity-75 mt-1">
-                        ⚡ Random 4-9 pts per $1 spent
+                        Random 4-9 pts per $1 spent
                     </div>
                 </div>
             </div>

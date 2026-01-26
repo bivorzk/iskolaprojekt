@@ -114,7 +114,8 @@ const saveCompletedOrder = async (userId, items, total, currency, paymentMethod,
                 const menuItem = await MenuItems.findById(item.menuItemId);
                 if (menuItem) {
                     const healthLevel = getHealthLevel(menuItem.healthScore);
-                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
+                    const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
                     totalPoints += points;
                 }
             }
@@ -195,7 +196,8 @@ const processBalancePayment = async (userId, items, total, currency) => {
                 const menuItem = await MenuItems.findById(item.menuItemId);
                 if (menuItem) {
                     const healthLevel = getHealthLevel(menuItem.healthScore);
-                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
+                    const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
                     totalPoints += points;
                 }
             }

@@ -37,6 +37,8 @@ const StudentDashboard = () => {
                 );
             case 'transactions':
                 return <TransactionsSection transactions={transactions} />;
+            case 'loyalty':
+                return <LoyaltySection />;
             case 'stats':
                 return <StatsSection stats={stats} walletAmount={walletAmount} />;
             case 'settings':

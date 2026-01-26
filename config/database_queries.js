@@ -129,10 +129,23 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
         let result;
         
         await session.withTransaction(async () => {
-            // Find and lock the document
-            const current = await this.findOne({ userId }).session(session);
+            // Find and lock the document, or create if it doesn't exist
+            let current = await this.findOne({ userId }).session(session);
+            
             if (!current) {
-                throw new Error(`UserLoyalty document not found for userId: ${userId}`);
+                // Create new loyalty record for user
+                current = new this({
+                    userId: userId,
+                    totalPoints: 0,
+                    userTier: TIERS.NONE,
+                    discounts: [],
+                    lastUpdated: now,
+                    lastDecay: now,
+                    pointHistory: [],
+                    milestonesAchieved: []
+                });
+                await current.save({ session });
+                console.log(`Created new loyalty record for user: ${userId}`);
             }
 
             // Calculate points after potential decay (apply decay to current points, not new total)

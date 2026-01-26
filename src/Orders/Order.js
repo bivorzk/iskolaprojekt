@@ -256,7 +256,8 @@ router.post('/Order/wallet', async (req, res) => {
                 for (const item of order.items) {
                     const menuItem = await MenuItems.findById(item.menuItemId);
                     const healthLevel = getHealthLevel(menuItem.healthScore);
-                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
+                    const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
                     totalPoints += points;
                 }
 
@@ -452,7 +453,8 @@ router.post('/:orderID/capture', async (req, res) => {
                 for (const item of order.items) {
                     const menuItem = item.menuItemId;
                     const healthLevel = getHealthLevel(menuItem.healthScore);
-                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
+                    const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
                     totalPoints += points;
                 }
                 

@@ -59,9 +59,6 @@ const { useState, useEffect } = React;
                         {/* Loyalty Status Banner */}
                         <LoyaltyStatus />
                         
-                        {/* Demo Mode Testing */}
-                        <LoyaltyDemo />
-                        
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Menu Section */}
                             <div className="flex-1">

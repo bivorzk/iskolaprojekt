@@ -458,6 +458,9 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
                         // Clear cart
                         clearCart();
 
+                        // Emit order completion event for loyalty refresh
+                        window.dispatchEvent(new CustomEvent('orderComplete', { detail: { orderId: saveResult.orderId, points: saveResult.loyaltyPointsAwarded } }));
+
                         // Show loyalty points animation if points were awarded
                         if (saveResult.loyaltyPointsAwarded && saveResult.loyaltyPointsAwarded > 0) {
                             setTimeout(() => {
@@ -523,6 +526,9 @@ const handleBalancePayment = async (cart, currency, clearCart) => {
     }).then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Emit order completion event for loyalty refresh
+            window.dispatchEvent(new CustomEvent('orderComplete', { detail: { orderId: data.orderId, points: data.loyaltyPointsAwarded } }));
+            
             // Show loyalty points animation if points were awarded
             if (data.loyaltyPointsAwarded && data.loyaltyPointsAwarded > 0) {
                 setTimeout(() => {
@@ -534,8 +540,8 @@ const handleBalancePayment = async (cart, currency, clearCart) => {
             setTimeout(() => {
                 showSnapTrayNotification(
                     'success',
-                    '🎉 Order Successfully Placed!',
-                    `Paid from account balance${data.loyaltyPointsAwarded > 0 ? `\n⚡ Earned ${data.loyaltyPointsAwarded} loyalty points!` : ''}`
+                    'Order Successfully Placed!',
+                    `Paid from account balance${data.loyaltyPointsAwarded > 0 ? `\n Earned ${data.loyaltyPointsAwarded} loyalty points!` : ''}`
                 );
             }, data.loyaltyPointsAwarded > 0 ? 4000 : 1000);
             

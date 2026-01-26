@@ -266,19 +266,36 @@ router.get('/loyalty', cacheResult((req) => `student:loyalty:${req.session.user.
   try {
     const userId = req.session.user.id;
     
-    const userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
+    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
     
     if (!userLoyalty) {
-      // Return default values for users without loyalty record
-      return res.status(200).json({
-        totalPoints: 0,
-        userTier: 'NONE',
-        discounts: [],
-        lastUpdated: null,
-        pointHistory: [],
-        milestonesAchieved: [],
-        success: true
-      });
+      // Create new loyalty record for user
+      try {
+        userLoyalty = new UserLoyalty({
+          userId: userId,
+          totalPoints: 0,
+          userTier: require('../../../config/DATABASE_CONSTANTS.JS').TIERS.NONE,
+          discounts: [],
+          lastUpdated: new Date(),
+          lastDecay: new Date(),
+          pointHistory: [],
+          milestonesAchieved: []
+        });
+        await userLoyalty.save();
+        console.log(`Created new loyalty record for user: ${userId}`);
+      } catch (createError) {
+        console.error('Error creating loyalty record:', createError);
+        // Return default values if creation fails
+        return res.status(200).json({
+          totalPoints: 0,
+          userTier: require('../../../config/DATABASE_CONSTANTS.JS').TIERS.NONE,
+          discounts: [],
+          lastUpdated: null,
+          pointHistory: [],
+          milestonesAchieved: [],
+          success: true
+        });
+      }
     }
 
     res.status(200).json({
@@ -286,12 +303,56 @@ router.get('/loyalty', cacheResult((req) => `student:loyalty:${req.session.user.
       userTier: userLoyalty.userTier,
       discounts: userLoyalty.discounts,
       lastUpdated: userLoyalty.lastUpdated,
-      pointHistory: userLoyalty.pointHistory.slice(-10), // Last 10 entries
+      pointHistory: userLoyalty.pointHistory.slice(-20), // Last 20 entries
       milestonesAchieved: userLoyalty.milestonesAchieved,
       success: true
     });
   } catch (error) {
     console.error('Error fetching loyalty information:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Refresh loyalty data (bypass cache)
+router.post('/loyalty/refresh', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    // Clear cache first
+    if (invalidateCache) {
+      invalidateCache([`student:loyalty:${userId}`]);
+    }
+    
+    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
+    
+    if (!userLoyalty) {
+      // Create new loyalty record for user
+      userLoyalty = new UserLoyalty({
+        userId: userId,
+        totalPoints: 0,
+        userTier: require('../../../config/DATABASE_CONSTANTS.JS').TIERS.NONE,
+        discounts: [],
+        lastUpdated: new Date(),
+        lastDecay: new Date(),
+        pointHistory: [],
+        milestonesAchieved: []
+      });
+      await userLoyalty.save();
+      console.log(`Created new loyalty record for user: ${userId}`);
+    }
+
+    res.status(200).json({
+      totalPoints: userLoyalty.totalPoints,
+      userTier: userLoyalty.userTier,
+      discounts: userLoyalty.discounts,
+      lastUpdated: userLoyalty.lastUpdated,
+      pointHistory: userLoyalty.pointHistory.slice(-20), // Last 20 entries
+      milestonesAchieved: userLoyalty.milestonesAchieved,
+      success: true,
+      refreshed: true
+    });
+  } catch (error) {
+    console.error('Error refreshing loyalty information:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });

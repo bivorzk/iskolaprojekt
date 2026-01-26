@@ -34,6 +34,16 @@ const StudentSidebar = ({ activeSection, setActiveSection }) => {
                         Transactions
                     </button>
                     <button
+                        onClick={() => setActiveSection('loyalty')}
+                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                            activeSection === 'loyalty'
+                                ? 'bg-primary text-white'
+                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                        }`}
+                    >
+                        ⚡ Loyalty Rewards
+                    </button>
+                    <button
                         onClick={() => setActiveSection('stats')}
                         className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
                             activeSection === 'stats'
