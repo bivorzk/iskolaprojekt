@@ -147,6 +147,8 @@ app.get('/password-reset/:token', (req, res) => {
 app.get('/pay', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/pay.html'));
 });
+
+
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
   res.sendFile(path.join(__dirname, 'verify.html'));

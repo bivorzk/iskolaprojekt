@@ -25,7 +25,18 @@ function requireStudent(req, res, next) {
   }
 }
 
+function requireParentAuth(req, res, next) {
+  if (!req.session.user || !req.session.user.IsLoggedIn) {
+    return res.sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
+  }
+  if (req.session.user.usertype !== 'parent' && req.session.user.usertype !== 'admin') {
+    return res.sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
+  }
+  next();
+}
+
 module.exports = {
   requireAdmin,
-  requireStudent
+  requireStudent,
+  requireParentAuth
 };
