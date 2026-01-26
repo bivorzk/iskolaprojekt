@@ -1,5 +1,6 @@
 const { User } = require('../database');
-const { MenuItems, Order, Payment } = require('../../config/database_queries');
+const { MenuItems, Order, Payment, UserLoyalty } = require('../../config/database_queries');
+const { ConvertPoints, getHealthLevel } = require('../LoyaltySystem/loyalty-service');
 const nanoID = require('nanoid');
 
 const validateOrderStock = async (cart) => {
@@ -99,14 +100,44 @@ const saveCompletedOrder = async (userId, items, total, currency, paymentMethod,
         transactionId
     );
     
+    // Calculate and award loyalty points
+    let totalPoints = 0;
+    try {
+        if (userId) {
+            const userLoyalty = await UserLoyalty.findOne({ userId });
+            let currentTier = 'NONE';
+            if (userLoyalty) {
+                currentTier = userLoyalty.userTier;
+            }
+            
+            for (const item of dbOrderItems) {
+                const menuItem = await MenuItems.findById(item.menuItemId);
+                if (menuItem) {
+                    const healthLevel = getHealthLevel(menuItem.healthScore);
+                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    totalPoints += points;
+                }
+            }
+            
+            if (totalPoints > 0) {
+                await UserLoyalty.updatePointsAtomically(userId, totalPoints, `${paymentMethod}_order_completion`);
+            }
+        }
+    } catch (loyaltyError) {
+        console.error('Error calculating/awarding loyalty points:', loyaltyError);
+        // Don't fail the order if loyalty points fail
+    }
+    
     return {
         orderId: newOrder.publicID,
+        loyaltyPointsAwarded: totalPoints,
         orderDetails: {
             id: newOrder.publicID,
             total: totalAmount,
             currency: currency,
             paymentMethod: paymentMethod,
-            items: dbOrderItems
+            items: dbOrderItems,
+            pointsEarned: totalPoints
         }
     };
 };
@@ -150,14 +181,44 @@ const processBalancePayment = async (userId, items, total, currency) => {
     user.balance -= totalInUSD;
     await user.save();
     
+    // Calculate and award loyalty points
+    let totalPoints = 0;
+    try {
+        if (userId) {
+            const userLoyalty = await UserLoyalty.findOne({ userId });
+            let currentTier = 'NONE';
+            if (userLoyalty) {
+                currentTier = userLoyalty.userTier;
+            }
+            
+            for (const item of dbOrderItems) {
+                const menuItem = await MenuItems.findById(item.menuItemId);
+                if (menuItem) {
+                    const healthLevel = getHealthLevel(menuItem.healthScore);
+                    const points = ConvertPoints(item.quantity, currentTier, healthLevel, new Date());
+                    totalPoints += points;
+                }
+            }
+            
+            if (totalPoints > 0) {
+                await UserLoyalty.updatePointsAtomically(userId, totalPoints, 'balance_order_completion');
+            }
+        }
+    } catch (loyaltyError) {
+        console.error('Error calculating/awarding loyalty points for balance payment:', loyaltyError);
+        // Don't fail the order if loyalty points fail
+    }
+    
     return {
         orderId: newOrder.publicID,
+        loyaltyPointsAwarded: totalPoints,
         orderDetails: {
             id: newOrder.publicID,
             total: totalAmount,
             currency: currency,
             paymentMethod: 'Balance',
-            items: dbOrderItems
+            items: dbOrderItems,
+            pointsEarned: totalPoints
         }
     };
 };

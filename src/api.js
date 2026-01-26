@@ -145,15 +145,16 @@ router.post('/save-order', validatePaymentInput, async (req, res) => {
     }
 
     try {
-        const { orderId, orderDetails } = await orderService.saveCompletedOrder(
+        const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.saveCompletedOrder(
             userId, items, total, currency, paymentMethod, transactionId
         );
 
-        console.log('Order saved successfully for user:', userId, '- Order ID:', orderId);
+        console.log('Order saved successfully for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);
 
         res.status(201).json({
             success: true,
             orderId: orderId,
+            loyaltyPointsAwarded: loyaltyPointsAwarded,
             message: 'Order placed successfully',
             orderDetails: orderDetails
         });
@@ -352,15 +353,16 @@ router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
     }
 
     try {
-        const { orderId, orderDetails } = await orderService.processBalancePayment(
+        const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.processBalancePayment(
             userId, items, total, currency
         );
 
-        console.log('Balance payment processed for user:', userId, '- Order ID:', orderId);
+        console.log('Balance payment processed for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);
 
         res.status(201).json({
             success: true,
             orderId: orderId,
+            loyaltyPointsAwarded: loyaltyPointsAwarded,
             message: 'Order placed successfully',
             orderDetails: orderDetails
         });
