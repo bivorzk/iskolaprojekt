@@ -5,7 +5,7 @@ const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
 // Import SecurityLogs model
-const { SecurityLogs } = require('./config/database_queries');
+const { SecurityLogs } = require('../config/database_queries');
 
 async function queryAllSecurityLogs() {
     try {

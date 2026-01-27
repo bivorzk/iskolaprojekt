@@ -356,13 +356,6 @@ const LoyaltySection = () => {
                             >
                                 🔄
                             </button>
-                            <button
-                                onClick={() => showLoyaltyPointsAnimation(Math.floor(Math.random() * 50) + 10)}
-                                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                                title="Test loyalty animation"
-                            >
-                                ⚡
-                            </button>
                         </div>
                     </div>
                     
