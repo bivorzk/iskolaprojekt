@@ -474,8 +474,9 @@ router.post('/wallet/add',
         currentTier = userLoyalty.userTier;
       }
       
-      // Calculate points based on amount added (1 point per dollar)
-      const pointsToAward = Math.floor(usdAmount);
+      // Use the same loyalty calculation as orders (4-9 random points per dollar)
+      const healthLevel = await getHealthLevel(userId);
+      const pointsToAward = ConvertPoints(usdAmount, currentTier, healthLevel, new Date());
       
       if (pointsToAward > 0) {
         await UserLoyalty.updatePointsAtomically(userId, pointsToAward, 'wallet_topup');
@@ -484,10 +485,11 @@ router.post('/wallet/add',
         invalidateCache([`student:loyalty:${userId}`]);
       }
     } catch (loyaltyError) {
-      console.error('Error awarding loyalty points for wallet top-up:', loyaltyError);
+      console.error('Error awarding loyalty points for wallet top-up:', loyaltyError.message || loyaltyError);
       // Continue even if loyalty update fails, wallet is already updated
     }
 
+    // Always return success since wallet was updated successfully
     res.status(200).json({
       message: 'Money added successfully',
       newBalance: newBalance,

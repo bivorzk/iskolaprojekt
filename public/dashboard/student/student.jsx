@@ -12,12 +12,9 @@ const StudentDashboard = () => {
         userData,
         loading,
         welcomeMessage,
-        uploadForm,
-        setUploadForm,
-        showPaymentModal,
-        setShowPaymentModal,
         refreshWalletBalance,
-        loadDashboardData
+        loadDashboardData,
+        setWalletAmount
     } = useStudentData();
 
     const renderActiveSection = () => {
@@ -28,11 +25,8 @@ const StudentDashboard = () => {
                 return (
                     <WalletSection
                         walletAmount={walletAmount}
-                        uploadForm={uploadForm}
-                        setUploadForm={setUploadForm}
-                        showPaymentModal={showPaymentModal}
-                        setShowPaymentModal={setShowPaymentModal}
                         refreshWalletBalance={refreshWalletBalance}
+                        setWalletAmount={setWalletAmount}
                     />
                 );
             case 'transactions':

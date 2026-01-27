@@ -254,9 +254,23 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
         return result;
         
     } catch (error) {
-        throw new Error(`Failed to update points atomically: ${error.message}`);
+        // Handle circular structure error by extracting only the error message
+        let errorMessage = 'Unknown error';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        } else if (error && error.toString) {
+            errorMessage = error.toString();
+        }
+        
+        throw new Error(`Failed to update points atomically: ${errorMessage}`);
     } finally {
-        await session.endSession();
+        try {
+            await session.endSession();
+        } catch (sessionError) {
+            console.warn('Error ending session:', sessionError.message);
+        }
     }
 };
 

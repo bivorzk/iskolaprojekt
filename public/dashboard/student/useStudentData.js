@@ -117,3 +117,6 @@ const useStudentData = () => {
         setWalletAmount
     };
 };
+
+// Export to window for global access
+window.useStudentData = useStudentData;

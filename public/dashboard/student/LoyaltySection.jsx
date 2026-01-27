@@ -11,9 +11,33 @@ const LoyaltySection = () => {
     });
     const [loading, setLoading] = useState(true);
     const [showHistory, setShowHistory] = useState(false);
+    const [previousPoints, setPreviousPoints] = useState(0);
 
     useEffect(() => {
         fetchLoyaltyData();
+    }, []);
+
+    // Listen for order completion events to refresh loyalty data and show animation
+    useEffect(() => {
+        const handleOrderComplete = () => {
+            setTimeout(() => {
+                fetchLoyaltyData();
+            }, 2000); // Wait 2 seconds after order to ensure backend processing is complete
+        };
+        
+        const handleLoyaltyPointsEarned = (event) => {
+            if (event.detail && event.detail.pointsEarned) {
+                showLoyaltyPointsAnimation(event.detail.pointsEarned);
+            }
+        };
+        
+        window.addEventListener('orderComplete', handleOrderComplete);
+        window.addEventListener('loyaltyPointsEarned', handleLoyaltyPointsEarned);
+        
+        return () => {
+            window.removeEventListener('orderComplete', handleOrderComplete);
+            window.removeEventListener('loyaltyPointsEarned', handleLoyaltyPointsEarned);
+        };
     }, []);
 
     const fetchLoyaltyData = async () => {
@@ -22,6 +46,16 @@ const LoyaltySection = () => {
             const response = await fetch('/dashboard/student/loyalty');
             if (response.ok) {
                 const data = await response.json();
+                
+                // Check if points increased and show animation
+                if (!loading && previousPoints > 0 && data.totalPoints > previousPoints) {
+                    const pointsEarned = data.totalPoints - previousPoints;
+                    setTimeout(() => {
+                        showLoyaltyPointsAnimation(pointsEarned);
+                    }, 500); // Delay to ensure UI updates first
+                }
+                
+                setPreviousPoints(data.totalPoints);
                 setLoyaltyData(data);
             } else {
                 console.error('Failed to fetch loyalty data');
@@ -43,6 +77,16 @@ const LoyaltySection = () => {
             });
             if (response.ok) {
                 const data = await response.json();
+                
+                // Check if points increased and show animation
+                if (previousPoints > 0 && data.totalPoints > previousPoints) {
+                    const pointsEarned = data.totalPoints - previousPoints;
+                    setTimeout(() => {
+                        showLoyaltyPointsAnimation(pointsEarned);
+                    }, 500);
+                }
+                
+                setPreviousPoints(data.totalPoints);
                 setLoyaltyData(data);
             } else {
                 console.error('Failed to refresh loyalty data');
@@ -50,6 +94,154 @@ const LoyaltySection = () => {
         } catch (error) {
             console.error('Error refreshing loyalty data:', error);
         }
+    };
+
+    const showLoyaltyPointsAnimation = (pointsAwarded) => {
+        if (!pointsAwarded || pointsAwarded <= 0) return;
+        
+        // Create the animation container
+        const animationContainer = document.createElement('div');
+        animationContainer.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            pointer-events: none;
+            font-family: system-ui, -apple-system, sans-serif;
+        `;
+        
+        // Create the points display with site theme
+        const pointsDisplay = document.createElement('div');
+        pointsDisplay.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #FF6B35, #FFC857);
+                color: white;
+                padding: 24px 32px;
+                border-radius: 16px;
+                box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3), 0 8px 16px rgba(255, 107, 53, 0.2);
+                text-align: center;
+                transform: scale(0);
+                animation: snapTrayBounceIn 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+                border: 2px solid rgba(255, 229, 220, 0.3);
+                backdrop-filter: blur(10px);
+            ">
+                <div style="
+                    font-size: 18px; 
+                    font-weight: 600; 
+                    margin-bottom: 12px;
+                    color: #FFE5DC;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                ">⚡ Loyalty Points Earned!</div>
+                <div style="
+                    font-size: 42px; 
+                    font-weight: bold; 
+                    color: white;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    margin: 8px 0;
+                ">+${pointsAwarded}</div>
+                <div style="
+                    font-size: 14px; 
+                    margin-top: 12px; 
+                    opacity: 0.9;
+                    color: #FFE5DC;
+                    font-weight: 500;
+                ">Keep ordering with SnapTray!</div>
+            </div>
+        `;
+        
+        // Add SnapTray themed keyframes
+        if (!document.getElementById('snapTrayLoyaltyStyles')) {
+            const style = document.createElement('style');
+            style.id = 'snapTrayLoyaltyStyles';
+            style.textContent = `
+                @keyframes snapTrayBounceIn {
+                    0% {
+                        transform: scale(0) rotate(-180deg);
+                        opacity: 0;
+                    }
+                    50% {
+                        transform: scale(1.15) rotate(-10deg);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: scale(1) rotate(0deg);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes snapTrayFadeOut {
+                    0% {
+                        transform: scale(1) translate(-50%, -50%);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: scale(0.9) translate(-50%, -60%);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes snapTraySparkle {
+                    0% {
+                        transform: translateY(0) scale(0) rotate(0deg);
+                        opacity: 1;
+                    }
+                    25% {
+                        transform: translateY(-20px) scale(1) rotate(90deg);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: translateY(-60px) scale(1.2) rotate(180deg);
+                        opacity: 0.8;
+                    }
+                    100% {
+                        transform: translateY(-120px) scale(0) rotate(360deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        animationContainer.appendChild(pointsDisplay);
+        document.body.appendChild(animationContainer);
+        
+        // Add SnapTray themed sparkle effects
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                const sparkle = document.createElement('div');
+                const sparkleTypes = ['⚡', '✨', '💎', '🔥'];
+                sparkle.innerHTML = sparkleTypes[Math.floor(Math.random() * sparkleTypes.length)];
+                sparkle.style.cssText = `
+                    position: absolute;
+                    font-size: ${Math.random() * 16 + 20}px;
+                    left: ${Math.random() * 400 - 200}px;
+                    top: ${Math.random() * 200 - 100}px;
+                    pointer-events: none;
+                    animation: snapTraySparkle ${Math.random() * 1.5 + 1.2}s ease-out forwards;
+                    z-index: 10001;
+                    filter: drop-shadow(0 0 4px rgba(255, 107, 53, 0.6));
+                `;
+                
+                animationContainer.appendChild(sparkle);
+                
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 2500);
+            }, i * 80);
+        }
+        
+        // Remove animation after delay with SnapTray style fadeout
+        setTimeout(() => {
+            animationContainer.style.animation = 'snapTrayFadeOut 0.6s ease-in forwards';
+            setTimeout(() => {
+                if (animationContainer.parentNode) {
+                    animationContainer.parentNode.removeChild(animationContainer);
+                }
+            }, 600);
+        }, 3500);
     };
 
     const getTierInfo = (tier) => {
@@ -156,13 +348,22 @@ const LoyaltySection = () => {
                                 <p className="text-white/90">{tierInfo.name} Member</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => refreshLoyaltyData()}
-                            className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                            title="Refresh loyalty data"
-                        >
-                            🔄
-                        </button>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => refreshLoyaltyData()}
+                                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                                title="Refresh loyalty data"
+                            >
+                                🔄
+                            </button>
+                            <button
+                                onClick={() => showLoyaltyPointsAnimation(Math.floor(Math.random() * 50) + 10)}
+                                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                                title="Test loyalty animation"
+                            >
+                                ⚡
+                            </button>
+                        </div>
                     </div>
                     
                     {tierInfo.nextPoints && (
