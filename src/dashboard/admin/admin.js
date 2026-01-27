@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const { User } = require('../../../src/database');
-const { Payment, MenuItems, Order } = require('../../../config/database_queries');
+const { Payment, MenuItems, Order, UserLoyalty } = require('../../../config/database_queries');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
@@ -114,6 +114,20 @@ router.get('/itemcount', cacheResult('admin:itemcount', 300), async (req, res) =
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// Total points across all users
+router.get('/totalpoints', cacheResult('admin:totalpoints', 300), async (req, res) => {
+  try {
+    const result = await UserLoyalty.aggregate([
+      { $group: { _id: null, totalPoints: { $sum: "$totalPoints" } } }
+    ]);
+    const totalPoints = result[0] ? result[0].totalPoints : 0;
+    res.status(202).json({ totalPoints });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 router.post(
   '/create_menuitem',
@@ -262,11 +276,14 @@ router.get('/paymentstats', cacheResult('admin:paymentstats', 300), async (req, 
       { $group: {
           _id: "$paymentMethod",
           count: { $sum: 1 },
-          currency: { $first: "$currency" }
+          currency: { $first: "$currency"}
         },
         $group: {
           _id: "$currency",
            totalAmount: { $sum: "$amount" },
+        },
+        $where: {
+          _id : "USD"
         }
 
       }

@@ -11,6 +11,7 @@ mongoose.connect(dbUrl + dbName)
 
 const User = require('../src/database').User;
 const { DISCOUNT_RATES, DISCOUNT_TYPES, TIERS } = require('./DATABASE_CONSTANTS.JS');
+const { db } = require('../src/models/User');
 
 // Payment Schema
 
@@ -330,6 +331,12 @@ const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
 const ParentStudent = mongoose.model('ParentStudent', ParentStudentScheme);
 const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
 
+
+
+
+mongoose.set('debug', function (collectionName, method, query, doc) {
+    console.log(`Mongoose: ${collectionName}.${method}(${JSON.stringify(query)}, ${JSON.stringify(doc)})`);
+});
 
 
 module.exports = {

@@ -3,7 +3,7 @@ const router = express.Router();
 const stats = require('simple-statistics');
 
 const { User } = require('../../../src/database');
-const { Order } = require('../../../config/database_queries');
+const { Order, UserLoyalty } = require('../../../config/database_queries');
 
 // Import shared services
 const { cacheResult } = require('../services/cache-service');
@@ -230,5 +230,14 @@ router.get('/stats/total-revenue', cacheResult('admin:total_revenue', 300), asyn
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+/* TODO Make stat for the top 5 users with the highest loyalty points
+
+*/
+
+
+
+
+
 
 module.exports = router;
