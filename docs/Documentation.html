@@ -1,0 +1,1242 @@
+<!DOCTYPE html><html><head>
+      <title>Documentation</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.20\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="software-documentation-for-snaptray">Software Documentation for SnapTray </h1>
+<h2 id="table-of-contents">Table of Contents </h2>
+<ul>
+<li><a href="#software-documentation-for-snaptray">Software Documentation for SnapTray</a>
+<ul>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#1-introduction">1. Introduction</a></li>
+<li><a href="#2-system-overview">2. System Overview</a></li>
+<li><a href="#3-requirements-specification">3. Requirements Specification</a></li>
+<li><a href="#4-system-architecture">4. System Architecture</a>
+<ul>
+<li><a href="#41-componentsmodules">4.1 Components/Modules</a></li>
+<li><a href="#42-data-flow">4.2 Data Flow</a></li>
+<li><a href="#43-technologies">4.3 Technologies</a></li>
+</ul>
+</li>
+<li><a href="#5-design">5. Design</a>
+<ul>
+<li><a href="#51-design-principles">5.1 Design Principles</a>
+<ul>
+<li><a href="#511-modularity-and-separation-of-concerns">5.1.1 Modularity and Separation of Concerns</a></li>
+<li><a href="#512-security-first-approach">5.1.2 Security-First Approach</a></li>
+<li><a href="#513-scalability-and-performance">5.1.3 Scalability and Performance</a></li>
+<li><a href="#514-user-centric-design">5.1.4 User-Centric Design</a></li>
+<li><a href="#515-reliability-and-fault-tolerance">5.1.5 Reliability and Fault Tolerance</a></li>
+<li><a href="#516-maintainability-and-extensibility">5.1.6 Maintainability and Extensibility</a></li>
+<li><a href="#517-data-integrity-and-consistency">5.1.7 Data Integrity and Consistency</a></li>
+<li><a href="#518-cross-platform-compatibility">5.1.8 Cross-Platform Compatibility</a></li>
+</ul>
+</li>
+<li><a href="#52-database-design">5.2 Database Design</a>
+<ul>
+<li><a href="#az-adatb%C3%A1zis-c%C3%A9lja-funkci%C3%B3ja-%C3%A9s-a-benne-t%C3%A1rolt-inform%C3%A1ci%C3%B3k-%C3%B6sszefoglal%C3%A1sa">5.2.1 Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása</a></li>
+<li><a href="#adatb%C3%A1zis-terv-%C3%A9s-s%C3%A9ma">5.2.2 Adatbázis-terv és séma</a>
+<ul>
+<li><a href="#entit%C3%A1sok-%C3%A9s-kapcsolatok-er-modell-%C3%B6sszefoglal%C3%B3">5.2.2.1 Entitások és kapcsolatok (ER modell összefoglaló)</a></li>
+<li><a href="#rel%C3%A1ci%C3%B3s-s%C3%A9ma-t%C3%A1bl%C3%A1zatok-r%C3%A9szletei">5.2.2.2 Relációs séma (táblázatok részletei)</a>
+<ul>
+<li><a href="#user-felhaszn%C3%A1l%C3%B3k">5.2.2.2.1 User (Felhasználók)</a></li>
+<li><a href="#payment-kifizet%C3%A9sek">5.2.2.2.2 Payment (Kifizetések)</a></li>
+<li><a href="#menuitems-men%C3%BCelemek">5.2.2.2.3 MenuItems (Menüelemek)</a></li>
+<li><a href="#order-rendel%C3%A9sek">5.2.2.2.4 Order (Rendelések)</a></li>
+<li><a href="#orderitems-rendel%C3%A9s-t%C3%A9telek">5.2.2.2.5 OrderItems (Rendelés tételek)</a></li>
+<li><a href="#review-%C3%A9rt%C3%A9kel%C3%A9sek">5.2.2.2.6 Review (Értékelések)</a></li>
+<li><a href="#dailymenu-napi-men%C3%BC">5.2.2.2.7 DailyMenu (Napi menü)</a></li>
+<li><a href="#parentstudent-sz%C3%BCl%C5%91-di%C3%A1k-kapcsolat">5.2.2.2.8 ParentStudent (Szülő-Diák kapcsolat)</a></li>
+<li><a href="#securitylogs-biztons%C3%A1gi-napl%C3%B3k">5.2.2.2.9 SecurityLogs (Biztonsági naplók)</a></li>
+<li><a href="#userloyalty-h%C5%B1s%C3%A9gprogram">5.2.2.2.10 UserLoyalty (Hűségprogram)</a></li>
+</ul>
+</li>
+<li><a href="#fizikai-%C3%A9s-logikai-szerkezet">5.2.2.3 Fizikai és logikai szerkezet</a></li>
+<li><a href="#haszn%C3%A1lati-esetek-use-cases-%C3%A9s-forgat%C3%B3k%C3%B6nyvek">5.2.2.4 Használati esetek (Use Cases) és forgatókönyvek</a></li>
+<li><a href="#biztons%C3%A1g-%C3%A9s-hozz%C3%A1f%C3%A9r%C3%A9s">5.2.2.5 Biztonság és hozzáférés</a></li>
+<li><a href="#karbantart%C3%A1s-%C3%A9s-%C3%BCzemeltet%C3%A9s">5.2.2.6 Karbantartás és üzemeltetés</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#53-algorithms-and-data-structures">5.3 Algorithms and Data Structures</a>
+<ul>
+<li><a href="#531-data-structures">5.3.1 Data Structures</a>
+<ul>
+<li><a href="#5311-mongodb-collections-nosql-documents">5.3.1.1 MongoDB Collections (NoSQL Documents)</a></li>
+<li><a href="#5312-redis-data-structures">5.3.1.2 Redis Data Structures</a></li>
+<li><a href="#5313-redis-lua-scripting">5.3.1.3 Redis Lua Scripting</a></li>
+<li><a href="#5314-javascript-objects-and-arrays">5.3.1.4 JavaScript Objects and Arrays</a></li>
+</ul>
+</li>
+<li><a href="#532-core-algorithms">5.3.2 Core Algorithms</a>
+<ul>
+<li><a href="#5321-authentication-and-security-algorithms">5.3.2.1 Authentication and Security Algorithms</a></li>
+<li><a href="#5322-payment-processing-algorithms">5.3.2.2 Payment Processing Algorithms</a></li>
+<li><a href="#5323-loyalty-point-calculation-algorithm">5.3.2.3 Loyalty Point Calculation Algorithm</a></li>
+<li><a href="#5324-search-and-filtering-algorithms">5.3.2.4 Search and Filtering Algorithms</a></li>
+<li><a href="#5325-caching-algorithms">5.3.2.5 Caching Algorithms</a></li>
+<li><a href="#5326-rate-limiting-algorithm">5.3.2.6 Rate Limiting Algorithm</a></li>
+<li><a href="#5327-data-validation-algorithms">5.3.2.7 Data Validation Algorithms</a></li>
+</ul>
+</li>
+<li><a href="#533-performance-optimization-algorithms">5.3.3 Performance Optimization Algorithms</a>
+<ul>
+<li><a href="#5331-database-query-optimization">5.3.3.1 Database Query Optimization</a></li>
+<li><a href="#5332-pagination-algorithm">5.3.3.2 Pagination Algorithm</a></li>
+<li><a href="#5333-batch-processing-algorithm">5.3.3.3 Batch Processing Algorithm</a></li>
+</ul>
+</li>
+<li><a href="#534-security-algorithms">5.3.4 Security Algorithms</a>
+<ul>
+<li><a href="#5341-recaptcha-verification">5.3.4.1 reCAPTCHA Verification</a></li>
+</ul>
+</li>
+<li><a href="#535-algorithm-selection-rationale">5.3.5 Algorithm Selection Rationale</a></li>
+</ul>
+</li>
+<li><a href="#54">5.4 Security Design</a></li>
+</ul>
+</li>
+<li><a href="#6-implementation">6. Implementation</a></li>
+<li><a href="#7-testing-and-validation">7. Testing and Validation</a></li>
+<li><a href="#8-user-manual">8. User Manual</a></li>
+<li><a href="#9-deployment-and-maintenance">9. Deployment and Maintenance</a></li>
+<li><a href="#10-conclusion-and-future-work">10. Conclusion and Future Work</a></li>
+<li><a href="#11-references">11. References</a></li>
+<li><a href="#12-appendices">12. Appendices</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="1-introduction">1. Introduction </h2>
+<h2 id="2-system-overview">2. System Overview </h2>
+<h2 id="3-requirements-specification">3. Requirements Specification </h2>
+<h2 id="4-system-architecture">4. System Architecture </h2>
+<p><img src="snaptraySTACK.png" alt="Architecture Diagram"></p>
+<h3 id="41-componentsmodules">4.1 Components/Modules </h3>
+<p>The SnapTray system is organized into several key subsystems that work together to provide a cohesive cafeteria management solution:</p>
+<ul>
+<li><strong>Frontend/UI Layer</strong>: Built with React.js, this layer handles user interactions, displays the interface, and manages client-side state. It includes components for authentication, menu browsing, ordering, and dashboard management.</li>
+<li><strong>API Layer</strong>: Implemented using Node.js and Express.js, this layer provides RESTful endpoints for data access and business logic execution. It handles requests from the frontend, processes them, and returns appropriate responses.</li>
+<li><strong>Data Layer</strong>: Comprises MongoDB for persistent data storage and Redis for caching and session management. This layer ensures data integrity, efficient retrieval, and temporary storage for performance optimization.</li>
+<li><strong>Authentication and Security Module</strong>: Integrated across all layers, this module manages user authentication, authorization, rate limiting, and security logging.</li>
+<li><strong>Payment Processing Module</strong>: Handles integration with external payment providers like PayPal and Google Pay, ensuring secure and reliable transaction processing.</li>
+<li><strong>Loyalty System Module</strong>: Manages user points, tiers, and discounts, calculating rewards based on purchase history and applying appropriate benefits.</li>
+</ul>
+<h3 id="42-data-flow">4.2 Data Flow </h3>
+<p>Data flows through the SnapTray system in a structured manner to ensure security, performance, and consistency:</p>
+<ol>
+<li><strong>User Interaction</strong>: Users interact with the React frontend, triggering API calls via HTTP requests.</li>
+<li><strong>Request Processing</strong>: The Express server receives requests, validates them through middleware (authentication, rate limiting, input sanitization), and routes them to appropriate handlers.</li>
+<li><strong>Business Logic Execution</strong>: Handlers execute business logic, often involving database queries to MongoDB or cache checks in Redis.</li>
+<li><strong>Data Retrieval/Storage</strong>: For read operations, data is fetched from Redis cache if available, otherwise from MongoDB. Write operations update both database and invalidate relevant cache entries.</li>
+<li><strong>Response Generation</strong>: Processed data is formatted and sent back to the frontend as JSON responses.</li>
+<li><strong>Real-time Updates</strong>: For certain operations (like wallet balance changes), Redis pub/sub is used to notify connected clients of updates.</li>
+<li><strong>Logging and Monitoring</strong>: All significant actions are logged to SecurityLogs collection for audit and monitoring purposes.</li>
+</ol>
+<p>This flow ensures that sensitive operations are atomic, cached data remains consistent, and the system can handle concurrent users efficiently.</p>
+<h3 id="43-technologies">4.3 Technologies </h3>
+<p>The technology stack for SnapTray was chosen to balance development speed, performance, scalability, and maintainability:</p>
+<ul>
+<li><strong>MERN Stack (MongoDB, Express.js, React.js, Node.js)</strong>: Selected for its JavaScript full-stack consistency, reducing context switching and enabling shared code between frontend and backend. MongoDB's document-based structure aligns well with the flexible data requirements of a cafeteria system.</li>
+<li><strong>Redis</strong>: Chosen for its high-performance in-memory data structure store, ideal for caching frequently accessed data (user sessions, menu items, statistics) and implementing features like rate limiting and real-time notifications. Its atomic operations ensure data consistency in high-concurrency scenarios.</li>
+<li><strong>Lua Scripting in Redis</strong>: Utilized for executing complex, atomic operations on Redis data structures. Chosen because it allows multiple Redis commands to run as a single, uninterruptible transaction, ensuring data consistency, preventing race conditions, and improving performance by reducing network round trips between the application and Redis server.</li>
+<li><strong>Tailwind CSS</strong>: Selected for rapid UI development with utility-first approach, ensuring responsive design and consistent styling across devices.</li>
+<li><strong>JWT for Authentication</strong>: Provides stateless authentication, reducing server-side session storage needs and improving scalability.</li>
+<li><strong>bcrypt for Password Hashing</strong>: Industry-standard for secure password storage, protecting against rainbow table and brute-force attacks.</li>
+<li><strong>reCAPTCHA</strong>: Integrated to prevent automated abuse while maintaining user experience.</li>
+<li><strong>PayPal/Google Pay APIs</strong>: Chosen for their robust security, global acceptance, and ease of integration for payment processing.</li>
+</ul>
+<p>The architecture follows a monolithic approach rather than microservices due to the project's scope and team size, allowing for simpler deployment, debugging, and data consistency. Horizontal scaling is achieved through MongoDB sharding and Redis clustering when needed.</p>
+<h2 id="5-design">5. Design </h2>
+<h3 id="51-design-principles">5.1 Design Principles </h3>
+<p>The SnapTray system follows several key design principles to ensure a robust, scalable, and user-friendly school cafeteria management solution. These principles guide the architecture, implementation, and maintenance of the system.</p>
+<h4 id="511-modularity-and-separation-of-concerns">5.1.1 Modularity and Separation of Concerns </h4>
+<ul>
+<li><strong>Component-based Architecture</strong>: The system is built using React components for the frontend, ensuring reusable and maintainable UI elements.</li>
+<li><strong>Service Layer Abstraction</strong>: Business logic is separated into dedicated service modules (order-service.js, paypal-service.js, etc.) to maintain clean separation between data access, business rules, and presentation layers.</li>
+<li><strong>Middleware Organization</strong>: Security, authentication, and validation logic are implemented as Express middleware, allowing for clean request processing pipelines.</li>
+</ul>
+<h4 id="512-security-first-approach">5.1.2 Security-First Approach </h4>
+<ul>
+<li><strong>Defense in Depth</strong>: Multiple layers of security including input validation, authentication, authorization, rate limiting, and data sanitization.</li>
+<li><strong>Principle of Least Privilege</strong>: Users have access only to the minimum resources necessary for their role (student, parent, teacher, admin).</li>
+<li><strong>Secure by Default</strong>: All endpoints require authentication by default, with explicit permissions granted for specific operations.</li>
+<li><strong>Data Protection</strong>: Sensitive data (passwords, payment information) is encrypted and hashed appropriately.</li>
+</ul>
+<h4 id="513-scalability-and-performance">5.1.3 Scalability and Performance </h4>
+<ul>
+<li><strong>Horizontal Scaling</strong>: The system uses MongoDB and Redis, which support horizontal scaling through sharding and clustering.</li>
+<li><strong>Caching Strategy</strong>: Redis is employed for session management and data caching to reduce database load and improve response times.</li>
+<li><strong>Asynchronous Processing</strong>: Non-blocking I/O operations and asynchronous programming patterns ensure the system can handle concurrent users efficiently.</li>
+<li><strong>Resource Optimization</strong>: Database queries are optimized with proper indexing, and large datasets are paginated.</li>
+</ul>
+<h4 id="514-user-centric-design">5.1.4 User-Centric Design </h4>
+<ul>
+<li><strong>Intuitive User Interface</strong>: Clean, responsive design using Tailwind CSS that works across devices (desktop, tablet, mobile).</li>
+<li><strong>Progressive Enhancement</strong>: Core functionality works without JavaScript, with enhanced features for modern browsers.</li>
+<li><strong>Accessibility</strong>: Following WCAG guidelines to ensure the system is usable by students with disabilities.</li>
+<li><strong>Feedback Systems</strong>: Clear error messages, loading states, and success confirmations to guide users through processes.</li>
+</ul>
+<h4 id="515-reliability-and-fault-tolerance">5.1.5 Reliability and Fault Tolerance </h4>
+<ul>
+<li><strong>Error Handling</strong>: Comprehensive error handling with graceful degradation - the system continues to function even when individual components fail.</li>
+<li><strong>Transaction Management</strong>: Database operations use transactions where appropriate to maintain data consistency.</li>
+<li><strong>Logging and Monitoring</strong>: Extensive logging for debugging and monitoring system health, with different log levels for different environments.</li>
+<li><strong>Backup and Recovery</strong>: Regular database backups and recovery procedures to prevent data loss.</li>
+</ul>
+<h4 id="516-maintainability-and-extensibility">5.1.6 Maintainability and Extensibility </h4>
+<ul>
+<li><strong>Clean Code Principles</strong>: Following established coding standards, meaningful variable names, and comprehensive documentation.</li>
+<li><strong>Version Control</strong>: Git-based development with feature branches and proper commit messages.</li>
+<li><strong>API Design</strong>: RESTful API design with consistent naming conventions and response formats.</li>
+<li><strong>Configuration Management</strong>: Environment-based configuration to support different deployment environments (development, staging, production).</li>
+</ul>
+<h4 id="517-data-integrity-and-consistency">5.1.7 Data Integrity and Consistency </h4>
+<ul>
+<li><strong>Validation Layers</strong>: Input validation at multiple levels (client-side, server-side, database-level).</li>
+<li><strong>Referential Integrity</strong>: Proper use of MongoDB references and population to maintain relationships between entities.</li>
+<li><strong>Atomic Operations</strong>: Critical operations (like payment processing and loyalty point updates) use atomic database operations.</li>
+<li><strong>Audit Trail</strong>: Security logs track all important actions for compliance and debugging.</li>
+</ul>
+<h4 id="518-cross-platform-compatibility">5.1.8 Cross-Platform Compatibility </h4>
+<ul>
+<li><strong>Browser Support</strong>: Compatible with modern browsers (Chrome, Firefox, Safari, Edge) with graceful degradation for older browsers.</li>
+<li><strong>Mobile Responsiveness</strong>: Responsive design ensures usability on various screen sizes.</li>
+<li><strong>API Flexibility</strong>: RESTful APIs that can be consumed by different clients (web, mobile apps, third-party integrations).</li>
+</ul>
+<h3 id="52-database-design">5.2 Database Design </h3>
+<h2 id="az-adatbázis-célja-funkciója-és-a-benne-tárolt-információk-összefoglalása">Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása </h2>
+<p>Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. A rendszer Redis-t használ gyorsítótárazáshoz a teljesítmény növelése érdekében.</p>
+<p>Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Kiegészítőként Redis in-memory adatbázis gyorsítótárazáshoz.</p>
+<h3 id="adatbázis-terv-és-séma">Adatbázis-terv és séma </h3>
+<h4 id="entitások-és-kapcsolatok-er-modell-összefoglaló">Entitások és kapcsolatok (ER modell összefoglaló) </h4>
+<p>A rendszer fő entitásai és kapcsolataik:</p>
+<ul>
+<li><strong>User</strong> (Felhasználó): Központi entitás, minden más entitáshoz kapcsolódik.</li>
+<li><strong>MenuItems</strong> (Menüelemek): Étkezési tételek.</li>
+<li><strong>Order</strong> (Rendelés): Felhasználók rendelései.</li>
+<li><strong>OrderItems</strong> (Rendelés tételek): Egy rendeléshez tartozó menüelemek.</li>
+<li><strong>Payment</strong> (Kifizetés): Pénzügyi tranzakciók.</li>
+<li><strong>Review</strong> (Értékelés): Menüelemek értékelése.</li>
+<li><strong>DailyMenu</strong> (Napi menü): Iskolai periódusok szerinti menük.</li>
+<li><strong>ParentStudent</strong> (Szülő-Diák kapcsolat): Szülők és diákok összekapcsolása.</li>
+<li><strong>SecurityLogs</strong> (Biztonsági naplók): Események naplózása.</li>
+<li><strong>UserLoyalty</strong> (Hűségprogram): Felhasználók pontjai, kedvezményei és hűségszintje.</li>
+</ul>
+<p>Kapcsolatok:</p>
+<ul>
+<li>User 1:N Payment, Order, Review, SecurityLogs, UserLoyalty.</li>
+<li>User 1:N ParentStudent (szülőként vagy diákként).</li>
+<li>MenuItems 1:N OrderItems (beágyazott Order-ben), Review.</li>
+<li>Order 1:N OrderItems (beágyazott).</li>
+<li>DailyMenu 1:N MenuItems (referenciákon keresztül).</li>
+</ul>
+<p>Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok referenciákon alapulnak (ObjectId-k).</p>
+<h4 id="relációs-séma-táblázatok-részletei">Relációs séma (táblázatok részletei) </h4>
+<p>Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: név, típus, jelentés/szerep, megszorítások.</p>
+<h5 id="user-felhasználók">User (Felhasználók) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td>String</td>
+<td>Felhasználónév</td>
+<td>Kötelező, egyedi</td>
+</tr>
+<tr>
+<td>password</td>
+<td>String</td>
+<td>Jelszó (hash-elt)</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>email</td>
+<td>String</td>
+<td>E-mail cím</td>
+<td>Kötelező, egyedi, e-mail formátum, trim</td>
+</tr>
+<tr>
+<td>isVerified</td>
+<td>Boolean</td>
+<td>E-mail ellenőrzés státusza</td>
+<td>Alapértelmezett: false</td>
+</tr>
+<tr>
+<td>usertype</td>
+<td>String</td>
+<td>Felhasználó típusa (admin, student, parent, teacher, frozen)</td>
+<td>Enum: ['admin', 'student', 'parent', 'teacher', 'frozen'], alapértelmezett: 'student'</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Fiók létrehozási dátuma</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+<tr>
+<td>balance</td>
+<td>Number</td>
+<td>Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz</td>
+<td>Alapértelmezett: 0</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).</p>
+<h5 id="payment-kifizetések">Payment (Kifizetések) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Fizető felhasználó</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Number</td>
+<td>Fizetett összeg</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Pénznem (pl. USD, HUF)</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Fizetési mód</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Státusz (Completed, Pending, Failed)</td>
+<td>Kötelező, enum: ['Completed', 'Pending', 'Failed']</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>Külső tranzakció referencia</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Létrehozási idő</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden kifizetés egy felhasználóhoz tartozik, de opcionális lehet (pl. vendég kifizetések).</p>
+<h5 id="menuitems-menüelemek">MenuItems (Menüelemek) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Menüelem neve</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Leírás</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>stock</td>
+<td>Number</td>
+<td>Készlet mennyisége</td>
+<td>Kötelező, alapértelmezett: 0</td>
+</tr>
+<tr>
+<td>price</td>
+<td>Number</td>
+<td>Ár</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>category</td>
+<td>String</td>
+<td>Kategória (Soup, Salad, stb.)</td>
+<td>Kötelező, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], alapértelmezett: 'Other'</td>
+</tr>
+<tr>
+<td>available</td>
+<td>Boolean</td>
+<td>Elérhetőség</td>
+<td>Alapértelmezett: true</td>
+</tr>
+<tr>
+<td>QRCode</td>
+<td>String</td>
+<td>QR kód a menüelemhez</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>allergens</td>
+<td>[String]</td>
+<td>Allergének listája</td>
+<td>Alapértelmezett: []</td>
+</tr>
+<tr>
+<td>nutritionalInfo.calories</td>
+<td>Number</td>
+<td>Kalóriák</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>nutritionalInfo.protein</td>
+<td>Number</td>
+<td>Fehérje</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>nutritionalInfo.carbs</td>
+<td>Number</td>
+<td>Szénhidrát</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>nutritionalInfo.fat</td>
+<td>Number</td>
+<td>Zsír</td>
+<td>Opcionális</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: A készlet nem lehet negatív; kategóriák alapján szűrhető. Pre-save hook: Ha a készlet &lt;= 0, akkor available = false, különben true.</p>
+<h5 id="order-rendelések">Order (Rendelések) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Rendelő felhasználó</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>items</td>
+<td>[OrderItemsScheme]</td>
+<td>Rendelés tételei</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>orderDate</td>
+<td>Date</td>
+<td>Rendelés dátuma</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Státusz (Pending, InProgress, Completed, Cancelled)</td>
+<td>Kötelező, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], alapértelmezett: 'Pending'</td>
+</tr>
+<tr>
+<td>totalAmount</td>
+<td>Number</td>
+<td>Teljes összeg</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>pickupTime</td>
+<td>Date</td>
+<td>Átvétel ideje</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>String</td>
+<td>Megjegyzések</td>
+<td>Opcionális, alapértelmezett: ''</td>
+</tr>
+<tr>
+<td>paypalOrderId</td>
+<td>String</td>
+<td>PayPal rendelés azonosító</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Fizetési mód</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>Tranzakció azonosító</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>publicID</td>
+<td>String</td>
+<td>Nyilvános azonosító</td>
+<td>Kötelező, egyedi</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; státusz változások követik az üzleti folyamatot. Pre-save hook: Ha a rendelés 'Pending' státuszban van és több mint 15 perc telt el a létrehozás óta, automatikusan 'Cancelled'-re változik.</p>
+<h5 id="orderitems-rendelés-tételek">OrderItems (Rendelés tételek) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>menuItemId</td>
+<td>ObjectId (ref: MenuItems)</td>
+<td>Menüelem azonosító</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>orderId</td>
+<td>ObjectId (ref: Order)</td>
+<td>Rendelés azonosító</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Number</td>
+<td>Mennyiség</td>
+<td>Kötelező, alapértelmezett: 1</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden tétel egy menüelemhez tartozik; mennyiség pozitív egész szám. Ez a séma be van ágyazva az Order séma items mezőjébe.</p>
+<h5 id="review-értékelések">Review (Értékelések) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Értékelő felhasználó</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>menuItemId</td>
+<td>ObjectId (ref: MenuItems)</td>
+<td>Értékelt menüelem</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>rating</td>
+<td>Number</td>
+<td>Értékelés (1-5)</td>
+<td>Kötelező, min: 1, max: 5</td>
+</tr>
+<tr>
+<td>comment</td>
+<td>String</td>
+<td>Megjegyzés</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Létrehozási idő</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Egy felhasználó többször is értékelhet különböző tételeket.</p>
+<h5 id="dailymenu-napi-menü">DailyMenu (Napi menü) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td>Dátum</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>schoolPeriod</td>
+<td>String</td>
+<td>Iskolai periódus (morning, afternoon)</td>
+<td>Kötelező, enum: ['morning', 'afternoon']</td>
+</tr>
+<tr>
+<td>menuItems</td>
+<td>[ObjectId] (ref: MenuItems)</td>
+<td>Menüelemek listája</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Létrehozási idő</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Napi menük periódusonként készülnek.</p>
+<h5 id="parentstudent-szülő-diák-kapcsolat">ParentStudent (Szülő-Diák kapcsolat) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>parentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Szülő felhasználó</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>studentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Diák felhasználó</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Létrehozási idő</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Szülők több diákhoz is kapcsolódhatnak.</p>
+<h5 id="securitylogs-biztonsági-naplók">SecurityLogs (Biztonsági naplók) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Felhasználó</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>action</td>
+<td>String</td>
+<td>Akció (pl. LOGIN_SUCCESS)</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>type</td>
+<td>String</td>
+<td>Típus (INFO, WARNING, ERROR)</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>ipAddress</td>
+<td>String</td>
+<td>IP cím (Hashelt)</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>Timestamp</td>
+<td>Date</td>
+<td>Időbélyeg</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+<tr>
+<td>details</td>
+<td>String</td>
+<td>További információk</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>country</td>
+<td>String</td>
+<td>Ország</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>CountryCode</td>
+<td>String</td>
+<td>Országkód</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Pénznem</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>Continent</td>
+<td>String</td>
+<td>Kontinens</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>IsVPN</td>
+<td>Boolean</td>
+<td>VPN használat</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>isTor</td>
+<td>Boolean</td>
+<td>Tor használat</td>
+<td>Opcionális</td>
+</tr>
+<tr>
+<td>isProxy</td>
+<td>Boolean</td>
+<td>Proxy használat</td>
+<td>Opcionális</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Naplók minden fontos eseményt rögzítenek.</p>
+<h5 id="userloyalty-hűségprogram">UserLoyalty (Hűségprogram) </h5>
+<table>
+<thead>
+<tr>
+<th>Mező neve</th>
+<th>Típus</th>
+<th>Jelentés/Szerep</th>
+<th>Megszorítások</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Felhasználó</td>
+<td>Kötelező</td>
+</tr>
+<tr>
+<td>totalPoints</td>
+<td>Number</td>
+<td>Összes pont</td>
+<td>Alapértelmezett: 0</td>
+</tr>
+<tr>
+<td>userTier</td>
+<td>String</td>
+<td>Felhasználó hűségszintje</td>
+<td>Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none'</td>
+</tr>
+<tr>
+<td>discounts</td>
+<td>String</td>
+<td>Kedvezmények listája</td>
+<td>[Lásd tábla alatt]:</td>
+</tr>
+<tr>
+<td>lastUpdated</td>
+<td>Date</td>
+<td>Utolsó frissítés</td>
+<td>Alapértelmezett: jelenlegi idő</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Pontok vásárlások alapján gyűlnek. A hűségszint automatikusan frissül a pontok alapján (50 ponttól Bronze, 250-től Silver, 800-tól Gold, 2000-tól Platinum). Pre-save hook: Tier frissítése a totalPoints alapján. Post-save hook: Ha a tier változott, új kedvezmények hozzáadása a tier alapján (Bronze: 5% healthy; Silver: 10% healthy, 5% drink 90 napig; Gold: 15% healthy, 10% full_meal; Platinum: 20% healthy, 15% general).</p>
+<p>A <code>discounts</code> mező részletei (tömb elemei):</p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token literal-property property">discounts</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span> <span class="token keyword keyword-enum">enum</span><span class="token operator">:</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">values</span><span class="token punctuation">(</span><span class="token constant">DISCOUNT_TYPES</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// e.g., DISCOUNT_TYPES.HEALTHY</span>
+    <span class="token literal-property property">rate</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">,</span> <span class="token keyword keyword-enum">enum</span><span class="token operator">:</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">values</span><span class="token punctuation">(</span><span class="token constant">DISCOUNT_RATES</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// e.g., DISCOUNT_RATES.FIVE</span>
+    <span class="token literal-property property">validUntil</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Date</span><span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+
+<span class="token keyword keyword-const">const</span> <span class="token constant">DISCOUNT_RATES</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token constant">FIVE</span><span class="token operator">:</span> <span class="token number">0.05</span><span class="token punctuation">,</span>
+  <span class="token constant">TEN</span><span class="token operator">:</span> <span class="token number">0.10</span><span class="token punctuation">,</span>
+  <span class="token constant">FIFTEEN</span><span class="token operator">:</span> <span class="token number">0.15</span><span class="token punctuation">,</span>
+  <span class="token constant">TWENTY</span><span class="token operator">:</span> <span class="token number">0.20</span><span class="token punctuation">,</span>
+  <span class="token constant">TWENTY_FIVE</span><span class="token operator">:</span> <span class="token number">0.25</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword keyword-const">const</span> <span class="token constant">DISCOUNT_TYPES</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token constant">HEALTHY</span><span class="token operator">:</span> <span class="token string">'healthy'</span><span class="token punctuation">,</span>
+  <span class="token constant">VEGETARIAN</span><span class="token operator">:</span> <span class="token string">'vegetarian'</span><span class="token punctuation">,</span>
+  <span class="token constant">FULL_MEAL</span><span class="token operator">:</span> <span class="token string">'full_meal'</span><span class="token punctuation">,</span>
+  <span class="token constant">DRINK</span><span class="token operator">:</span> <span class="token string">'drink'</span><span class="token punctuation">,</span>
+  <span class="token constant">DESSERT</span><span class="token operator">:</span> <span class="token string">'dessert'</span><span class="token punctuation">,</span>
+  <span class="token constant">GENERAL</span><span class="token operator">:</span> <span class="token string">'general'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+</code></pre><h3 id="fizikai-és-logikai-szerkezet">Fizikai és logikai szerkezet </h3>
+<ul>
+<li><strong>Táblák/Nézetek</strong>: MongoDB kollekciók (collections) a fenti sémák alapján.</li>
+<li><strong>Indexek</strong>: alapértelmezett indexek az _id-re és egyedi mezőkre (pl. username, email).</li>
+<li><strong>Tárolt eljárások/Függvények</strong>: Nincs (JavaScript backend kezel mindent).</li>
+<li><strong>Gyorsítótárazás (Cache)</strong>: Redis in-memory adatbázis használata a teljesítmény növelésére, különösen a dashboard adatok gyors eléréséhez (pl. felhasználók listája, statisztikák), 5 perces lejárattal.</li>
+</ul>
+<h3 id="használati-esetek-use-cases-és-forgatókönyvek">Használati esetek (Use Cases) és forgatókönyvek </h3>
+<ul>
+<li><strong>Felhasználói regisztráció és autentikáció</strong>: Diákok/szülők regisztrálnak, bejelentkeznek; adatok User kollekcióban.</li>
+<li><strong>Menü kezelése</strong>: Admin hozzáadja/szerkeszti MenuItems-t; diákok böngészik DailyMenu alapján.</li>
+<li><strong>Rendelés leadása</strong>: Diák kiválaszt tételeket OrderItems-ben, Order létrejön; Payment rögzíti kifizetést.</li>
+<li><strong>Értékelés</strong>: Felhasználók Review-t adnak MenuItems-hez.</li>
+<li><strong>Hűségprogram</strong>: Vásárlások után UserLoyalty frissül.</li>
+<li><strong>Biztonság</strong>: Minden akció SecurityLogs-ban naplózódik.</li>
+<li><strong>Admin műveletek</strong>: Felhasználók listázása, statisztikák (User, Order stb. alapján), Redis cache-ből gyorsítottan.</li>
+</ul>
+<h3 id="biztonság-és-hozzáférés">Biztonság és hozzáférés </h3>
+<ul>
+<li><strong>Felhasználói szerepek</strong>: Admin (teljes hozzáférés), Student/Parent/Teacher (korlátozott), Frozen (blokkolva).</li>
+<li><strong>Jogosultságok</strong>: JWT tokenek, middleware-ek (pl. requireAdmin).</li>
+<li><strong>Adatvédelmi szabályok</strong>: E-mail ellenőrzés, GDPR-kompatibilis (pl. személyes adatok védelme), IP cím GDPR kombatibilis tárolás.</li>
+<li><strong>Biztonság</strong>: Jelszavak hash-elve (bcrypt), reCAPTCHA, IP naplózás, IP hashelés, VPN/Tor detektálás.</li>
+</ul>
+<h3 id="karbantartás-és-üzemeltetés">Karbantartás és üzemeltetés </h3>
+<ul>
+<li><strong>Biztonsági mentési eljárások</strong>: MongoDB dump/export rendszeres mentéshez; Redis esetében adatok ideiglenesek, így külön mentés nem szükséges.</li>
+<li><strong>Teljesítményfigyelés</strong>: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében.</li>
+<li><strong>Frissítési folyamatok</strong>: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.</li>
+<li><strong>További</strong>: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.</li>
+</ul>
+<p><img src="database.png" alt="Database Diagram"></p>
+<h3 id="53-algorithms-and-data-structures">5.3 Algorithms and Data Structures </h3>
+<p>The SnapTray system employs various algorithms and data structures to ensure efficient data processing, security, and performance. This section documents the key algorithms and data structures used throughout the system.</p>
+<h4 id="531-data-structures">5.3.1 Data Structures </h4>
+<h5 id="5311-mongodb-collections-nosql-documents">5.3.1.1 MongoDB Collections (NoSQL Documents) </h5>
+<ul>
+<li><strong>Document-based Storage</strong>: MongoDB collections store data as BSON documents, allowing flexible schemas and nested structures.</li>
+<li><strong>Embedded Documents</strong>: Order items are embedded within Order documents for atomic operations and better read performance.</li>
+<li><strong>References</strong>: ObjectId references link related documents (e.g., User to Order, MenuItem to Review).</li>
+<li><strong>Arrays</strong>: Used for storing multiple values like allergens, menu items in daily menus, and discount lists.</li>
+</ul>
+<h5 id="5312-redis-data-structures">5.3.1.2 Redis Data Structures </h5>
+<ul>
+<li><strong>Strings</strong>: Session storage, cached user data, and simple key-value pairs.</li>
+<li><strong>Hashes</strong>: Complex cached objects like user statistics and dashboard data.</li>
+<li><strong>Sorted Sets</strong>: Rate limiting with score-based expiration.</li>
+<li><strong>Lists</strong>: Queue structures for background processing (if implemented).</li>
+</ul>
+<h5 id="5313-redis-lua-scripting">5.3.1.3 Redis Lua Scripting </h5>
+<p>Redis Lua scripts are used for atomic operations that require multiple Redis commands to execute as a single, uninterruptible transaction. This ensures data consistency in high-concurrency scenarios.</p>
+<p><strong>Key Lua Scripts in the System:</strong></p>
+<p><strong>Order Processing Script (process_order.lua):</strong></p>
+<pre data-role="codeBlock" data-info="lua" class="language-lua lua"><code><span class="token comment">-- Atomic order processing with inventory management</span>
+<span class="token keyword keyword-local">local</span> orderId <span class="token operator">=</span> ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-local">local</span> userId <span class="token operator">=</span> ARGV<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-local">local</span> items <span class="token operator">=</span> cjson<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment">-- Check inventory availability</span>
+<span class="token keyword keyword-for">for</span> i<span class="token punctuation">,</span> item <span class="token keyword keyword-in">in</span> <span class="token function">ipairs</span><span class="token punctuation">(</span>items<span class="token punctuation">)</span> <span class="token keyword keyword-do">do</span>
+    <span class="token keyword keyword-local">local</span> stock <span class="token operator">=</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> <span class="token string">'item:'</span> <span class="token operator">..</span> item<span class="token punctuation">.</span>id <span class="token operator">..</span> <span class="token string">':stock'</span><span class="token punctuation">)</span>
+    <span class="token keyword keyword-if">if</span> <span class="token keyword keyword-not">not</span> stock <span class="token keyword keyword-or">or</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>stock<span class="token punctuation">)</span> <span class="token operator">&lt;</span> item<span class="token punctuation">.</span>quantity <span class="token keyword keyword-then">then</span>
+        <span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">error_reply</span><span class="token punctuation">(</span><span class="token string">'INSUFFICIENT_STOCK'</span><span class="token punctuation">)</span>
+    <span class="token keyword keyword-end">end</span>
+<span class="token keyword keyword-end">end</span>
+
+<span class="token comment">-- Deduct inventory atomically</span>
+<span class="token keyword keyword-for">for</span> i<span class="token punctuation">,</span> item <span class="token keyword keyword-in">in</span> <span class="token function">ipairs</span><span class="token punctuation">(</span>items<span class="token punctuation">)</span> <span class="token keyword keyword-do">do</span>
+    redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'DECRBY'</span><span class="token punctuation">,</span> <span class="token string">'item:'</span> <span class="token operator">..</span> item<span class="token punctuation">.</span>id <span class="token operator">..</span> <span class="token string">':stock'</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>quantity<span class="token punctuation">)</span>
+<span class="token keyword keyword-end">end</span>
+
+<span class="token comment">-- Create order record</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'HMSET'</span><span class="token punctuation">,</span> <span class="token string">'order:'</span> <span class="token operator">..</span> orderId<span class="token punctuation">,</span>
+    <span class="token string">'userId'</span><span class="token punctuation">,</span> userId<span class="token punctuation">,</span>
+    <span class="token string">'status'</span><span class="token punctuation">,</span> <span class="token string">'CONFIRMED'</span><span class="token punctuation">,</span>
+    <span class="token string">'timestamp'</span><span class="token punctuation">,</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'TIME'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">status_reply</span><span class="token punctuation">(</span><span class="token string">'ORDER_CONFIRMED'</span><span class="token punctuation">)</span>
+</code></pre><ul>
+<li><strong>Purpose</strong>: Atomic inventory deduction and order creation</li>
+<li><strong>Benefits</strong>: Prevents race conditions during high-traffic ordering</li>
+<li><strong>Atomicity</strong>: All operations succeed or all fail together</li>
+</ul>
+<p><strong>Wallet Update Script (wallet_update.lua):</strong></p>
+<pre data-role="codeBlock" data-info="lua" class="language-lua lua"><code><span class="token comment">-- Atomic wallet balance updates with validation</span>
+<span class="token keyword keyword-local">local</span> userId <span class="token operator">=</span> ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-local">local</span> amount <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-local">local</span> operation <span class="token operator">=</span> ARGV<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token comment">-- 'add' or 'subtract'</span>
+
+<span class="token keyword keyword-local">local</span> walletKey <span class="token operator">=</span> <span class="token string">'wallet:'</span> <span class="token operator">..</span> userId
+<span class="token keyword keyword-local">local</span> currentBalance <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> walletKey<span class="token punctuation">)</span> <span class="token keyword keyword-or">or</span> <span class="token string">'0'</span><span class="token punctuation">)</span>
+
+<span class="token keyword keyword-if">if</span> operation <span class="token operator">==</span> <span class="token string">'subtract'</span> <span class="token keyword keyword-and">and</span> currentBalance <span class="token operator">&lt;</span> amount <span class="token keyword keyword-then">then</span>
+    <span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">error_reply</span><span class="token punctuation">(</span><span class="token string">'INSUFFICIENT_FUNDS'</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-end">end</span>
+
+<span class="token keyword keyword-local">local</span> newBalance <span class="token operator">=</span> operation <span class="token operator">==</span> <span class="token string">'add'</span> <span class="token keyword keyword-and">and</span> <span class="token punctuation">(</span>currentBalance <span class="token operator">+</span> amount<span class="token punctuation">)</span> <span class="token keyword keyword-or">or</span> <span class="token punctuation">(</span>currentBalance <span class="token operator">-</span> amount<span class="token punctuation">)</span>
+
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'SET'</span><span class="token punctuation">,</span> walletKey<span class="token punctuation">,</span> newBalance<span class="token punctuation">)</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'PUBLISH'</span><span class="token punctuation">,</span> <span class="token string">'wallet_updates'</span><span class="token punctuation">,</span> userId <span class="token operator">..</span> <span class="token string">':'</span> <span class="token operator">..</span> newBalance<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">status_reply</span><span class="token punctuation">(</span><span class="token string">'BALANCE_UPDATED:'</span> <span class="token operator">..</span> newBalance<span class="token punctuation">)</span>
+</code></pre><ul>
+<li><strong>Purpose</strong>: Thread-safe wallet balance modifications</li>
+<li><strong>Validation</strong>: Prevents negative balances and insufficient funds</li>
+<li><strong>Notifications</strong>: Publishes balance changes for real-time updates</li>
+</ul>
+<p><strong>Rate Limiting Script (rate_limit.lua):</strong></p>
+<pre data-role="codeBlock" data-info="lua" class="language-lua lua"><code><span class="token comment">-- Sliding window rate limiting</span>
+<span class="token keyword keyword-local">local</span> key <span class="token operator">=</span> KEYS<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-local">local</span> window <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token comment">-- window size in seconds</span>
+<span class="token keyword keyword-local">local</span> limit <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment">-- max requests per window</span>
+<span class="token keyword keyword-local">local</span> current <span class="token operator">=</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'TIME'</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+<span class="token comment">-- Remove old entries outside the window</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZREMRANGEBYSCORE'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> current <span class="token operator">-</span> window<span class="token punctuation">)</span>
+
+<span class="token comment">-- Count current requests in window</span>
+<span class="token keyword keyword-local">local</span> count <span class="token operator">=</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZCARD'</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-if">if</span> count <span class="token operator">&gt;=</span> limit <span class="token keyword keyword-then">then</span>
+    <span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">error_reply</span><span class="token punctuation">(</span><span class="token string">'RATE_LIMIT_EXCEEDED'</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-end">end</span>
+
+<span class="token comment">-- Add current request</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZADD'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> current<span class="token punctuation">,</span> current<span class="token punctuation">)</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'EXPIRE'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> window<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">status_reply</span><span class="token punctuation">(</span><span class="token string">'ALLOWED:'</span> <span class="token operator">..</span> <span class="token punctuation">(</span>limit <span class="token operator">-</span> count <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">..</span> <span class="token string">'_remaining'</span><span class="token punctuation">)</span>
+</code></pre><ul>
+<li><strong>Purpose</strong>: Distributed rate limiting across multiple server instances</li>
+<li><strong>Algorithm</strong>: Sliding window with sorted set for timestamp tracking</li>
+<li><strong>Accuracy</strong>: More precise than fixed window but maintains performance</li>
+</ul>
+<p><strong>Lua Script Benefits:</strong></p>
+<ul>
+<li><strong>Atomicity</strong>: Multiple Redis operations execute as one atomic unit</li>
+<li><strong>Performance</strong>: Reduces network round trips between application and Redis</li>
+<li><strong>Consistency</strong>: Eliminates race conditions in concurrent operations</li>
+<li><strong>Reusability</strong>: Scripts are cached on Redis server for repeated execution</li>
+</ul>
+<h5 id="5314-javascript-objects-and-arrays">5.3.1.4 JavaScript Objects and Arrays </h5>
+<ul>
+<li><strong>Plain Objects</strong>: Configuration objects, API responses, and in-memory data manipulation.</li>
+<li><strong>Arrays</strong>: Cart management, menu filtering, and batch operations.</li>
+<li><strong>Maps</strong>: Efficient key-value storage for caching and lookups.</li>
+<li><strong>Sets</strong>: Unique value collections for filtering and deduplication.</li>
+</ul>
+<h4 id="532-core-algorithms">5.3.2 Core Algorithms </h4>
+<h5 id="5321-authentication-and-security-algorithms">5.3.2.1 Authentication and Security Algorithms </h5>
+<p><strong>Password Hashing Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// bcrypt with salt rounds for secure password storage</span>
+<span class="token keyword keyword-const">const</span> hashedPassword <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> bcrypt<span class="token punctuation">.</span><span class="token method function property-access">hash</span><span class="token punctuation">(</span>password<span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword keyword-const">const</span> isValid <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> bcrypt<span class="token punctuation">.</span><span class="token method function property-access">compare</span><span class="token punctuation">(</span>password<span class="token punctuation">,</span> hashedPassword<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: bcrypt with adaptive cost factor</li>
+<li><strong>Purpose</strong>: Prevent rainbow table attacks and brute force attacks</li>
+</ul>
+<p><strong>JWT Token Generation and Verification:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// HS256 algorithm for token signing</span>
+<span class="token keyword keyword-const">const</span> token <span class="token operator">=</span> jwt<span class="token punctuation">.</span><span class="token method function property-access">sign</span><span class="token punctuation">(</span>payload<span class="token punctuation">,</span> secretKey<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">expiresIn</span><span class="token operator">:</span> <span class="token string">'24h'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword keyword-const">const</span> decoded <span class="token operator">=</span> jwt<span class="token punctuation">.</span><span class="token method function property-access">verify</span><span class="token punctuation">(</span>token<span class="token punctuation">,</span> secretKey<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: HMAC-SHA256 (HS256)</li>
+<li><strong>Purpose</strong>: Stateless authentication and secure data transmission</li>
+<li><strong>Security Features</strong>: Expiration, issuer validation, audience restriction</li>
+</ul>
+<p><strong>IP Hashing for Privacy:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// SHA-256 hashing for GDPR compliance</span>
+<span class="token keyword keyword-const">const</span> hashedIP <span class="token operator">=</span> crypto<span class="token punctuation">.</span><span class="token method function property-access">createHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">update</span><span class="token punctuation">(</span>ipAddress<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">digest</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: SHA-256 cryptographic hash</li>
+<li><strong>Purpose</strong>: Anonymize IP addresses in logs while maintaining uniqueness</li>
+<li><strong>Compliance</strong>: GDPR Article 32 data protection requirements</li>
+</ul>
+<h5 id="5322-payment-processing-algorithms">5.3.2.2 Payment Processing Algorithms </h5>
+<p><strong>Currency Conversion Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Simple multiplication-based conversion</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function">convertCurrency</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">amount<span class="token punctuation">,</span> fromRate<span class="token punctuation">,</span> toRate</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">(</span>amount <span class="token operator">/</span> fromRate<span class="token punctuation">)</span> <span class="token operator">*</span> toRate<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Linear conversion with exchange rates</li>
+<li><strong>Purpose</strong>: Convert between different currencies for international payments</li>
+<li><strong>Precision</strong>: Uses floating-point arithmetic with rounding to 2 decimal places</li>
+</ul>
+<p><strong>Payment Validation Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Multi-step validation with checksums</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function">validatePayment</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">paymentData</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token function">validateAmount</span><span class="token punctuation">(</span>paymentData<span class="token punctuation">.</span><span class="token property-access">amount</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+           <span class="token function">validateCurrency</span><span class="token punctuation">(</span>paymentData<span class="token punctuation">.</span><span class="token property-access">currency</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+           <span class="token function">validateChecksum</span><span class="token punctuation">(</span>paymentData<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Multi-condition validation with early termination</li>
+<li><strong>Purpose</strong>: Prevent fraudulent transactions and data corruption</li>
+<li><strong>Error Handling</strong>: Comprehensive validation with specific error messages</li>
+</ul>
+<h5 id="5323-loyalty-point-calculation-algorithm">5.3.2.3 Loyalty Point Calculation Algorithm </h5>
+<p><strong>Point Calculation Based on Purchase Amount:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">calculatePoints</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">amount<span class="token punctuation">,</span> tier<span class="token punctuation">,</span> healthLevel<span class="token punctuation">,</span> date</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> basePoints <span class="token operator">=</span> amount <span class="token operator">*</span> <span class="token number">4</span><span class="token punctuation">;</span> <span class="token comment">// 4 points per dollar</span>
+    <span class="token keyword keyword-const">const</span> tierMultiplier <span class="token operator">=</span> <span class="token function">getTierMultiplier</span><span class="token punctuation">(</span>tier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> healthBonus <span class="token operator">=</span> healthLevel <span class="token operator">===</span> <span class="token string">'HIGH'</span> <span class="token operator">?</span> <span class="token number">1.5</span> <span class="token operator">:</span> <span class="token number">1.0</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> holidayBonus <span class="token operator">=</span> <span class="token function">isHoliday</span><span class="token punctuation">(</span>date<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token number">1.2</span> <span class="token operator">:</span> <span class="token number">1.0</span><span class="token punctuation">;</span>
+    
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">floor</span><span class="token punctuation">(</span>basePoints <span class="token operator">*</span> tierMultiplier <span class="token operator">*</span> healthBonus <span class="token operator">*</span> holidayBonus<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Multiplicative point calculation with tier bonuses</li>
+<li><strong>Factors</strong>: Purchase amount, user tier, health score, holiday periods</li>
+<li><strong>Rounding</strong>: Floor function to ensure integer points</li>
+</ul>
+<p><strong>Tier Determination Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">determineTier</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">totalPoints</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">20000</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'PLATINUM'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">8000</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'GOLD'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">2500</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'SILVER'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">1200</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'BRONZE'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'NONE'</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Threshold-based classification</li>
+<li><strong>Purpose</strong>: Automatic tier promotion based on accumulated points</li>
+<li><strong>Triggers</strong>: Real-time updates on point changes</li>
+</ul>
+<h5 id="5324-search-and-filtering-algorithms">5.3.2.4 Search and Filtering Algorithms </h5>
+<p><strong>Menu Item Filtering Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">filterMenuItems</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">items<span class="token punctuation">,</span> filters</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> items<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">category</span> <span class="token operator">||</span> item<span class="token punctuation">.</span><span class="token property-access">category</span> <span class="token operator">===</span> filters<span class="token punctuation">.</span><span class="token property-access">category</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+               <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">priceRange</span> <span class="token operator">||</span> <span class="token function">isInRange</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span><span class="token property-access">price</span><span class="token punctuation">,</span> filters<span class="token punctuation">.</span><span class="token property-access">priceRange</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+               <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">allergens</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token function">hasAllergens</span><span class="token punctuation">(</span>item<span class="token punctuation">,</span> filters<span class="token punctuation">.</span><span class="token property-access">allergens</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+               <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">searchTerm</span> <span class="token operator">||</span> <span class="token function">matchesSearch</span><span class="token punctuation">(</span>item<span class="token punctuation">,</span> filters<span class="token punctuation">.</span><span class="token property-access">searchTerm</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Multi-criteria filtering with short-circuit evaluation</li>
+<li><strong>Purpose</strong>: Efficient menu browsing with multiple filter options</li>
+</ul>
+<p><strong>Text Search Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">matchesSearch</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">item<span class="token punctuation">,</span> term</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> searchTerm <span class="token operator">=</span> term<span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>searchTerm<span class="token punctuation">)</span> <span class="token operator">||</span>
+           item<span class="token punctuation">.</span><span class="token property-access">description</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>searchTerm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Case-insensitive substring matching</li>
+<li><strong>Purpose</strong>: Basic text search across menu items</li>
+<li><strong>Limitations</strong>: Simple implementation, could be enhanced with fuzzy matching</li>
+</ul>
+<h5 id="5325-caching-algorithms">5.3.2.5 Caching Algorithms </h5>
+<p><strong>Cache Key Generation:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">generateCacheKey</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">userId<span class="token punctuation">,</span> resource<span class="token punctuation">,</span> params</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>resource<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">stringify</span><span class="token punctuation">(</span>params<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Structured key generation with JSON serialization</li>
+<li><strong>Purpose</strong>: Unique cache keys for different user-resource combinations</li>
+<li><strong>Collision Prevention</strong>: Includes all relevant parameters</li>
+</ul>
+<p><strong>Cache Invalidation Strategy:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">invalidateUserCache</span> <span class="token operator">=</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">userId</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> pattern <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:*</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> keys <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> redisClient<span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>pattern<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>keys<span class="token punctuation">.</span><span class="token property-access">length</span> <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow keyword-await">await</span> redisClient<span class="token punctuation">.</span><span class="token method function property-access">del</span><span class="token punctuation">(</span>keys<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Pattern-based bulk invalidation</li>
+<li><strong>Purpose</strong>: Clear all user-related cache entries on data changes</li>
+<li><strong>Performance</strong>: Uses Redis pattern matching for efficiency</li>
+</ul>
+<h5 id="5326-rate-limiting-algorithm">5.3.2.6 Rate Limiting Algorithm </h5>
+<p><strong>Token Bucket Algorithm (via express-rate-limit):</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Implemented through express-rate-limit middleware</span>
+<span class="token keyword keyword-const">const</span> limiter <span class="token operator">=</span> <span class="token function">rateLimit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">windowMs</span><span class="token operator">:</span> <span class="token number">15</span> <span class="token operator">*</span> <span class="token number">60</span> <span class="token operator">*</span> <span class="token number">1000</span><span class="token punctuation">,</span> <span class="token comment">// 15 minutes</span>
+    <span class="token literal-property property">max</span><span class="token operator">:</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token comment">// limit each IP to 100 requests per windowMs</span>
+    <span class="token literal-property property">store</span><span class="token operator">:</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">RedisStore</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token comment">/* redis config */</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Token bucket with fixed window</li>
+<li><strong>Purpose</strong>: Prevent abuse and ensure fair resource usage</li>
+<li><strong>Storage</strong>: Redis-backed for distributed rate limiting</li>
+</ul>
+<h5 id="5327-data-validation-algorithms">5.3.2.7 Data Validation Algorithms </h5>
+<p><strong>Input Sanitization Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">sanitizeInput</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">input</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> input
+        <span class="token punctuation">.</span><span class="token method function property-access">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">[&lt;&gt;]</span><span class="token regex-delimiter">/</span><span class="token regex-flags">g</span></span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span> <span class="token comment">// Basic XSS prevention</span>
+        <span class="token punctuation">.</span><span class="token method function property-access">substring</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Length limiting</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Multi-step sanitization with regex replacement</li>
+<li><strong>Purpose</strong>: Prevent injection attacks and normalize input data</li>
+<li><strong>Layers</strong>: Client-side, server-side, and database-level validation</li>
+</ul>
+<p><strong>Email Validation Algorithm:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">validateEmail</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">email</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> emailRegex <span class="token operator">=</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^[^\s@]+@[^\s@]+\.[^\s@]+$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> emailRegex<span class="token punctuation">.</span><span class="token method function property-access">test</span><span class="token punctuation">(</span>email<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> email<span class="token punctuation">.</span><span class="token property-access">length</span> <span class="token operator">&lt;=</span> <span class="token number">254</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Regular expression matching with length constraints</li>
+<li><strong>Purpose</strong>: Ensure valid email format and prevent buffer overflow</li>
+</ul>
+<h4 id="533-performance-optimization-algorithms">5.3.3 Performance Optimization Algorithms </h4>
+<h5 id="5331-database-query-optimization">5.3.3.1 Database Query Optimization </h5>
+<p><strong>Index Utilization:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Compound indexes for common query patterns</span>
+<span class="token maybe-class-name">User</span><span class="token punctuation">.</span><span class="token property-access">collection</span><span class="token punctuation">.</span><span class="token method function property-access">createIndex</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">email</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token literal-property property">isVerified</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">Order</span><span class="token punctuation">.</span><span class="token property-access">collection</span><span class="token punctuation">.</span><span class="token method function property-access">createIndex</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">userId</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token literal-property property">orderDate</span><span class="token operator">:</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Strategic index creation based on query patterns</li>
+<li><strong>Purpose</strong>: Reduce query execution time</li>
+<li><strong>Maintenance</strong>: Automatic index updates on document changes</li>
+</ul>
+<h5 id="5332-pagination-algorithm">5.3.3.2 Pagination Algorithm </h5>
+<p><strong>Cursor-based Pagination:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">getPaginatedResults</span> <span class="token operator">=</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">model<span class="token punctuation">,</span> filter<span class="token punctuation">,</span> page<span class="token punctuation">,</span> limit</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> skip <span class="token operator">=</span> <span class="token punctuation">(</span>page <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> limit<span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> results <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> model<span class="token punctuation">.</span><span class="token method function property-access">find</span><span class="token punctuation">(</span>filter<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token method function property-access">sort</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">createdAt</span><span class="token operator">:</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token method function property-access">skip</span><span class="token punctuation">(</span>skip<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token method function property-access">limit</span><span class="token punctuation">(</span>limit<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> total <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> model<span class="token punctuation">.</span><span class="token method function property-access">countDocuments</span><span class="token punctuation">(</span>filter<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">{</span> results<span class="token punctuation">,</span> total<span class="token punctuation">,</span> page<span class="token punctuation">,</span> <span class="token literal-property property">pages</span><span class="token operator">:</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">ceil</span><span class="token punctuation">(</span>total <span class="token operator">/</span> limit<span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Skip-limit pagination with total count</li>
+<li><strong>Purpose</strong>: Efficient handling of large datasets</li>
+</ul>
+<h5 id="5333-batch-processing-algorithm">5.3.3.3 Batch Processing Algorithm </h5>
+<p><strong>Order Fulfillment Batch Processing:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">processOrderBatch</span> <span class="token operator">=</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">orders</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> bulkOps <span class="token operator">=</span> orders<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">order</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">updateOne</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">filter</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">_id</span><span class="token operator">:</span> order<span class="token punctuation">.</span><span class="token property-access">_id</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">update</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">status</span><span class="token operator">:</span> <span class="token string">'Completed'</span> <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token maybe-class-name">Order</span><span class="token punctuation">.</span><span class="token method function property-access">bulkWrite</span><span class="token punctuation">(</span>bulkOps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Bulk database operations for multiple records</li>
+<li><strong>Purpose</strong>: Reduce database round trips for batch updates</li>
+</ul>
+<h4 id="534-security-algorithms">5.3.4 Security Algorithms </h4>
+<h5 id="5341-recaptcha-verification">5.3.4.1 reCAPTCHA Verification </h5>
+<p><strong>Score-based Assessment:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">verifyRecaptcha</span> <span class="token operator">=</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">token</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'https://www.google.com/recaptcha/api/siteverify'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">method</span><span class="token operator">:</span> <span class="token string">'POST'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">body</span><span class="token operator">:</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">URLSearchParams</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">secret</span><span class="token operator">:</span> process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">RECAPTCHA_SECRET</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">response</span><span class="token operator">:</span> token
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> result <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> result<span class="token punctuation">.</span><span class="token property-access">score</span> <span class="token operator">&gt;=</span> <span class="token number">0.5</span><span class="token punctuation">;</span> <span class="token comment">// Threshold for human/bot determination</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><ul>
+<li><strong>Algorithm</strong>: Machine learning-based risk assessment</li>
+<li><strong>Purpose</strong>: Distinguish between human users and automated bots</li>
+<li><strong>Accuracy</strong>: Google's proprietary algorithm with score 0.0-1.0 (1 being the highest chance the user is a human and 0 being the lowest chance, 0.5 the default threshold for human detection )</li>
+</ul>
+<h4 id="534-algorithm-selection-rationale">5.3.4 Algorithm Selection Rationale </h4>
+<ul>
+<li><strong>Security Algorithms</strong>: Chosen for industry-standard security (bcrypt, JWT, AES)</li>
+<li><strong>Performance Algorithms</strong>: Selected for scalability (Redis caching, pagination, indexing)</li>
+<li><strong>Business Logic Algorithms</strong>: Designed for fairness and transparency (loyalty calculations, tier systems)</li>
+<li><strong>Data Processing Algorithms</strong>: Optimized for common use cases (filtering, searching, validation)</li>
+</ul>
+<p>The algorithms are chosen to balance security, performance, maintainability, and user experience while adhering to industry best practices and compliance requirements.</p>
+<h4 id="54-security-design">5.4 Security Design </h4>
+<h2 id="6-implementation">6. Implementation </h2>
+<h2 id="7-testing-and-validation">7. Testing and Validation </h2>
+<h2 id="8-user-manual">8. User Manual </h2>
+<h2 id="9-deployment-and-maintenance">9. Deployment and Maintenance </h2>
+<h2 id="10-conclusion-and-future-work">10. Conclusion and Future Work </h2>
+<h2 id="11-references">11. References </h2>
+<h2 id="12-appendices">12. Appendices </h2>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
