@@ -1,4 +1,4 @@
-# TODO List for Lua Scripts
+# TODO List
 
 - authentication.lua - User login and session management
 - logging.lua - Centralized event and error logging

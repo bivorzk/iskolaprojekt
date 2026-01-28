@@ -19,6 +19,8 @@ const logoutRouter = require('./logout');
 const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
+const cors = require('cors');
+
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
@@ -58,7 +60,7 @@ app.get('/', (req, res) => {
 });
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
-
+app.use(cors());
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
