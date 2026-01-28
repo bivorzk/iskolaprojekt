@@ -76,10 +76,9 @@
 
                     if (response.ok) {
                         setMessage({ text: 'Login successful! Welcome back!', type: 'success' });
-                        // Uncomment to redirect after successful login
-                        // setTimeout(() => {
-                        //     window.location.href = '/dashboard';
-                        // }, 1500);
+                         setTimeout(() => {
+                             window.location.href = '/dashboard/student';
+                        }, 1500);
                     } else {
                         setMessage({ text: data, type: 'error' });
                     }
@@ -203,8 +202,8 @@
                                             Forgot Password?
                                         </button>
                                         <div>
-                                            <a href="register.html" className="text-sm text-gray-600 hover:text-primary">
-                                                Don't have an account? Register
+                                            Don't have an account? <a href="register.html" className="text-sm text-gray-600 hover:text-primary">
+                                                Register
                                             </a>
                                         </div>
                                     </div>

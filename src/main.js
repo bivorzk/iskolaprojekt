@@ -1,5 +1,9 @@
 const express = require('express');
 const app = express();
+
+// Trust proxy for correct IP extraction
+app.set('trust proxy', 1);
+
 const port = 3000;
 const rateLimit = require('express-rate-limit');
 const session = require('express-session'); 
@@ -61,7 +65,6 @@ app.get('/', (req, res) => {
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
 app.use(cors());
-app.set('trust proxy', 1);
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
