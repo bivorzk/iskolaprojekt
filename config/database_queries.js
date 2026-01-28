@@ -254,17 +254,9 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
         return result;
         
     } catch (error) {
-        // Handle circular structure error by extracting only the error message
-        let errorMessage = 'Unknown error';
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        } else if (typeof error === 'string') {
-            errorMessage = error;
-        } else if (error && error.toString) {
-            errorMessage = error.toString();
-        }
-        
-        throw new Error(`Failed to update points atomically: ${errorMessage}`);
+        // Handle errors without trying to stringify potentially circular objects
+        console.error('Error in updatePointsAtomically:', error.message || 'Unknown error');
+        throw new Error('Failed to update points atomically');
     } finally {
         try {
             await session.endSession();

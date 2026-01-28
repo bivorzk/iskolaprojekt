@@ -470,7 +470,7 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
 
                         // Show SnapTray themed success message
                         setTimeout(() => {
-                            alert(`✅ Order placed successfully with SnapTray!\n\n📦 Order ID: ${saveResult.orderId || 'N/A'}\n⚡ Loyalty Points Earned: +${saveResult.loyaltyPointsAwarded || 0}`);
+                            alert(`Order placed successfully with SnapTray!\n\n Order ID: ${saveResult.orderId || 'N/A'}\nLoyalty Points Earned: +${saveResult.loyaltyPointsAwarded || 0}`);
                         }, saveResult.loyaltyPointsAwarded > 0 ? 4000 : 1000);
 
                         // Close PayPal modal
