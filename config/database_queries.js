@@ -255,7 +255,13 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
         
     } catch (error) {
         // Handle errors without trying to stringify potentially circular objects
-        console.error('Error in updatePointsAtomically:', error.message || 'Unknown error');
+        let errorMsg = 'Unknown error';
+        try {
+            errorMsg = String(error.message || error);
+        } catch (e) {
+            errorMsg = 'Error with circular references';
+        }
+        console.error('Error in updatePointsAtomically:', errorMsg);
         throw new Error('Failed to update points atomically');
     } finally {
         try {
@@ -340,9 +346,9 @@ const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
 
 
 
-mongoose.set('debug', function (collectionName, method, query, doc) {
-    console.log(`Mongoose: ${collectionName}.${method}(${JSON.stringify(query)}, ${JSON.stringify(doc)})`);
-});
+// mongoose.set('debug', function (collectionName, method, query, doc) {
+//     console.log(`Mongoose: ${collectionName}.${method}(${JSON.stringify(query)}, ${JSON.stringify(doc)})`);
+// });
 
 
 module.exports = {
