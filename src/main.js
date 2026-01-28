@@ -61,6 +61,7 @@ app.get('/', (req, res) => {
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
 app.use(cors());
+app.set('trust proxy', true);
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
@@ -121,7 +122,7 @@ app.use('/register', registerLimiter);
 app.use('/api', limiter);
 app.use('/dashboard', dashboardLimiter);
 app.use('/admin', limiter);
-app.use('/Order', limiter);
+app.use('/order', limiter);
 app.use('/2fa', limiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
