@@ -66,7 +66,8 @@ const corsOptions = {
 
         const allowedOrigins = [
             'http://localhost:3000',
-            'https://snaptray.onrender.com'
+            'https://snaptray.onrender.com',
+            'https://snaptray.onrender.com/'
         ];
 
         if (allowedOrigins.indexOf(origin) !== -1) {
