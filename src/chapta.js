@@ -1,5 +1,6 @@
-// 6LfkaeErAAAAAEzBV6Puvepk4UoMKNyMPlKqbQmk
-require('dotenv').config();
+// 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const RECAPTCHA_SITE_KEY = process.env.Client_Side_Captha;
         

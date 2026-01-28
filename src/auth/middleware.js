@@ -3,7 +3,7 @@ const express = require('express');
 
 function configureAuthMiddleware(app) {
   // Trust proxy for correct IP extraction
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
   
   // Parse URL-encoded bodies
   app.use(express.urlencoded({ extended: true }));

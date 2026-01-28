@@ -61,7 +61,7 @@ app.get('/', (req, res) => {
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
 app.use(cors());
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
