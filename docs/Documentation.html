@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
-      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.20\crossnote\dependencies\katex\katex.min.css">
+      <link rel="stylesheet" href="file:///c:\Users\Bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.20\crossnote\dependencies\katex\katex.min.css">
       
       
       
@@ -1220,7 +1220,27 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 <li><strong>Data Processing Algorithms</strong>: Optimized for common use cases (filtering, searching, validation)</li>
 </ul>
 <p>The algorithms are chosen to balance security, performance, maintainability, and user experience while adhering to industry best practices and compliance requirements.</p>
-<h4 id="54-security-design">5.4 Security Design </h4>
+<h3 id="54-security-design">5.4 Security Design </h3>
+<h4 id="541-security-features">5.4.1 Security Features </h4>
+<ul>
+<li><strong>Authentication</strong>: JWT-based authentication with role-based access control (RBAC).</li>
+<li><strong>Data Encryption</strong>: Sensitive data encrypted at rest and in transit (TLS/SSL).</li>
+<li><strong>Input Validation</strong>: Comprehensive validation and sanitization of all user inputs.</li>
+<li><strong>Rate Limiting</strong>: Prevent brute-force attacks using express-rate-limit with Redis store and Redis rate limiting via Lua integration.</li>
+<li><strong>Logging and Monitoring</strong>: SecurityLogs collection for tracking user actions and potential security incidents.</li>
+<li><strong>Regular Audits</strong>: Periodic security audits and vulnerability assessments.</li>
+<li><strong>Backup and Recovery</strong>: Regular backups of the database and secure storage of backup files. NOT YET IMPLEMENTED</li>
+<li><strong>Compliance</strong>: Adherence to GDPR and other relevant data protection regulations.</li>
+<li><strong>XSS Protection</strong>: Use of libraries liek <em>xss-clean</em> and <em>helmet</em> to mitigate XSS attacks.</li>
+<li><strong>HTTP Pollution Protection</strong>: Use of <em>helmet</em> to set secure HTTP headers.</li>
+<li><strong>CSRF Protection</strong>: Implementation of CSRF tokens for state-changing operations.</li>
+<li><strong>Password Policies</strong>: Enforcing strong password requirements..</li>
+<li><strong>Two-Factor Authentication (2FA)</strong>: Optional 2FA for enhanced security.</li>
+<li><strong>Session Management</strong>: Secure session handling with appropriate expiration and invalidation.</li>
+<li><strong>Proxy/VPN/Tor Detection</strong>: Logging and potential blocking of suspicious IPs using third-party services. NOT YET IMPLEMENTED</li>
+<li><strong>reCAPTCHA Integration</strong>: To prevent automated bot interactions during registration and login.</li>
+<li><strong>IP Hashing</strong>: Hashing IP addresses before storage to enhance user privacy.</li>
+</ul>
 <h2 id="6-implementation">6. Implementation </h2>
 <h2 id="7-testing-and-validation">7. Testing and Validation </h2>
 <h2 id="8-user-manual">8. User Manual </h2>

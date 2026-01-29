@@ -77,9 +77,7 @@
 ## 3. Requirements Specification
 
 ## 4. System Architecture
-
 ![Architecture Diagram](snaptraySTACK.png)
-
 ### 4.1 Components/Modules
 
 The SnapTray system is organized into several key subsystems that work together to provide a cohesive cafeteria management solution:
@@ -797,8 +795,40 @@ const verifyRecaptcha = async (token) => {
 
 The algorithms are chosen to balance security, performance, maintainability, and user experience while adhering to industry best practices and compliance requirements.
 
-#### 5.4 Security Design
+### 5.4 Security Design
 
+#### 5.4.1 Security Features
+- **Authentication**: JWT-based authentication with role-based access control (RBAC).
+- **Data Encryption**: Sensitive data encrypted at rest and in transit (TLS/SSL).
+- **Input Validation**: Comprehensive validation and sanitization of all user inputs.
+- **Rate Limiting**: Prevent brute-force attacks using express-rate-limit with Redis store and Redis rate limiting via Lua integration.
+- **Logging and Monitoring**: SecurityLogs collection for tracking user actions and potential security incidents.
+- **Regular Audits**: Periodic security audits and vulnerability assessments.
+- **Backup and Recovery**: Regular backups of the database and secure storage of backup files. NOT YET IMPLEMENTED
+- **Compliance**: Adherence to GDPR and other relevant data protection regulations.
+- **XSS Protection**: Use of libraries liek *xss-clean* and *helmet* to mitigate XSS attacks.
+- **HTTP Pollution Protection**: Use of *helmet* to set secure HTTP headers.
+- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations.
+- **Password Policies**: Enforcing strong password requirements..
+- **Two-Factor Authentication (2FA)**: Optional 2FA for enhanced security.
+- **Session Management**: Secure session handling with appropriate expiration and invalidation.
+- **Proxy/VPN/Tor Detection**: Logging and potential blocking of suspicious IPs using third-party services. NOT YET IMPLEMENTED
+- **reCAPTCHA Integration**: To prevent automated bot interactions during registration and login.
+- **IP Hashing**: Hashing IP addresses before storage to enhance user privacy.
+- **NoSQL Injection Prevention**: Use of parameterized queries and ODM features and libraries to prevent injection attacks.
+- **Security Headers**: Implementation of security headers using Helmet.js to protect against common vulnerabilities.
+- **Content Security Policy (CSP)**: Define and enforce a strict CSP to mitigate XSS and data injection attacks.
+#### 5.4.2 Security Policies
+- **Access Control**: Strict role-based access control (RBAC) to limit user permissions.
+- **Data Retention**: Policies for data retention and deletion in compliance with regulations.
+- **Incident Response**: Procedures for responding to security incidents and breaches.
+- **User Education**: Informing users about security best practices.
+- **Regular Updates**: Keeping software and dependencies up to date with security patches.
+### 5.4.3 In depth Security Measures 
+- **Password Hashing**: All passwords are hashed using bcrypt with a salt of 10 rounds before storage.
+- **JWT Authentication**: JSON Web Tokens (JWT) are used for stateless authentication, JWT tokens are made using crypto-secure random secrets stored in environment variables, as well as (openssl rand -hex 32) to generate secure secrets for example ((699fd18bfdad7039f5c1006840ddf233eaa0147e935a9f13cf57f741dfbb5232), this method is more secure than using Math.Random as it is cryptographically secure and Javascript Math.random uses *xorshift128+* which is crackable.
+- **Payment Security**: Integration with PayPal's and Google Pay's secure payment gateways, ensuring PCI compliance they are encrypting payment data via AES-256 encryption.
+- 
 
 ## 6. Implementation
 
@@ -813,4 +843,3 @@ The algorithms are chosen to balance security, performance, maintainability, and
 ## 11. References
 
 ## 12. Appendices
-
