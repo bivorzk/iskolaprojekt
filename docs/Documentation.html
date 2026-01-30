@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
-      <link rel="stylesheet" href="file:///c:\Users\Bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.20\crossnote\dependencies\katex\katex.min.css">
+      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.20\crossnote\dependencies\katex\katex.min.css">
       
       
       
@@ -24,6 +24,31 @@
     
       <div class="crossnote markdown-preview  ">
       
+<style> 
+@page {
+  size: A4 landscape;
+  margin: 0.3cm;
+}
+
+.fullpage {
+  page-break-before: always;
+  page-break-after: always;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Force PNG to fit inside the page box */
+img {
+  display: block;
+  max-width: 98%;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+</style>
 <h1 id="software-documentation-for-snaptray">Software Documentation for SnapTray </h1>
 <h2 id="table-of-contents">Table of Contents </h2>
 <ul>
@@ -135,8 +160,8 @@
 <h2 id="2-system-overview">2. System Overview </h2>
 <h2 id="3-requirements-specification">3. Requirements Specification </h2>
 <h2 id="4-system-architecture">4. System Architecture </h2>
-<p><img src="snaptraySTACK.png" alt="Architecture Diagram"></p>
-<h3 id="41-componentsmodules">4.1 Components/Modules </h3>
+<div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram" style="max-width: 100%; height: auto;"></div>
+### 4.1 Components/Modules {#41-componentsmodules }
 <p>The SnapTray system is organized into several key subsystems that work together to provide a cohesive cafeteria management solution:</p>
 <ul>
 <li><strong>Frontend/UI Layer</strong>: Built with React.js, this layer handles user interactions, displays the interface, and manages client-side state. It includes components for authentication, menu browsing, ordering, and dashboard management.</li>
@@ -1240,6 +1265,24 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 <li><strong>Proxy/VPN/Tor Detection</strong>: Logging and potential blocking of suspicious IPs using third-party services. NOT YET IMPLEMENTED</li>
 <li><strong>reCAPTCHA Integration</strong>: To prevent automated bot interactions during registration and login.</li>
 <li><strong>IP Hashing</strong>: Hashing IP addresses before storage to enhance user privacy.</li>
+<li><strong>NoSQL Injection Prevention</strong>: Use of parameterized queries and ODM features and libraries to prevent injection attacks.</li>
+<li><strong>Security Headers</strong>: Implementation of security headers using Helmet.js to protect against common vulnerabilities.</li>
+<li><strong>Content Security Policy (CSP)</strong>: Define and enforce a strict CSP to mitigate XSS and data injection attacks.</li>
+</ul>
+<h4 id="542-security-policies">5.4.2 Security Policies </h4>
+<ul>
+<li><strong>Access Control</strong>: Strict role-based access control (RBAC) to limit user permissions.</li>
+<li><strong>Data Retention</strong>: Policies for data retention and deletion in compliance with regulations.</li>
+<li><strong>Incident Response</strong>: Procedures for responding to security incidents and breaches.</li>
+<li><strong>User Education</strong>: Informing users about security best practices.</li>
+<li><strong>Regular Updates</strong>: Keeping software and dependencies up to date with security patches.</li>
+</ul>
+<h3 id="543-in-depth-security-measures">5.4.3 In depth Security Measures </h3>
+<ul>
+<li><strong>Password Hashing</strong>: All passwords are hashed using bcrypt with a salt of 10 rounds before storage.</li>
+<li><strong>JWT Authentication</strong>: JSON Web Tokens (JWT) are used for stateless authentication, JWT tokens are made using crypto-secure random secrets stored in environment variables, as well as (openssl rand -hex 32) to generate secure secrets for example ((699fd18bfdad7039f5c1006840ddf233eaa0147e935a9f13cf57f741dfbb5232), this method is more secure than using Math.Random as it is cryptographically secure and Javascript Math.random uses <em>xorshift128+</em> which is crackable.</li>
+<li><strong>Payment Security</strong>: Integration with PayPal's and Google Pay's secure payment gateways, ensuring PCI compliance they are encrypting payment data via AES-256 encryption.</li>
+<li></li>
 </ul>
 <h2 id="6-implementation">6. Implementation </h2>
 <h2 id="7-testing-and-validation">7. Testing and Validation </h2>

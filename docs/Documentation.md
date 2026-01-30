@@ -1,3 +1,28 @@
+<style> 
+@page {
+  size: A4 landscape;
+  margin: 0.3cm;
+}
+
+.fullpage {
+  page-break-before: always;
+  page-break-after: always;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Force PNG to fit inside the page box */
+img {
+  display: block;
+  max-width: 98%;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+</style>
 # Software Documentation for SnapTray
 
 ## Table of Contents
@@ -77,7 +102,7 @@
 ## 3. Requirements Specification
 
 ## 4. System Architecture
-![Architecture Diagram](snaptraySTACK.png)
+<div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram" style="max-width: 100%; height: auto;"></div>
 ### 4.1 Components/Modules
 
 The SnapTray system is organized into several key subsystems that work together to provide a cohesive cafeteria management solution:
