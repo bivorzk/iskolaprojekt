@@ -1,7 +1,14 @@
-<style> 
+<style>
 @page {
   size: A4 landscape;
-  margin: 0.3cm;
+  margin: 1.5cm;
+}
+
+/* Typography improvements */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: #333;
 }
 
 .fullpage {
@@ -11,9 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f8f9fa;
 }
 
-/* Force PNG to fit inside the page box */
+/* Enhanced image handling */
 img {
   display: block;
   max-width: 98%;
@@ -21,7 +29,189 @@ img {
   width: auto;
   height: auto;
   object-fit: contain;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin: 1rem auto;
 }
+
+/* Enhanced table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  position: relative;
+}
+
+tr:hover {
+  background: #f8f9fa;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Code block enhancements */
+pre {
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 1rem 0;
+}
+
+code {
+  background: #f1f3f4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #e83e8c;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Heading improvements */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  border-bottom: 3px solid #007acc;
+  padding-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+  color: #2d3748;
+  border-bottom: 2px solid #e1e5e9;
+  padding-bottom: 0.3rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  color: #4a5568;
+}
+
+h4 {
+  font-size: 1.25rem;
+  color: #718096;
+}
+
+/* List improvements */
+ul, ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+li {
+  margin: 0.5rem 0;
+}
+
+/* Blockquote styling */
+blockquote {
+  border-left: 4px solid #007acc;
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Print-specific rules */
+/* Prevent code blocks and tables from breaking badly */
+pre, code, table, .directory-tree {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Allow long code blocks to break only between lines if necessary */
+pre {
+  page-break-inside: auto;
+  orphans: 3;
+  widows: 3;
+}
+
+/* Keep directory trees together when possible */
+.directory-tree {
+  page-break-inside: avoid;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+/* More selective page breaks - only for major sections */
+h1 {
+  page-break-before: always;
+  page-break-after: avoid;
+}
+
+h2 {
+  page-break-before: auto;
+  page-break-after: avoid;
+  margin-top: 3rem;
+}
+
+h3, h4, h5, h6 {
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+/* For long sections, allow natural breaks */
+section {
+  page-break-inside: auto;
+}
+
+/* Enhanced spacing */
+.content-section {
+  margin: 2rem 0;
+}
+
+/* Special formatting for database schema tables */
+.schema-table {
+  font-size: 0.85rem;
+}
+
+.schema-table th {
+  background: #343a40;
+  color: #fff;
+}
+
+.schema-table tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
 </style>
 # Software Documentation for SnapTray
 
@@ -95,14 +285,25 @@ img {
   - [11. References](#11-references)
   - [12. Appendices](#12-appendices)
 
+---
+
 ## 1. Introduction
+
+
+---
 
 ## 2. System Overview
 
+
+---
+
 ## 3. Requirements Specification
+
+---
 
 ## 4. System Architecture
 <div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram" style="max-width: 100%; height: auto;"></div>
+
 ### 4.1 Components/Modules
 
 The SnapTray system is organized into several key subsystems that work together to provide a cohesive cafeteria management solution:
@@ -140,7 +341,9 @@ The technology stack for SnapTray was chosen to balance development speed, perfo
 - **bcrypt for Password Hashing**: Industry-standard for secure password storage, protecting against rainbow table and brute-force attacks.
 - **reCAPTCHA**: Integrated to prevent automated abuse while maintaining user experience.
 - **PayPal/Google Pay APIs**: Chosen for their robust security, global acceptance, and ease of integration for payment processing.
-
+- **Render**: Used for deployment due to its simplicity, scalability, and support for modern web applications.
+- **Git/GitHub**: For version control and collaborative development.
+- **IPlocate.io**: Integrated for IP geolocation services to enhance security logging and fraud detection.
 The architecture follows a monolithic approach rather than microservices due to the project's scope and team size, allowing for simpler deployment, debugging, and data consistency. Horizontal scaling is achieved through MongoDB sharding and Redis clustering when needed.
 
 ## 5. Design
@@ -207,7 +410,9 @@ The SnapTray system follows several key design principles to ensure a robust, sc
 
 ### 5.2 Database Design
 
-## Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása
+---
+
+#### 5.2.1 Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása
 
 Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. A rendszer Redis-t használ gyorsítótárazáshoz a teljesítmény növelése érdekében.
 
@@ -244,6 +449,7 @@ Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok re
 Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: név, típus, jelentés/szerep, megszorítások.
 
 ##### User (Felhasználók)
+
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
 |-----------|-------|-----------------|---------------|
 | username | String | Felhasználónév | Kötelező, egyedi |
@@ -254,9 +460,10 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 | createdAt | Date | Fiók létrehozási dátuma | Alapértelmezett: jelenlegi idő |
 | balance | Number | Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz | Alapértelmezett: 0 |
 
-Üzleti szabályok: Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).
+**Üzleti szabályok:** Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).
 
 ##### Payment (Kifizetések)
+
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
 |-----------|-------|-----------------|---------------|
 | userId | ObjectId (ref: User) | Fizető felhasználó | Opcionális |
@@ -432,7 +639,8 @@ const DISCOUNT_TYPES = {
 - **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.
 - **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
 
-![Database Diagram](database.png)
+
+<div class="fullpage"><img src="database.png" alt="Database Diagram" style="width: 100%;"></div>
 
 
 
@@ -831,11 +1039,11 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **Regular Audits**: Periodic security audits and vulnerability assessments.
 - **Backup and Recovery**: Regular backups of the database and secure storage of backup files. NOT YET IMPLEMENTED
 - **Compliance**: Adherence to GDPR and other relevant data protection regulations.
-- **XSS Protection**: Use of libraries liek *xss-clean* and *helmet* to mitigate XSS attacks.
+- **XSS Protection**: Use of libraries like *xss-clean* and *helmet* to mitigate XSS attacks.
 - **HTTP Pollution Protection**: Use of *helmet* to set secure HTTP headers.
-- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations.
+- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations to prevent cross-site request forgery attacks. NOT YET IMPLEMENTED
 - **Password Policies**: Enforcing strong password requirements..
-- **Two-Factor Authentication (2FA)**: Optional 2FA for enhanced security.
+- **Two-Factor Authentication (2FA)**: Optional 2FA for enhanced security. NOT YET IMPLEMENTED
 - **Session Management**: Secure session handling with appropriate expiration and invalidation.
 - **Proxy/VPN/Tor Detection**: Logging and potential blocking of suspicious IPs using third-party services. NOT YET IMPLEMENTED
 - **reCAPTCHA Integration**: To prevent automated bot interactions during registration and login.
@@ -843,6 +1051,7 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **NoSQL Injection Prevention**: Use of parameterized queries and ODM features and libraries to prevent injection attacks.
 - **Security Headers**: Implementation of security headers using Helmet.js to protect against common vulnerabilities.
 - **Content Security Policy (CSP)**: Define and enforce a strict CSP to mitigate XSS and data injection attacks.
+- **Detailed CSP Configuration**: The application implements a comprehensive CSP that restricts resource loading to approved domains only. This includes restrictions on script sources, style sources, image sources, and form actions. Inline scripts are prohibited except for specific nonces, and eval() is completely disabled.
 #### 5.4.2 Security Policies
 - **Access Control**: Strict role-based access control (RBAC) to limit user permissions.
 - **Data Retention**: Policies for data retention and deletion in compliance with regulations.
@@ -850,12 +1059,236 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **User Education**: Informing users about security best practices.
 - **Regular Updates**: Keeping software and dependencies up to date with security patches.
 ### 5.4.3 In depth Security Measures 
-- **Password Hashing**: All passwords are hashed using bcrypt with a salt of 10 rounds before storage.
-- **JWT Authentication**: JSON Web Tokens (JWT) are used for stateless authentication, JWT tokens are made using crypto-secure random secrets stored in environment variables, as well as (openssl rand -hex 32) to generate secure secrets for example ((699fd18bfdad7039f5c1006840ddf233eaa0147e935a9f13cf57f741dfbb5232), this method is more secure than using Math.Random as it is cryptographically secure and Javascript Math.random uses *xorshift128+* which is crackable.
+- **Password Hashing**: All passwords are hashed using bcrypt with a salt of 12 rounds when registering and 10 rounds when resetting password. VERIFY 
+-**JWT Authentication**: JSON Web Tokens (JWT) are used for stateless authentication between the client and server. JWT signing secrets are generated using cryptographically secure random values stored in environment variables. This approach ensures that token secrets are unpredictable and resistant to attacks. Standard JavaScript functions like Math.random(), which rely on algorithms such as xorshift128+, are not suitable for cryptographic purposes due to their predictability, highlighting the importance of using a secure random number generator for authentication secrets.
 - **Payment Security**: Integration with PayPal's and Google Pay's secure payment gateways, ensuring PCI compliance they are encrypting payment data via AES-256 encryption.
-- 
+- **XSS Protection**: Use of libraries like *xss-clean* and *helmet* to mitigate XSS attacks by sanitizing user inputs and setting secure HTTP headers.
+- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations to prevent cross-site request forgery attacks.
+- **Rate Limiting**: The site has 2 different rate limiting methods, one via *express-rate-limit* with *Redis* store to limit requests per IP per time window, and another via Redis Lua scripting for the site's dashboard routes to prevent abuse and ensure fair resource usage.
+- **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs to enhance user privacy while maintaining the ability to track unique IPs.
+- **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into the registration and login processes to prevent automated bot interactions, using a score-based assessment to differentiate between human users and bots. The reCAPTCHA secret key is securely stored in environment variables. It uses Google's proprietary machine learning algorithm to assign a score between 0.1 and 1.0, with a threshold of 0.5 for human detection this helps to reduce spam and abuse on the platform.
+- **NoSQL Injection Prevention**: The application uses parameterized queries and ODM features to prevent NoSQL injection attacks, ensuring that user inputs are properly sanitized and validated before being used in database operations. It also uses libraries like *express-mongo-sanitize* to further protect against injection attacks.
+- **IP Detection** The site uses a third-party service (iplocate.io) to detect if an IP address is using a VPN, Proxy, or Tor network. This information is logged in the SecurityLogs collection for monitoring purposes and potential blocking of suspicious IPs. The service provides details such as country, country code, continent, and whether the IP is associated with VPN, Proxy, or Tor usage.The free tier of the service currently let's us have 1k requestes/day     NOT YET IMPLEMENTED FAR
+- **HTTP Parameter Pollution (HPP)** The application uses the *hpp* library middleware to protect against HTTP Parameter Pollution attacks by sanitizing query parameters and ensuring that only the first occurrence of a parameter is considered.
+- **CORS Policy**: The application implements a strict CORS policy using the *cors* middleware to control which domains can access the API, preventing unauthorized cross-origin requests, this is configured to only allow requests from the official frontend domain
+- **Security Headers**: The application uses Helmet.js to set various HTTP headers that enhance security, such as Content Security Policy (CSP), X-Content-Type-Options, X-Frame-Options, and others to protect against common web vulnerabilities.
+- **Database Security**: MongoDB connections use authentication with credentials stored in environment variables. The application implements connection pooling and timeout configurations to prevent resource exhaustion attacks. Database queries use Mongoose ODM which provides built-in protection against NoSQL injection through schema validation and type casting.
+- **Error Handling Security**: Sensitive information is never exposed in error messages sent to clients. Error responses are sanitized and provide minimal information to prevent information leakage that could aid attackers.
+- **API Security**: All API endpoints require authentication by default. Public endpoints (like registration) are explicitly marked and protected with additional rate limiting and bot detection.
+- **Environment Security**: All sensitive configuration (API keys, database credentials, JWT secrets) are stored in environment variables and never committed to version control. The application validates required environment variables on startup.
+
+### 5.4.4 Security Testing and Validation
+
+- **Automated Security Testing**: The project includes security-focused test suites that validate authentication flows, input sanitization, and rate limiting effectiveness.
+- **Penetration Testing**: Periodic manual security assessments to identify vulnerabilities not caught by automated tools.
 
 ## 6. Implementation
+
+### 6.1 Directory Structure 
+
+```
+├── .env
+├── .git/
+├── .gitattributes
+├── .github/
+├── .gitignore
+├── .idea/
+├── .vscode/
+├── code_analytics.json         # Code analytics data
+├── config/                     # Configuration files
+│   ├── DATABASE_CONSTANTS.JS
+│   ├── database_queries.js
+│   └── hu.json
+├── data/                       # Data files
+│   ├── disposable_email_list.json
+│   ├── Most_used_passwords.json
+│   ├── password_characters.json
+│   └── database_test/          # Test database files
+│       ├── Food_Items.json
+│       └── menu_items.json
+├── docs/                       # Documentation
+│   ├── database.png
+│   ├── DatabaseDoc.md
+│   ├── DatabaseDoc.pdf
+│   ├── Documentation.html
+│   ├── Documentation.md
+│   ├── Documentation.pdf
+│   ├── Paypal_TestDetails.txt
+│   ├── RedisLua_README.md
+│   ├── snaptraySTACK.png
+│   └── sourcefor_security_checks.txt
+├── node_modules/
+├── package-lock.json
+├── package.json                # Node.js dependencies and scripts
+├── postcss.config.js          # PostCSS configuration
+├── public/                     # Static files served to client (Frontend)
+│   ├── favicon.ico
+│   ├── googlepay.js
+│   ├── index.html
+│   ├── password_reset.html
+│   ├── pay.html
+│   ├── paypal.js
+│   ├── register.html
+│   ├── verify.html
+│   ├── 404/                    # 404 error pages
+│   │   ├── 404.html
+│   │   └── 404.jsx
+│   ├── 429/                    # 429 error pages
+│   │   ├── 429.html
+│   │   └── 429.jsx
+│   ├── dashboard/              # Dashboard pages
+│   │   ├── admin/
+│   │   │   ├── admin.html
+│   │   │   ├── admin.jsx
+│   │   │   ├── AdminHeader.jsx
+│   │   │   ├── AdminSidebar.jsx
+│   │   │   ├── MenuItemsSection.jsx
+│   │   │   ├── SettingsSection.jsx
+│   │   │   ├── StatsSection.jsx
+│   │   │   ├── useAdminData.js
+│   │   │   └── UsersSection.jsx
+│   │   ├── parent/
+│   │   │   ├── parent.html
+│   │   │   ├── parent.jsx
+│   │   │   ├── ParentHeader.jsx
+│   │   │   ├── ParentOrdersSection.jsx
+│   │   │   ├── ParentSettingsSection.jsx
+│   │   │   ├── ParentSidebar.jsx
+│   │   │   ├── ParentStatsSection.jsx
+│   │   │   ├── ParentStudentsSection.jsx
+│   │   │   └── useParentData.js
+│   │   └── student/
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       ├── LoyaltySection.jsx
+│   │       ├── OrdersSection.jsx
+│   │       ├── services/
+│   │       ├── SettingsSection.jsx
+│   │       ├── StatsSection.jsx
+│   │       ├── student.html
+│   │       ├── student.jsx
+│   │       ├── StudentHeader.jsx
+│   │       ├── StudentSidebar.jsx
+│   │       ├── TransactionsSection.jsx
+│   │       ├── useStudentData.js
+│   │       ├── utils/
+│   │       └── WalletSection.jsx
+│   ├── home_page/              # Home page files
+│   │   ├── home_page.html
+│   │   └── home_page.jsx
+│   ├── information/            # Information pages
+│   │   ├── index.html
+│   │   └── information.jsx
+│   ├── no_perm/                # No permission pages
+│   │   ├── index.html
+│   │   └── no_perm.jsx
+│   └── Order/                  # Order pages
+│       ├── Cart.jsx
+│       ├── Header.jsx
+│       ├── index.html
+│       ├── LoyaltyStatus.jsx
+│       ├── MenuItem.jsx
+│       ├── notifications.js
+│       ├── order.jsx
+│       ├── paymentHandlers.js
+│       └── useCart.js
+├── readme.md                   # Project documentation
+├── src/                        # Server-side source code (backend)
+│   ├── admin/
+│   │   └── admin.js
+│   ├── api.js
+│   ├── auth/                   # Authentication modules
+│   │   ├── 2fa.js
+│   │   ├── email_verification.js
+│   │   ├── index.js
+│   │   ├── login.js
+│   │   ├── middleware.js
+│   │   ├── password_reset.js
+│   │   ├── passwordhash.js
+│   │   ├── register.js
+│   │   ├── security.js
+│   │   └── validation.js
+│   ├── chapta.js
+│   ├── dashboard/
+│   │   ├── admin/
+│   │   │   └── admin.js
+│   │   ├── dashboard.js
+│   │   ├── middleware/
+│   │   │   └── auth-middleware.js
+│   │   ├── parent/
+│   │   │   └── parent.js
+│   │   ├── services/
+│   │   │   └── cache-service.js
+│   │   ├── statistics/
+│   │   │   └── statistics.js
+│   │   └── student/
+│   │       └── student.js
+│   ├── database.js
+│   ├── examples/
+│   │   └── lua-demo.js
+│   ├── logout.js
+│   ├── LoyaltySystem/
+│   │   └── loyalty-service.js
+│   ├── main.js
+│   ├── middleware/
+│   │   └── security.js
+│   ├── models/
+│   │   └── User.js
+│   ├── Orders/
+│   │   └── Order.js
+│   ├── payments/
+│   │   ├── googlepay.js
+│   │   └── paypal.js
+│   ├── redis-lua.js
+│   ├── redis.js
+│   ├── Register.jsx
+│   ├── script-loader.js
+│   ├── scripts/
+│   │   ├── process_order.lua
+│   │   ├── rate_limit.lua
+│   │   ├── TODO.md
+│   │   └── wallet_update.lua
+│   ├── services/               # Service modules
+│       ├── googlepay-service.js
+│       ├── order-service.js
+│       ├── paypal-service.js
+│       └── redis-lua-service.js
+│   └── verificationStore.js
+├── tailwind.config.js         # Tailwind CSS configuration
+└── tests/                      # Test files
+    ├── code_analytic.py
+    ├── code_analytics.json
+    ├── creating_test_users.js
+    ├── database_testing.js
+    ├── fake_data.py
+    ├── menu_items.json
+    ├── Paypal_TestConfig.txt
+    ├── query_security_logs.js
+    ├── register_testing.py
+    ├── Jest/                   # Jest test directory
+    └── performance_tests/      # Performance test files
+        ├── artillery.yml
+        └── reports/
+            ├── 20260121_916.txt
+            └── 20260121_936.txt
+
+```
+
+### 6.2 Backend Implementation
+
+#### 6.2.1 Technology Stack
+
+The backend of the SnapTray system is built using a robust and scalable technology stack designed to handle high traffic, ensure data integrity, and provide a secure environment for users. The project leverages modern technologies and best practices to deliver a reliable service. The stack is used as follows:
+- **Runtime Environment**: Node.js
+- **Web Framework**: Express.js
+- **Database**: MongoDB (NoSQL)
+- **In-Memory Data Store**: Redis
+- **Authentication**: JSON Web Tokens (JWT)
+- **Payment Gateways**: PayPal, Google Pay
+- **Caching**: Redis with Lua scripting for atomic operations
+
+Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a schema-less design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
+
 
 ## 7. Testing and Validation
 

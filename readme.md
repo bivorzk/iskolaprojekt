@@ -129,15 +129,18 @@ Dev Dependencies:
 ## Directory Structure
 
 ```
+├── .env
+├── .git/
+├── .gitattributes
+├── .github/
+├── .gitignore
+├── .idea/
+├── .vscode/
 ├── code_analytics.json         # Code analytics data
-├── package.json                # Node.js dependencies and scripts
-├── postcss.config.js          # PostCSS configuration
-├── readme.md                   # Project documentation
-├── tailwind.config.js         # Tailwind CSS configuration
 ├── config/                     # Configuration files
+│   ├── DATABASE_CONSTANTS.JS
 │   ├── database_queries.js
-│   ├── hu.json
-│   └── LOYALTY_CONSTANTS.JS
+│   └── hu.json
 ├── data/                       # Data files
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
@@ -148,9 +151,20 @@ Dev Dependencies:
 ├── docs/                       # Documentation
 │   ├── database.png
 │   ├── DatabaseDoc.md
+│   ├── DatabaseDoc.pdf
+│   ├── Documentation.html
+│   ├── Documentation.md
+│   ├── Documentation.pdf
 │   ├── Paypal_TestDetails.txt
+│   ├── RedisLua_README.md
+│   ├── snaptraySTACK.png
 │   └── sourcefor_security_checks.txt
+├── node_modules/
+├── package-lock.json
+├── package.json                # Node.js dependencies and scripts
+├── postcss.config.js          # PostCSS configuration
 ├── public/                     # Static files served to client (Frontend)
+│   ├── favicon.ico
 │   ├── googlepay.js
 │   ├── index.html
 │   ├── password_reset.html
@@ -164,36 +178,42 @@ Dev Dependencies:
 │   ├── 429/                    # 429 error pages
 │   │   ├── 429.html
 │   │   └── 429.jsx
-│   ├── css/                    # Stylesheets
-│   │   ├── register.css
-│   │   └── tailwind.css
 │   ├── dashboard/              # Dashboard pages
 │   │   ├── admin/
-│   │   │   ├── admin.css
 │   │   │   ├── admin.html
-│   │   │   ├── admin.js
 │   │   │   ├── admin.jsx
 │   │   │   ├── AdminHeader.jsx
 │   │   │   ├── AdminSidebar.jsx
-│   │   │   ├── admin_old.html
 │   │   │   ├── MenuItemsSection.jsx
 │   │   │   ├── SettingsSection.jsx
 │   │   │   ├── StatsSection.jsx
 │   │   │   ├── useAdminData.js
 │   │   │   └── UsersSection.jsx
+│   │   ├── parent/
+│   │   │   ├── parent.html
+│   │   │   ├── parent.jsx
+│   │   │   ├── ParentHeader.jsx
+│   │   │   ├── ParentOrdersSection.jsx
+│   │   │   ├── ParentSettingsSection.jsx
+│   │   │   ├── ParentSidebar.jsx
+│   │   │   ├── ParentStatsSection.jsx
+│   │   │   ├── ParentStudentsSection.jsx
+│   │   │   └── useParentData.js
 │   │   └── student/
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       ├── LoyaltySection.jsx
 │   │       ├── OrdersSection.jsx
+│   │       ├── services/
 │   │       ├── SettingsSection.jsx
 │   │       ├── StatsSection.jsx
-│   │       ├── student.css
 │   │       ├── student.html
-│   │       ├── student.js
 │   │       ├── student.jsx
 │   │       ├── StudentHeader.jsx
 │   │       ├── StudentSidebar.jsx
-│   │       ├── student_old.html
 │   │       ├── TransactionsSection.jsx
 │   │       ├── useStudentData.js
+│   │       ├── utils/
 │   │       └── WalletSection.jsx
 │   ├── home_page/              # Home page files
 │   │   ├── home_page.html
@@ -205,24 +225,20 @@ Dev Dependencies:
 │   │   ├── index.html
 │   │   └── no_perm.jsx
 │   └── Order/                  # Order pages
-│       ├── index.css
+│       ├── Cart.jsx
+│       ├── Header.jsx
 │       ├── index.html
-│       ├── index_old.html
+│       ├── LoyaltyStatus.jsx
+│       ├── MenuItem.jsx
+│       ├── notifications.js
 │       ├── order.jsx
-│       └── script.js
+│       ├── paymentHandlers.js
+│       └── useCart.js
+├── readme.md                   # Project documentation
 ├── src/                        # Server-side source code (backend)
-│   ├── api.js
-│   ├── chapta.js
-│   ├── database_backup.js      # Backup database file 
-│   ├── database_original.js    # Original database file (rollback)
-│   ├── database.js
-│   ├── logout.js
-│   ├── main.js
-│   ├── redis.js
-│   ├── Register.jsx
-│   ├── verificationStore.js
 │   ├── admin/
 │   │   └── admin.js
+│   ├── api.js
 │   ├── auth/                   # Authentication modules
 │   │   ├── 2fa.js
 │   │   ├── email_verification.js
@@ -234,18 +250,28 @@ Dev Dependencies:
 │   │   ├── register.js
 │   │   ├── security.js
 │   │   └── validation.js
+│   ├── chapta.js
 │   ├── dashboard/
-│   │   ├── dashboard.js
 │   │   ├── admin/
 │   │   │   └── admin.js
+│   │   ├── dashboard.js
 │   │   ├── middleware/
 │   │   │   └── auth-middleware.js
+│   │   ├── parent/
+│   │   │   └── parent.js
 │   │   ├── services/
 │   │   │   └── cache-service.js
 │   │   ├── statistics/
 │   │   │   └── statistics.js
 │   │   └── student/
 │   │       └── student.js
+│   ├── database.js
+│   ├── examples/
+│   │   └── lua-demo.js
+│   ├── logout.js
+│   ├── LoyaltySystem/
+│   │   └── loyalty-service.js
+│   ├── main.js
 │   ├── middleware/
 │   │   └── security.js
 │   ├── models/
@@ -255,23 +281,38 @@ Dev Dependencies:
 │   ├── payments/
 │   │   ├── googlepay.js
 │   │   └── paypal.js
-│   └── services/               # Service modules
+│   ├── redis-lua.js
+│   ├── redis.js
+│   ├── Register.jsx
+│   ├── script-loader.js
+│   ├── scripts/
+│   │   ├── process_order.lua
+│   │   ├── rate_limit.lua
+│   │   ├── TODO.md
+│   │   └── wallet_update.lua
+│   ├── services/               # Service modules
 │       ├── googlepay-service.js
 │       ├── order-service.js
-│       └── paypal-service.js
-├── tests/                      # Test files
-│   ├── code_analytic.py
-│   ├── code_analytics.json
-│   ├── creating_test_users.js
-│   ├── database_testing.js
-│   ├── fake_data.py
-│   ├── menu_items.json
-│   ├── Paypal_TestConfig.txt
-│   ├── register_testing.py
-│   ├── Jest/                   # Jest test directory
-│   └── performance_tests/      # Performance test files
-│       └── artillery.yml
-└── readme.md                   # Project documentation
+│       ├── paypal-service.js
+│       └── redis-lua-service.js
+│   └── verificationStore.js
+├── tailwind.config.js         # Tailwind CSS configuration
+└── tests/                      # Test files
+    ├── code_analytic.py
+    ├── code_analytics.json
+    ├── creating_test_users.js
+    ├── database_testing.js
+    ├── fake_data.py
+    ├── menu_items.json
+    ├── Paypal_TestConfig.txt
+    ├── query_security_logs.js
+    ├── register_testing.py
+    ├── Jest/                   # Jest test directory
+    └── performance_tests/      # Performance test files
+        ├── artillery.yml
+        └── reports/
+            ├── 20260121_916.txt
+            └── 20260121_936.txt
 ```
 
 ## Router Routes
