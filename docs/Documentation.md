@@ -376,7 +376,6 @@ The SnapTray system follows several key design principles to ensure a robust, sc
 
 - **Intuitive User Interface**: Clean, responsive design using Tailwind CSS that works across devices (desktop, tablet, mobile).
 - **Progressive Enhancement**: Core functionality works without JavaScript, with enhanced features for modern browsers.
-- **Accessibility**: Following WCAG guidelines to ensure the system is usable by students with disabilities.
 - **Feedback Systems**: Clear error messages, loading states, and success confirmations to guide users through processes.
 
 #### 5.1.5 Reliability and Fault Tolerance
@@ -1288,6 +1287,9 @@ The backend of the SnapTray system is built using a robust and scalable technolo
 - **Caching**: Redis with Lua scripting for atomic operations
 
 Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a schema-less design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
+The backend is structured to separate concerns, with dedicated modules for authentication, payment processing, order management, and dashboard functionalities. This modular approach facilitates maintainability and scalability as the application grows. The application can be run without Redis running but some features will be limited or slower.
+
+#### 6.2.2 Key Modules and Components
 
 
 ## 7. Testing and Validation
