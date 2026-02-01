@@ -38,7 +38,7 @@ const { useState, useEffect } = React;
             const categories = ['all', ...new Set(menuItems.map(item => item.category))];
 
             const handleViewInfo = (itemName) => {
-                window.location.href = `/Order/item_information/${encodeURIComponent(itemName)}`;
+                window.location.href = `/order/item_information/${encodeURIComponent(itemName)}`;
             };
 
             const handleAddToCart = (item) => {

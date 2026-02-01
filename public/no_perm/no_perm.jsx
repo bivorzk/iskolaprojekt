@@ -73,7 +73,7 @@ const NoPermissionPage = () => {
                         <div className="flex flex-wrap justify-center gap-4 text-sm">
                             <a href="/login" className="text-primary hover:text-secondary transition-colors">Login</a>
                             <a href="/register.html" className="text-primary hover:text-secondary transition-colors">Register</a>
-                            <a href="/Order/" className="text-primary hover:text-secondary transition-colors">Order Food</a>
+                            <a href="/order/" className="text-primary hover:text-secondary transition-colors">Order Food</a>
                         </div>
                     </div>
                 </div>

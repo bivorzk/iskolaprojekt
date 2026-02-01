@@ -70,7 +70,7 @@ const NotFoundPage = () => {
                     <div className="mt-8 pt-8 border-t border-gray-200">
                         <p className="text-sm text-gray-600 mb-4">Looking for something specific?</p>
                         <div className="flex flex-wrap justify-center gap-4 text-sm">
-                            <a href="/Order/" className="text-primary hover:text-secondary transition-colors">Order Food</a>
+                            <a href="/order/" className="text-primary hover:text-secondary transition-colors">Order Food</a>
                             <a href="/register.html" className="text-primary hover:text-secondary transition-colors">Register</a>
                             <a href="/login" className="text-primary hover:text-secondary transition-colors">Login</a>
                             <a href="/dashboard/student/" className="text-primary hover:text-secondary transition-colors">Student Dashboard</a>

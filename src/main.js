@@ -173,7 +173,7 @@ app.use('/2fa', TwoFA);
 app.use('/dashboard', dashboardRouter);
 app.use('/', logoutRouter);
 app.use('/admin', admin);
-app.use('/Order', Order);
+app.use('/order', Order);
 
 
 // 404 handler

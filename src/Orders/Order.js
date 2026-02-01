@@ -44,7 +44,7 @@ const ordersController = new OrdersController(client);
 
 
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/Order/index.html'));
+    res.sendFile(path.join(__dirname, '../public/order/index.html'));
 });
 
 router.get('/item_information/:itemName', (req, res) => {
@@ -63,7 +63,7 @@ router.get('/menu_items', async (req, res) => {
 });
 
 
-router.post('/Order', async (req, res) => {
+router.post('/order', async (req, res) => {
     // Extract order details from request body
     const { cart } = req.body;
     
@@ -133,7 +133,7 @@ router.post('/Order', async (req, res) => {
 });
 
 // Process order with wallet payment (atomic operation)
-router.post('/Order/wallet', async (req, res) => {
+router.post('/order/wallet', async (req, res) => {
     const { cart } = req.body;
 
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
