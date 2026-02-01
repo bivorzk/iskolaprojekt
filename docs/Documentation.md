@@ -1286,8 +1286,8 @@ The backend of the SnapTray system is built using a robust and scalable technolo
 - **Payment Gateways**: PayPal, Google Pay
 - **Caching**: Redis with Lua scripting for atomic operations
 
-Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a schema-less design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
-The backend is structured to separate concerns, with dedicated modules for authentication, payment processing, order management, and dashboard functionalities. This modular approach facilitates maintainability and scalability as the application grows. The application can be run without Redis running but some features will be limited or slower.
+Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a flexible (schema-less) design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
+The backend is structured to separate concerns, with dedicated modules for authentication, payment processing, order management, and dashboard functionalities. This modular approach facilitates maintainability and scalability as the application grows. The application can be run without Redis running but some features will be limited or slower so it's recommended to run redis for the application to work as intended.
 
 #### 6.2.2 Key Modules and Components
 
