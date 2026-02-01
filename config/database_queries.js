@@ -28,6 +28,7 @@ const PaymentScheme = new mongoose.Schema({
 PaymentScheme.index({ userId: 1 });
 PaymentScheme.index({ status: 1 });
 PaymentScheme.index({ paymentMethod: 1, currency: 1 });
+PaymentScheme.index({ userId: 1, createdAt: -1 });
 
 // Menu Items Schema
 
@@ -63,6 +64,7 @@ MenuItemsScheme.pre('save', function(next) {
 MenuItemsScheme.index({ available: 1 });
 MenuItemsScheme.index({ stock: 1 });
 MenuItemsScheme.index({ category: 1 });
+MenuItemsScheme.index({ name: 1, available: 1 });
 
 // Order Item Schema
 
@@ -98,6 +100,7 @@ OrderScheme.pre('save', function(next) {
 OrderScheme.index({ userId: 1 });
 OrderScheme.index({ status: 1 });
 OrderScheme.index({ orderDate: 1 });
+OrderScheme.index({ paypalOrderId: 1 });
 
 const UserLoyaltyScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
@@ -114,8 +117,6 @@ const UserLoyaltyScheme = new mongoose.Schema({
     milestonesAchieved: [{ type: String }] // e.g., 'BRONZE_FIRST', 'SILVER_FIRST'
     
 });
-
-UserLoyaltyScheme.index({ userId: 1 });
 
 // Add a static method for atomic point updates
 UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, pointsToAdd, reason) {
@@ -300,6 +301,8 @@ DailyMenuScheme.index({ date: 1 });
 
 DailyMenuScheme.index({ schoolPeriod: 1 });
 
+DailyMenuScheme.index({ date: 1, schoolPeriod: 1 }); 
+
 // Parent Student Schema
 
 const ParentStudentScheme = new mongoose.Schema({
@@ -309,6 +312,7 @@ const ParentStudentScheme = new mongoose.Schema({
 });
 ParentStudentScheme.index({ parentId: 1 });
 ParentStudentScheme.index({ studentId: 1 });
+ParentStudentScheme.index({ parentId: 1, studentId: 1 }); 
 
 
 // might expand 
@@ -331,6 +335,7 @@ const SecurityLogsScheme = new mongoose.Schema({
 SecurityLogsScheme.index({ userId: 1 });
 SecurityLogsScheme.index({ action: 1 });
 SecurityLogsScheme.index({ Timestamp: -1 });
+SecurityLogsScheme.index({ userId: 1, Timestamp: -1 }); 
 
 
 const Payment = mongoose.model('Payment', PaymentScheme);
