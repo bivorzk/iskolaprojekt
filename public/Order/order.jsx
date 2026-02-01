@@ -8,6 +8,7 @@ const { useState, useEffect } = React;
             const [selectedCategory, setSelectedCategory] = useState('all');
 
             const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart();
+            const { isMobileCartVisible, toggleMobileCart, hideMobileCart } = useMobileCart();
 
             useEffect(() => {
                 loadMenuItems();
@@ -40,6 +41,14 @@ const { useState, useEffect } = React;
                 window.location.href = `/Order/item_information/${encodeURIComponent(itemName)}`;
             };
 
+            const handleAddToCart = (item) => {
+                addToCart(item);
+                // Show toast notification on mobile
+                if (window.showMobileToast) {
+                    window.showMobileToast(`${item.name} added to cart!`);
+                }
+            };
+
             if (loading) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center">
@@ -63,7 +72,7 @@ const { useState, useEffect } = React;
                             {/* Menu Section */}
                             <div className="flex-1">
                                 <div className="mb-6">
-                                    <h1 className="text-3xl font-bold text-primary mb-4">Cafeteria Menu</h1>
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-4">Cafeteria Menu</h1>
 
                                     {/* Search and Filter */}
                                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -73,14 +82,14 @@ const { useState, useEffect } = React;
                                                 placeholder="Search menu items..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                             />
                                         </div>
-                                        <div>
+                                        <div className="sm:w-auto">
                                             <select
                                                 value={selectedCategory}
                                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                className="w-full sm:w-auto px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                             >
                                                 {categories.map(category => (
                                                     <option key={category} value={category}>
@@ -93,12 +102,12 @@ const { useState, useEffect } = React;
                                 </div>
 
                                 {/* Menu Items Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-24 lg:pb-8">
                                     {filteredMenuItems.map((item) => (
                                         <MenuItem
                                             key={item._id}
                                             item={item}
-                                            onAddToCart={addToCart}
+                                            onAddToCart={handleAddToCart}
                                             onViewInfo={handleViewInfo}
                                         />
                                     ))}
@@ -115,18 +124,47 @@ const { useState, useEffect } = React;
                                 )}
                             </div>
 
-                            <Cart
-                                cart={cart}
-                                onUpdateQuantity={updateQuantity}
-                                onRemoveFromCart={removeFromCart}
-                                currency={currency}
-                                onCurrencyChange={setCurrency}
-                                onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart)}
-                                onPayPal={() => handlePayPalPayment(cart, currency, clearCart)}
-                                onBalance={() => handleBalancePayment(cart, currency, clearCart)}
-                            />
+                            {/* Desktop Cart - Hidden on Mobile */}
+                            <div className="hidden lg:block">
+                                <Cart
+                                    cart={cart}
+                                    onUpdateQuantity={updateQuantity}
+                                    onRemoveFromCart={removeFromCart}
+                                    currency={currency}
+                                    onCurrencyChange={setCurrency}
+                                    onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart)}
+                                    onPayPal={() => handlePayPalPayment(cart, currency, clearCart)}
+                                    onBalance={() => handleBalancePayment(cart, currency, clearCart)}
+                                />
+                            </div>
                         </div>
                     </div>
+
+                    {/* Mobile Cart */}
+                    <MobileCart
+                        cart={cart}
+                        onUpdateQuantity={updateQuantity}
+                        onRemoveFromCart={removeFromCart}
+                        currency={currency}
+                        onCurrencyChange={setCurrency}
+                        onGooglePay={() => {
+                            hideMobileCart();
+                            handleGooglePayPayment(cart, currency, clearCart);
+                        }}
+                        onPayPal={() => {
+                            hideMobileCart();
+                            handlePayPalPayment(cart, currency, clearCart);
+                        }}
+                        onBalance={() => {
+                            hideMobileCart();
+                            handleBalancePayment(cart, currency, clearCart);
+                        }}
+                        isVisible={isMobileCartVisible}
+                        onToggle={toggleMobileCart}
+                    />
+
+                    {/* Mobile Toast Notifications */}
+                    <MobileToast />
 
                     {/* PayPal Button Container - Hidden by default */}
                     <div id="paypal-button-container" style={{ display: 'none' }}></div>

@@ -58,10 +58,11 @@ const StudentDashboard = () => {
             <StudentHeader welcomeMessage={welcomeMessage} walletAmount={walletAmount} />
             <div className="flex">
                 <StudentSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-                <main className="flex-1 p-8">
+                <main className="flex-1 p-4 sm:p-8 pb-20 lg:pb-8">
                     {renderActiveSection()}
                 </main>
             </div>
+            <MobileStudentNav activeSection={activeSection} setActiveSection={setActiveSection} />
         </div>
     );
 };

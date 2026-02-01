@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Order - SnapTray</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/mobile-enhancements.css">
     <script>
         tailwind.config = {
             theme: {
@@ -19,6 +20,11 @@
             },
         }
     </script>
+    <!-- PWA and mobile optimizations -->
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SnapTray">
 </head>
 <body>
     <div id="root"></div>
@@ -27,13 +33,17 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <script src="../js/mobile-utils.js"></script>
     <script src="useCart.js"></script>
+    <script src="useMobileCart.js"></script>
     <script src="notifications.js"></script>
     <script src="paymentHandlers.js"></script>
     <script type="text/babel" src="Header.jsx"></script>
     <script type="text/babel" src="LoyaltyStatus.jsx"></script>
     <script type="text/babel" src="MenuItem.jsx"></script>
     <script type="text/babel" src="Cart.jsx"></script>
+    <script type="text/babel" src="MobileCart.jsx"></script>
+    <script type="text/babel" src="MobileToast.jsx"></script>
     <script type="text/babel" src="order.jsx"></script>
 </body>
 </html>

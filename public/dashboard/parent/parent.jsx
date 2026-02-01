@@ -2,7 +2,6 @@ const { useState } = React;
 
 const ParentDashboard = () => {
     const [activeSection, setActiveSection] = useState('students');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const { stats, students, orders, welcomeMessage, loading, loadDashboardData } = useParentData();
 
@@ -11,7 +10,7 @@ const ParentDashboard = () => {
             <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading dashboard...</p>
+                    <p className="text-gray-600">Loading parent dashboard...</p>
                 </div>
             </div>
         );
@@ -19,15 +18,22 @@ const ParentDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
-            <ParentHeader welcomeMessage={welcomeMessage} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+            <ParentHeader welcomeMessage={welcomeMessage} />
 
             <div className="flex">
-                <ParentSidebar activeSection={activeSection} setActiveSection={setActiveSection} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+                <ParentSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
 
-                {isMobileMenuOpen && (
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-                        onClick={() => setIsMobileMenuOpen(false)}
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
+                    {activeSection === 'students' && <ParentStudentsSection students={students} />}
+                    {activeSection === 'stats' && <ParentStatsSection stats={stats} />}
+                    {activeSection === 'orders' && <ParentOrdersSection orders={orders} />}
+                    {activeSection === 'settings' && <ParentSettingsSection />}
+                </main>
+            </div>
+            
+            <MobileParentNav activeSection={activeSection} setActiveSection={setActiveSection} />
+        </div>
+    );
                     ></div>
                 )}
 

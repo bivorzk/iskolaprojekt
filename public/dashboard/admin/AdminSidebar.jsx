@@ -1,48 +1,63 @@
-const AdminSidebar = ({ activeSection, setActiveSection, isMobileMenuOpen, setIsMobileMenuOpen }) => {
+const AdminSidebar = ({ activeSection, setActiveSection }) => {
     return (
-        <aside className={`w-64 bg-white shadow-lg min-h-screen fixed md:relative z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+        <aside className="hidden lg:block w-64 bg-white shadow-lg min-h-screen">
             <nav className="mt-8">
                 <div className="px-4 space-y-2">
                     <button
-                        onClick={() => { setActiveSection('users'); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                        onClick={() => setActiveSection('users')}
+                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                             activeSection === 'users'
-                                ? 'bg-primary text-white'
+                                ? 'bg-primary text-white shadow-md'
                                 : 'text-gray-700 hover:bg-accent hover:text-primary'
                         }`}
                     >
-                        Users
+                        <span className="mr-3 text-lg">👥</span>
+                        Users Management
                     </button>
                     <button
-                        onClick={() => { setActiveSection('stats'); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                        onClick={() => setActiveSection('stats')}
+                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                             activeSection === 'stats'
-                                ? 'bg-primary text-white'
+                                ? 'bg-primary text-white shadow-md'
                                 : 'text-gray-700 hover:bg-accent hover:text-primary'
                         }`}
                     >
-                        Statistics
+                        <span className="mr-3 text-lg">📊</span>
+                        Analytics & Stats
                     </button>
                     <button
-                        onClick={() => { setActiveSection('menu-items'); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                        onClick={() => setActiveSection('menu-items')}
+                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                             activeSection === 'menu-items'
-                                ? 'bg-primary text-white'
+                                ? 'bg-primary text-white shadow-md'
                                 : 'text-gray-700 hover:bg-accent hover:text-primary'
                         }`}
                     >
-                        Menu Items
+                        <span className="mr-3 text-lg">🍽️</span>
+                        Menu Management
                     </button>
                     <button
-                        onClick={() => { setActiveSection('settings'); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                        onClick={() => setActiveSection('settings')}
+                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                             activeSection === 'settings'
-                                ? 'bg-primary text-white'
+                                ? 'bg-primary text-white shadow-md'
                                 : 'text-gray-700 hover:bg-accent hover:text-primary'
                         }`}
                     >
-                        Settings
+                        <span className="mr-3 text-lg">⚙️</span>
+                        System Settings
                     </button>
+                </div>
+                
+                <div className="px-4 mt-8">
+                    <div className="border-t border-gray-200 pt-4">
+                        <a
+                            href="/Order"
+                            className="w-full block text-center bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-secondary transition-colors"
+                        >
+                            🛒 View Store
+                        </a>
+                    </div>
                 </div>
             </nav>
         </aside>

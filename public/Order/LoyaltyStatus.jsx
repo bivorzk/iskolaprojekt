@@ -66,12 +66,12 @@ const LoyaltyStatus = () => {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-                <div className="animate-pulse flex space-x-4">
-                    <div className="rounded-full bg-gray-300 h-10 w-10"></div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+                <div className="animate-pulse flex space-x-3 sm:space-x-4">
+                    <div className="rounded-full bg-gray-300 h-8 w-8 sm:h-10 sm:w-10"></div>
                     <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                        <div className="h-3 sm:h-4 bg-gray-300 rounded w-3/4"></div>
+                        <div className="h-2 sm:h-3 bg-gray-300 rounded w-1/2"></div>
                     </div>
                 </div>
             </div>
@@ -81,24 +81,24 @@ const LoyaltyStatus = () => {
     const tierInfo = getTierInfo(loyaltyData.userTier);
 
     return (
-        <div className="bg-gradient-to-r from-primary to-secondary rounded-lg shadow-lg p-4 mb-6 text-white">
+        <div className="bg-gradient-to-r from-primary to-secondary rounded-lg shadow-lg p-3 sm:p-4 mb-4 sm:mb-6 text-white">
             <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{tierInfo.icon}</div>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="text-xl sm:text-2xl">{tierInfo.icon}</div>
                     <div>
-                        <h3 className="font-semibold text-lg">
+                        <h3 className="font-semibold text-base sm:text-lg">
                             {loyaltyData.totalPoints} Points
                         </h3>
-                        <p className="text-accent opacity-90">
+                        <p className="text-accent opacity-90 text-sm sm:text-base">
                             {tierInfo.name} Member
                         </p>
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-sm text-accent opacity-90">
+                    <div className="text-xs sm:text-sm text-accent opacity-90">
                         Earn points with every order!
                     </div>
-                    <div className="text-xs text-accent opacity-75 mt-1">
+                    <div className="text-xs text-accent opacity-75 mt-1 hidden sm:block">
                         Random 4-9 pts per $1 spent
                     </div>
                 </div>
