@@ -47,7 +47,18 @@ const MenuItemsScheme = new mongoose.Schema({
         carbs: { type: Number, default: 0 },
         fat: { type: Number, default: 0 }
     },
-    healthScore: { type: Number, default: 0 } // for discounts
+    healthScore: { type: Number, default: 0 }, // for discounts
+    reviews: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+        rating: { type: Number, required: true, min: 1, max: 5 },
+        comment: { type: String, required: true, maxlength: 500 },
+        date: { type: Date, default: Date.now },
+        ipAddress: { type: String, required: false },
+        reported: { type: Boolean, default: false },
+        moderated: { type: Boolean, default: false },
+        moderatorNotes: { type: String, required: false }
+    }],
+    averageRating: { type: Number, default: 0 }
 });
 
 
@@ -274,19 +285,7 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
 };
 
 
-// Review Schema
 
-const ReviewScheme = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItems', required: true },
-    rating: { type: Number, min: 1, max: 5, required: true },
-    comment: { type: String, required: false },
-    createdAt: { type: Date, default: Date.now }
-});
-
-ReviewScheme.index({ userId: 1 });
-
-ReviewScheme.index({ menuItemId: 1 });
 
 // Daily Menu Schema
 
@@ -343,7 +342,6 @@ const UserLoyalty = mongoose.model('UserLoyalty', UserLoyaltyScheme);
 const MenuItems = mongoose.model('MenuItems', MenuItemsScheme);
 const Order = mongoose.model('Order', OrderScheme);
 const OrderItems = mongoose.model('OrderItems', OrderItemsScheme);
-const Review = mongoose.model('Review', ReviewScheme);
 const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
 const ParentStudent = mongoose.model('ParentStudent', ParentStudentScheme);
 const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
@@ -362,7 +360,6 @@ module.exports = {
     MenuItems,
     Order,
     OrderItems,
-    Review,
     DailyMenu,
     ParentStudent,
     SecurityLogs
