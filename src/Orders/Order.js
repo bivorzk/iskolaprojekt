@@ -44,7 +44,7 @@ const ordersController = new OrdersController(client);
 
 
 router.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public/order/index.html'));
+    res.sendFile(path.join(process.cwd(), 'public/Order/index.html'));
 });
 
 router.get('/item_information/:itemName', (req, res) => {
