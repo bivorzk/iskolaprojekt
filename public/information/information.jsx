@@ -9,28 +9,10 @@ const ItemInformation = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-    const [username, setUsername] = useState('Anonymous');
 
     useEffect(() => {
         loadItemInformation();
-        loadUsername();
     }, []);
-
-    const loadUsername = async () => {
-        try {
-            const response = await fetch('/order/username');
-            if (response.ok) {
-                const data = await response.json();
-                setUsername(data.username);
-            } else {
-                // Keep default 'Anonymous' if not logged in
-                console.log('User not logged in or username fetch failed');
-            }
-        } catch (err) {
-            console.log('Error fetching username:', err);
-            // Keep default 'Anonymous'
-        }
-    };
 
     const loadItemInformation = async () => {
         try {
@@ -412,9 +394,9 @@ const ItemInformation = () => {
                                         </span>
                                     </div>
                                     <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                                    {review.userId && (
+                                    {review.userId && review.userId.username && (
                                         <div className="mt-2 text-sm text-gray-500">
-                                            By: {username}
+                                            By: {review.userId.username}
                                         </div>
                                     )}
                                 </div>

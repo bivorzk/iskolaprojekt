@@ -361,6 +361,7 @@ router.get('/menu_items', async (req, res) => {
     try {
         const menuItems = await MenuItems.find({ available: true })
             .select('name price description category healthScore averageRating stock available reviews')
+            .populate('reviews.userId', 'username')
             .lean(); 
         
         console.log('Fetched menu items with reviews:');
