@@ -24,7 +24,6 @@ const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
 const cors = require('cors');
-const parentPayRouter = require('./payments/parent-pay');
 
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -175,7 +174,6 @@ app.use('/dashboard', dashboardRouter);
 app.use('/', logoutRouter);
 app.use('/admin', admin);
 app.use('/order', Order);
-app.use('/api/parent', parentPayRouter);
 
 
 // 404 handler
