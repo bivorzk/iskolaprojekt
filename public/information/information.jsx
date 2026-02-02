@@ -53,7 +53,7 @@ const ItemInformation = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
                     <p className="text-gray-600">{error}</p>
                     <button
-                        onClick={() => navigate('/order/')}
+                        onClick={() => navigate('/Order/')}
                         className="mt-4 bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary"
                     >
                         Back to Menu
@@ -83,7 +83,7 @@ const ItemInformation = () => {
                         </div>
                         <div className="flex items-center space-x-4">
                             <button
-                                onClick={() => navigate('/order/')}
+                                onClick={() => navigate('/Order/')}
                                 className="text-primary hover:text-secondary font-medium"
                             >
                                 Back to Menu
@@ -198,7 +198,7 @@ const ItemInformation = () => {
 
                             <div className="flex space-x-4">
                                 <button
-                                    onClick={() => window.location.href = '/order/'}
+                                    onClick={() => navigate('/Order/')}
                                     className="flex-1 bg-primary text-white py-3 px-6 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium text-lg"
                                 >
                                     Back to Menu
