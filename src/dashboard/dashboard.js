@@ -20,7 +20,7 @@ router.use('/parent', parentRouter);
 
 // General dashboard route
 router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/dashboard/dashboard.html'));
+  res.sendFile(path.join(process.cwd(), 'public/dashboard/dashboard.html'));
 });
 
 module.exports = router;

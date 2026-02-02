@@ -60,10 +60,10 @@ app.use(session({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/home_page/home_page.html'));
+  res.sendFile(path.join(process.cwd(), 'public/home_page/home_page.html'));
 });
-app.use(express.static(path.join(__dirname, '../public')));
-app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
+app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(favicon(path.join(process.cwd(), "public", "favicon.ico")));
 app.use(cors());
 
 const createStore = () => redisAvailable ? new RedisStore({
@@ -82,7 +82,7 @@ const limiter = rateLimit({
   store: createStore(),
     handler: (req, res) => {
     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
 })
 
@@ -91,7 +91,7 @@ const registerLimiter = rateLimit({
   max: 100, // start blocking after 100 requests
   handler: (req, res) => {
     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
 });
@@ -102,7 +102,7 @@ const LoginLimiter = rateLimit({
   max: 35,
   handler: (req, res) => {
     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
 });
@@ -112,7 +112,7 @@ const dashboardLimiter = rateLimit({
   max: 1000, // start blocking after 1000 requests
   handler: (req, res) => {
      res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(__dirname, '../public/429/429.html'));
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
 });
@@ -140,18 +140,18 @@ app.use('/dashboard', (req, res, next) => {
 
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.sendFile(path.join(process.cwd(), 'public/index.html'));
 });
 
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/register.html'));
+  res.sendFile(path.join(process.cwd(), 'public/register.html'));
 });
 app.get('/password-reset/:token', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/password_reset.html'));
+  res.sendFile(path.join(process.cwd(), 'public/password_reset.html'));
 });
 
 app.get('/pay', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/pay.html'));
+  res.sendFile(path.join(process.cwd(), 'public/pay.html'));
 });
 
 
@@ -178,7 +178,7 @@ app.use('/order', Order);
 
 // 404 handler
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../public/404/404.html'));
+  res.sendFile(path.join(process.cwd(), 'public/404/404.html'));
 
 //  res.status(404).send('Page not found 😀');
 });

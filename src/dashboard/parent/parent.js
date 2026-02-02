@@ -13,7 +13,7 @@ const { cacheResult, invalidateCache } = require('../services/cache-service');
 
 
 router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../../public/dashboard/parent/parent.html'));
+  res.sendFile(path.join(process.cwd(), 'public/dashboard/parent/parent.html'));
 });
 
 // Apply auth middleware to all routes

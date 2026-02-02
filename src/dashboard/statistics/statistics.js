@@ -11,10 +11,10 @@ const { cacheResult } = require('../services/cache-service');
 // Admin permission middleware
 function requireAdmin(req, res, next) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.sendFile(require('path').join(process.cwd(), 'public/no_perm/index.html'));
   }
   if (req.session.user.usertype !== 'admin') {
-    return res.sendFile(require('path').join(__dirname, '../../../public/no_perm/index.html'));
+    return res.sendFile(require('path').join(process.cwd(), 'public/no_perm/index.html'));
   }
   next();
 }
