@@ -1,8 +1,7 @@
-import ParentPaymentButton from './ParentPaymentButton';
-
+import React, { useState } from "react";
 
 const ParentPaymentButton = ({ orderId, studentId, amount, onPaid }) => {
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handlePay = async () => {
     setLoading(true);
@@ -10,15 +9,16 @@ const ParentPaymentButton = ({ orderId, studentId, amount, onPaid }) => {
       const res = await fetch("/api/parent/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, studentId, amount })
+        body: JSON.stringify({ orderId, studentId, amount }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
         alert("Payment successful!");
         if (onPaid) onPaid(orderId);
       } else {
-        alert("Payment failed: " + data.error);
+        alert("Payment failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
       alert("Payment error: " + err.message);
@@ -38,4 +38,5 @@ const ParentPaymentButton = ({ orderId, studentId, amount, onPaid }) => {
   );
 };
 
+export default ParentPaymentButton;
 
