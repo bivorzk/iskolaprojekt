@@ -1203,7 +1203,7 @@ The algorithms are chosen to balance security, performance, maintainability, and
 │   │   └── admin.js
 │   ├── api.js
 │   ├── auth/                   # Authentication modules
-│   │   ├── 2fa.js
+  │   │   ├── 2fa.js
 │   │   ├── email_verification.js
 │   │   ├── index.js
 │   │   ├── login.js
@@ -1295,7 +1295,284 @@ The backend of the SnapTray system is built using a robust and scalable technolo
 Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a flexible (schema-less) design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
 The backend is structured to separate concerns, with dedicated modules for authentication, payment processing, order management, and dashboard functionalities. This modular approach facilitates maintainability and scalability as the application grows. The application can be run without Redis running but some features will be limited or slower so it's recommended to run redis for the application to work as intended.
 
+
 #### 6.2.2 Key Modules and Components
+
+The main component of the backend is src/main.js this is where **Express** connects to the routers, this is where the Express's rate limiting is defined and applied to the routes
+```javascript
+const express = require('express');
+// Rate limiter for all non-sensitive routes
+// HOUR = 1h
+const limiter = rateLimit({
+  windowMs: HOUR, // 1 hour
+  max: 250, // Limit each IP to 250
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  store: createStore(),
+    handler: (req, res) => {
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+  },
+})
+```
+Rate limiting is a web security feature which prevents DDoS attacks by limiting how many requests are sent to the website and how often, this is done by tracking the IP address of the requester and limiting the requests per time window, if the limit is exceeded the requester will get a 429 status code (Too many requests) and will be blocked from making further requests until the time window resets, this is done to prevent abuse and ensure fair resource usage.
+
+- The *windowMs* parameter defines the time window in milliseconds, in this case it's set to 1 hour (HOUR constant)
+- The *max* parameter defines the maximum number of requests allowed per IP address within the time window, in this case it's set to 250 requests. which in this case is safe for non-sensitive routes e.g. home page, menu browsing etc.
+- The *standardHeaders* parameter, when set to true, ensures that rate limit information is returned in the `RateLimit-*` headers, providing clients with details about their current rate limit status.
+- The *legacyHeaders* parameter, when set to false, disables the older `X-RateLimit-*` headers, promoting the use of the standardized headers for better compatibility and clarity.
+- The *store* parameter specifies the storage mechanism for tracking request counts, in this case, it's using a Redis store created by the *createStore()* function, which allows for distributed rate limiting across multiple server instances.
+- The *handler* parameter defines a custom function that is executed when a client exceeds the rate limit. In this case, it sets the response status to 429 (Too Many Requests), customizes the status message, and serves a static HTML file located at 'public/429/429.html' to inform the user about the rate limit being exceeded.
+
+The site also has a second rate limiting method via Redis Lua scripting for the site's dashboard routes to prevent abuse and ensure fair resource usage.
+```lua
+-- Lua script for advanced rate limiting
+-- KEYS: [1] rate_limit_key
+-- ARGV: [1] window_size_seconds, [2] max_requests, [3] current_timestamp
+---@diagnostic disable: undefined-global -- Disable undefined global warnings
+
+local key = KEYS[1]
+local window = tonumber(ARGV[1])
+local max_requests = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+-- Remove old entries outside the window
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+
+-- Count current requests in window
+local current_count = redis.call('ZCARD', key)
+
+-- Check if limit exceeded
+if current_count >= max_requests then
+    return {0, current_count} -- 0 = blocked, current count
+end
+
+-- Add current request
+redis.call('ZADD', key, now, now)
+
+-- Set expiration on the key (cleanup)
+redis.call('EXPIRE', key, window)
+
+return {1, current_count + 1} -- 1 = allowed, new count
+```
+- The Lua script implements a sliding window rate limiting algorithm using Redis sorted sets to track request timestamps.
+(The sliding window algorithm provides a more accurate rate limiting mechanism compared to fixed window algorithms by allowing requests to be counted over a rolling time frame, reducing the chances of burst traffic exceeding limits at the edges of fixed windows.) This is particularly useful for dashboard routes where users may perform multiple actions in a short period.
+- The script uses Redis commands like `ZREMRANGEBYSCORE` to remove old entries, `ZCARD` to count current requests, and `ZADD` to add new request timestamps. 
+- It returns a status indicating whether the request is allowed or blocked, along with the current request count.
+- The script is executed atomically, ensuring consistent rate limiting even under high concurrency.
+- There is a line called `@diagnostic disable: undefined-global` which is used to disable warnings from code analysis tools about undefined global variables, specifically for the Redis commands used in the script. This helps to keep the code clean and focused on its functionality without being cluttered by unnecessary warnings. This does not affect the execution of the script itself nor the performance of the site.
+
+**Router Modules and API Endpoints:**
+## Router Modules and API Endpoints
+
+### Main Application Routes
+
+| Method | Endpoint                       | Description               |
+|--------|-------------------------------|---------------------------|
+| GET    | `/login`                      | Login page                |
+| GET    | `/register`                   | Registration page         |
+| GET    | `/password-reset/:token`      | Password reset page       |
+| GET    | `/pay`                        | Payment page              |
+
+### Authentication Routes
+
+| Method | Endpoint                       | Description               |
+|--------|-------------------------------|---------------------------|
+| POST   | `/register`                   | User registration         |
+| POST   | `/login`                      | User login                |
+| POST   | `/logout`                     | User logout               |
+| GET    | `/logout`                     | Logout confirmation       |
+| POST   | `/2fa`                        | Two-factor authentication |
+
+### Email Verification Routes
+
+| Method | Endpoint                                 | Description                  |
+|--------|------------------------------------------|------------------------------|
+| POST   | `/email-verification/verify-code`        | Verify email code            |
+| GET    | `/email-verification/verify/:token`      | Verify email with token      |
+
+### Password Reset Routes
+
+| Method | Endpoint                       | Description                   |
+|--------|-------------------------------|-------------------------------|
+| POST   | `/password-reset/`            | Request password reset        |
+| GET    | `/password-reset/:token`      | Password reset form           |
+| POST   | `/password-reset/:token`      | Submit new password           |
+| POST   | `/forgot-password/`           | Forgot password request       |
+
+### Dashboard Routes
+
+| Method | Endpoint                       | Description                   |
+|--------|-------------------------------|-------------------------------|
+| GET    | `/dashboard/`                 | Main dashboard                |
+| GET    | `/dashboard/admin`            | Admin dashboard page          |
+| GET    | `/dashboard/student`          | Student dashboard page        |
+
+### Admin Dashboard API Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| GET    | `/dashboard/admin/usercount`               | Get user count                |
+| GET    | `/dashboard/admin/userlist`                | Get list of users             |
+| GET    | `/dashboard/admin/stats`                   | Get admin statistics          |
+| GET    | `/dashboard/admin/signup-stats`            | Get signup statistics         |
+| GET    | `/dashboard/admin/orders`                  | Get orders data               |
+| GET    | `/dashboard/admin/soldout`                 | Get sold out items            |
+| GET    | `/dashboard/admin/itemcount`               | Get item count                |
+| GET    | `/dashboard/admin/menulist`                | Get menu items list           |
+| GET    | `/dashboard/admin/stockalerts`             | Get stock alerts              |
+| GET    | `/dashboard/admin/paymentstats`            | Get payment statistics        |
+| GET    | `/dashboard/admin/welcome-message`         | Get welcome message           |
+| GET    | `/dashboard/admin/health`                  | System health check           |
+| GET    | `/dashboard/admin/menuitem_export`         | Export menu items             |
+| GET    | `/dashboard/admin/delete_menuitem/:id`     | Delete menu item              |
+| POST   | `/dashboard/admin/create_menuitem`         | Create new menu item          |
+| PUT    | `/dashboard/admin/menuitem/:id`            | Update menu item              |
+
+### Student Dashboard Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| GET    | `/dashboard/student/freeze_account`        | Freeze student account        |
+| POST   | `/dashboard/student/parent/link`           | Link parent account           |
+
+### Order Management Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| GET    | `/Order/`                                 | Order page                    |
+| GET    | `/Order/menu_items`                       | Get menu items for ordering   |
+| GET    | `/Order/:orderID`                         | Get specific order details    |
+| POST   | `/Order/Order`                            | Create new order              |
+| PUT    | `/Order/:orderID/status`                  | Update order status           |
+| POST   | `/Order/:orderID/capture`                 | Capture order payment         |
+
+### Admin Management Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| GET    | `/admin/changeuser`                       | Change user permissions       |
+
+---
+
+## API Routes
+
+### General API Routes
+
+| Method | Endpoint                       | Description                   |
+|--------|-------------------------------|-------------------------------|
+| GET    | `/api/test`                   | API test endpoint             |
+| GET    | `/api/current_user`           | Get current logged-in user    |
+| GET    | `/api/menu-items`             | Get available menu items      |
+
+### Order API Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| POST   | `/api/orders`                             | Create PayPal order           |
+| POST   | `/api/orders/:orderID/capture`            | Capture PayPal payment        |
+
+### Google Pay API Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| POST   | `/api/orders/googlepay`                   | Create Google Pay order       |
+| POST   | `/api/orders/googlepay/complete`          | Complete Google Pay transaction|
+
+### Payment Integration Routes
+
+| Method | Endpoint                                   | Description                   |
+|--------|--------------------------------------------|-------------------------------|
+| POST   | `/api/payments/paypal`                    | PayPal payment processing     |
+| POST   | `/api/payments/googlepay`                 | Google Pay payment processing |
+
+
+# 6.2.3 Database Integration and Models
+The backend uses MongoDB as the primary database for storing user data, orders, menu items, and security logs. Mongoose is used as the ODM (Object Data Modeling) library to define schemas and interact with the database.
+The database connection is established in config/database_queries.js and src/models/User.js defines the User schema
+The database is exported from the database_queries.js and used throughout the backend modules for CRUD operations.
+#6.2.4 Caching Strategy
+The backend employs Redis as an in-memory data store to cache frequently accessed data, such as menu items and user sessions. This reduces database load and improves response times for read-heavy operations.
+The caching logic is implemented in src/dashboard/services/cache-service.js, which provides functions to get and set cached data.
+```javascript 
+// ttl = Time to live in seconds, cacheKey can be a string or a function that returns a string
+function cacheResult(cacheKey, ttl = 300) {
+  return async (req, res, next) => {
+    if (!isRedisAvailable()) {
+      return next();
+    }
+
+    try {
+      // Support both string keys and functions that generate keys
+      const key = typeof cacheKey === 'function' ? cacheKey(req) : cacheKey;
+
+      const cached = await redisClient.get(key);
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        return res.status(200).json(parsedData);
+      }
+
+      // Store original json method
+      const originalJson = res.json;
+
+      // Override json method to cache response
+      res.json = function(data) {
+        if (isRedisAvailable()) {
+          redisClient.setEx(key, ttl, JSON.stringify(data)).catch(err =>
+            console.error('Redis cache set error:', err)
+          );
+        }
+        // Call original json method
+        return originalJson.call(this, data);
+      };
+
+      next();
+    } catch (error) {
+      console.error('Cache middleware error:', error);
+      next();
+    }
+  };
+}
+``` 
+- This middleware checks if the requested data is in the Redis cache. If found, it returns the cached data; otherwise, it proceeds to fetch from the database and caches the result for future requests. This is to ensure that frequently requested data is served quickly, reducing latency and improving user experience, and reducing the load on the primary database. If Redis is unavailable, the middleware gracefully falls back to normal database queries without caching this is handled by the isRedisAvailable() function.
+```javascript
+let redisClient = null;
+try {
+  const { redisClient: client } = require('../../redis');
+  redisClient = client;
+} catch (error) {
+  console.log('Redis not available in cache service:', error.message);
+}
+
+function isRedisAvailable() {
+  return redisClient && redisClient.isOpen;
+}
+```
+- The cache expiration time (TTL) is configurable, allowing for flexibility based on data volatility.
+- The caching strategy is applied to routes that serve menu items and dashboard statistics, significantly improving performance for these endpoints.
+- The application also uses Redis Lua scripting for atomic operations, such as rate limiting and wallet updates, ensuring data consistency and integrity during concurrent access.
+
+```javascript
+async function invalidateCache(keys) {
+  if (!isRedisAvailable() || !keys || keys.length === 0) {
+    return;
+  }
+
+  try {
+    await redisClient.del(keys);
+  } catch (error) {
+    console.error('Cache invalidation error:', error);
+  }
+}
+```
+- The `invalidateCache` function is used to remove specific keys from the Redis cache when data changes, ensuring that stale data is not served to users. This is particularly important for dynamic data that may be updated frequently, such as menu items or user statistics.
+- The function checks if Redis is available and if there are keys to invalidate before attempting to delete them, handling any errors that may occur during the process.
+- This ensures that the cache remains accurate and up-to-date, enhancing the overall reliability of the caching strategy.
+
+
+
+
+
 
 
 ## 7. Testing and Validation
