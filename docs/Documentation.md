@@ -300,14 +300,68 @@ Az intuitív felhasználói felület, a megbízható háttérrendszer és a hat�
 
 ## 2. System Overview
 
+A rendszer egy webalapú rendelési és fizetési platform oktatási intézmények
+számára. Célja, hogy a diákok biztonságosan tudjanak rendeléseket leadni,
+a szülők felügyelhessék a költéseket, az adminisztrátorok pedig kezelhessék
+a teljes rendszert.
+
+Az alkalmazás kliens–szerver architektúrát követ. A backend Node.js alapú,
+a frontend szerepkör-alapú dashboardokat biztosít. A rendszer Redis-t használ
+gyorsítótárazásra, rate limitingre és Lua scriptek segítségével atomi műveletekhez.
 
 ---
 
 ## 3. Requirements Specification
 
+### Fő célok
+- Biztonságos és ellenőrzött rendelési folyamat
+- Digitális pénztárca és hűségpont rendszer
+- Skálázható és nagy teljesítményű backend
+- Külső fizetési szolgáltatók integrálása (PayPal, Google Pay)
+
+**Felhasználókezelés**
+- A rendszernek lehetővé kell tennie a felhasználók regisztrációját.
+- A rendszernek támogatnia kell az email alapú fiókellenőrzést.
+- A rendszernek szerepkör-alapú hozzáférést kell biztosítania (diák, szülő, admin).
+
+**Hitelesítés és biztonság**
+- A rendszernek JWT alapú hitelesítést kell alkalmaznia.
+- A rendszernek támogatnia kell a kétlépcsős azonosítást (2FA).
+- A rendszernek védenie kell a brute-force támadások ellen rate limiting segítségével.
+
+**Rendelések és fizetések**
+- A rendszernek lehetővé kell tennie a diákok számára rendelés leadását.
+- A rendszernek ki kell számítania a rendelés végösszegét.
+- A rendszernek támogatnia kell PayPal és Google Pay fizetéseket.
+- A rendszernek nyilván kell tartania a tranzakciókat.
+
+**Adminisztráció**
+- Az adminisztrátoroknak lehetőséget kell biztosítani felhasználók kezelésére.
+- A rendszernek statisztikákat és riportokat kell biztosítania.
+
 ---
 
 ## 4. System Architecture
+
+A rendszer három fő rétegből áll:
+
+### 1️⃣ Megjelenítési réteg (Frontend)
+- HTML és JSX alapú felhasználói felület
+- Szerepkör-alapú dashboardok
+- REST API-n keresztüli kommunikáció a backenddel
+
+### 2️⃣ Alkalmazási réteg (Backend)
+- Node.js és Express alapú szerver
+- Hitelesítés, jogosultságkezelés
+- Üzleti logika és fizetési folyamatok kezelése
+
+### 3️⃣ Adatréteg
+- Perzisztens adatbázis
+- Redis cache és rate limiting
+- Lua scriptek az atomi műveletekhez
+
+---
+
 <div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram" style="max-width: 100%; height: auto;"></div>
 
 ### 4.1 Components/Modules
