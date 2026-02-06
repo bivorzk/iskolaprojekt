@@ -21,7 +21,7 @@ const useAdminData = () => {
 
     const loadDashboardData = async () => {
         try {
-            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes] = await Promise.all([
+            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes, activeUsersRes] = await Promise.all([
                 fetch('/dashboard/admin/usercount'),
                 fetch('/dashboard/admin/orders'),
                 fetch('/dashboard/admin/userlist'),
@@ -33,7 +33,8 @@ const useAdminData = () => {
                 fetch('/dashboard/admin/stats/revenue-lastmonth'),
                 fetch('/dashboard/admin/stats/average-order-value'),
                 fetch('/dashboard/admin/stats/total-revenue'),
-                fetch('/dashboard/admin/paymentstats')
+                fetch('/dashboard/admin/paymentstats'),
+                fetch('/dashboard/admin/activeusers')
             ]);
 
             // Check if all responses are ok
@@ -49,8 +50,9 @@ const useAdminData = () => {
             if (!averageOrderValueRes.ok) console.error('average_order_value failed:', averageOrderValueRes.status);
             if (!totalRevenueRes.ok) console.error('total_revenue failed:', totalRevenueRes.status);
             if (!paymentStatsRes.ok) console.error('paymentstats failed:', paymentStatsRes.status);
-
-            const [userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData] = await Promise.all([
+            if (!activeUsersRes.ok) console.error('activeusers failed:', activeUsersRes.status);
+            
+            const [userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers] = await Promise.all([
                 userCountRes.json(),
                 ordersRes.json(),
                 userListRes.json(),
@@ -62,21 +64,23 @@ const useAdminData = () => {
                 revenueLastMonthRes.json(),
                 averageOrderValueRes.json(),
                 totalRevenueRes.json(),
-                paymentStatsRes.json()
+                paymentStatsRes.json(),
+                activeUsersRes.json()
             ]);
 
-            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData });
+            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers });
             setStats({
                 totalUsers: userCount.total || '--',
                 activeSessions: '--', // This might need a separate endpoint
                 ordersMade: orders.total || '--',
                 totalMenuItems: menuData.menuItems ? menuData.menuItems.length : '--',
-                paymentStats: paymentStatsData.totalAmount?.[1] || '--',
+                paymentStats: paymentStatsData.totalAmount || '--',
                 mostBoughtItems: mostBoughtItems || [],
                 mostBoughtItemsLastWeek: mostBoughtItemsLastWeek || [],
-                revenueLastMonth: revenueLastMonth || {} || '--',
-                averageOrderValue: averageOrderValue || {} || '--',
-                totalRevenue: totalRevenue || {} || '--'
+                revenueLastMonth: revenueLastMonth || '--',
+                averageOrderValue: averageOrderValue || '--',
+                totalRevenue: totalRevenue || '--',
+                activeUsers: activeUsers.activeUsers || '--'
             });
 
             setUsers(userList.users || []);
@@ -94,10 +98,10 @@ const useAdminData = () => {
                 paymentStats: '--',
                 mostBoughtItems: [],
                 mostBoughtItemsLastWeek: [],
-                revenueLastMonth: {},
-                averageOrderValue: {},
-                totalRevenue: {},
-                paymentStats: {}
+                revenueLastMonth: '--',
+                averageOrderValue: '--',
+                totalRevenue: '--',
+                activeUsers: '--'
             });
         } finally {
             setLoading(false);

@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
   balance: { 
     type: Number, 
     default: 0 
+  },
+  isBanned : {
+    type: Boolean,
+    default: false
   }
 });
 

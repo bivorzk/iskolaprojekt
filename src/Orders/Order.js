@@ -14,7 +14,9 @@ const { cacheResult, invalidateCache, getCached, setCached } = require('../dashb
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
 const redisLuaService = require('../services/redis-lua-service');
+const levenshtein = require('fast-levenshtein');
 const badwords = require('badwords-list');
+const naughtiness = require('naughty-words');
 const { createSecurityLog } = require('../auth/security');
 const { validateUsername, validatePassword } = require('../auth/validation');
 
@@ -173,16 +175,44 @@ router.post('/item_information/:itemName/Review', [
     const { rating, comment } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
 
-    if (badwords.array.includes(comment.toLowerCase())) {
+
+    // Check for profanity using Levenshtein distance
+    const words = comment.toLowerCase().split(/\s+/);
+    let containsProfanity = false;
+
+    for (const word of words) {
+        for (const badWord of badwords.array) {
+            if (levenshtein.get(word, badWord.toLowerCase()) < 2) {
+                containsProfanity = true;
+                break;
+            }
+        }
+        if (containsProfanity) break;
+        // Check against all language lists in naughtiness
+        for (const lang in naughtiness) {
+            if (Array.isArray(naughtiness[lang])) {
+                for (const naughtyWord of naughtiness[lang]) {
+                    if (levenshtein.get(word, naughtyWord.toLowerCase()) < 2) {
+                        containsProfanity = true;
+                        break;
+                    }
+                }
+                if (containsProfanity) break;
+            }
+        }
+        if (containsProfanity) break;
+    }
+    if (containsProfanity) {
         await createSecurityLog({
             userId: req.session.user ? req.session.user.id : null,
             ipAddress,
             action: 'REVIEW_CONTAINS_PROFANITY',
             type: 'CONTENT_VIOLATION',
-            details: 'Review comment contains prohibited language'
+            details: 'Review comment contains language similar to prohibited words'
         });
         return res.status(400).json({ error: 'Review comment contains inappropriate language' });
     }
+
     
     try {
         // Check Redis cache for menu item first

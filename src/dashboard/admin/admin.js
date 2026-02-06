@@ -270,27 +270,30 @@ router.get('/menuitem_export', cacheResult('admin:menuitem_export', 300), async 
   }
 });
 
+router.get('/activeusers', cacheResult('admin:activeusers', 300), async (req, res) => {
+  try {
+    const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
+    res.status(202).json({ activeUsers });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 router.get('/paymentstats', cacheResult('admin:paymentstats', 300), async (req, res) => {
   try {
     const paymentStats = await Payment.aggregate([
+      { $match: { currency: "USD" } },
       { $group: {
           _id: "$paymentMethod",
           count: { $sum: 1 },
-          currency: { $first: "$currency"}
-        },
-        $group: {
-          _id: "$currency",
-           totalAmount: { $sum: "$amount" },
-        },
-        $where: {
-          _id : "USD"
+          totalAmount: { $sum: "$amount" }
         }
-
       }
     ]);
-    res.json(paymentStats);
-  }
-  catch (error) {
+    const totalAmount = paymentStats.reduce((sum, stat) => sum + stat.totalAmount, 0);
+    res.json({ totalAmount });
+  }catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });

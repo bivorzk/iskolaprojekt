@@ -112,7 +112,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         email,
         usertype: userType,
-        isVerified: false
+        isVerified: false,
       });
       
       await user.save();

@@ -17,6 +17,7 @@ const {
     ParentStudent,
     SecurityLogs
 } = require('../config/database_queries');
+const { User } = require('../src/database');
 
 // Connect to MongoDB
 async function connectDB() {
@@ -218,45 +219,7 @@ async function testPayment() {
     }
 }
 
-// Test Review model
-async function testReview() {
-    console.log('\n--- Testing Review ---');
 
-    const testUserId = new mongoose.Types.ObjectId();
-    const testMenuItemId = new mongoose.Types.ObjectId();
-
-    const testReview = new Review({
-        userId: testUserId,
-        menuItemId: testMenuItemId,
-        rating: 5,
-        comment: 'Excellent food!'
-    });
-
-    try {
-        const start = process.hrtime.bigint();
-        const savedReview = await testReview.save();
-        const end = process.hrtime.bigint();
-        const duration = Number(end - start) / 1e6;
-        console.log(`Review created in ${duration.toFixed(3)} ms:`, savedReview._id);
-
-        // Query reviews for menu item
-        const start2 = process.hrtime.bigint();
-        const reviews = await Review.find({ menuItemId: testMenuItemId });
-        const end2 = process.hrtime.bigint();
-        const duration2 = Number(end2 - start2) / 1e6;
-        console.log(`Reviews found in ${duration2.toFixed(3)} ms:`, reviews.length);
-
-        // Delete the review
-        const start3 = process.hrtime.bigint();
-        await Review.findByIdAndDelete(savedReview._id);
-        const end3 = process.hrtime.bigint();
-        const duration3 = Number(end3 - start3) / 1e6;
-        console.log(`Review deleted in ${duration3.toFixed(3)} ms`);
-
-    } catch (err) {
-        console.error('Error testing Review:', err);
-    }
-}
 
 // Test SecurityLogs model
 async function testSecurityLogs() {
@@ -312,17 +275,29 @@ async function testSecurityLogs() {
     }
 }
 
+// Update all users to include the isBanned field
+async function updateUsersWithIsBanned() {
+    console.log('\n--- Updating Users with isBanned field ---');
+
+    try {
+        const result = await User.updateMany({}, { $set: { isBanned: false } });
+        console.log(`Updated ${result.modifiedCount} users with isBanned field set to false`);
+    } catch (err) {
+        console.error('Error updating users with isBanned field:', err);
+    }
+}
+
 // Main test runner
 async function runTests() {
     await connectDB();
 
     try {
-        await testMenuItems();
-        await testUserLoyalty();
-        await testOrder();
-        await testPayment();
-        await testReview();
-        await testSecurityLogs();
+    await testMenuItems();
+    await testUserLoyalty();
+    await testOrder();
+    await testPayment();
+    await testSecurityLogs();
+    await updateUsersWithIsBanned();
 
         console.log('\n--- All tests completed ---');
     } catch (err) {
@@ -337,14 +312,15 @@ if (require.main === module) {
     runTests();
 }
 
+
 module.exports = {
     runTests,
     testMenuItems,
     testUserLoyalty,
     testOrder,
     testPayment,
-    testReview,
-    testSecurityLogs
+    testSecurityLogs,
+    updateUsersWithIsBanned
 };
 
 

@@ -1,0 +1,7 @@
+## todo 
+
+-- make a logging section
+-- make it so every user is clickable and it displays their stats
+-- add more stats?
+-- Add more Settings options 
+-- Ban/Freeze Users
