@@ -1,6 +1,6 @@
     const jwt = require('jsonwebtoken');
     const express = require('express');
-    const nodemailer = require('nodemailer');
+    const sgMail = require('@sendgrid/mail');
     const router = express.Router();
     const path = require('path');
     require('dotenv').config({ path: path.join(__dirname, '../../.env') });
@@ -29,15 +29,8 @@
     router.use(express.urlencoded({ extended: true }));
     router.use(express.json());
 
-    const transport = nodemailer.createTransport({
-        port: Number(process.env.SMTP_PORT),
-        host: process.env.SMTP_HOST,
-        secure: false,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
+    // Set SendGrid API key
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
         function sendVerificationEmail(email, userId) {
         const token = jwt.sign({
@@ -52,26 +45,38 @@
         console.log('Reset URL: http://snaptray.onrender.com/password-reset/' + token);
         console.log('======================================');
 
+        console.log('=== EMAIL CONFIGURATION DEBUG ===');
+        console.log('FROM EMAIL:', process.env.EMAIL_USER);
+        console.log('TO EMAIL:', email);
+        console.log('SENDGRID_API_KEY set:', !!process.env.SENDGRID_API_KEY);
+        console.log('=====================================');
+
         const mailConfig = {
-            from: process.env.EMAIL_USER,
+            from: {
+                email: process.env.EMAIL_USER,
+                name: 'SnapTray'
+            },
             to: email,
-            subject: 'Password Reset',
+            subject: 'Password Reset - SnapTray',
             text: 'Hi, please reset your password by clicking the link below. This link is valid for 15 minutes.\n\n' +
             'http://snaptray.onrender.com/password-reset/' + token + '\n\n' +
             'If you did not request this, please ignore this email.\n\n' +
             'Thank you!\n'
         };
 
-        transport.sendMail(mailConfig, function(err, info){
-            if(err){
-                console.log('Email sending failed:', err.message);
+        sgMail.send(mailConfig)
+            .then((response) => {
+                console.log('Email sent successfully via SendGrid');
+                console.log('SendGrid Response Status:', response[0].statusCode);
+                console.log('SendGrid Message ID:', response[0].headers['x-message-id']);
+                return true;
+            })
+            .catch((error) => {
+                console.log('Email sending failed:', error.message);
+                console.log('Full error:', JSON.stringify(error, null, 2));
                 console.log('You can use the token above for testing');
                 return false;
-            } else {
-                console.log('Email sent successfully: ' + info.response);
-                return true;
-            }
-        });
+            });
     }
 
     router.get('/:token', async (req, res) => {

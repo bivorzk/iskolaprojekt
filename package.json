@@ -12,6 +12,7 @@
   "dependencies": {
     "@google-cloud/recaptcha-enterprise": "^6.3.0",
     "@paypal/paypal-server-sdk": "^1.1.0",
+    "@sendgrid/mail": "^8.1.6",
     "artillery": "^2.0.27",
     "badwords-list": "^2.0.1-4",
     "bcrypt": "^6.0.0",
