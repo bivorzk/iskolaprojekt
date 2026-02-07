@@ -10,7 +10,7 @@ const { getVerificationCode, deleteVerificationCode } = require('../verification
 const transport = nodemailer.createTransport({
     port: Number(process.env.SMTP_PORT),
     host: process.env.SMTP_HOST,
-    secure: true,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
