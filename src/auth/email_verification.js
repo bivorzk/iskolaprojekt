@@ -8,8 +8,8 @@ const app = express();
 const { getVerificationCode, deleteVerificationCode } = require('../verificationStore');
 
 const transport = nodemailer.createTransport({
-    port: 465,
-    host: 'smtp.gmail.com',
+    port: Number(process.env.SMPT_PORT),
+    host: process.env.SMPT_HOST,
     secure: true,
     service: 'Gmail',
     type: 'login',
