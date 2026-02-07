@@ -33,14 +33,22 @@ function sendVerificationEmail(email, verificationCode) {
         },
         to: email,
         subject: 'Email Verification - SnapTray',
-        html: `Hi, please verify your email in one of the following ways. Both are valid for 10 minutes.<br><br>
-        <strong>Option 1: Click the link</strong><br>
-        <a href="http://snaptray.onrender.com/email-verification/verify/${token}">Verify Email</a><br><br>
-        <strong>Option 2: Enter the code manually</strong><br>
-        Verification Code: ${verificationCode}<br>
-        Go to the verification page and enter your email and this code.<br><br>
-        If you did not request this, please ignore this email.<br><br>
-        Thank you!`
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <h2 style="color: #333;">Welcome to SnapTray!</h2>
+        <p>Thank you for signing up. To complete your registration and start enjoying our services, please verify your email address using one of the methods below. Both options are valid for 10 minutes.</p>
+        
+        <h3 style="color: #4CAF50;">Option 1: Click the verification link</h3>
+        <p><a href="http://snaptray.onrender.com/email-verification/verify/${token}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify My Email</a></p>
+        
+        <h3 style="color: #4CAF50;">Option 2: Enter the verification code</h3>
+        <p>Verification Code: <strong style="font-size: 18px; color: #333;">${verificationCode}</strong></p>
+        <p>Visit our <a href="http://snaptray.onrender.com/verify.html" style="color: #4CAF50;">verification page</a> and enter your email along with this code.</p>
+        
+        <p style="color: #666; font-size: 14px;">If you didn't create an account with SnapTray, please ignore this email.</p>
+        
+        <p>Thank you for joining us!</p>
+        <p>Best regards,<br>The SnapTray Team</p>
+        </div>`
     };
 
     sgMail.send(mailConfig)

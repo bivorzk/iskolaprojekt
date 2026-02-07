@@ -58,10 +58,13 @@
             },
             to: email,
             subject: 'Password Reset - SnapTray',
-            text: 'Hi, please reset your password by clicking the link below. This link is valid for 15 minutes.\n\n' +
-            'http://snaptray.onrender.com/password-reset/' + token + '\n\n' +
-            'If you did not request this, please ignore this email.\n\n' +
-            'Thank you!\n'
+            text: 'Hi,\n\n' +
+            'We received a request to reset your password for your SnapTray account. If you made this request, please click the link below to securely reset your password. This link will expire in 15 minutes for your security.\n\n' +
+            'Reset Password: http://snaptray.onrender.com/password-reset/' + token + '\n\n' +
+            'If you didn\'t request a password reset, please ignore this email. Your password will remain unchanged.\n\n' +
+            'For your security, please don\'t share this email or the link with anyone.\n\n' +
+            'Thank you,\n' +
+            'The SnapTray Team\n'
         };
 
         sgMail.send(mailConfig)
