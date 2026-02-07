@@ -3,6 +3,7 @@ const StudentHeader = ({ welcomeMessage, walletAmount }) => {
         <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex justify-between items-center py-4 w-full">
                 <div className="flex items-center space-x-4 px-4 sm:px-6 lg:px-8">
+                        <a href="/">
                     <svg viewBox="0 0 500 140" className="h-20 w-auto">
                         <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
                         <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
@@ -13,6 +14,7 @@ const StudentHeader = ({ welcomeMessage, walletAmount }) => {
                         <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
                         <text x="150" y="105" fontFamily="system-ui, -apple-system, sans-serif" fontSize="20" fill="#6C757D" letterSpacing="2">STUDENT PANEL</text>
                     </svg>
+                    </a>
                 </div>
                 <div className="flex items-center space-x-4 pr-4 sm:pr-6 lg:pr-8">
                     <div className="text-right">

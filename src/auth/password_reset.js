@@ -51,7 +51,7 @@
         console.log('=== PASSWORD RESET TOKEN GENERATED ===');
         console.log('Email:', email);
         console.log('Token:', token);
-        console.log('Reset URL: http://localhost:3000/password-reset/' + token);
+        console.log('Reset URL: http://snaptray.onrender.com/password-reset/' + token);
         console.log('======================================');
 
         const mailConfig = {
@@ -59,7 +59,7 @@
             to: email,
             subject: 'Password Reset',
             text: 'Hi, please reset your password by clicking the link below. This link is valid for 15 minutes.\n\n' +
-            'http://localhost:3000/password-reset/' + token + '\n\n' +
+            'http://snaptray.onrender.com/password-reset/' + token + '\n\n' +
             'If you did not request this, please ignore this email.\n\n' +
             'Thank you!\n'
         };
@@ -108,7 +108,7 @@
             return res.status(400).send('Token is required');
         }
         try {
-            const decoded = jwt.verify(token, 'ourSecretKey');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             
             // Find the user based on the JWT token information
             const user = await User.findById(decoded.userId);

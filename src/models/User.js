@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const path = require('path');
+const { use } = require('react');
 
 // Environment configuration
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
@@ -12,6 +13,24 @@ const dbName = process.env.DB_NAME;
 mongoose.connect(dbUrl + dbName)
   .then(() => console.log('Connected to MongoDB for user auth'))
   .catch(err => console.error('Could not connect to MongoDB for user auth', err));
+
+  // subdocument schema for user personal information
+  const userPersonalInfoSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    firstName: { type: String, required: true, trim: true, minlength: 1, maxlength: 50 },
+    lastName: { type: String, required: true, trim: true, minlength: 1, maxlength: 50 },
+    dateOfBirth: { type: Date, required: false },
+    grade: { type: String, enum: ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade', '13th Grade'], required: false },
+    school: { type: String, trim: true, maxlength: 100 },
+    address: {
+      street: { type: String, trim: true, maxlength: 100 },
+      city: { type: String, trim: true, maxlength: 50 },
+      state: { type: String, trim: true, maxlength: 50 },
+      postalCode: { type: String, trim: true, match: [/^\d{4,10}$/, 'Invalid postal code format'] },
+      country: { type: String, trim: true, maxlength: 50 }
+    }
+  });
+
 
 // User Schema Definition
 const userSchema = new mongoose.Schema({
@@ -50,9 +69,16 @@ const userSchema = new mongoose.Schema({
   },
   isBanned : {
     type: Boolean,
-    default: false
-  }
+    default: false,
+    banReason: {
+      type: String,
+      default: ''
+    }
+  },
+  userPersonalInfo: [userPersonalInfoSchema] // Subdocument for personal info
 });
+
+
 
 userSchema.index({ usertype: 1 }); 
 userSchema.index({ email: 1, usertype: 1 }); 
