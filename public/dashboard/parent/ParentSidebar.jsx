@@ -63,23 +63,8 @@ const ParentSidebar = ({ activeSection, setActiveSection }) => {
         </aside>
     );
 };
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        Orders
-                    </button>
-                    <button
-                        onClick={() => { setActiveSection('settings'); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
-                            activeSection === 'settings'
-                                ? 'bg-primary text-white'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        Settings
-                    </button>
-                </div>
-            </nav>
-        </aside>
-    );
-};
+
+export default ParentSidebar;
+
+
+                    

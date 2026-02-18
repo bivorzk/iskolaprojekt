@@ -16,7 +16,7 @@ const useParentData = () => {
 
     const loadDashboardData = async () => {
         try {
-            // Load data individually to handle failures gracefully
+            // Alapértelmezett értékek
             let studentList = { students: [] };
             let ordersData = { orders: [] };
             let statsData = {
@@ -29,6 +29,7 @@ const useParentData = () => {
             };
             let welcomeData = { message: 'Welcome, Parent' };
 
+            // Student list betöltése
             try {
                 const studentListRes = await fetch('/dashboard/parent/studentlist', { credentials: 'include' });
                 if (studentListRes.ok) {
@@ -40,6 +41,7 @@ const useParentData = () => {
                 console.error('Error fetching student list:', error);
             }
 
+            // Orders betöltése
             try {
                 const ordersRes = await fetch('/dashboard/parent/orders', { credentials: 'include' });
                 if (ordersRes.ok) {
@@ -51,6 +53,7 @@ const useParentData = () => {
                 console.error('Error fetching orders:', error);
             }
 
+            // Stats betöltése
             try {
                 const statsRes = await fetch('/dashboard/parent/stats', { credentials: 'include' });
                 if (statsRes.ok) {
@@ -62,6 +65,7 @@ const useParentData = () => {
                 console.error('Error fetching stats:', error);
             }
 
+            // Welcome message betöltése
             try {
                 const welcomeRes = await fetch('/dashboard/parent/welcome-message', { credentials: 'include' });
                 if (welcomeRes.ok) {
@@ -73,9 +77,7 @@ const useParentData = () => {
                 console.error('Error fetching welcome message:', error);
             }
 
-            console.log('Welcome data:', welcomeData);
-            console.log('Welcome message:', welcomeData.message);
-
+            // Adatok beállítása a state-be
             setStudents(studentList.students || []);
             setOrders(ordersData.orders || []);
             setStats({
@@ -107,3 +109,4 @@ const useParentData = () => {
         loadDashboardData
     };
 };
+

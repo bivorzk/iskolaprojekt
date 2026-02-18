@@ -41,3 +41,6 @@ const ParentStudentsSection = ({ students }) => {
         </div>
     );
 };
+
+export default ParentStudentsSection;
+

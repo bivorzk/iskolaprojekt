@@ -18,3 +18,6 @@ const ParentSettingsSection = () => {
         </div>
     );
 };
+
+export default ParentSettingsSection;
+

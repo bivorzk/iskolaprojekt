@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 
+// Komponensek importálása
 import ParentHeader from "./ParentHeader";
 import ParentSidebar from "./ParentSidebar";
 import ParentStatsSection from "./ParentStatsSection";
@@ -8,12 +9,18 @@ import ParentStudentsSection from "./ParentStudentsSection";
 import ParentOrdersSection from "./ParentOrdersSection";
 import ParentSettingsSection from "./ParentSettingsSection";
 import MobileParentNav from "./MobileParentNav";
+import ParentPaymentButton from "./ParentPaymentButton"; // ha külön kell
+
+// Custom hook az adatok betöltéséhez
 import { useParentData } from "./useParentData";
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("students");
+
+  // Hook visszaadja a dashboard adatait
   const { stats, students, orders, welcomeMessage, loading } = useParentData();
 
+  // Betöltés animáció
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center">
@@ -27,23 +34,33 @@ const ParentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-accent to-white">
+      {/* Header */}
       <ParentHeader welcomeMessage={welcomeMessage} />
+
       <div className="flex">
+        {/* Sidebar */}
         <ParentSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
 
+        {/* Fő tartalom */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
           {activeSection === "students" && <ParentStudentsSection students={students} />}
           {activeSection === "stats" && <ParentStatsSection stats={stats} />}
-          {activeSection === "orders" && <ParentOrdersSection orders={orders} />}
+          {activeSection === "orders" && (
+            <ParentOrdersSection orders={orders} onOrderPaid={() => { /* újratöltés vagy toast */ }} />
+          )}
           {activeSection === "settings" && <ParentSettingsSection />}
         </main>
       </div>
+
+      {/* Mobil alsó navigáció */}
       <MobileParentNav activeSection={activeSection} setActiveSection={setActiveSection} />
     </div>
   );
 };
 
+// React root létrehozása és renderelés
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<ParentDashboard />);
+
 
 

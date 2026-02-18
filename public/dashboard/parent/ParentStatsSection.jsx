@@ -83,3 +83,6 @@ const ParentStatsSection = ({ stats }) => {
         </div>
     );
 };
+
+export default ParentStatsSection;
+

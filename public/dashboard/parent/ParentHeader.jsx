@@ -1,10 +1,14 @@
+import React from "react";
+
 const ParentHeader = ({ welcomeMessage, isMobileMenuOpen, setIsMobileMenuOpen }) => {
     return (
         <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex justify-between items-center py-3 w-full px-3 sm:px-6 lg:px-8">
+                {/* Bal oldal: mobil menü gomb + logó */}
                 <div className="flex items-center space-x-2 sm:space-x-4">
+                    {/* Mobil menü gomb */}
                     <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="md:hidden p-1.5 rounded-md text-gray-700 hover:text-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
                     >
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -12,6 +16,7 @@ const ParentHeader = ({ welcomeMessage, isMobileMenuOpen, setIsMobileMenuOpen })
                         </svg>
                     </button>
 
+                    {/* Logó */}
                     <svg viewBox="0 0 500 140" className="h-20 w-auto">
                         <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
                         <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
@@ -24,11 +29,19 @@ const ParentHeader = ({ welcomeMessage, isMobileMenuOpen, setIsMobileMenuOpen })
                     </svg>
                 </div>
 
+                {/* Jobb oldal: welcome message + logout */}
                 <div className="flex items-center space-x-2 sm:space-x-4">
-                    <span className="hidden sm:inline text-sm sm:text-base text-gray-700 truncate max-w-32 sm:max-w-none">{welcomeMessage}</span>
-                    <a href="/logout" className="text-sm sm:text-base text-primary hover:text-secondary font-medium whitespace-nowrap">Logout</a>
+                    <span className="hidden sm:inline text-sm sm:text-base text-gray-700 truncate max-w-32 sm:max-w-none">
+                        {welcomeMessage}
+                    </span>
+                    <a href="/logout" className="text-sm sm:text-base text-primary hover:text-secondary font-medium whitespace-nowrap">
+                        Logout
+                    </a>
                 </div>
             </div>
         </header>
     );
 };
+
+export default ParentHeader;
+

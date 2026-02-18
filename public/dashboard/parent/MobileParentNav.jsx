@@ -13,7 +13,7 @@ const MobileParentNav = ({ activeSection, setActiveSection }) => {
                     <button
                         key={item.id}
                         onClick={() => setActiveSection(item.id)}
-                        className={`flex flex-col items-center justify-center p-3 min-w-0 flex-1 transition-all duration-200 ${
+                        className={`relative flex flex-col items-center justify-center p-3 min-w-0 flex-1 transition-all duration-200 ${
                             activeSection === item.id
                                 ? 'text-primary bg-accent'
                                 : 'text-gray-600 hover:text-primary hover:bg-gray-50'
@@ -30,12 +30,12 @@ const MobileParentNav = ({ activeSection, setActiveSection }) => {
                             {item.label}
                         </span>
                         {activeSection === item.id && (
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full"></div>
+                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full"></div>
                         )}
                     </button>
                 ))}
             </nav>
-            
+
             {/* Quick Action Button */}
             <div className="absolute top-0 right-4 transform -translate-y-1/2">
                 <button
@@ -51,3 +51,5 @@ const MobileParentNav = ({ activeSection, setActiveSection }) => {
         </div>
     );
 };
+
+export default MobileParentNav;
