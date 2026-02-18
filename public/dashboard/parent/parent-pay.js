@@ -1,12 +1,12 @@
 // parent-pay.js
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 // Ellenőrzi, hogy a szülő valóban kapcsolatban áll a gyerekkel
-const { verifyParentChild } = require('../auth/validation');
+import { verifyParentChild } from '../auth/validation.js';
 
 // PayPal vagy saját fizetési logika
-const { processPaypalPayment } = require('./paypal');
+import { processPaypalPayment } from './paypal.js';
 
 // POST endpoint a szülő fizetéséhez
 router.post('/api/parent/pay', async (req, res) => {
@@ -35,5 +35,6 @@ router.post('/api/parent/pay', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+
 

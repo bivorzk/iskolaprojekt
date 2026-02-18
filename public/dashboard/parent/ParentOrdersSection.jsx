@@ -1,38 +1,23 @@
-import React from "react";
-import ParentPaymentButton from "./ParentPaymentButton";
+import React from 'react';
+import { useParentData } from './useParentData';
 
-const ParentOrdersSection = ({ orders, onOrderPaid }) => {
-  if (!orders || orders.length === 0) {
-    return <p>Nincs fizetendő rendelés.</p>;
-  }
+export default function ParentOrdersSection() {
+  const { orders } = useParentData();
 
   return (
-    <div className="space-y-2">
-      {orders.map(order => (
-        <div
-          key={order.id}
-          className="flex items-center justify-between border p-2 rounded"
-        >
-          <div>
-            <p className="font-semibold">Rendelés #{order.id}</p>
-            <p className="text-sm text-gray-600">
-              Összeg: {order.amount} Ft
-            </p>
-          </div>
-
-          <ParentPaymentButton
-            orderId={order.id}
-            studentId={order.studentId}
-            amount={order.amount}
-            onPaid={onOrderPaid}
-          />
-        </div>
-      ))}
-    </div>
+    <section id="orders" className="mt-6">
+      <h2 className="text-lg font-semibold mb-2">Recent Orders</h2>
+      <ul className="space-y-2">
+        {orders.map(order => (
+          <li key={order._id} className="p-2 border rounded hover:bg-gray-50">
+            {order.studentName} - {order.total} - {order.status} - {new Date(order.createdAt).toLocaleDateString()}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
-};
+}
 
-export default ParentOrdersSection;
 
 
 

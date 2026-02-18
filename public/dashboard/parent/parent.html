@@ -40,25 +40,29 @@
     <!-- React root -->
     <div id="root"></div>
 
-    <!-- React és Babel CDN-ek -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- React és ReactDOM ES6 modul verzió CDN-ek -->
+    <script type="module">
+        import React from 'https://cdn.jsdelivr.net/npm/react@18/esm/react.development.js';
+        import ReactDOM from 'https://cdn.jsdelivr.net/npm/react-dom@18/esm/react-dom.development.js';
 
-    <!-- Saját JS utility-k -->
-    <script src="../../js/mobile-utils.js"></script>
+        // Saját komponensek importja ES6 modulokkal
+        import { useParentData } from './useParentData.js';
+        import ParentHeader from './ParentHeader.jsx';
+        import ParentSidebar from './ParentSidebar.jsx';
+        import MobileParentNav from './MobileParentNav.jsx';
+        import ParentStudentsSection from './ParentStudentsSection.jsx';
+        import ParentStatsSection from './ParentStatsSection.jsx';
+        import ParentOrdersSection from './ParentOrdersSection.jsx';
+        import ParentSettingsSection from './ParentSettingsSection.jsx';
+        import ParentPaymentButton from './ParentPaymentButton.jsx';
+        import App from './parent.jsx';
 
-    <!-- React komponensek importálása Babel-lel -->
-    <script type="text/babel" src="useParentData.js"></script>
-    <script type="text/babel" src="ParentHeader.jsx"></script>
-    <script type="text/babel" src="ParentSidebar.jsx"></script>
-    <script type="text/babel" src="MobileParentNav.jsx"></script>
-    <script type="text/babel" src="ParentStudentsSection.jsx"></script>
-    <script type="text/babel" src="ParentStatsSection.jsx"></script>
-    <script type="text/babel" src="ParentOrdersSection.jsx"></script>
-    <script type="text/babel" src="ParentSettingsSection.jsx"></script>
-    <script type="text/babel" src="ParentPaymentButton.jsx"></script>
-    <script type="text/babel" src="parent.jsx"></script>
+        // Render a root div-be
+        ReactDOM.createRoot(document.getElementById('root')).render(
+            React.createElement(App)
+        );
+    </script>
 </body>
 </html>
+
 

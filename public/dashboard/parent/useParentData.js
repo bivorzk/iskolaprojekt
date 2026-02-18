@@ -1,112 +1,41 @@
-const { useState, useEffect } = React;
+import { useState, useEffect } from 'react';
 
-const useParentData = () => {
-    const [stats, setStats] = useState({
-        totalStudents: '--',
-        activeChildren: '--',
-        ordersMade: '--',
-        totalPayments: '--',
-        balance: '--',
-        signupData: []
-    });
-    const [students, setStudents] = useState([]);
-    const [orders, setOrders] = useState([]);
-    const [welcomeMessage, setWelcomeMessage] = useState('Welcome, Parent');
-    const [loading, setLoading] = useState(true);
+export function useParentData() {
+  const [students, setStudents] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState({});
+  const [welcome, setWelcome] = useState('');
 
-    const loadDashboardData = async () => {
-        try {
-            // Alapértelmezett értékek
-            let studentList = { students: [] };
-            let ordersData = { orders: [] };
-            let statsData = {
-                totalStudents: 0,
-                activeChildren: 0,
-                ordersMade: 0,
-                totalPayments: 0,
-                balance: 0,
-                signupData: []
-            };
-            let welcomeData = { message: 'Welcome, Parent' };
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [studentRes, ordersRes, statsRes, welcomeRes] = await Promise.all([
+          fetch('/dashboard/parent/studentlist'),
+          fetch('/dashboard/parent/orders'),
+          fetch('/dashboard/parent/stats'),
+          fetch('/dashboard/parent/welcome-message')
+        ]);
 
-            // Student list betöltése
-            try {
-                const studentListRes = await fetch('/dashboard/parent/studentlist', { credentials: 'include' });
-                if (studentListRes.ok) {
-                    studentList = await studentListRes.json();
-                } else {
-                    console.error('Student list fetch failed:', studentListRes.status);
-                }
-            } catch (error) {
-                console.error('Error fetching student list:', error);
-            }
+        const studentData = await studentRes.json();
+        setStudents(studentData.students || []);
 
-            // Orders betöltése
-            try {
-                const ordersRes = await fetch('/dashboard/parent/orders', { credentials: 'include' });
-                if (ordersRes.ok) {
-                    ordersData = await ordersRes.json();
-                } else {
-                    console.error('Orders fetch failed:', ordersRes.status);
-                }
-            } catch (error) {
-                console.error('Error fetching orders:', error);
-            }
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.orders || []);
 
-            // Stats betöltése
-            try {
-                const statsRes = await fetch('/dashboard/parent/stats', { credentials: 'include' });
-                if (statsRes.ok) {
-                    statsData = await statsRes.json();
-                } else {
-                    console.error('Stats fetch failed:', statsRes.status);
-                }
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            }
+        const statsData = await statsRes.json();
+        setStats(statsData);
 
-            // Welcome message betöltése
-            try {
-                const welcomeRes = await fetch('/dashboard/parent/welcome-message', { credentials: 'include' });
-                if (welcomeRes.ok) {
-                    welcomeData = await welcomeRes.json();
-                } else {
-                    console.error('Welcome fetch failed:', welcomeRes.status);
-                }
-            } catch (error) {
-                console.error('Error fetching welcome message:', error);
-            }
+        const welcomeData = await welcomeRes.json();
+        setWelcome(welcomeData.message || '');
+      } catch (err) {
+        console.error('Error fetching parent data:', err);
+      }
+    }
 
-            // Adatok beállítása a state-be
-            setStudents(studentList.students || []);
-            setOrders(ordersData.orders || []);
-            setStats({
-                totalStudents: statsData.totalStudents || 0,
-                activeChildren: statsData.activeChildren || 0,
-                ordersMade: statsData.ordersMade || 0,
-                totalPayments: statsData.totalPayments || 0,
-                balance: statsData.balance || 0,
-                signupData: statsData.signupData || []
-            });
-            setWelcomeMessage(welcomeData.message || 'Welcome, Parent');
-        } catch (error) {
-            console.error('Error loading parent dashboard data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    fetchData();
+  }, []);
 
-    useEffect(() => {
-        loadDashboardData();
-    }, []);
+  return { students, orders, stats, welcome };
+}
 
-    return {
-        stats,
-        students,
-        orders,
-        welcomeMessage,
-        loading,
-        loadDashboardData
-    };
-};
 

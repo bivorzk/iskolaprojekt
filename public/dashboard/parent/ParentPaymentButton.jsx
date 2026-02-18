@@ -1,43 +1,22 @@
-import React, { useState } from "react";
+import React from 'react';
 
-const ParentPaymentButton = ({ orderId, studentId, amount, onPaid }) => {
-  const [loading, setLoading] = useState(false);
-
+export default function ParentPaymentButton() {
   const handlePay = async () => {
-    setLoading(true);
     try {
-      const res = await fetch("/api/parent/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, studentId, amount }),
-      });
-
+      const res = await fetch('/api/parent/pay', { method: 'POST' });
       const data = await res.json();
-
-      if (res.ok) {
-        alert("Payment successful!");
-        if (onPaid) onPaid(orderId);
-      } else {
-        alert("Payment failed: " + (data.error || "Unknown error"));
-      }
+      alert(data.message || 'Payment processed');
     } catch (err) {
-      alert("Payment error: " + err.message);
-    } finally {
-      setLoading(false);
+      console.error('Payment error:', err);
+      alert('Payment failed');
     }
   };
 
   return (
-    <button
-      onClick={handlePay}
-      disabled={loading}
-      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
-    >
-      {loading ? "Paying..." : "Pay"}
+    <button onClick={handlePay} className="mt-4 p-2 bg-green-500 text-white rounded hover:bg-green-600">
+      Pay Now
     </button>
   );
-};
-
-export default ParentPaymentButton;
+}
 
 

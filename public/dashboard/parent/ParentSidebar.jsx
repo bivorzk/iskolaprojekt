@@ -1,70 +1,18 @@
-const ParentSidebar = ({ activeSection, setActiveSection }) => {
-    return (
-        <aside className="hidden lg:block w-64 bg-white shadow-lg min-h-screen">
-            <nav className="mt-8">
-                <div className="px-4 space-y-2">
-                    <button
-                        onClick={() => setActiveSection('students')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'students'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">👨‍👩‍👧‍👦</span>
-                        Students
-                    </button>
-                    <button
-                        onClick={() => setActiveSection('stats')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'stats'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">📊</span>
-                        Statistics
-                    </button>
-                    <button
-                        onClick={() => setActiveSection('orders')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'orders'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">📋</span>
-                        Order History
-                    </button>
-                    <button
-                        onClick={() => setActiveSection('settings')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'settings'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">⚙️</span>
-                        Settings
-                    </button>
-                </div>
-                
-                <div className="px-4 mt-8">
-                    <div className="border-t border-gray-200 pt-4">
-                        <a
-                            href="/Order"
-                            className="w-full block text-center bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-secondary transition-colors"
-                        >
-                            🍽️ Order Food
-                        </a>
-                    </div>
-                </div>
-            </nav>
-        </aside>
-    );
-};
+import React from 'react';
 
-export default ParentSidebar;
+export default function ParentSidebar() {
+  return (
+    <aside className="bg-gray-800 text-white w-64 min-h-screen p-4 hidden md:block">
+      <nav className="flex flex-col space-y-2">
+        <a href="#students" className="hover:bg-gray-700 p-2 rounded">Students</a>
+        <a href="#stats" className="hover:bg-gray-700 p-2 rounded">Stats</a>
+        <a href="#orders" className="hover:bg-gray-700 p-2 rounded">Orders</a>
+        <a href="#settings" className="hover:bg-gray-700 p-2 rounded">Settings</a>
+      </nav>
+    </aside>
+  );
+}
+
 
 
                     
