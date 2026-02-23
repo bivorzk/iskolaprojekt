@@ -5,7 +5,10 @@
   "main": "src/main.js",
   "scripts": {
     "dev": "nodemon src/main.js",
-    "start": "node src/main.js"
+    "start": "node src/main.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "coverage": "cross-env NODE_ENV=test jest --coverage"
   },
   "author": "",
   "license": "ISC",
@@ -13,25 +16,24 @@
     "@google-cloud/recaptcha-enterprise": "^6.3.0",
     "@paypal/paypal-server-sdk": "^1.1.0",
     "@sendgrid/mail": "^8.1.6",
-    "artillery": "^2.0.27",
-    "badwords-list": "^2.0.1-4",
+    "artillery": "^2.0.20",
     "bcrypt": "^6.0.0",
     "connect-redis": "^9.0.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "dotenv": "^17.2.3",
-    "ejs": "^3.1.9",
-    "express": "^4.21.2",
+    "dotenv": "^17.3.1",
+    "ejs": "^3.0.2",
+    "express": "^4.22.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.1.0",
-    "express-session": "^1.18.2",
+    "express-session": "^1.19.0",
     "express-validator": "^7.3.1",
     "fast-levenshtein": "^3.0.0",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^6.20.0",
-    "mongoose": "^8.18.2",
+    "mongoose": "^8.23.0",
     "nanoid": "^5.1.6",
     "naughty-words": "^1.2.0",
     "node-fetch": "^2.7.0",
@@ -46,9 +48,33 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
     "autoprefixer": "^10.4.23",
+    "babel-jest": "^30.2.0",
+    "badwords-list": "^2.0.1-4",
+    "cross-env": "^10.1.0",
+    "cross-fetch": "^4.1.0",
+    "jest": "^25.5.4",
     "nodemon": "^3.0.1",
     "postcss": "^8.5.6",
+    "supertest": "^6.3.4",
     "tailwindcss": "^4.1.18"
-  }
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/main.js"
+    ],
+    "coverageDirectory": "coverage",
+    "clearMocks": true,
+    "modulePaths": [
+      "<rootDir>/src"
+    ]
+  },
+  "testTimeout": 10000
 }
