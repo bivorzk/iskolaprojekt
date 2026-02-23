@@ -62,19 +62,16 @@
     "tailwindcss": "^4.1.18"
   },
   "jest": {
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/tests"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.js",
-      "!src/main.js"
-    ],
-    "coverageDirectory": "coverage",
-    "clearMocks": true,
-    "modulePaths": [
-      "<rootDir>/src"
-    ]
+  "testEnvironment": "node",
+  "roots": ["<rootDir>/tests"],
+  "collectCoverageFrom": ["src/**/*.js", "!src/main.js"],
+  "coverageDirectory": "coverage",
+  "clearMocks": true,
+  "modulePaths": ["<rootDir>/src"],
+  "transform": {
+    "^.+\\.js$": "babel-jest"
   },
-  "testTimeout": 10000
-}
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(axios|@sendgrid/mail|@sendgrid/client|cross-fetch)/)"
+  ]
+}}
