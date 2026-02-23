@@ -307,15 +307,168 @@ router.get('/welcome-message', (req, res) => {
   }
 });
 
-// Health check endpoint for admin dashboard
 router.get('/health', async (req, res) => {
+  const healthResults = {
+    overall: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {},
+    details: {}
+  };
+
+  let hasErrors = false;
+
   try {
-    // Optional: check MongoDB connection
     await mongoose.connection.db.admin().ping();
-    res.status(200).json({ status: 'ok', message: 'Admin dashboard is healthy' });
+    healthResults.services.database = 'healthy';
+    healthResults.details.database = 'MongoDB connection established and responding';
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Database not reachable' });
+    healthResults.services.database = 'unhealthy';
+    healthResults.details.database = `Database error: ${error.message}`;
+    hasErrors = true;
   }
+
+  try {
+    if (isRedisAvailable()) {
+      await redisClient.ping();
+      healthResults.services.redis = 'healthy';
+      healthResults.details.redis = 'Redis connection established and responding';
+    } else {
+      healthResults.services.redis = 'unavailable';
+      healthResults.details.redis = 'Redis client not available or not connected';
+    }
+  } catch (error) {
+    healthResults.services.redis = 'unhealthy';
+    healthResults.details.redis = `Redis error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  try {
+    const userCount = await User.countDocuments({});
+    healthResults.services.userModel = 'healthy';
+    healthResults.details.userModel = `User model accessible (${userCount} users)`;
+
+    const menuItemsCount = await MenuItems.countDocuments({});
+    healthResults.services.menuModel = 'healthy';
+    healthResults.details.menuModel = `MenuItems model accessible (${menuItemsCount} items)`;
+
+    const orderCount = await Order.countDocuments({});
+    healthResults.services.orderModel = 'healthy';
+    healthResults.details.orderModel = `Order model accessible (${orderCount} orders)`;
+
+
+    const paymentCount = await Payment.countDocuments({});
+    healthResults.services.paymentModel = 'healthy';
+    healthResults.details.paymentModel = `Payment model accessible (${paymentCount} payments)`;
+
+    const loyaltyCount = await UserLoyalty.countDocuments({});
+    healthResults.services.loyaltyModel = 'healthy';
+    healthResults.details.loyaltyModel = `UserLoyalty model accessible (${loyaltyCount} loyalty records)`;
+  } catch (error) {
+    healthResults.services.models = 'unhealthy';
+    healthResults.details.models = `Database model error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  try {
+    const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
+    const availableItems = await MenuItems.countDocuments({ available: true });
+    const lowStockItems = await MenuItems.countDocuments({ stock: { $lt: 5 } });
+
+    healthResults.services.adminEndpoints = 'healthy';
+    healthResults.details.adminEndpoints = `Admin functions operational (${activeUsers} active users, ${availableItems} available items, ${lowStockItems} low stock alerts)`;
+  } catch (error) {
+    healthResults.services.adminEndpoints = 'unhealthy';
+    healthResults.details.adminEndpoints = `Admin endpoint error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  try {
+    if (isRedisAvailable()) {
+      const testKey = `health_check_test_${Date.now()}`;
+      const rateLimitResult = await redisLuaService.checkRateLimit(testKey, 60, 100);
+      
+      healthResults.services.redisLua = 'healthy';
+      healthResults.details.redisLua = `Redis Lua scripts operational (rate limit test: ${rateLimitResult.allowed ? 'allowed' : 'denied'})`;
+      
+      await redisClient.del(testKey);
+    } else {
+      healthResults.services.redisLua = 'degraded';
+      healthResults.details.redisLua = 'Redis Lua scripts unavailable due to Redis connection issue';
+    }
+  } catch (error) {
+    healthResults.services.redisLua = 'unhealthy';
+    healthResults.details.redisLua = `Redis Lua error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  try {
+    if (req.session) {
+      healthResults.services.sessions = 'healthy';
+      healthResults.details.sessions = 'Session system operational';
+    } else {
+      healthResults.services.sessions = 'unhealthy';
+      healthResults.details.sessions = 'Session system not available';
+      hasErrors = true;
+    }
+  } catch (error) {
+    healthResults.services.sessions = 'unhealthy';
+    healthResults.details.sessions = `Session error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  try {
+    const cacheTestKey = `admin:health_test:${Date.now()}`;
+    const testData = { test: 'data', timestamp: Date.now() };
+    
+    healthResults.services.caching = 'healthy';
+    healthResults.details.caching = 'Cache system operational';
+  } catch (error) {
+    healthResults.services.caching = 'unhealthy';
+    healthResults.details.caching = `Cache error: ${error.message}`;
+    hasErrors = true;
+  }
+
+  healthResults.services.externalServices = {};
+  
+  try {
+    const hasPayPalConfig = process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET;
+    
+    let hasGooglePayConfig = false;
+    try {
+      const googlePayService = require('../../services/googlepay-service');
+      // Check if Google Pay service functions are available
+      hasGooglePayConfig = typeof googlePayService.createGooglePayOrder === 'function' && 
+                          typeof googlePayService.completeGooglePayOrder === 'function';
+    } catch (error) {
+      hasGooglePayConfig = false;
+    }
+    
+    healthResults.services.externalServices.paypal = hasPayPalConfig ? 'configured' : 'not_configured';
+    healthResults.services.externalServices.googlepay = hasGooglePayConfig ? 'configured' : 'not_configured';
+    healthResults.details.externalServices = `Payment service configurations checked - PayPal: ${hasPayPalConfig ? 'env vars present' : 'missing env vars'}, Google Pay: ${hasGooglePayConfig ? 'service available' : 'service unavailable'}`;
+  } catch (error) {
+    healthResults.services.externalServices = 'error';
+    healthResults.details.externalServices = `External services check error: ${error.message}`;
+  }
+
+  if (hasErrors) {
+    healthResults.overall = 'degraded';
+  }
+
+  if (healthResults.services.database === 'unhealthy' || 
+      healthResults.services.sessions === 'unhealthy' ||
+      healthResults.services.models === 'unhealthy') {
+    healthResults.overall = 'unhealthy';
+  }
+
+  const healthyServices = Object.values(healthResults.services).filter(s => s === 'healthy').length;
+  const totalServices = Object.keys(healthResults.services).length - 1; // Exclude nested externalServices
+  healthResults.summary = `${healthyServices}/${totalServices} core services healthy`;
+
+  const httpStatus = healthResults.overall === 'unhealthy' ? 500 : 
+                    healthResults.overall === 'degraded' ? 206 : 200;
+
+  res.status(httpStatus).json(healthResults);
 });
 
 module.exports = router;

@@ -12,3 +12,4 @@ node_modules/cluster-key-slot
 node_modules/
 .env
 docs/redis*
+tests/code_analytics.json

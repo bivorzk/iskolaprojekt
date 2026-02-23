@@ -3,6 +3,7 @@ const MobileAdminNav = ({ activeSection, setActiveSection }) => {
         { id: 'users', label: 'Users', icon: '👥' },
         { id: 'stats', label: 'Stats', icon: '📊' },
         { id: 'menu-items', label: 'Menu', icon: '🍽️' },
+        { id: 'health', label: 'Health', icon: '🏥' },
         { id: 'settings', label: 'Settings', icon: '⚙️' }
     ];
 

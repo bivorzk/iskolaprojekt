@@ -31,6 +31,7 @@ const AdminDashboard = () => {
                     {activeSection === 'users' && <UsersSection users={users} />}
                     {activeSection === 'stats' && <StatsSection stats={stats} signupData={signupData} />}
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
+                    {activeSection === 'health' && <HealthCheckSection />}
                     {activeSection === 'settings' && <SettingsSection />}
                 </main>
             </div>
