@@ -23,6 +23,7 @@ const logoutRouter = require('./logout');
 const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
+const chatService = require('./services/chat-service');
 const cors = require('cors');
 
 
@@ -129,6 +130,7 @@ app.use('/order', limiter);
 app.use('/2fa', limiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
+app.use('/chat', limiter);
 
 app.use('/dashboard', (req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
@@ -154,6 +156,10 @@ app.get('/pay', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/pay.html'));
 });
 
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public/chat/index.html'));
+});
+
 
 /*
 app.get('/email-verification/verify/:token', (req, res) => {
@@ -174,6 +180,7 @@ app.use('/dashboard', dashboardRouter);
 app.use('/', logoutRouter);
 app.use('/admin', admin);
 app.use('/order', Order);
+app.use('/chat', chatService);
 
 
 // 404 handler

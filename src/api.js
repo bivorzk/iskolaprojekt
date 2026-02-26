@@ -44,6 +44,19 @@ router.get('/current_user', (req, res) => {
     }
 });
 
+// Route to get current user for chat functionality
+router.get('/current-user', (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    res.json({
+        id: req.session.user.id,
+        username: req.session.user.username,
+        usertype: req.session.user.usertype
+    });
+});
+
 // Route to get available menu items for ordering
 router.get('/menu-items', async (req, res) => {
     try {
