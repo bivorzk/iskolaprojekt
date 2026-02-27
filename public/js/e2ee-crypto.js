@@ -1,17 +1,9 @@
-/**
- * E2EE Crypto Utilities for Chat
- * Uses Web Crypto API for secure client-side encryption
- */
-
 class E2EECrypto {
   constructor() {
-    this.keyPairs = new Map(); // Store key pairs by key ID
-    this.importedPublicKeys = new Map(); // Cache for imported public keys
+    this.keyPairs = new Map();
+    this.importedPublicKeys = new Map(); 
   }
 
-  /**
-   * Generate a new RSA key pair for E2EE
-   */
   async generateKeyPair() {
     try {
       const keyPair = await window.crypto.subtle.generateKey(
@@ -25,11 +17,9 @@ class E2EECrypto {
         ['encrypt', 'decrypt']
       );
 
-      // Export public key to share with server
       const publicKeyBuffer = await window.crypto.subtle.exportKey('spki', keyPair.publicKey);
       const publicKeyBase64 = this.arrayBufferToBase64(publicKeyBuffer);
 
-      // Store private key in localStorage (in production, consider more secure storage)
       const privateKeyBuffer = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
       const privateKeyBase64 = this.arrayBufferToBase64(privateKeyBuffer);
       
@@ -49,9 +39,6 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Get the current private key from storage
-   */
   async getCurrentPrivateKey() {
     try {
       const keyId = localStorage.getItem('e2ee_current_key_id');
@@ -113,9 +100,7 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Generate a symmetric key for message encryption
-   */
+
   async generateSymmetricKey() {
     return await window.crypto.subtle.generateKey(
       {
@@ -126,19 +111,12 @@ class E2EECrypto {
       ['encrypt', 'decrypt']
     );
   }
-
-  /**
-   * Encrypt a message with hybrid encryption (RSA + AES)
-   */
   async encryptMessage(message, recipientPublicKeyBase64, recipientKeyId) {
     try {
-      // Generate symmetric key
       const symmetricKey = await this.generateSymmetricKey();
       
-      // Generate IV
       const iv = window.crypto.getRandomValues(new Uint8Array(12));
       
-      // Encrypt message with symmetric key
       const messageBuffer = new TextEncoder().encode(message);
       const encryptedMessage = await window.crypto.subtle.encrypt(
         {
@@ -149,10 +127,8 @@ class E2EECrypto {
         messageBuffer
       );
 
-      // Export symmetric key
       const symmetricKeyBuffer = await window.crypto.subtle.exportKey('raw', symmetricKey);
 
-      // Encrypt symmetric key with both sender and recipient public keys
       const recipientPublicKey = await this.importPublicKey(recipientPublicKeyBase64, recipientKeyId);
       const recipientEncryptedKey = await window.crypto.subtle.encrypt(
         {
@@ -162,13 +138,11 @@ class E2EECrypto {
         symmetricKeyBuffer
       );
 
-      // For sender's copy, we need sender's public key
       const senderPrivateKey = await this.getCurrentPrivateKey();
       if (!senderPrivateKey) {
         throw new Error('Sender private key not found');
       }
 
-      // Get sender's public key from the stored key pair
       const senderKeyId = localStorage.getItem('e2ee_current_key_id');
       const senderPublicKeyBase64 = await this.getSenderPublicKey();
       const senderPublicKey = await this.importPublicKey(senderPublicKeyBase64, senderKeyId);
@@ -196,33 +170,60 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Decrypt a message
-   */
+
   async decryptMessage(encryptedData, isRecipient = true) {
     try {
+      console.log('Decrypting message with data:', encryptedData);
+      console.log('Is recipient:', isRecipient);
+      
       const privateKey = await this.getCurrentPrivateKey();
       if (!privateKey) {
         throw new Error('Private key not found');
       }
+      console.log('Private key loaded successfully');
 
       const { encryptedContent, encryptionMetadata } = encryptedData;
       
-      // Decrypt the symmetric key
+      if (!encryptedContent || !encryptionMetadata) {
+        throw new Error(`Missing required data: encryptedContent=${!!encryptedContent}, encryptionMetadata=${!!encryptionMetadata}`);
+      }
+      
+      console.log('Encryption metadata:', encryptionMetadata);
+      
       const encryptedKeyBase64 = isRecipient 
         ? encryptionMetadata.recipientEncryptedKey 
         : encryptionMetadata.senderEncryptedKey;
       
+      console.log('Using encrypted key:', encryptedKeyBase64 ? 'present' : 'missing');
+      
+      if (!encryptedKeyBase64) {
+        throw new Error(`Missing encrypted key for ${isRecipient ? 'recipient' : 'sender'}`);
+      }
+      
+      console.log('Encrypted key base64 length:', encryptedKeyBase64.length);
+      console.log('Encrypted key sample:', encryptedKeyBase64.substring(0, 50) + '...');
+      
       const encryptedKeyBuffer = this.base64ToArrayBuffer(encryptedKeyBase64);
-      const symmetricKeyBuffer = await window.crypto.subtle.decrypt(
-        {
-          name: 'RSA-OAEP'
-        },
-        privateKey,
-        encryptedKeyBuffer
-      );
+      console.log('Encrypted key buffer length:', encryptedKeyBuffer.byteLength);
+      console.log('Decrypting symmetric key...');
+      
+      let symmetricKeyBuffer;
+      try {
+        symmetricKeyBuffer = await window.crypto.subtle.decrypt(
+          {
+            name: 'RSA-OAEP'
+          },
+          privateKey,
+          encryptedKeyBuffer
+        );
+        console.log('Symmetric key decrypted successfully, length:', symmetricKeyBuffer.byteLength);
+      } catch (keyDecryptError) {
+        console.error('Failed to decrypt symmetric key:', keyDecryptError);
+        console.error('Private key algorithm:', privateKey.algorithm);
+        console.error('Private key usages:', privateKey.usages);
+        throw new Error(`Symmetric key decryption failed: ${keyDecryptError.message}. This usually means the message was encrypted with a different public key.`);
+      }
 
-      // Import symmetric key
       const symmetricKey = await window.crypto.subtle.importKey(
         'raw',
         symmetricKeyBuffer,
@@ -232,30 +233,46 @@ class E2EECrypto {
         false,
         ['decrypt']
       );
+      console.log('Symmetric key imported successfully');
 
-      // Decrypt message
       const iv = this.base64ToArrayBuffer(encryptionMetadata.iv);
       const encryptedMessageBuffer = this.base64ToArrayBuffer(encryptedContent);
       
-      const decryptedMessageBuffer = await window.crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv: iv
-        },
-        symmetricKey,
-        encryptedMessageBuffer
-      );
+      console.log('IV length:', iv.byteLength, 'Expected: 12');
+      console.log('Encrypted message buffer length:', encryptedMessageBuffer.byteLength);
+      console.log('Encrypted content sample:', encryptedContent.substring(0, 50) + '...');
+      
+      console.log('Decrypting message content...');
+      let decryptedMessageBuffer;
+      try {
+        decryptedMessageBuffer = await window.crypto.subtle.decrypt(
+          {
+            name: 'AES-GCM',
+            iv: iv
+          },
+          symmetricKey,
+          encryptedMessageBuffer
+        );
+        console.log('Message content decrypted successfully, length:', decryptedMessageBuffer.byteLength);
+      } catch (messageDecryptError) {
+        console.error('Failed to decrypt message content:', messageDecryptError);
+        throw new Error(`Message content decryption failed: ${messageDecryptError.message}. The message may be corrupted.`);
+      }
 
-      return new TextDecoder().decode(decryptedMessageBuffer);
+      const decryptedText = new TextDecoder().decode(decryptedMessageBuffer);
+      console.log('Message decrypted successfully:', decryptedText);
+      return decryptedText;
     } catch (error) {
       console.error('Message decryption failed:', error);
-      throw new Error('Failed to decrypt message');
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw new Error(`Failed to decrypt message: ${error.message}`);
     }
   }
 
-  /**
-   * Get sender's public key for encrypting their own copy
-   */
   async getSenderPublicKey() {
     try {
       const keyId = localStorage.getItem('e2ee_current_key_id');
@@ -335,11 +352,151 @@ class E2EECrypto {
     keysToRemove.forEach(key => localStorage.removeItem(key));
     this.keyPairs.clear();
     this.importedPublicKeys.clear();
+    console.log('All E2EE keys cleared');
+  }
+
+  /**
+   * Reset E2EE completely - clear keys and force re-setup
+   */
+  async resetE2EE() {
+    try {
+      console.log('Resetting E2EE completely...');
+      
+      // Clear local keys
+      this.clearKeys();
+      
+      // Notify server to disable E2EE
+      try {
+        await fetch('/chat/reset-e2ee', { method: 'POST' });
+      } catch (error) {
+        console.log('Server reset failed (continuing anyway):', error);
+      }
+      
+      console.log('E2EE reset complete. Page will reload to re-setup.');
+      
+      // Reload page to start fresh
+      window.location.reload();
+      
+      return true;
+    } catch (error) {
+      console.error('E2EE reset failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Admin function: Clear ALL E2EE data from database
+   */
+  async clearAllE2EEFromDatabase(clearMessages = true) {
+    try {
+      console.log('Clearing ALL E2EE data from database...');
+      
+      const response = await fetch('/chat/admin/clear-all-e2ee', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ clearMessages })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Database clear result:', result);
+      
+      // Clear local keys too
+      this.clearKeys();
+      
+      alert(`Success! Cleared ${result.usersCleared} users and ${result.messagesDeleted} messages. Page will reload.`);
+      
+      // Reload page
+      window.location.reload();
+      
+      return result;
+    } catch (error) {
+      console.error('Failed to clear database E2EE:', error);
+      alert(`Failed to clear database: ${error.message}`);
+      return false;
+    }
+  }
+
+  async debugKeys() {
+    try {
+      console.log('=== E2EE Key Debug ===');
+      
+      const keyId = localStorage.getItem('e2ee_current_key_id');
+      console.log('Current key ID:', keyId);
+      
+      if (!keyId) {
+        console.error('No key ID found');
+        return false;
+      }
+      
+      const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
+      const publicKeyBase64 = localStorage.getItem(`e2ee_public_key_${keyId}`);
+      
+      console.log('Private key exists:', !!privateKeyBase64, 'Length:', privateKeyBase64?.length);
+      console.log('Public key exists:', !!publicKeyBase64, 'Length:', publicKeyBase64?.length);
+      
+      const privateKey = await this.getCurrentPrivateKey();
+      console.log('Private key loaded successfully:', !!privateKey);
+      
+      if (privateKey) {
+        console.log('Private key algorithm:', privateKey.algorithm);
+        console.log('Private key usages:', privateKey.usages);
+      }
+      
+      if (publicKeyBase64) {
+        const publicKey = await this.importPublicKey(publicKeyBase64, keyId);
+        console.log('Public key imported successfully:', !!publicKey);
+        
+        if (publicKey) {
+          console.log('Public key algorithm:', publicKey.algorithm);
+          console.log('Public key usages:', publicKey.usages);
+        }
+      }
+      
+      // Test encryption/decryption cycle
+      console.log('Testing encryption/decryption cycle...');
+      const testMessage = 'Hello, E2EE test!';
+      const encrypted = await this.encryptMessage(testMessage, publicKeyBase64, keyId);
+      console.log('Test encryption successful');
+      
+      const decrypted = await this.decryptMessage(encrypted, true);
+      console.log('Test decryption successful:', decrypted === testMessage);
+      console.log('Decrypted message:', decrypted);
+      
+      return true;
+    } catch (error) {
+      console.error('Key debug failed:', error);
+      return false;
+    }
   }
 }
 
 // Global instance
 window.e2eeCrypto = new E2EECrypto();
+
+window.debugE2EE = {
+  checkKeys: () => window.e2eeCrypto.debugKeys(),
+  resetE2EE: () => window.e2eeCrypto.resetE2EE(),
+  clearKeys: () => window.e2eeCrypto.clearKeys(),
+  clearDatabase: (clearMessages = true) => window.e2eeCrypto.clearAllE2EEFromDatabase(clearMessages),
+  status: () => {
+    const keyId = localStorage.getItem('e2ee_current_key_id');
+    const hasPrivateKey = !!localStorage.getItem(`e2ee_private_key_${keyId}`);
+    const hasPublicKey = !!localStorage.getItem(`e2ee_public_key_${keyId}`);
+    return {
+      isSetup: window.e2eeCrypto.isE2EESetup(),
+      keyId,
+      hasPrivateKey,
+      hasPublicKey,
+      localStorageKeys: Object.keys(localStorage).filter(k => k.startsWith('e2ee_'))
+    };
+  }
+};
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {

@@ -4,7 +4,13 @@ const User = require('../models/User');
 const { Message } = require('../models/Message');
 const { body, validationResult } = require('express-validator');
 
-// Middleware to check authentication
+let io; // Socket.IO instance
+
+// Function to set the Socket.IO instance
+const setSocketIO = (socketIOInstance) => {
+  io = socketIOInstance;
+};
+
 const requireAuth = (req, res, next) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({ error: 'Authentication required' });
@@ -12,7 +18,6 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// E2EE Setup - Store user's public key
 router.post('/setup-e2ee', 
   requireAuth,
   [
@@ -48,7 +53,6 @@ router.post('/setup-e2ee',
   }
 );
 
-// Get public key for a user (for encryption)
 router.get('/public-key/:userId', requireAuth, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -75,7 +79,6 @@ router.get('/public-key/:userId', requireAuth, async (req, res) => {
   }
 });
 
-// Send encrypted message
 router.post('/send-message',
   requireAuth,
   [
@@ -96,7 +99,6 @@ router.post('/send-message',
       const { recipientId, encryptedContent, encryptionMetadata, messageType = 'text' } = req.body;
       const senderId = req.session.user.id;
 
-      // Verify both users have E2EE enabled
       const [sender, recipient] = await Promise.all([
         User.findById(senderId, 'encryption'),
         User.findById(recipientId, 'encryption')
@@ -116,6 +118,19 @@ router.post('/send-message',
       });
 
       await message.save();
+
+      // Emit real-time message to recipient if Socket.IO is available
+      if (io) {
+        io.to(`user_${recipientId}`).emit('newMessage', {
+          messageId: message._id,
+          senderId,
+          recipientId,
+          encryptedContent,
+          encryptionMetadata,
+          messageType,
+          timestamp: message.createdAt
+        });
+      }
 
       res.json({
         success: true,
@@ -270,7 +285,6 @@ router.get('/conversations', requireAuth, async (req, res) => {
   }
 });
 
-// Search users for starting new conversations
 router.get('/search-users', requireAuth, async (req, res) => {
   try {
     const { query } = req.query;
@@ -294,7 +308,6 @@ router.get('/search-users', requireAuth, async (req, res) => {
   }
 });
 
-// Get E2EE status
 router.get('/e2ee-status', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
@@ -312,5 +325,108 @@ router.get('/e2ee-status', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/reset-e2ee', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    await User.findByIdAndUpdate(userId, {
+      'encryption.publicKey': null,
+      'encryption.keyGeneratedAt': null,
+      'encryption.isE2EEEnabled': false
+    });
+    
+    res.json({ success: true, message: 'E2EE reset successfully' });
+  } catch (error) {
+    console.error('Reset E2EE error:', error);
+    res.status(500).json({ error: 'Failed to reset E2EE' });
+  }
+});
+
+router.post('/admin/clear-all-e2ee', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId);
+    
+    if (!user || user.usertype !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { clearMessages = true } = req.body;
+    
+    console.log('Admin clearing all E2EE data...');
+    
+    const userUpdateResult = await User.updateMany(
+      {},
+      {
+        $unset: {
+          'encryption.publicKey': '',
+          'encryption.keyGeneratedAt': ''
+        },
+        $set: {
+          'encryption.isE2EEEnabled': false
+        }
+      }
+    );
+    
+    console.log(`Cleared encryption settings for ${userUpdateResult.modifiedCount} users`);
+    
+    let messageDeleteResult = null;
+    if (clearMessages) {
+      messageDeleteResult = await Message.deleteMany({});
+      console.log(`Deleted ${messageDeleteResult.deletedCount} encrypted messages`);
+    }
+    
+    res.json({
+      success: true,
+      message: 'All E2EE data cleared successfully',
+      usersCleared: userUpdateResult.modifiedCount,
+      messagesDeleted: messageDeleteResult ? messageDeleteResult.deletedCount : 0
+    });
+  } catch (error) {
+    console.error('Clear all E2EE error:', error);
+    res.status(500).json({ error: 'Failed to clear E2EE data' });
+  }
+});
+
+// Function to initialize Socket.IO for chat
+const initializeChatSocket = (socketIOInstance) => {
+  setSocketIO(socketIOInstance);
+
+  io.on('connection', (socket) => {
+    console.log('A user connected to the chat service');
+
+    // Authenticate socket connection
+    socket.on('authenticate', (userId) => {
+      if (userId) {
+        socket.userId = userId;
+        socket.join(`user_${userId}`);
+        console.log(`User ${userId} authenticated and joined their room`);
+      }
+    });
+
+    socket.on('joinConversation', (otherUserId) => {
+      if (socket.userId) {
+        socket.join(`conversation_${socket.userId}_${otherUserId}`);
+        socket.join(`conversation_${otherUserId}_${socket.userId}`);
+        console.log(`User ${socket.userId} joined conversation with ${otherUserId}`);
+      }
+    });
+
+    socket.on('leaveConversation', (otherUserId) => {
+      if (socket.userId) {
+        socket.leave(`conversation_${socket.userId}_${otherUserId}`);
+        socket.leave(`conversation_${otherUserId}_${socket.userId}`);
+        console.log(`User ${socket.userId} left conversation with ${otherUserId}`);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('A user disconnected from the chat service');
+    });
+  });
+};
+
 module.exports = router;
+module.exports.setSocketIO = setSocketIO;
+module.exports.initializeChatSocket = initializeChatSocket;
 

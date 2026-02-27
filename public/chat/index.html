@@ -46,6 +46,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
   <script src="../js/e2ee-crypto.js"></script>
   
   <script type="text/babel">
@@ -55,6 +56,7 @@
     const E2EEChatApp = () => {
       const [isE2EESetup, setIsE2EESetup] = useState(false);
       const [setupError, setSetupError] = useState(null);
+      const [keyMismatchError, setKeyMismatchError] = useState(false);
       const [loading, setLoading] = useState(true);
       const [conversations, setConversations] = useState([]);
       const [activeConversation, setActiveConversation] = useState(null);
@@ -65,6 +67,7 @@
       const [isSearching, setIsSearching] = useState(false);
       const [showUserSearch, setShowUserSearch] = useState(false);
       const [currentUser, setCurrentUser] = useState(null);
+      const [socket, setSocket] = useState(null);
       
       const messagesEndRef = useRef(null);
       
@@ -78,6 +81,29 @@
         scrollToBottom();
       }, [messages]);
       
+      // Cleanup socket on unmount
+      useEffect(() => {
+        return () => {
+          if (socket) {
+            socket.disconnect();
+          }
+        };
+      }, [socket]);
+      
+      // Periodic refresh for conversations and active messages
+      useEffect(() => {
+        const refreshInterval = setInterval(() => {
+          if (isE2EESetup && currentUser) {
+            loadConversations();
+            if (activeConversation) {
+              loadMessages(activeConversation._id);
+            }
+          }
+        }, 4500); // Refresh every 5 seconds
+        
+        return () => clearInterval(refreshInterval);
+      }, [isE2EESetup, currentUser, activeConversation]);
+      
       const initializeApp = async () => {
         try {
           // Check current user session
@@ -90,7 +116,38 @@
           const userData = await userResponse.json();
           setCurrentUser(userData);
           
-          // Check E2EE status
+          const newSocket = io();
+          setSocket(newSocket);
+          
+          newSocket.emit('authenticate', userData.id);
+          
+          newSocket.on('newMessage', async (messageData) => {
+            console.log('Received new message:', messageData);
+            if (activeConversation && 
+                (messageData.senderId === activeConversation._id || messageData.recipientId === activeConversation._id)) {
+              try {
+                const isRecipient = messageData.recipientId === currentUser.id;
+                const decryptedContent = await window.e2eeCrypto.decryptMessage(messageData, isRecipient);
+                
+                setMessages(prevMessages => [...prevMessages, {
+                  ...messageData,
+                  senderId: { username: activeConversation.username },
+                  decryptedContent,
+                  createdAt: new Date(messageData.timestamp)
+                }]);
+              } catch (error) {
+                console.error('Failed to decrypt real-time message:', error);
+                setMessages(prevMessages => [...prevMessages, {
+                  ...messageData,
+                  senderId: { username: activeConversation.username },
+                  decryptedContent: '[Failed to decrypt]',
+                  createdAt: new Date(messageData.timestamp)
+                }]);
+              }
+            }
+            loadConversations();
+          });
+          
           const e2eeResponse = await fetch('/chat/e2ee-status');
           const e2eeStatus = await e2eeResponse.json();
           
@@ -98,7 +155,6 @@
             setIsE2EESetup(true);
             await loadConversations();
           } else {
-            // Auto-setup E2EE if not enabled
             console.log('E2EE not setup, auto-enabling...');
             await setupE2EE();
           }
@@ -168,11 +224,41 @@
           const decryptedMessages = await Promise.all(
             data.messages.map(async (message) => {
               try {
+                console.log('Decrypting message:', message);
+                console.log('Current user ID:', currentUser.id);
+                console.log('Message sender ID:', message.senderId._id);
+                console.log('Message recipient ID:', message.recipientId._id);
+                
                 const isRecipient = message.recipientId._id === currentUser.id;
+                const isSender = message.senderId._id === currentUser.id;
+                console.log('Is recipient:', isRecipient, 'Is sender:', isSender);
+                
+                if (!isRecipient && !isSender) {
+                  console.error('User is neither sender nor recipient of this message!');
+                  return { ...message, decryptedContent: '[Not authorized to decrypt]' };
+                }
+                
+                console.log('Message structure:', {
+                  hasEncryptedContent: !!message.encryptedContent,
+                  encryptedContentLength: message.encryptedContent ? message.encryptedContent.length : 0,
+                  hasEncryptionMetadata: !!message.encryptionMetadata,
+                  metadataKeys: message.encryptionMetadata ? Object.keys(message.encryptionMetadata) : []
+                });
+                
                 const decryptedContent = await window.e2eeCrypto.decryptMessage(message, isRecipient);
+                console.log('Decryption successful for message');
                 return { ...message, decryptedContent };
               } catch (error) {
                 console.error('Failed to decrypt message:', error);
+                console.error('Message that failed:', message);
+                
+                // Check if it's a key mismatch error
+                if (error.message && error.message.includes('Symmetric key decryption failed')) {
+                  console.log('Key mismatch detected - setting error state');
+                  setKeyMismatchError(true);
+                  return { ...message, decryptedContent: '[Key mismatch - reset E2EE required]' };
+                }
+                
                 return { ...message, decryptedContent: '[Failed to decrypt]' };
               }
             })
@@ -268,6 +354,12 @@
         setSearchQuery('');
         setSearchResults([]);
         setIsSearching(false);
+        
+        // Join conversation room via socket
+        if (socket) {
+          socket.emit('joinConversation', user._id);
+        }
+        
         await loadMessages(user._id);
       };
       
@@ -339,8 +431,39 @@
       
       return (
         <div className="min-h-screen flex">
+          {/* Key Mismatch Error Banner */}
+          {keyMismatchError && (
+            <div className="fixed top-0 left-0 right-0 bg-red-500 text-white p-4 z-50">
+              <div className="max-w-4xl mx-auto flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
+                  <div>
+                    <p className="font-semibold">Encryption Key Mismatch</p>
+                    <p className="text-sm">Your encryption keys have changed. Old messages cannot be decrypted.</p>
+                  </div>
+                </div>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => window.e2eeCrypto.resetE2EE()}
+                    className="bg-white text-red-500 px-4 py-2 rounded font-medium hover:bg-red-50"
+                  >
+                    Reset E2EE
+                  </button>
+                  <button 
+                    onClick={() => setKeyMismatchError(false)}
+                    className="text-white hover:text-red-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Sidebar */}
-          <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+          <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col" style={{ marginTop: keyMismatchError ? '80px' : '0' }}>
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h1 className="text-xl font-bold text-gray-800">Secure Chat</h1>
@@ -419,6 +542,10 @@
                   key={conv._id}
                   onClick={() => {
                     setActiveConversation(conv);
+                    // Join conversation room via socket
+                    if (socket) {
+                      socket.emit('joinConversation', conv._id);
+                    }
                     loadMessages(conv._id);
                   }}
                   className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
@@ -450,7 +577,7 @@
           </div>
           
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col" style={{ marginTop: keyMismatchError ? '80px' : '0' }}>
             {activeConversation ? (
               <>
                 {/* Chat Header */}

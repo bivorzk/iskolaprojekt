@@ -25,6 +25,8 @@ const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
 const chatService = require('./services/chat-service');
 const cors = require('cors');
+const {Server} = require('socket.io');
+
 
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -66,6 +68,22 @@ app.get('/', (req, res) => {
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(favicon(path.join(process.cwd(), "public", "favicon.ico")));
 app.use(cors());
+
+// Create HTTP server first
+const server = require('http').createServer(app);
+
+// Attach Socket.IO to the HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Initialize chat service with Socket.IO
+chatService.initializeChatSocket(io);
+
+
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
@@ -190,6 +208,6 @@ app.use((req, res) => {
 //  res.status(404).send('Page not found 😀');
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });

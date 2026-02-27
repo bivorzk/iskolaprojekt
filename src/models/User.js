@@ -76,27 +76,22 @@ const userSchema = new mongoose.Schema({
   },
   userPersonalInfo: [userPersonalInfoSchema], // Subdocument for personal info
   
-  // E2EE encryption fields
   encryption: {
-    // Public key for receiving encrypted messages (stored as base64)
     publicKey: {
       type: String,
       required: false
     },
     
-    // Key generation timestamp
     keyGeneratedAt: {
       type: Date,
       required: false
     },
     
-    // Whether the user has E2EE enabled
     isE2EEEnabled: {
       type: Boolean,
       default: false
     },
     
-    // Encryption algorithm details
     keyAlgorithm: {
       type: String,
       default: 'RSA-OAEP'
