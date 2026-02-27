@@ -1,0 +1,40 @@
+.message-bubble {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.encryption-indicator {
+  background: linear-gradient(45deg, #10b981, #059669);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.7; 
+  }
+}
+
+/* Historical message styling */
+.message-historical {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-left: 4px solid #d1d5db;
+}
+
+/* Error message styling */
+.message-error {
+  background: linear-gradient(135deg, #fef7f7 0%, #fed7d7 100%);
+  border-left: 4px solid #f56565;
+}

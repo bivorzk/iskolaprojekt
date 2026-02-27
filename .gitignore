@@ -13,3 +13,4 @@ node_modules/
 .env
 docs/redis*
 tests/code_analytics.json
+todo.md

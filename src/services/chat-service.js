@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const User = require('../models/User');
 const { Message } = require('../models/Message');
 const { body, validationResult } = require('express-validator');
+const rediLuaService = require('./redis-lua-service');
 
-let io; // Socket.IO instance
+let io; 
 
-// Function to set the Socket.IO instance
 const setSocketIO = (socketIOInstance) => {
   io = socketIOInstance;
 };
@@ -17,6 +18,34 @@ const requireAuth = (req, res, next) => {
   }
   next();
 };
+
+
+async function rateLimitByUser(req, res, next) {
+  try {
+    const userId = req.session?.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required for rate limiting' });
+    }
+    const key = `rate_limit:user:${userId}`;
+    const result = await rediLuaService.checkRateLimit(key, 60, 75); // 75 requests per 60 seconds
+    if (!result.allowed) {
+      return res.status(429).sendFile(path.join(__dirname, '../../public/429/429.html'));
+    }
+
+    res.set({
+      'X-RateLimit-Limit': '75',
+      'X-RateLimit-Remaining': Math.max(0, 74 - result.currentCount),
+      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
+    });
+    next();
+  } catch (error) {
+    console.error('Rate limiting error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+  
+}
+
+router.use('/', rateLimitByUser);
 
 router.post('/setup-e2ee', 
   requireAuth,
@@ -119,7 +148,6 @@ router.post('/send-message',
 
       await message.save();
 
-      // Emit real-time message to recipient if Socket.IO is available
       if (io) {
         io.to(`user_${recipientId}`).emit('newMessage', {
           messageId: message._id,
@@ -285,6 +313,18 @@ router.get('/conversations', requireAuth, async (req, res) => {
   }
 });
 
+async function searchUsers(query, userId, excludeAdmins = false) {
+  const filter = {
+    _id: { $ne: userId },
+    'encryption.isE2EEEnabled': true,
+    username: { $regex: query, $options: 'i' }
+  };
+  if (excludeAdmins) {
+    filter.usertype = { $ne: 'admin' };
+  }
+  return User.find(filter, 'username encryption.isE2EEEnabled').limit(20);
+}
+
 router.get('/search-users', requireAuth, async (req, res) => {
   try {
     const { query } = req.query;
@@ -293,14 +333,10 @@ router.get('/search-users', requireAuth, async (req, res) => {
     if (!query || query.length < 2) {
       return res.json({ users: [] });
     }
+    const currentUser = await User.findById(userId);
+    const excludeAdmins = ['student', 'teacher', 'parent'].includes(currentUser.usertype);
 
-    const users = await User.find({
-      _id: { $ne: userId },
-      'encryption.isE2EEEnabled': true,
-      username: { $regex: query, $options: 'i' }
-    }, 'username encryption.isE2EEEnabled')
-    .limit(20);
-
+    const users = await searchUsers(query, userId, excludeAdmins);
     res.json({ users });
   } catch (error) {
     console.error('Search users error:', error);

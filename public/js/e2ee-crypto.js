@@ -173,8 +173,10 @@ class E2EECrypto {
 
   async decryptMessage(encryptedData, isRecipient = true) {
     try {
+      console.log('=== DECRYPTION DEBUG ===');
       console.log('Decrypting message with data:', encryptedData);
       console.log('Is recipient:', isRecipient);
+      console.log('Current user role:', isRecipient ? 'RECIPIENT' : 'SENDER');
       
       const privateKey = await this.getCurrentPrivateKey();
       if (!privateKey) {
@@ -194,34 +196,106 @@ class E2EECrypto {
         ? encryptionMetadata.recipientEncryptedKey 
         : encryptionMetadata.senderEncryptedKey;
       
-      console.log('Using encrypted key:', encryptedKeyBase64 ? 'present' : 'missing');
+      console.log(`Using ${isRecipient ? 'RECIPIENT' : 'SENDER'} encrypted key`);
+      console.log('Encrypted key present:', !!encryptedKeyBase64);
       
       if (!encryptedKeyBase64) {
         throw new Error(`Missing encrypted key for ${isRecipient ? 'recipient' : 'sender'}`);
       }
       
       console.log('Encrypted key base64 length:', encryptedKeyBase64.length);
-      console.log('Encrypted key sample:', encryptedKeyBase64.substring(0, 50) + '...');
       
       const encryptedKeyBuffer = this.base64ToArrayBuffer(encryptedKeyBase64);
       console.log('Encrypted key buffer length:', encryptedKeyBuffer.byteLength);
       console.log('Decrypting symmetric key...');
       
       let symmetricKeyBuffer;
-      try {
-        symmetricKeyBuffer = await window.crypto.subtle.decrypt(
-          {
-            name: 'RSA-OAEP'
-          },
-          privateKey,
-          encryptedKeyBuffer
-        );
-        console.log('Symmetric key decrypted successfully, length:', symmetricKeyBuffer.byteLength);
-      } catch (keyDecryptError) {
-        console.error('Failed to decrypt symmetric key:', keyDecryptError);
-        console.error('Private key algorithm:', privateKey.algorithm);
-        console.error('Private key usages:', privateKey.usages);
-        throw new Error(`Symmetric key decryption failed: ${keyDecryptError.message}. This usually means the message was encrypted with a different public key.`);
+      let decryptionSuccessful = false;
+      const privateKeysToTry = [];
+      
+      // Get current key first
+      const currentKeyId = localStorage.getItem('e2ee_current_key_id');
+      privateKeysToTry.push({ key: privateKey, keyId: currentKeyId });
+      
+      // Then get all other private keys, sorted by ID (newer keys have higher timestamps)
+      const otherKeyIds = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('e2ee_private_key_') && key !== `e2ee_private_key_${currentKeyId}`) {
+          const keyId = key.replace('e2ee_private_key_', '');
+          otherKeyIds.push(keyId);
+        }
+      }
+      
+      // Sort keys by creation time (newer first, then older)
+      otherKeyIds.sort((a, b) => {
+        const timestampA = parseInt(a.split('_')[1]) || 0;
+        const timestampB = parseInt(b.split('_')[1]) || 0;
+        return timestampB - timestampA; // Descending order (newer first)
+      });
+      
+      // Load and add other keys
+      for (const keyId of otherKeyIds) {
+        const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
+        if (privateKeyBase64) {
+          try {
+            const privateKeyBuffer = this.base64ToArrayBuffer(privateKeyBase64);
+            const privKey = await window.crypto.subtle.importKey(
+              'pkcs8',
+              privateKeyBuffer,
+              {
+                name: 'RSA-OAEP',
+                hash: 'SHA-256'
+              },
+              false,
+              ['decrypt']
+            );
+            privateKeysToTry.push({ key: privKey, keyId });
+          } catch (importError) {
+            console.warn(`Failed to import private key ${keyId}:`, importError);
+          }
+        }
+      }
+      
+      console.log(`Trying decryption with ${privateKeysToTry.length} keys in order:`, 
+        privateKeysToTry.map(k => k.keyId));
+      
+      for (const { key, keyId } of privateKeysToTry) {
+        try {
+          symmetricKeyBuffer = await window.crypto.subtle.decrypt(
+            {
+              name: 'RSA-OAEP'
+            },
+            key,
+            encryptedKeyBuffer
+          );
+          console.log(`Symmetric key decrypted successfully with key ${keyId}, length:`, symmetricKeyBuffer.byteLength);
+          decryptionSuccessful = true;
+          
+          // Only update current key if we used a newer key than current, not older ones
+          const currentKeyId = localStorage.getItem('e2ee_current_key_id');
+          if (keyId !== currentKeyId) {
+            console.log(`Successfully decrypted with different key ${keyId}, but keeping current key ${currentKeyId}`);
+            // Don't change the current key - this allows us to decrypt old messages without breaking new ones
+          }
+          break;
+        } catch (keyDecryptError) {
+          console.log(`Failed to decrypt with key ${keyId}:`, keyDecryptError.message);
+        }
+      }
+      
+      if (!decryptionSuccessful) {
+        // Enhanced debug information before failing
+        console.error('=== DECRYPTION FAILURE DEBUG ===');
+        console.error('Available keys tried:', privateKeysToTry.map(k => k.keyId));
+        console.error('Current key ID:', localStorage.getItem('e2ee_current_key_id'));
+        console.error('All E2EE localStorage keys:', 
+          Object.keys(localStorage).filter(k => k.startsWith('e2ee_')));
+        console.error('Encrypted key buffer length:', encryptedKeyBuffer.byteLength);
+        console.error('Expected RSA key buffer length: 256 bytes');
+        console.error('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+        
+        throw new Error('Symmetric key decryption failed with all available keys. This usually means the message was encrypted with a different public key.');
       }
 
       const symmetricKey = await window.crypto.subtle.importKey(
@@ -336,6 +410,31 @@ class E2EECrypto {
   isE2EESetup() {
     const keyId = localStorage.getItem('e2ee_current_key_id');
     return !!keyId && !!localStorage.getItem(`e2ee_private_key_${keyId}`);
+  }
+
+
+  // Key versioning 
+  async versionKeys() {
+      try {
+        const keyId = localStorage.getItem('e2ee_current_key_id');
+        if (!keyId) {
+          throw new Error('No current key ID found for versioning');
+        }
+        const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
+        const publicKeyBase64 = localStorage.getItem(`e2ee_public_key_${keyId}`);
+        if (!privateKeyBase64 || !publicKeyBase64) {
+          throw new Error('Current keys not found for versioning');
+        }
+        const newKeyId = this.generateKeyId();
+        localStorage.setItem(`e2ee_private_key_${newKeyId}`, privateKeyBase64);
+        localStorage.setItem(`e2ee_public_key_${newKeyId}`, publicKeyBase64);
+        localStorage.setItem('e2ee_current_key_id', newKeyId);
+        console.log(`Keys versioned successfully. New key ID: ${newKeyId}`);
+        return newKeyId;
+      } catch (error) {
+        console.error('Key versioning failed:', error);
+        throw new Error('Failed to version keys');
+      }
   }
 
   /**

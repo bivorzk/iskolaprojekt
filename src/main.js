@@ -80,10 +80,7 @@ const io = new Server(server, {
   }
 });
 
-// Initialize chat service with Socket.IO
 chatService.initializeChatSocket(io);
-
-
 
 const createStore = () => redisAvailable ? new RedisStore({
   sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
@@ -148,7 +145,6 @@ app.use('/order', limiter);
 app.use('/2fa', limiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
-app.use('/chat', limiter);
 
 app.use('/dashboard', (req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
