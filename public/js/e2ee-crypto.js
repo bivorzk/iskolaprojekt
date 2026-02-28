@@ -284,14 +284,21 @@ class E2EECrypto {
       }
       
       if (!decryptionSuccessful) {
-        // Only log detailed error info in debug mode or for the first few failures
+        // Implement smart error logging to prevent console spam
         const errorCount = this.getDecryptionErrorCount();
-        if (this.debugMode || errorCount < 3) {
-          console.error('=== DECRYPTION FAILURE ===');
-          console.error('Available keys tried:', privateKeysToTry.length);
-          console.error('Current key ID:', currentKeyId);
-          console.error('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+        const shouldLogError = this.debugMode || (errorCount < 5 && errorCount % 5 === 0);
+        
+        if (shouldLogError) {
+          console.warn(`=== E2EE Decryption Failed (${errorCount + 1} total) ===`);
+          console.warn('Available keys tried:', privateKeysToTry.length);
+          console.warn('Current key ID:', currentKeyId);
+          console.warn('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+          
+          if (errorCount === 0) {
+            console.warn('Tip: Use window.debugE2EE.enableDebug() for detailed logging');
+          }
         }
+        
         this.incrementDecryptionErrorCount();
         
         throw new Error('Symmetric key decryption failed with all available keys. This usually means the message was encrypted with a different public key.');
@@ -573,16 +580,33 @@ class E2EECrypto {
    * Track decryption error count to reduce console spam
    */
   getDecryptionErrorCount() {
-    return parseInt(sessionStorage.getItem('e2ee_decrypt_errors') || '0');
+    const key = 'e2ee_decrypt_errors_' + (localStorage.getItem('e2ee_current_key_id') || 'unknown');
+    return parseInt(sessionStorage.getItem(key) || '0');
   }
   
   incrementDecryptionErrorCount() {
+    const key = 'e2ee_decrypt_errors_' + (localStorage.getItem('e2ee_current_key_id') || 'unknown');
     const count = this.getDecryptionErrorCount() + 1;
-    sessionStorage.setItem('e2ee_decrypt_errors', count.toString());
+    sessionStorage.setItem(key, count.toString());
+    
+    // Auto-enable debug mode if errors are excessive
+    if (count === 10 && !this.debugMode) {
+      console.warn('High number of decryption errors detected. Auto-enabling debug mode.');
+      this.setDebugMode(true);
+    }
   }
   
   resetDecryptionErrorCount() {
-    sessionStorage.removeItem('e2ee_decrypt_errors');
+    // Clear all decryption error counts
+    const keysToRemove = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('e2ee_decrypt_errors_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    console.log('Decryption error counts reset');
   }
   
   /**
@@ -590,7 +614,14 @@ class E2EECrypto {
    */
   setDebugMode(enabled) {
     this.debugMode = enabled;
-    console.log(`E2EE debug mode ${enabled ? 'enabled' : 'disabled'}`);
+    console.log(`🔧 E2EE debug mode ${enabled ? 'enabled' : 'disabled'}`);
+    
+    if (enabled) {
+      console.log('Debug commands:');
+      console.log('  window.debugE2EE.status() - Current E2EE status');
+      console.log('  window.debugE2EE.disableDebug() - Disable debug mode');
+      console.log('  window.debugE2EE.resetErrorCount() - Reset error counts');
+    }
   }
 }
 
@@ -605,19 +636,42 @@ window.debugE2EE = {
   enableDebug: () => window.e2eeCrypto.setDebugMode(true),
   disableDebug: () => window.e2eeCrypto.setDebugMode(false),
   resetErrorCount: () => window.e2eeCrypto.resetDecryptionErrorCount(),
+  forceKeyRefresh: async () => {
+    console.log('🔄 Forcing key refresh...');
+    window.e2eeCrypto.resetDecryptionErrorCount();
+    window.e2eeCrypto.keyPairs.clear();
+    window.e2eeCrypto.importedPublicKeys.clear();
+    console.log('✅ Key caches cleared. Try your operation again.');
+  },
   status: () => {
     const keyId = localStorage.getItem('e2ee_current_key_id');
     const hasPrivateKey = !!localStorage.getItem(`e2ee_private_key_${keyId}`);
     const hasPublicKey = !!localStorage.getItem(`e2ee_public_key_${keyId}`);
-    return {
+    const errorCount = window.e2eeCrypto.getDecryptionErrorCount();
+    
+    const status = {
       isSetup: window.e2eeCrypto.isE2EESetup(),
       keyId,
       hasPrivateKey,
       hasPublicKey,
       debugMode: window.e2eeCrypto.debugMode,
-      errorCount: window.e2eeCrypto.getDecryptionErrorCount(),
-      localStorageKeys: Object.keys(localStorage).filter(k => k.startsWith('e2ee_'))
+      errorCount,
+      allLocalKeys: Object.keys(localStorage).filter(k => k.startsWith('e2ee_')),
+      recommendations: []
     };
+    
+    if (errorCount > 5) {
+      status.recommendations.push('Consider running window.debugE2EE.resetE2EE() to fix persistent errors');
+    }
+    if (errorCount > 0 && !window.e2eeCrypto.debugMode) {
+      status.recommendations.push('Run window.debugE2EE.enableDebug() for detailed error information');
+    }
+    if (status.allLocalKeys.length > 6) {
+      status.recommendations.push('Multiple key versions detected - old messages may not decrypt');
+    }
+    
+    console.table(status);
+    return status;
   }
 };
 

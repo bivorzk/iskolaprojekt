@@ -22,11 +22,90 @@ const E2EEChatApp = () => {
   // Initialize app
   useEffect(() => {
     initializeApp();
+    
+    // Production safety: Add global error handler for crypto operations
+    window.addEventListener('error', (event) => {
+      if (event.error && event.error.message && event.error.message.includes('crypto')) {
+        console.error('Crypto operation failed:', event.error);
+        // Auto-attempt recovery
+        if (window.e2eeCrypto) {
+          try {
+            console.log('Attempting crypto error recovery...');
+            window.e2eeCrypto.resetDecryptionErrorCount();
+            window.e2eeCrypto.keyPairs && window.e2eeCrypto.keyPairs.clear();
+            window.e2eeCrypto.importedPublicKeys && window.e2eeCrypto.importedPublicKeys.clear();
+          } catch (recoveryError) {
+            console.warn('Auto-recovery failed:', recoveryError);
+          }
+        }
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('error', () => {});
+    };
   }, []);
   
   const getActiveMessages = () => {
     const activeMessages = activeConversation ? messages[activeConversation._id] || [] : [];
     return activeMessages;
+  };
+  
+  // Group consecutive error messages for better UI
+  const groupMessages = (messages) => {
+    if (!messages.length) return [];
+    
+    const grouped = [];
+    let errorGroup = [];
+    
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      const isError = message.decryptedContent?.includes('[Key mismatch') || 
+                     message.decryptedContent?.includes('[Failed to decrypt]');
+      
+      if (isError) {
+        errorGroup.push(message);
+      } else {
+        // If we have accumulated errors, create a group
+        if (errorGroup.length > 0) {
+          if (errorGroup.length === 1) {
+            grouped.push(errorGroup[0]);
+          } else {
+            grouped.push({
+              _id: `error_group_${errorGroup[0]._id}`,
+              isErrorGroup: true,
+              errorCount: errorGroup.length,
+              firstError: errorGroup[0],
+              lastError: errorGroup[errorGroup.length - 1],
+              senderId: errorGroup[0].senderId,
+              createdAt: errorGroup[errorGroup.length - 1].createdAt
+            });
+          }
+          errorGroup = [];
+        }
+        
+        grouped.push(message);
+      }
+    }
+    
+    // Handle remaining errors at the end
+    if (errorGroup.length > 0) {
+      if (errorGroup.length === 1) {
+        grouped.push(errorGroup[0]);
+      } else {
+        grouped.push({
+          _id: `error_group_${errorGroup[0]._id}`,
+          isErrorGroup: true,
+          errorCount: errorGroup.length,
+          firstError: errorGroup[0],
+          lastError: errorGroup[errorGroup.length - 1],
+          senderId: errorGroup[0].senderId,
+          createdAt: errorGroup[errorGroup.length - 1].createdAt
+        });
+      }
+    }
+    
+    return grouped;
   };
   
   useEffect(() => {
@@ -128,6 +207,11 @@ const E2EEChatApp = () => {
   
   const initializeApp = async () => {
     try {
+      // Production safety: Validate crypto support
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error('Your browser does not support the required encryption features. Please use a modern browser.');
+      }
+      
       // Check current user session
       const userResponse = await fetch('/api/current-user');
       if (!userResponse.ok) {
@@ -138,11 +222,31 @@ const E2EEChatApp = () => {
       const userData = await userResponse.json();
       setCurrentUser(userData);
       
-      const newSocket = io();
-      setSocket(newSocket);
+      // Production safety: Initialize Socket.IO with better error handling
+      try {
+        const newSocket = io({
+          transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
+          timeout: 10000,
+          forceNew: true
+        });
+        
+        newSocket.on('connect_error', (error) => {
+          console.warn('Socket connection error:', error);
+          // Continue without real-time updates if socket fails
+        });
+        
+        setSocket(newSocket);
+        newSocket.emit('authenticate', userData.id);
+      } catch (socketError) {
+        console.warn('Socket.IO initialization failed:', socketError);
+        // Continue without real-time updates
+      }
       
-      
-      newSocket.emit('authenticate', userData.id);
+      // Production safety: Check if E2EE crypto module is loaded
+      if (!window.e2eeCrypto) {
+        console.error('E2EE crypto module not loaded');
+        throw new Error('Encryption module failed to load. Please refresh the page.');
+      }
       
       const e2eeResponse = await fetch('/chat/e2ee-status');
       const e2eeStatus = await e2eeResponse.json();
@@ -162,7 +266,7 @@ const E2EEChatApp = () => {
       }
     } catch (error) {
       console.error('Failed to initialize app:', error);
-      setSetupError('Failed to initialize chat. Please refresh the page.');
+      setSetupError(error.message || 'Failed to initialize chat. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -190,34 +294,119 @@ const E2EEChatApp = () => {
       setLoading(true);
       setSetupError(null);
       
+      // Production safety: Check if already setup
+      if (window.e2eeCrypto && window.e2eeCrypto.isE2EESetup()) {
+        console.log('E2EE already setup, verifying server sync...');
+        
+        // Verify server has our public key
+        try {
+          const statusResponse = await fetch('/chat/e2ee-status');
+          const statusData = await statusResponse.json();
+          
+          if (statusData.isEnabled && statusData.hasPublicKey) {
+            setIsE2EESetup(true);
+            await loadConversations();
+            return;
+          } else {
+            console.log('Server missing E2EE setup, re-initializing...');
+          }
+        } catch (verifyError) {
+          console.warn('Could not verify server E2EE status:', verifyError);
+        }
+      }
+      
       console.log('Generating encryption keys...');
-      // Generate key pair
-      const keys = await window.e2eeCrypto.generateKeyPair();
-      window.e2eeCrypto.storePublicKey(keys.keyId, keys.publicKey);
+      
+      // Production safety: Multiple attempts for key generation
+      let keys = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`Key generation attempt ${attempt}/3`);
+          keys = await window.e2eeCrypto.generateKeyPair();
+          if (keys && keys.publicKey) {
+            window.e2eeCrypto.storePublicKey(keys.keyId, keys.publicKey);
+            break;
+          }
+        } catch (error) {
+          console.warn(`Key generation attempt ${attempt} failed:`, error);
+          if (attempt === 3) throw error;
+          
+          // Clear any partially generated keys and wait before retry
+          window.e2eeCrypto.clearKeys();
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+      
+      if (!keys) {
+        throw new Error('Failed to generate encryption keys after multiple attempts');
+      }
       
       console.log('Sending public key to server...');
-      // Send public key to server
-      const response = await fetch('/chat/setup-e2ee', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          publicKey: keys.publicKey,
-          keyAlgorithm: 'RSA-OAEP'
-        })
-      });
       
-      if (!response.ok) {
-        throw new Error('Failed to setup E2EE on server');
+      // Production safety: Retry server setup
+      let serverSetup = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const response = await fetch('/chat/setup-e2ee', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              publicKey: keys.publicKey,
+              keyAlgorithm: 'RSA-OAEP'
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+          }
+          
+          serverSetup = true;
+          break;
+        } catch (error) {
+          console.warn(`Server setup attempt ${attempt} failed:`, error);
+          if (attempt === 3) throw error;
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+      
+      if (!serverSetup) {
+        throw new Error('Failed to setup E2EE on server after multiple attempts');
       }
       
       console.log('E2EE setup completed successfully!');
       setIsE2EESetup(true);
       await loadConversations();
+      
+      // Production safety: Verify setup worked
+      setTimeout(async () => {
+        if (!window.e2eeCrypto.isE2EESetup()) {
+          console.error('E2EE setup verification failed');
+          setSetupError('Setup verification failed. Please refresh the page.');
+          setIsE2EESetup(false);
+        }
+      }, 1000);
+      
     } catch (error) {
       console.error('E2EE setup failed:', error);
-      setSetupError(error.message || 'Failed to setup End-to-End Encryption. Please try again.');
+      
+      // Production-friendly error messages
+      let userMessage = 'Setup failed: ';
+      if (error.message.includes('timeout')) {
+        userMessage += 'Connection timeout. Please check your internet and try again.';
+      } else if (error.message.includes('Server error')) {
+        userMessage += 'Server error. Please try again in a moment.';
+      } else if (error.message.includes('generate')) {
+        userMessage += 'Could not generate secure keys. Please refresh and try again.';
+      } else {
+        userMessage += error.message || 'Unknown error occurred. Please try again.';
+      }
+      
+      setSetupError(userMessage);
       setIsE2EESetup(false);
     } finally {
       setLoading(false);
@@ -239,14 +428,34 @@ const E2EEChatApp = () => {
       const response = await fetch(`/chat/messages/${otherUserId}`);
       const data = await response.json();
       
+      // Production safety: Validate E2EE setup before attempting decryption
+      if (!window.e2eeCrypto || !window.e2eeCrypto.isE2EESetup()) {
+        console.warn('E2EE not properly initialized, attempting setup...');
+        await initializeApp();
+        
+        // If still not setup, show all messages as encrypted
+        if (!window.e2eeCrypto.isE2EESetup()) {
+          const safeMessages = data.messages.map(message => ({
+            ...message,
+            decryptedContent: '[E2EE not initialized - please refresh page]'
+          }));
+          setMessages(prevMessages => ({
+            ...prevMessages,
+            [otherUserId]: safeMessages
+          }));
+          return;
+        }
+      }
+      
       // Track decryption results to avoid spamming console and state updates
       let hasKeyMismatchError = false;
       let recentKeyMismatchCount = 0;
       let totalKeyMismatchCount = 0;
+      let successfulDecryptions = 0;
       
-      // Decrypt messages
+      // Decrypt messages with enhanced error handling
       const decryptedMessages = await Promise.all(
-        data.messages.map(async (message) => {
+        data.messages.map(async (message, index) => {
           try {
             const isRecipient = message.recipientId._id === currentUser.id;
             const isSender = message.senderId._id === currentUser.id;
@@ -256,10 +465,23 @@ const E2EEChatApp = () => {
               return { ...message, decryptedContent: '[Not authorized to decrypt]' };
             }
             
-            const decryptedContent = await window.e2eeCrypto.decryptMessage(message, isRecipient);
+            // Production safety: validate message structure
+            if (!message.encryptedContent || !message.encryptionMetadata) {
+              console.warn(`Invalid message structure for message ${message._id}`);
+              return { ...message, decryptedContent: '[Invalid message format]' };
+            }
+            
+            // Production safety: Add timeout for decryption
+            const decryptionPromise = window.e2eeCrypto.decryptMessage(message, isRecipient);
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Decryption timeout')), 5000);
+            });
+            
+            const decryptedContent = await Promise.race([decryptionPromise, timeoutPromise]);
+            successfulDecryptions++;
             return { ...message, decryptedContent };
           } catch (error) {
-            // Handle different types of decryption errors
+            // Enhanced error classification for production
             if (error.message && error.message.includes('Symmetric key decryption failed')) {
               const messageAge = new Date() - new Date(message.createdAt);
               const isRecentMessage = messageAge < 24 * 60 * 60 * 1000; // Less than 24 hours old
@@ -274,18 +496,44 @@ const E2EEChatApp = () => {
                 // For older messages, assume they're from a previous key setup
                 return { ...message, decryptedContent: '[Message from previous encryption setup - cannot decrypt]' };
               }
+            } else if (error.message && error.message.includes('timeout')) {
+              console.warn(`Decryption timeout for message ${message._id}`);
+              return { ...message, decryptedContent: '[Decryption timeout - server may be slow]' };
             } else {
               // Other decryption errors
               console.warn(`Decryption failed for message ${message._id}:`, error.message);
-              return { ...message, decryptedContent: '[Failed to decrypt]' };
+              return { ...message, decryptedContent: '[Failed to decrypt - try refreshing]' };
             }
           }
         })
       );
       
-      // Log summary instead of individual message errors
-      if (totalKeyMismatchCount > 0) {
-        console.log(`Decryption summary: ${totalKeyMismatchCount} total key mismatches (${recentKeyMismatchCount} recent, ${totalKeyMismatchCount - recentKeyMismatchCount} historical)`);
+      // Production safety: Auto-recovery if too many failures
+      const totalMessages = data.messages.length;
+      const failureRate = totalKeyMismatchCount / totalMessages;
+      
+      if (totalMessages > 0) {
+        console.log(`Decryption summary: ${successfulDecryptions}/${totalMessages} successful, ${totalKeyMismatchCount} key mismatches (failure rate: ${(failureRate * 100).toFixed(1)}%)`);
+        
+        // If failure rate is too high and we have recent messages, something is wrong
+        if (failureRate > 0.5 && recentKeyMismatchCount > 2) {
+          console.warn('High failure rate detected - may need key refresh');
+          
+          // Auto-attempt recovery in production
+          try {
+            console.log('Attempting automatic key recovery...');
+            window.e2eeCrypto.resetDecryptionErrorCount();
+            // Clear key caches
+            if (window.e2eeCrypto.keyPairs) {
+              window.e2eeCrypto.keyPairs.clear();
+            }
+            if (window.e2eeCrypto.importedPublicKeys) {
+              window.e2eeCrypto.importedPublicKeys.clear();
+            }
+          } catch (recoveryError) {
+            console.warn('Auto-recovery failed:', recoveryError);
+          }
+        }
       }
       
       // Only set error state once if there are recent key mismatches
@@ -315,46 +563,116 @@ const E2EEChatApp = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeConversation) return;
     
+    // Production safety: Validate E2EE before sending
+    if (!window.e2eeCrypto || !window.e2eeCrypto.isE2EESetup()) {
+      console.error('E2EE not properly initialized for sending');
+      alert('Encryption not available. Please refresh the page and try again.');
+      return;
+    }
+
     try {
-      // Get recipient's public key
-      const keyResponse = await fetch(`/chat/public-key/${activeConversation._id}`);
-      const keyData = await keyResponse.json();
+      // Get recipient's public key with retry logic
+      let keyData = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const keyResponse = await fetch(`/chat/public-key/${activeConversation._id}`);
+          if (!keyResponse.ok) {
+            throw new Error(`Server error: ${keyResponse.status}`);
+          }
+          keyData = await keyResponse.json();
+          break;
+        } catch (error) {
+          console.warn(`Public key fetch attempt ${attempt} failed:`, error);
+          if (attempt === 3) throw new Error('Could not retrieve recipient\'s public key');
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
       
-      // Encrypt message
-      const encryptedData = await window.e2eeCrypto.encryptMessage(
+      if (!keyData || !keyData.publicKey) {
+        throw new Error('Invalid recipient public key received');
+      }
+
+      // Encrypt message with timeout protection
+      const encryptionPromise = window.e2eeCrypto.encryptMessage(
         newMessage,
         keyData.publicKey,
         activeConversation._id
       );
       
-      // Send encrypted message
-      const response = await fetch('/chat/send-message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          recipientId: activeConversation._id,
-          encryptedContent: encryptedData.encryptedContent,
-          encryptionMetadata: encryptedData.encryptionMetadata,
-          messageType: 'text'
-        })
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Encryption timeout')), 10000);
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to send message');
+      const encryptedData = await Promise.race([encryptionPromise, timeoutPromise]);
+      
+      if (!encryptedData || !encryptedData.encryptedContent) {
+        throw new Error('Encryption failed - invalid result');
+      }
+
+      // Send encrypted message with retry logic
+      let messageSent = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const response = await fetch('/chat/send-message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              recipientId: activeConversation._id,
+              encryptedContent: encryptedData.encryptedContent,
+              encryptionMetadata: encryptedData.encryptionMetadata,
+              messageType: 'text'
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+          }
+          
+          messageSent = true;
+          break;
+        } catch (error) {
+          console.warn(`Message send attempt ${attempt} failed:`, error);
+          if (attempt === 3) throw error;
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
       
-      // Clear input
+      if (!messageSent) {
+        throw new Error('Failed to send message after multiple attempts');
+      }
+
+      // Clear input and refresh
       setNewMessage('');
       
-      // Add the message locally (will be replaced by loadMessages)
-      // For now, just reload messages
-      await loadMessages(activeConversation._id);
-      await loadConversations();
+      // Reload messages and conversations
+      await Promise.all([
+        loadMessages(activeConversation._id),
+        loadConversations()
+      ]);
+      
     } catch (error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message. Please try again.');
+      
+      // Production-friendly error messages
+      let userMessage = 'Failed to send message. ';
+      if (error.message.includes('timeout')) {
+        userMessage += 'The operation timed out. Please check your connection and try again.';
+      } else if (error.message.includes('public key')) {
+        userMessage += 'Recipient\'s encryption key not available. They may need to refresh their page.';
+      } else if (error.message.includes('Server error')) {
+        userMessage += 'Server error occurred. Please try again in a moment.';
+      } else {
+        userMessage += 'Please try again or refresh the page if the problem persists.';
+      }
+      
+      alert(userMessage);
     }
   };
   
@@ -467,6 +785,11 @@ const E2EEChatApp = () => {
                   <li>• Maximum privacy enabled by default</li>
                 </ul>
               </div>
+              {/* Production debugging info */}
+              <div className="bg-blue-50 p-3 rounded-lg mb-4 text-xs text-blue-600">
+                <p>Environment: {window.location.hostname === 'localhost' ? 'Development' : 'Production'}</p>
+                <p>Crypto Support: {window.crypto && window.crypto.subtle ? 'Available' : 'Not Available'}</p>
+              </div>
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="text-sm text-gray-500 mt-4">Please wait...</p>
             </>
@@ -488,30 +811,42 @@ const E2EEChatApp = () => {
               </svg>
               <div>
                 <p className="font-semibold">Encryption Key Issue Detected</p>
-                <p className="text-sm">Recent messages cannot be decrypted. Your current encryption keys may be out of sync.</p>
+                <p className="text-sm">Some messages cannot be decrypted. This usually happens after key changes.</p>
               </div>
             </div>
             <div className="flex space-x-3">
               <button 
                 onClick={async () => {
-                  if (confirm('This will generate new encryption keys and you will lose access to old messages. Continue?')) {
-                    await window.e2eeCrypto.resetE2EE();
-                    window.location.reload();
+                  try {
+                    console.log('🔄 Attempting quick recovery...');
+                    window.e2eeCrypto && window.e2eeCrypto.resetDecryptionErrorCount();
+                    // Reload messages for current conversation
+                    if (activeConversation) {
+                      await loadMessages(activeConversation._id);
+                    }
+                    setKeyMismatchError(false);
+                  } catch (error) {
+                    console.error('Quick recovery failed:', error);
                   }
                 }}
-                className="bg-white text-red-500 px-4 py-2 rounded font-medium hover:bg-red-50"
+                className="bg-white text-red-500 px-4 py-2 rounded font-medium hover:bg-red-50 transition-colors"
+              >
+                Try Recovery
+              </button>
+              <button 
+                onClick={async () => {
+                  if (confirm('This will generate new encryption keys. You will lose access to old messages but can send new ones. Continue?')) {
+                    await window.e2eeCrypto.resetE2EE();
+                  }
+                }}
+                className="bg-red-400 text-white px-4 py-2 rounded font-medium hover:bg-red-600 transition-colors"
               >
                 Reset E2EE
               </button>
               <button 
-                onClick={() => window.location.reload()}
-                className="bg-red-400 text-white px-4 py-2 rounded font-medium hover:bg-red-600"
-              >
-                Refresh
-              </button>
-              <button 
                 onClick={() => setKeyMismatchError(false)}
-                className="text-white hover:text-red-200"
+                className="text-white hover:text-red-200 transition-colors"
+                title="Dismiss warning"
               >
                 ✕
               </button>
@@ -658,52 +993,87 @@ const E2EEChatApp = () => {
             
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {getActiveMessages().map(message => (
-                <div 
-                  key={message._id}
-                  className={`flex ${message.senderId._id === currentUser.id ? 'justify-end' : 'justify-start'} message-bubble`}
-                >
-                  <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.decryptedContent?.includes('[Message from previous encryption setup') 
-                      ? 'bg-gray-100 text-gray-500 border border-gray-300' 
-                      : message.decryptedContent?.includes('[Key mismatch') || message.decryptedContent?.includes('[Failed to decrypt]')
-                        ? 'bg-red-100 text-red-700 border border-red-300'
-                        : message.senderId._id === currentUser.id
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-200 text-gray-800'
-                  }`}>
-                    {message.decryptedContent?.includes('[Message from previous encryption setup') ? (
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                        </svg>
-                        <p className="break-words text-sm italic">Message encrypted with previous keys</p>
+              {groupMessages(getActiveMessages()).map(message => {
+                if (message.isErrorGroup) {
+                  // Render grouped errors
+                  return (
+                    <div 
+                      key={message._id}
+                      className={`flex ${message.senderId._id === currentUser.id ? 'justify-end' : 'justify-start'} message-bubble`}
+                    >
+                      <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200">
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                          </svg>
+                          <div>
+                            <p className="break-words text-sm font-medium">
+                              {message.errorCount} messages couldn't be decrypted
+                            </p>
+                            <p className="text-xs text-red-500 mt-1">
+                              Key mismatch - try resetting E2EE
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs mt-2 text-red-400">
+                          {new Date(message.createdAt).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
                       </div>
-                    ) : message.decryptedContent?.includes('[Key mismatch') || message.decryptedContent?.includes('[Failed to decrypt]') ? (
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                        <p className="break-words text-sm">Encryption error - unable to decrypt</p>
-                      </div>
-                    ) : (
-                      <p className="break-words">{message.decryptedContent}</p>
-                    )}
-                    <p className={`text-xs mt-1 ${
-                      message.decryptedContent?.includes('[Message from previous encryption setup') || 
-                      message.decryptedContent?.includes('[Key mismatch') || 
-                      message.decryptedContent?.includes('[Failed to decrypt]')
-                        ? 'text-gray-400'
-                        : message.senderId._id === currentUser.id ? 'text-orange-100' : 'text-gray-500'
+                    </div>
+                  );
+                }
+                
+                // Render normal messages
+                return (
+                  <div 
+                    key={message._id}
+                    className={`flex ${message.senderId._id === currentUser.id ? 'justify-end' : 'justify-start'} message-bubble`}
+                  >
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      message.decryptedContent?.includes('[Message from previous encryption setup') 
+                        ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                        : message.decryptedContent?.includes('[Key mismatch') || message.decryptedContent?.includes('[Failed to decrypt]')
+                          ? 'bg-red-100 text-red-700 border border-red-300'
+                          : message.senderId._id === currentUser.id
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-200 text-gray-800'
                     }`}>
-                      {new Date(message.createdAt).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
+                      {message.decryptedContent?.includes('[Message from previous encryption setup') ? (
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                          </svg>
+                          <p className="break-words text-sm italic">Message encrypted with previous keys</p>
+                        </div>
+                      ) : message.decryptedContent?.includes('[Key mismatch') || message.decryptedContent?.includes('[Failed to decrypt]') ? (
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                          </svg>
+                          <p className="break-words text-sm">Unable to decrypt message</p>
+                        </div>
+                      ) : (
+                        <p className="break-words">{message.decryptedContent}</p>
+                      )}
+                      <p className={`text-xs mt-1 ${
+                        message.decryptedContent?.includes('[Message from previous encryption setup') || 
+                        message.decryptedContent?.includes('[Key mismatch') || 
+                        message.decryptedContent?.includes('[Failed to decrypt]')
+                          ? 'text-gray-400'
+                          : message.senderId._id === currentUser.id ? 'text-orange-100' : 'text-gray-500'
+                      }`}>
+                        {new Date(message.createdAt).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
             
