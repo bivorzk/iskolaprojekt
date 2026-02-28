@@ -1,4 +1,3 @@
-// Tailwind configuration for chat
 tailwind.config = {
   theme: {
     extend: {

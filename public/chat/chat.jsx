@@ -239,59 +239,60 @@ const E2EEChatApp = () => {
       const response = await fetch(`/chat/messages/${otherUserId}`);
       const data = await response.json();
       
+      // Track decryption results to avoid spamming console and state updates
+      let hasKeyMismatchError = false;
+      let recentKeyMismatchCount = 0;
+      let totalKeyMismatchCount = 0;
+      
       // Decrypt messages
       const decryptedMessages = await Promise.all(
         data.messages.map(async (message) => {
           try {
-            console.log('Decrypting message:', message);
-            console.log('Current user ID:', currentUser.id);
-            console.log('Message sender ID:', message.senderId._id);
-            console.log('Message recipient ID:', message.recipientId._id);
-            
             const isRecipient = message.recipientId._id === currentUser.id;
             const isSender = message.senderId._id === currentUser.id;
-            console.log('Is recipient:', isRecipient, 'Is sender:', isSender);
             
             if (!isRecipient && !isSender) {
-              console.error('User is neither sender nor recipient of this message!');
+              console.warn(`Unauthorized access attempt for message ${message._id}`);
               return { ...message, decryptedContent: '[Not authorized to decrypt]' };
             }
             
-            console.log('Message structure:', {
-              hasEncryptedContent: !!message.encryptedContent,
-              encryptedContentLength: message.encryptedContent ? message.encryptedContent.length : 0,
-              hasEncryptionMetadata: !!message.encryptionMetadata,
-              metadataKeys: message.encryptionMetadata ? Object.keys(message.encryptionMetadata) : []
-            });
-            
             const decryptedContent = await window.e2eeCrypto.decryptMessage(message, isRecipient);
-            console.log('Decryption successful for message');
             return { ...message, decryptedContent };
           } catch (error) {
-            console.error('Failed to decrypt message:', error);
-            console.error('Message that failed:', message);
-            
-            // Check if it's a key mismatch error
+            // Handle different types of decryption errors
             if (error.message && error.message.includes('Symmetric key decryption failed')) {
               const messageAge = new Date() - new Date(message.createdAt);
               const isRecentMessage = messageAge < 24 * 60 * 60 * 1000; // Less than 24 hours old
               
+              totalKeyMismatchCount++;
+              
               if (isRecentMessage) {
-                // Only show global error for recent messages
-                console.log('Key mismatch detected in recent message - setting error state');
-                setKeyMismatchError(true);
+                recentKeyMismatchCount++;
+                hasKeyMismatchError = true;
                 return { ...message, decryptedContent: '[Key mismatch - reset E2EE required]' };
               } else {
-                // For older messages, just show as historical key mismatch
-                console.log('Key mismatch in older message - likely from previous key generation');
+                // For older messages, assume they're from a previous key setup
                 return { ...message, decryptedContent: '[Message from previous encryption setup - cannot decrypt]' };
               }
+            } else {
+              // Other decryption errors
+              console.warn(`Decryption failed for message ${message._id}:`, error.message);
+              return { ...message, decryptedContent: '[Failed to decrypt]' };
             }
-            
-            return { ...message, decryptedContent: '[Failed to decrypt]' };
           }
         })
       );
+      
+      // Log summary instead of individual message errors
+      if (totalKeyMismatchCount > 0) {
+        console.log(`Decryption summary: ${totalKeyMismatchCount} total key mismatches (${recentKeyMismatchCount} recent, ${totalKeyMismatchCount - recentKeyMismatchCount} historical)`);
+      }
+      
+      // Only set error state once if there are recent key mismatches
+      if (hasKeyMismatchError && !keyMismatchError) {
+        console.log('Setting key mismatch error state due to recent decryption failures');
+        setKeyMismatchError(true);
+      }
       
       setMessages(prevMessages => ({
         ...prevMessages,
@@ -299,9 +300,15 @@ const E2EEChatApp = () => {
       }));
       
       // Mark messages as read
-      await fetch(`/chat/messages/read/${otherUserId}`, { method: 'PUT' });
+      try {
+        await fetch(`/chat/messages/read/${otherUserId}`, { method: 'PUT' });
+      } catch (readError) {
+        console.warn('Failed to mark messages as read:', readError.message);
+      }
     } catch (error) {
       console.error('Failed to load messages:', error);
+      // Show user-friendly error message
+      alert('Failed to load messages. Please refresh the page or contact support.');
     }
   };
   

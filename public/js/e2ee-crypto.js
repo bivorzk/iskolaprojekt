@@ -1,7 +1,8 @@
 class E2EECrypto {
   constructor() {
     this.keyPairs = new Map();
-    this.importedPublicKeys = new Map(); 
+    this.importedPublicKeys = new Map();
+    this.debugMode = false; // Set to true for detailed logging
   }
 
   async generateKeyPair() {
@@ -172,17 +173,18 @@ class E2EECrypto {
 
 
   async decryptMessage(encryptedData, isRecipient = true) {
+    const startTime = performance.now();
+    
     try {
-      console.log('=== DECRYPTION DEBUG ===');
-      console.log('Decrypting message with data:', encryptedData);
-      console.log('Is recipient:', isRecipient);
-      console.log('Current user role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+      if (this.debugMode) {
+        console.log('=== DECRYPTION DEBUG ===');
+        console.log('Is recipient:', isRecipient);
+      }
       
       const privateKey = await this.getCurrentPrivateKey();
       if (!privateKey) {
         throw new Error('Private key not found');
       }
-      console.log('Private key loaded successfully');
 
       const { encryptedContent, encryptionMetadata } = encryptedData;
       
@@ -190,24 +192,15 @@ class E2EECrypto {
         throw new Error(`Missing required data: encryptedContent=${!!encryptedContent}, encryptionMetadata=${!!encryptionMetadata}`);
       }
       
-      console.log('Encryption metadata:', encryptionMetadata);
-      
       const encryptedKeyBase64 = isRecipient 
         ? encryptionMetadata.recipientEncryptedKey 
         : encryptionMetadata.senderEncryptedKey;
-      
-      console.log(`Using ${isRecipient ? 'RECIPIENT' : 'SENDER'} encrypted key`);
-      console.log('Encrypted key present:', !!encryptedKeyBase64);
       
       if (!encryptedKeyBase64) {
         throw new Error(`Missing encrypted key for ${isRecipient ? 'recipient' : 'sender'}`);
       }
       
-      console.log('Encrypted key base64 length:', encryptedKeyBase64.length);
-      
       const encryptedKeyBuffer = this.base64ToArrayBuffer(encryptedKeyBase64);
-      console.log('Encrypted key buffer length:', encryptedKeyBuffer.byteLength);
-      console.log('Decrypting symmetric key...');
       
       let symmetricKeyBuffer;
       let decryptionSuccessful = false;
@@ -234,7 +227,7 @@ class E2EECrypto {
         return timestampB - timestampA; // Descending order (newer first)
       });
       
-      // Load and add other keys
+      // Load and add other keys (with minimal logging)
       for (const keyId of otherKeyIds) {
         const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
         if (privateKeyBase64) {
@@ -252,14 +245,19 @@ class E2EECrypto {
             );
             privateKeysToTry.push({ key: privKey, keyId });
           } catch (importError) {
-            console.warn(`Failed to import private key ${keyId}:`, importError);
+            if (this.debugMode) {
+              console.warn(`Failed to import private key ${keyId}:`, importError);
+            }
           }
         }
       }
       
-      console.log(`Trying decryption with ${privateKeysToTry.length} keys in order:`, 
-        privateKeysToTry.map(k => k.keyId));
+      if (this.debugMode) {
+        console.log(`Trying decryption with ${privateKeysToTry.length} keys`);
+      }
       
+      // Try to decrypt with available keys
+      let usedKeyId = null;
       for (const { key, keyId } of privateKeysToTry) {
         try {
           symmetricKeyBuffer = await window.crypto.subtle.decrypt(
@@ -269,31 +267,32 @@ class E2EECrypto {
             key,
             encryptedKeyBuffer
           );
-          console.log(`Symmetric key decrypted successfully with key ${keyId}, length:`, symmetricKeyBuffer.byteLength);
+          
+          usedKeyId = keyId;
           decryptionSuccessful = true;
           
-          // Only update current key if we used a newer key than current, not older ones
-          const currentKeyId = localStorage.getItem('e2ee_current_key_id');
-          if (keyId !== currentKeyId) {
+          if (this.debugMode && keyId !== currentKeyId) {
             console.log(`Successfully decrypted with different key ${keyId}, but keeping current key ${currentKeyId}`);
-            // Don't change the current key - this allows us to decrypt old messages without breaking new ones
           }
           break;
         } catch (keyDecryptError) {
-          console.log(`Failed to decrypt with key ${keyId}:`, keyDecryptError.message);
+          // Silent failure for key attempts unless in debug mode
+          if (this.debugMode) {
+            console.log(`Failed to decrypt with key ${keyId}:`, keyDecryptError.message);
+          }
         }
       }
       
       if (!decryptionSuccessful) {
-        // Enhanced debug information before failing
-        console.error('=== DECRYPTION FAILURE DEBUG ===');
-        console.error('Available keys tried:', privateKeysToTry.map(k => k.keyId));
-        console.error('Current key ID:', localStorage.getItem('e2ee_current_key_id'));
-        console.error('All E2EE localStorage keys:', 
-          Object.keys(localStorage).filter(k => k.startsWith('e2ee_')));
-        console.error('Encrypted key buffer length:', encryptedKeyBuffer.byteLength);
-        console.error('Expected RSA key buffer length: 256 bytes');
-        console.error('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+        // Only log detailed error info in debug mode or for the first few failures
+        const errorCount = this.getDecryptionErrorCount();
+        if (this.debugMode || errorCount < 3) {
+          console.error('=== DECRYPTION FAILURE ===');
+          console.error('Available keys tried:', privateKeysToTry.length);
+          console.error('Current key ID:', currentKeyId);
+          console.error('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
+        }
+        this.incrementDecryptionErrorCount();
         
         throw new Error('Symmetric key decryption failed with all available keys. This usually means the message was encrypted with a different public key.');
       }
@@ -307,16 +306,10 @@ class E2EECrypto {
         false,
         ['decrypt']
       );
-      console.log('Symmetric key imported successfully');
 
       const iv = this.base64ToArrayBuffer(encryptionMetadata.iv);
       const encryptedMessageBuffer = this.base64ToArrayBuffer(encryptedContent);
       
-      console.log('IV length:', iv.byteLength, 'Expected: 12');
-      console.log('Encrypted message buffer length:', encryptedMessageBuffer.byteLength);
-      console.log('Encrypted content sample:', encryptedContent.substring(0, 50) + '...');
-      
-      console.log('Decrypting message content...');
       let decryptedMessageBuffer;
       try {
         decryptedMessageBuffer = await window.crypto.subtle.decrypt(
@@ -327,22 +320,24 @@ class E2EECrypto {
           symmetricKey,
           encryptedMessageBuffer
         );
-        console.log('Message content decrypted successfully, length:', decryptedMessageBuffer.byteLength);
       } catch (messageDecryptError) {
-        console.error('Failed to decrypt message content:', messageDecryptError);
+        console.error('Failed to decrypt message content:', messageDecryptError.message);
         throw new Error(`Message content decryption failed: ${messageDecryptError.message}. The message may be corrupted.`);
       }
 
       const decryptedText = new TextDecoder().decode(decryptedMessageBuffer);
-      console.log('Message decrypted successfully:', decryptedText);
+      
+      if (this.debugMode) {
+        const elapsed = performance.now() - startTime;
+        console.log(`Message decrypted successfully in ${elapsed.toFixed(2)}ms using key ${usedKeyId}`);
+      }
+      
       return decryptedText;
     } catch (error) {
-      console.error('Message decryption failed:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      // Only log full error details in debug mode or for critical errors
+      if (this.debugMode || !error.message.includes('Symmetric key decryption failed')) {
+        console.error('Message decryption failed:', error.message);
+      }
       throw new Error(`Failed to decrypt message: ${error.message}`);
     }
   }
@@ -573,6 +568,30 @@ class E2EECrypto {
       return false;
     }
   }
+
+  /**
+   * Track decryption error count to reduce console spam
+   */
+  getDecryptionErrorCount() {
+    return parseInt(sessionStorage.getItem('e2ee_decrypt_errors') || '0');
+  }
+  
+  incrementDecryptionErrorCount() {
+    const count = this.getDecryptionErrorCount() + 1;
+    sessionStorage.setItem('e2ee_decrypt_errors', count.toString());
+  }
+  
+  resetDecryptionErrorCount() {
+    sessionStorage.removeItem('e2ee_decrypt_errors');
+  }
+  
+  /**
+   * Enable/disable debug logging
+   */
+  setDebugMode(enabled) {
+    this.debugMode = enabled;
+    console.log(`E2EE debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
 }
 
 // Global instance
@@ -583,6 +602,9 @@ window.debugE2EE = {
   resetE2EE: () => window.e2eeCrypto.resetE2EE(),
   clearKeys: () => window.e2eeCrypto.clearKeys(),
   clearDatabase: (clearMessages = true) => window.e2eeCrypto.clearAllE2EEFromDatabase(clearMessages),
+  enableDebug: () => window.e2eeCrypto.setDebugMode(true),
+  disableDebug: () => window.e2eeCrypto.setDebugMode(false),
+  resetErrorCount: () => window.e2eeCrypto.resetDecryptionErrorCount(),
   status: () => {
     const keyId = localStorage.getItem('e2ee_current_key_id');
     const hasPrivateKey = !!localStorage.getItem(`e2ee_private_key_${keyId}`);
@@ -592,6 +614,8 @@ window.debugE2EE = {
       keyId,
       hasPrivateKey,
       hasPublicKey,
+      debugMode: window.e2eeCrypto.debugMode,
+      errorCount: window.e2eeCrypto.getDecryptionErrorCount(),
       localStorageKeys: Object.keys(localStorage).filter(k => k.startsWith('e2ee_'))
     };
   }

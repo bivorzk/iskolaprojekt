@@ -14,3 +14,4 @@ node_modules/
 docs/redis*
 tests/code_analytics.json
 todo.md
+chat_todo.md
