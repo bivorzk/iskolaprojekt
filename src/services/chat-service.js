@@ -5,8 +5,33 @@ const User = require('../models/User');
 const { Message } = require('../models/Message');
 const { body, validationResult } = require('express-validator');
 const rediLuaService = require('./redis-lua-service');
+const { redisClient } = require('../redis');
 
-let io; 
+const PUBKEY_TTL = 30 * 24 * 60 * 60;
+const pubkeyCacheKey = (userId) => `e2ee:pubkey:${userId}`;
+
+async function cachePublicKey(userId, payload) {
+  try {
+    if (redisClient?.isOpen) {
+      await redisClient.setEx(pubkeyCacheKey(userId), PUBKEY_TTL, JSON.stringify(payload));
+    }
+  } catch (err) {
+    console.warn('Redis pubkey cache write failed (non-critical):', err.message);
+  }
+}
+
+async function invalidatePublicKey(userId) {
+  try {
+    if (redisClient?.isOpen) {
+      await redisClient.del(pubkeyCacheKey(userId));
+    }
+  } catch (err) {
+    console.warn('Redis pubkey cache delete failed (non-critical):', err.message);
+  }
+}
+
+let io;
+const userSockets = new Map();
 
 const setSocketIO = (socketIOInstance) => {
   io = socketIOInstance;
@@ -62,13 +87,22 @@ router.post('/setup-e2ee',
 
       const { publicKey, keyAlgorithm = 'RSA-OAEP' } = req.body;
       const userId = req.session.user.id;
+      const keyGeneratedAt = new Date();
 
       // Update user with encryption details
       await User.findByIdAndUpdate(userId, {
         'encryption.publicKey': publicKey,
-        'encryption.keyGeneratedAt': new Date(),
+        'encryption.keyGeneratedAt': keyGeneratedAt,
         'encryption.isE2EEEnabled': true,
         'encryption.keyAlgorithm': keyAlgorithm
+      });
+
+      // Cache new public key in Redis (30-day TTL); old entry is overwritten
+      await cachePublicKey(userId, {
+        userId,
+        publicKey,
+        keyAlgorithm,
+        keyGeneratedAt
       });
 
       res.json({ 
@@ -85,6 +119,19 @@ router.post('/setup-e2ee',
 router.get('/public-key/:userId', requireAuth, async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // Try Redis cache first
+    if (redisClient?.isOpen) {
+      try {
+        const cached = await redisClient.get(pubkeyCacheKey(userId));
+        if (cached) {
+          return res.json(JSON.parse(cached));
+        }
+      } catch (err) {
+        console.warn('Redis pubkey cache read failed (non-critical):', err.message);
+      }
+    }
+
     const user = await User.findById(userId, 'encryption username');
     
     if (!user) {
@@ -95,13 +142,18 @@ router.get('/public-key/:userId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'User does not have E2EE enabled' });
     }
 
-    res.json({
+    const payload = {
       userId: user._id,
       username: user.username,
       publicKey: user.encryption.publicKey,
       keyAlgorithm: user.encryption.keyAlgorithm,
       keyGeneratedAt: user.encryption.keyGeneratedAt
-    });
+    };
+
+    // Populate cache for subsequent requests
+    await cachePublicKey(userId, payload);
+
+    res.json(payload);
   } catch (error) {
     console.error('Get public key error:', error);
     res.status(500).json({ error: 'Failed to retrieve public key' });
@@ -181,12 +233,13 @@ router.get('/messages/:otherUserId', requireAuth, async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const skip = (page - 1) * limit;
 
-    // Get messages between two users
+    // Get messages between two users, excluding ones that were auto-replaced
     const messages = await Message.find({
       $or: [
         { senderId: userId, recipientId: otherUserId },
         { senderId: otherUserId, recipientId: userId }
-      ]
+      ],
+      status: { $ne: 'replaced' }
     })
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -207,6 +260,46 @@ router.get('/messages/:otherUserId', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Get messages error:', error);
     res.status(500).json({ error: 'Failed to retrieve messages' });
+  }
+});
+
+// Fetch a single message — used by the sender during auto-resend to recover plaintext
+router.get('/message/:messageId', requireAuth, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.session.user.id;
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (String(message.senderId) !== userId && String(message.recipientId) !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    res.json(message);
+  } catch (error) {
+    console.error('Fetch single message error:', error);
+    res.status(500).json({ error: 'Failed to fetch message' });
+  }
+});
+
+// Mark a message as replaced after a successful auto-resend
+router.post('/message/:messageId/replace', requireAuth, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { recipientId } = req.body;
+    const userId = req.session.user.id;
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (String(message.senderId) !== userId) {
+      return res.status(403).json({ error: 'Only the sender can mark a message as replaced' });
+    }
+    await Message.findByIdAndUpdate(messageId, { status: 'replaced' });
+    if (io) {
+      io.to(`user_${userId}`).emit('messageReplaced', { messageId });
+      io.to(`user_${recipientId}`).emit('messageReplaced', { messageId });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark replaced error:', error);
+    res.status(500).json({ error: 'Failed to mark message as replaced' });
   }
 });
 
@@ -247,7 +340,8 @@ router.get('/conversations', requireAuth, async (req, res) => {
           $or: [
             { senderId: userId },
             { recipientId: userId }
-          ]
+          ],
+          status: { $ne: 'replaced' }  // exclude auto-replaced messages from sidebar preview
         }
       },
       {
@@ -374,6 +468,9 @@ router.post('/reset-e2ee', requireAuth, async (req, res) => {
       'encryption.keyIv': null,
       'encryption.hasKeyBackup': false
     });
+
+    // Remove stale cached key so the next sender doesn't encrypt to a dead key
+    await invalidatePublicKey(userId);
     
     res.json({ success: true, message: 'E2EE reset successfully' });
   } catch (error) {
@@ -491,6 +588,44 @@ router.post('/admin/clear-all-e2ee', requireAuth, async (req, res) => {
   }
 });
 
+// Recipient patches senderEncryptedKey so sender's new device can decrypt their own messages
+router.post('/message/:messageId/update-sender-key', requireAuth, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { newSenderEncryptedKey, requesterId } = req.body;
+    const userId = req.session.user.id;
+
+    if (!newSenderEncryptedKey) {
+      return res.status(400).json({ error: 'Missing newSenderEncryptedKey' });
+    }
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    // Only the recipient of a message may update its sender key
+    if (String(message.recipientId) !== userId) {
+      return res.status(403).json({ error: 'Only the recipient can update the sender key' });
+    }
+
+    await Message.findByIdAndUpdate(messageId, {
+      'encryptionMetadata.senderEncryptedKey': newSenderEncryptedKey
+    });
+
+    // Notify sender so their client re-decrypts the message immediately
+    if (io) {
+      const updated = await Message.findById(messageId);
+      io.to(`user_${message.senderId}`).emit('senderKeyUpdated', {
+        messageId:          String(message._id),
+        encryptedContent:   updated.encryptedContent,
+        encryptionMetadata: updated.encryptionMetadata
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update sender key error:', error);
+    res.status(500).json({ error: 'Failed to update sender key' });
+  }
+});
+
 // Function to initialize Socket.IO for chat
 const initializeChatSocket = (socketIOInstance) => {
   setSocketIO(socketIOInstance);
@@ -501,9 +636,11 @@ const initializeChatSocket = (socketIOInstance) => {
     // Authenticate socket connection
     socket.on('authenticate', (userId) => {
       if (userId) {
-        socket.userId = userId;
+        socket.userId = String(userId);
         socket.join(`user_${userId}`);
-        console.log(`User ${userId} authenticated and joined their room`);
+        if (!userSockets.has(socket.userId)) userSockets.set(socket.userId, new Set());
+        userSockets.get(socket.userId).add(socket.id);
+        console.log(`User ${userId} authenticated and joined their room (socket ${socket.id})`);
       }
     });
 
@@ -523,7 +660,87 @@ const initializeChatSocket = (socketIOInstance) => {
       }
     });
 
+    // Recipient couldn't decrypt a message (sender used stale key).
+    // Relay the original encrypted payload to the sender so they can re-encrypt and resend.
+    socket.on('requestResend', async ({ messageId, requesterId }) => {
+      if (!socket.userId || socket.userId !== String(requesterId)) return;
+      try {
+        const message = await Message.findById(messageId);
+        if (!message || String(message.recipientId) !== String(requesterId)) return;
+        if (message.status === 'replaced') return;
+        // Emit to ONE socket for the sender — the most recently connected tab.
+        // This prevents multiple open tabs from each handling the resend and
+        // sending duplicate messages.
+        const senderSockets = userSockets.get(String(message.senderId));
+        const targetSocketId = senderSockets && senderSockets.size > 0
+          ? [...senderSockets].at(-1) // most recently added
+          : null;
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('resendRequired', {
+            messageId:          String(message._id),
+            recipientId:        String(message.recipientId),
+            encryptedContent:   message.encryptedContent,
+            encryptionMetadata: message.encryptionMetadata
+          });
+        } else {
+          // Sender has no active socket — fall back to room (they may reconnect)
+          io.to(`user_${message.senderId}`).emit('resendRequired', {
+            messageId:          String(message._id),
+            recipientId:        String(message.recipientId),
+            encryptedContent:   message.encryptedContent,
+            encryptionMetadata: message.encryptionMetadata
+          });
+        }
+      } catch (err) {
+        console.error('requestResend socket error:', err);
+      }
+    });
+
+    // Sender's new device can't decrypt senderEncryptedKey.
+    // Relay to the recipient so they can re-encrypt the symmetric key for the sender.
+    socket.on('requestSenderRecovery', async ({ messageId, senderId, recipientId }) => {
+      if (!socket.userId || socket.userId !== String(senderId)) return;
+      try {
+        const message = await Message.findById(messageId);
+        if (!message) return;
+        if (String(message.senderId)    !== String(senderId))    return;
+        if (String(message.recipientId) !== String(recipientId)) return;
+        if (message.status === 'replaced') return;
+
+        // Include sender's current public key so recipient can encrypt directly to it
+        const sender = await User.findById(senderId, 'encryption');
+        if (!sender?.encryption?.publicKey) return;
+
+        const recipientSockets = userSockets.get(String(recipientId));
+        const targetSocketId = recipientSockets && recipientSockets.size > 0
+          ? [...recipientSockets].at(-1)
+          : null;
+
+        const payload = {
+          messageId:       String(message._id),
+          senderId:        String(senderId),
+          senderPublicKey: sender.encryption.publicKey,
+          senderKeyId:     sender.encryption.keyId || String(senderId)
+        };
+
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('senderRecoveryNeeded', payload);
+        } else {
+          io.to(`user_${recipientId}`).emit('senderRecoveryNeeded', payload);
+        }
+      } catch (err) {
+        console.error('requestSenderRecovery socket error:', err);
+      }
+    });
+
     socket.on('disconnect', () => {
+      if (socket.userId) {
+        const sockets = userSockets.get(socket.userId);
+        if (sockets) {
+          sockets.delete(socket.id);
+          if (sockets.size === 0) userSockets.delete(socket.userId);
+        }
+      }
       console.log('A user disconnected from the chat service');
     });
   });

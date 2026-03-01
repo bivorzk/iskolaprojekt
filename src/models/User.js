@@ -31,7 +31,6 @@ mongoose.connect(dbUrl + dbName)
   });
 
 
-// User Schema Definition
 const userSchema = new mongoose.Schema({
   username: { 
     type: String, 

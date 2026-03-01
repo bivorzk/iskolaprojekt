@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 const E2EEChatApp = () => {
   const [isE2EESetup, setIsE2EESetup]           = useState(false);
@@ -6,7 +6,12 @@ const E2EEChatApp = () => {
   const [keyMismatchError, setKeyMismatchError] = useState(false);
   const [loading, setLoading]                   = useState(true);
   const [needsKeyRestore, setNeedsKeyRestore]   = useState(false);
+  const [needsNewDevice, setNeedsNewDevice]     = useState(false);
   const [needsPassphrase, setNeedsPassphrase]   = useState(false);
+
+  const pendingResendsRef = useRef(new Set());
+  const currentUserRef    = useRef(null);
+  const bcRef             = useRef(null);
   const [passphrase, setPassphrase]             = useState('');
   const [passphraseConfirm, setPassphraseConfirm] = useState('');
   const [passphraseError, setPassphraseError]   = useState('');
@@ -24,6 +29,8 @@ const E2EEChatApp = () => {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [socket, setSocket]           = useState(null);
+
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
   useEffect(() => {
     initializeApp();
@@ -52,40 +59,163 @@ const E2EEChatApp = () => {
     if (!socket || !currentUser) return;
 
     const messageHandler = async (messageData) => {
+      const isRecipient    = String(messageData.recipientId) === String(currentUser.id);
+      const conversationId = isRecipient ? messageData.senderId : messageData.recipientId;
+
+      let decryptedContent;
       try {
-        const isRecipient = String(messageData.recipientId) === String(currentUser.id);
-        const decryptedContent = await window.e2eeCrypto.decryptMessage(messageData, isRecipient);
-
-        const formattedMessage = {
-          _id: messageData.messageId,
-          senderId:    { _id: messageData.senderId,    username: 'User' },
-          recipientId: { _id: messageData.recipientId, username: currentUser.username },
-          encryptedContent:   messageData.encryptedContent,
-          encryptionMetadata: messageData.encryptionMetadata,
-          messageType:        messageData.messageType,
-          createdAt:          new Date(messageData.timestamp),
-          decryptedContent,
-          status: 'delivered'
-        };
-
-        const conversationId = isRecipient ? messageData.senderId : messageData.recipientId;
-
-        setMessages(prev => {
-          const existing = prev[conversationId] || [];
-          if (existing.some(m => m._id === messageData.messageId)) return prev;
-          return { ...prev, [conversationId]: [...existing, formattedMessage] };
-        });
+        decryptedContent = await window.e2eeCrypto.decryptMessage(messageData, isRecipient);
       } catch (error) {
-        console.error('Failed to process real-time message:', error);
-        if (error.message?.includes('Symmetric key decryption failed')) {
+        console.error('Failed to decrypt real-time message:', error);
+        const isKeyMismatch = error.message?.includes('Symmetric key decryption failed');
+
+        if (isKeyMismatch && isRecipient) {
+          // Sender used a stale key — silently request a resend, don't surface error to user
+          const msgId = String(messageData.messageId);
+          if (!pendingResendsRef.current.has(msgId)) {
+            pendingResendsRef.current.add(msgId);
+            socket.emit('requestResend', { messageId: msgId, requesterId: currentUser.id });
+          }
+          // Also re-upload our current public key immediately so the sender
+          // fetches the correct one on the next attempt
+          window.e2eeCrypto.getSenderPublicKey().then(pk =>
+            pk ? E2EEApi.setupOnServer(pk).catch(() => {}) : null
+          ).catch(() => {});
+          loadConversations();
+          return; // don't add the undecryptable message to state
+        }
+
+        if (isKeyMismatch) {
           setKeyMismatchError(true);
+          decryptedContent = '[Key mismatch - reset E2EE required]';
+        } else {
+          decryptedContent = '[Failed to decrypt - try refreshing]';
         }
       }
+
+      const formattedMessage = {
+        _id:         messageData.messageId,
+        senderId:    { _id: messageData.senderId,    username: 'User' },
+        recipientId: { _id: messageData.recipientId, username: currentUser.username },
+        encryptedContent:   messageData.encryptedContent,
+        encryptionMetadata: messageData.encryptionMetadata,
+        messageType:        messageData.messageType,
+        createdAt:          new Date(messageData.timestamp),
+        decryptedContent,
+        status: 'delivered'
+      };
+
+      setMessages(prev => {
+        const existing = prev[conversationId] || [];
+        if (existing.some(m => m._id === messageData.messageId)) return prev;
+        return { ...prev, [conversationId]: [...existing, formattedMessage] };
+      });
+
       loadConversations();
     };
 
-    socket.on('newMessage', messageHandler);
-    return () => socket.off('newMessage', messageHandler);
+    // Sender receives this when a recipient couldn’t decrypt their message.
+    // Transparently re-encrypt with the recipient’s current public key and resend.
+    const resendRequiredHandler = async ({ messageId, recipientId, encryptedContent, encryptionMetadata }) => {
+      const id = String(messageId);
+      // Dedup: skip if this tab already claimed it, or a sibling tab broadcast that it's handling it
+      if (pendingResendsRef.current.has(id)) return;
+      pendingResendsRef.current.add(id);
+      // Tell ALL other tabs of this account to skip this resend job
+      bcRef.current?.postMessage({ type: 'handling', messageId: id });
+      try {
+        const plaintext = await window.e2eeCrypto.decryptMessage(
+          { encryptedContent, encryptionMetadata }, false
+        );
+        await ChatAPI.sendMessage(recipientId, plaintext);
+        await fetch(`/chat/message/${id}/replace`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientId })
+        }).catch(() => {});
+      } catch (err) {
+        console.warn('Auto-resend failed (non-critical):', err.message);
+        pendingResendsRef.current.delete(id);
+      }
+    };
+
+    // Both parties receive this when a message is marked as replaced — remove from UI
+    const messageReplacedHandler = ({ messageId }) => {
+      const id = String(messageId);
+      pendingResendsRef.current.delete(id);
+      setMessages(prev => {
+        const next = { ...prev };
+        for (const convId of Object.keys(next)) {
+          next[convId] = next[convId].filter(m => String(m._id) !== id);
+        }
+        return next;
+      });
+    };
+
+
+    const senderRecoveryNeededHandler = async ({ messageId, senderId, senderPublicKey, senderKeyId }) => {
+      try {
+        const msgRes = await fetch(`/chat/message/${messageId}`);
+        if (!msgRes.ok) return;
+        const msg = await msgRes.json();
+        const newSenderEncryptedKey = await window.e2eeCrypto.reEncryptKeyForSender(
+          msg, senderPublicKey, senderKeyId
+        );
+        await fetch(`/chat/message/${messageId}/update-sender-key`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newSenderEncryptedKey, requesterId: senderId })
+        }).catch(() => {});
+      } catch (err) {
+        console.warn('Sender recovery failed (non-critical):', err.message);
+      }
+    };
+
+
+    const senderKeyUpdatedHandler = async ({ messageId, encryptedContent, encryptionMetadata }) => {
+      const id = String(messageId);
+      try {
+        const plaintext = await window.e2eeCrypto.decryptMessage(
+          { encryptedContent, encryptionMetadata }, false
+        );
+        setMessages(prev => {
+          const next = { ...prev };
+          for (const convId of Object.keys(next)) {
+            next[convId] = next[convId].map(m =>
+              String(m._id) === id ? { ...m, decryptedContent: plaintext } : m
+            );
+          }
+          return next;
+        });
+      } catch (err) {
+        console.warn('senderKeyUpdated re-decrypt failed:', err.message);
+      }
+    };
+
+    socket.on('newMessage',           messageHandler);
+    socket.on('resendRequired',        resendRequiredHandler);
+    socket.on('messageReplaced',       messageReplacedHandler);
+    socket.on('senderRecoveryNeeded',  senderRecoveryNeededHandler);
+    socket.on('senderKeyUpdated',      senderKeyUpdatedHandler);
+
+
+    const bc = new BroadcastChannel('e2ee_resend');
+    bcRef.current = bc;
+    bc.onmessage = (e) => {
+      if (e.data?.type === 'handling') {
+        pendingResendsRef.current.add(String(e.data.messageId));
+      }
+    };
+
+    return () => {
+      socket.off('newMessage',           messageHandler);
+      socket.off('resendRequired',        resendRequiredHandler);
+      socket.off('messageReplaced',       messageReplacedHandler);
+      socket.off('senderRecoveryNeeded',  senderRecoveryNeededHandler);
+      socket.off('senderKeyUpdated',      senderKeyUpdatedHandler);
+      bc.close();
+      bcRef.current = null;
+    };
   }, [socket, currentUser]);
 
   useEffect(() => {
@@ -96,8 +226,15 @@ const E2EEChatApp = () => {
   
   const initializeApp = async () => {
     try {
+    if (!window.isSecureContext) {
+        throw new Error(
+          'A secure connection (HTTPS) is required for end-to-end encryption. ' +
+          'Please access this page via HTTPS. If you are on a local network, ' +
+          'ask your administrator to enable HTTPS or use localhost. Thanks (@bivorzk)'
+        );
+      }
       if (!window.crypto?.subtle) {
-        throw new Error('Your browser does not support the required encryption features. Please use a modern browser.');
+        throw new Error('Your browser does not support the Web Crypto API. Please update your browser or use Chrome/Firefox/Safari.');
       }
 
       const userData = await ChatAPI.getCurrentUser();
@@ -126,13 +263,25 @@ const E2EEChatApp = () => {
         } catch (err) {
           console.log('Server E2EE re-setup failed, local keys exist:', err);
         }
+        E2EEApi.checkAndRotateKey().catch(err =>
+          console.warn('Key rotation check failed (non-critical):', err)
+        );
       } else {
         try {
           const backupData = await E2EEApi.checkKeyBackup();
-          if (backupData.hasBackup) { setNeedsKeyRestore(true); return; }
+          if (backupData.hasBackup) {
+            setNeedsKeyRestore(true);
+            return;
+          }
+          if (backupData.isE2EEEnabled) {
+
+            setNeedsNewDevice(true);
+            return;
+          }
         } catch (err) {
           console.warn('Could not check for key backup:', err);
         }
+        // Genuinely first time — no server key at all
         setNeedsPassphrase(true);
       }
     } catch (error) {
@@ -154,9 +303,39 @@ const E2EEChatApp = () => {
 
   const loadMessages = async (otherUserId) => {
     try {
-      const { messages: decrypted, hasKeyMismatch } = await ChatAPI.loadMessages(otherUserId, currentUser);
+      const { messages: decrypted, hasKeyMismatch, wrongDeviceMessages, senderRecoveryMessages } =
+        await ChatAPI.loadMessages(otherUserId, currentUser);
+
       if (hasKeyMismatch && !keyMismatchError) setKeyMismatchError(true);
       setMessages(prev => ({ ...prev, [otherUserId]: decrypted }));
+
+      // For each message the sender encrypted with a stale key, silently request a resend.
+      // The sender’s app will re-encrypt with our current public key and send a replacement.
+      if (socket && wrongDeviceMessages?.length) {
+        // Re-upload our key first so the sender fetches the correct one
+        window.e2eeCrypto.getSenderPublicKey().then(pk =>
+          pk ? E2EEApi.setupOnServer(pk).catch(() => {}) : null
+        ).catch(() => {});
+
+        for (const msg of wrongDeviceMessages) {
+          const id = String(msg._id);
+          if (!pendingResendsRef.current.has(id)) {
+            pendingResendsRef.current.add(id);
+            socket.emit('requestResend', { messageId: id, requesterId: currentUser.id });
+          }
+        }
+      }
+      // For each message we sent but can't decrypt on this new device, ask
+      // the recipient to re-encrypt the symmetric key with our current public key.
+      if (socket && senderRecoveryMessages?.length) {
+        for (const msg of senderRecoveryMessages) {
+          socket.emit('requestSenderRecovery', {
+            messageId:   msg._id,
+            senderId:    currentUser.id,
+            recipientId: msg.recipientId
+          });
+        }
+      }
     } catch (err) {
       console.error('Failed to load messages:', err);
       alert('Failed to load messages. Please refresh the page or contact support.');
@@ -249,6 +428,16 @@ const E2EEChatApp = () => {
   const handleKeyMismatchRecover = async (conv) => {
     try {
       window.e2eeCrypto?.resetDecryptionErrorCount();
+      window.e2eeCrypto?.keyPairs?.clear();
+      window.e2eeCrypto?.importedPublicKeys?.clear();
+
+      try {
+        const pubKey = await window.e2eeCrypto?.getSenderPublicKey();
+        if (pubKey) await E2EEApi.setupOnServer(pubKey);
+      } catch (syncErr) {
+        console.warn('Key re-sync failed (non-critical):', syncErr);
+      }
+
       if (conv) await loadMessages(conv._id);
       setKeyMismatchError(false);
     } catch (err) {
@@ -274,6 +463,23 @@ const E2EEChatApp = () => {
           restoringKeys={restoringKeys}
           onRestore={handleRestoreKeys}
           onSetupNew={() => { setNeedsKeyRestore(false); setNeedsPassphrase(true); setPassphrase(''); setPassphraseError(''); }}
+        />
+      );
+    }
+    if (needsNewDevice) {
+      return (
+        <NewDeviceScreen
+          passphrase={passphrase}
+          setPassphrase={setPassphrase}
+          passphraseError={passphraseError}
+          restoringKeys={restoringKeys}
+          onRestore={handleRestoreKeys}
+          onStartFresh={() => {
+            setNeedsNewDevice(false);
+            setNeedsPassphrase(true);
+            setPassphrase('');
+            setPassphraseError('');
+          }}
         />
       );
     }
@@ -335,6 +541,8 @@ const E2EEChatApp = () => {
           newMessage={newMessage}
           setNewMessage={setNewMessage}
           onSend={sendMessage}
+          onRecover={handleKeyMismatchRecover}
+          onReset={handleKeyMismatchReset}
         />
       </div>
     </div>

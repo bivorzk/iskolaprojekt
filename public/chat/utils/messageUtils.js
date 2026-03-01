@@ -27,7 +27,8 @@ window.MessageUtils = {
     for (const message of messages) {
       const isError =
         message.decryptedContent?.includes('[Key mismatch') ||
-        message.decryptedContent?.includes('[Failed to decrypt]');
+        message.decryptedContent?.includes('[Failed to decrypt]') ||
+        message.decryptedContent?.includes('[Wrong device key');
 
       if (isError) {
         errorGroup.push(message);
@@ -47,6 +48,11 @@ window.MessageUtils = {
       content?.includes('[Failed to decrypt]') ||
       content?.includes('[Failed to decrypt - try refreshing]')
     );
+  },
+
+
+  isWrongDeviceKey(content) {
+    return content?.includes('[Wrong device key');
   },
 
   // Returns true if the message is from a previous key setup.

@@ -15,19 +15,22 @@ const WarningIcon = ({ extraClass = '' }) => (
 );
 
 const MessageBubble = ({ message, currentUserId }) => {
-  const isPrev = MessageUtils.isPreviousKeyMessage(message.decryptedContent);
-  const isError = MessageUtils.isDecryptionError(message.decryptedContent);
-  const isMine = message.senderId._id === currentUserId;
+  const isPrev        = MessageUtils.isPreviousKeyMessage(message.decryptedContent);
+  const isError       = MessageUtils.isDecryptionError(message.decryptedContent);
+  const isWrongDevice = MessageUtils.isWrongDeviceKey(message.decryptedContent);
+  const isMine        = message.senderId._id === currentUserId;
 
   const bubbleClass = isPrev
     ? 'bg-gray-100 text-gray-500 border border-gray-300'
-    : isError
-      ? 'bg-red-100 text-red-700 border border-red-300'
-      : isMine
-        ? 'bg-primary text-white'
-        : 'bg-gray-200 text-gray-800';
+    : isWrongDevice
+      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+      : isError
+        ? 'bg-red-100 text-red-700 border border-red-300'
+        : isMine
+          ? 'bg-primary text-white'
+          : 'bg-gray-200 text-gray-800';
 
-  const timeClass = isPrev || isError
+  const timeClass = isPrev || isError || isWrongDevice
     ? 'text-gray-400'
     : isMine ? 'text-orange-100' : 'text-gray-500';
 
@@ -38,6 +41,14 @@ const MessageBubble = ({ message, currentUserId }) => {
           <div className="flex items-center">
             <InlineLockIcon extraClass="text-gray-400" />
             <p className="break-words text-sm italic">Message encrypted with previous keys</p>
+          </div>
+        ) : isWrongDevice ? (
+          <div className="flex items-start">
+            <InlineLockIcon extraClass="text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="break-words text-sm">Sent to a different device</p>
+              <p className="text-xs text-amber-500 mt-0.5">Ask them to resend — your key has been updated</p>
+            </div>
           </div>
         ) : isError ? (
           <div className="flex items-center">
@@ -55,7 +66,7 @@ const MessageBubble = ({ message, currentUserId }) => {
   );
 };
 
-const ErrorGroupBubble = ({ message, currentUserId }) => {
+const ErrorGroupBubble = ({ message, currentUserId, onRecover, onReset }) => {
   const isMine = message.senderId._id === currentUserId;
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} message-bubble`}>
@@ -69,6 +80,26 @@ const ErrorGroupBubble = ({ message, currentUserId }) => {
             <p className="text-xs text-red-500 mt-1">Key mismatch - try resetting E2EE</p>
           </div>
         </div>
+        {(onRecover || onReset) && (
+          <div className="flex gap-2 mt-2">
+            {onRecover && (
+              <button
+                onClick={onRecover}
+                className="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded transition-colors"
+              >
+                Try Recovery
+              </button>
+            )}
+            {onReset && (
+              <button
+                onClick={onReset}
+                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+              >
+                Reset E2EE
+              </button>
+            )}
+          </div>
+        )}
         <p className="text-xs mt-2 text-red-400">
           {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
@@ -90,7 +121,7 @@ const EmptyState = () => (
   </div>
 );
 
-window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setNewMessage, onSend }) => {
+window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setNewMessage, onSend, onRecover, onReset }) => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -126,7 +157,13 @@ window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setN
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {groupedMessages.map(message =>
           message.isErrorGroup ? (
-            <ErrorGroupBubble key={message._id} message={message} currentUserId={currentUser.id} />
+            <ErrorGroupBubble
+              key={message._id}
+              message={message}
+              currentUserId={currentUser.id}
+              onRecover={onRecover ? () => onRecover(activeConversation) : undefined}
+              onReset={onReset}
+            />
           ) : (
             <MessageBubble key={message._id} message={message} currentUserId={currentUser.id} />
           )

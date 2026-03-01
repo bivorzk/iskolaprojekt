@@ -12,8 +12,7 @@ window.ChatAPI = {
     return data.conversations || [];
   },
 
-  // Fetches and decrypts messages for a conversation.
-  // Returns { messages: [], hasKeyMismatch: bool }
+
   async loadMessages(otherUserId, currentUser) {
     const response = await fetch(`/chat/messages/${otherUserId}`);
     const data = await response.json();
@@ -55,13 +54,24 @@ window.ChatAPI = {
           if (error.message && error.message.includes('Symmetric key decryption failed')) {
             const messageAge = new Date() - new Date(message.createdAt);
             const isRecent   = messageAge < 24 * 60 * 60 * 1000;
+            const isRecipient = message.recipientId._id === currentUser.id;
             totalKeyMismatchCount++;
-            if (isRecent) {
-              recentKeyMismatchCount++;
-              hasKeyMismatchError = true;
-              return { ...message, decryptedContent: '[Key mismatch - reset E2EE required]' };
+
+            if (!isRecent) {
+              return { ...message, decryptedContent: '[Message from previous encryption setup - cannot decrypt]' };
             }
-            return { ...message, decryptedContent: '[Message from previous encryption setup - cannot decrypt]' };
+
+            recentKeyMismatchCount++;
+
+            if (isRecipient) {
+              // Sender used a stale copy of our public key.
+              // Flag for auto-resend — don't show a red error.
+              return { ...message, decryptedContent: '[Wrong device key - ask sender to resend]', _needsResend: true };
+            } else {
+              // New device: senderEncryptedKey was encrypted with the old public key.
+              // Request the recipient to re-encrypt the symmetric key for us.
+              return { ...message, decryptedContent: '[Sent from another device — recovery in progress...]', _needsSenderRecovery: true };
+            }
           } else if (error.message && error.message.includes('timeout')) {
             return { ...message, decryptedContent: '[Decryption timeout - server may be slow]' };
           } else {
@@ -79,6 +89,8 @@ window.ChatAPI = {
           window.e2eeCrypto.resetDecryptionErrorCount();
           window.e2eeCrypto.keyPairs && window.e2eeCrypto.keyPairs.clear();
           window.e2eeCrypto.importedPublicKeys && window.e2eeCrypto.importedPublicKeys.clear();
+          const pubKey = await window.e2eeCrypto.getSenderPublicKey().catch(() => null);
+          if (pubKey && window.E2EEApi) await window.E2EEApi.setupOnServer(pubKey).catch(() => {});
         } catch (err) {
           console.warn('Auto-recovery failed:', err);
         }
@@ -86,11 +98,25 @@ window.ChatAPI = {
       console.log(`Decryption: ${successfulDecryptions}/${totalMessages} ok, ${totalKeyMismatchCount} mismatches`);
     }
 
+    // Collect messages that need transparent auto-resend
+    const wrongDeviceMessages = decryptedMessages
+      .filter(m => m._needsResend)
+      .map(m => ({ _id: String(m._id), senderId: m.senderId._id || String(m.senderId) }));
+
+    const senderRecoveryMessages = decryptedMessages
+      .filter(m => m._needsSenderRecovery)
+      .map(m => ({
+        _id:                String(m._id),
+        recipientId:        m.recipientId._id || String(m.recipientId),
+        encryptedContent:   m.encryptedContent,
+        encryptionMetadata: m.encryptionMetadata
+      }));
+
     fetch(`/chat/messages/read/${otherUserId}`, { method: 'PUT' }).catch(err =>
       console.warn('Failed to mark messages as read:', err.message)
     );
 
-    return { messages: decryptedMessages, hasKeyMismatch: hasKeyMismatchError };
+    return { messages: decryptedMessages, hasKeyMismatch: hasKeyMismatchError, wrongDeviceMessages, senderRecoveryMessages };
   },
 
   async sendMessage(recipientId, plaintext) {

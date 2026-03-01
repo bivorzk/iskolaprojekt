@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
 const path = require('path');
 
-// Environment configuration
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-// Database connection (reuse existing connection)
 const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
@@ -26,7 +24,6 @@ const messageSchema = new mongoose.Schema({
     required: true
   },
   
-  // Encryption metadata
   encryptionMetadata: {
     senderEncryptedKey: {
       type: String,
@@ -38,7 +35,6 @@ const messageSchema = new mongoose.Schema({
       required: true
     },
     
-    // Initialization vector for AES encryption
     iv: {
       type: String,
       required: true
@@ -52,7 +48,7 @@ const messageSchema = new mongoose.Schema({
   
   status: {
     type: String,
-    enum: ['sent', 'delivered', 'read'],
+    enum: ['sent', 'delivered', 'read', 'replaced'],
     default: 'sent'
   },
   

@@ -99,6 +99,32 @@ window.E2EEApi = {
     }
   },
 
+  async checkAndRotateKey() {
+    try {
+      const status = await this.checkStatus();
+      if (!status.keyGeneratedAt) return;
+
+      const ageMs   = Date.now() - new Date(status.keyGeneratedAt).getTime();
+      const ageDays = ageMs / (1000 * 60 * 60 * 24);
+      if (ageDays < 30) return;
+
+      console.log(`E2EE key is ${Math.floor(ageDays)} days old — rotating monthly key...`);
+
+      const keys = await window.e2eeCrypto.generateKeyPair();
+      await this.setupOnServer(keys.publicKey);
+
+      try {
+        const backupCheck = await this.checkKeyBackup();
+        if (backupCheck.hasBackup) {
+          console.log('Key backup exists but requires passphrase to refresh — skipping auto-backup update.');
+        }
+      } catch (_) {}
+
+      console.log('Monthly key rotation complete. Old private key kept for decryption fallback.');
+    } catch (err) {
+      console.warn('Monthly key rotation failed (non-critical):', err.message);
+    }
+  },
 
   async restoreKeys(userPassphrase) {
     try {

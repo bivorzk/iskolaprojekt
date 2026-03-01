@@ -206,8 +206,10 @@ class E2EECrypto {
 
   async importPublicKey(publicKeyBase64, keyId) {
     try {
-      if (this.importedPublicKeys.has(keyId)) {
-        return this.importedPublicKeys.get(keyId);
+
+      const cacheKey = keyId + ':' + publicKeyBase64.slice(-24);
+      if (this.importedPublicKeys.has(cacheKey)) {
+        return this.importedPublicKeys.get(cacheKey);
       }
 
       const publicKeyBuffer = this.base64ToArrayBuffer(publicKeyBase64);
@@ -222,7 +224,7 @@ class E2EECrypto {
         ['encrypt']
       );
 
-      this.importedPublicKeys.set(keyId, publicKey);
+      this.importedPublicKeys.set(cacheKey, publicKey);
       return publicKey;
     } catch (error) {
       console.error('Failed to import public key:', error);
@@ -452,6 +454,54 @@ class E2EECrypto {
       }
       throw new Error('Failed to decrypt message: ' + error.message);
     }
+  }
+
+  async reEncryptKeyForSender(messageData, senderPublicKeyBase64, senderKeyId) {
+    // Called by RECIPIENT to help a sender whose new device can't decrypt their
+    // own senderEncryptedKey. We decrypt recipientEncryptedKey (which we can do),
+    // then re-encrypt the raw AES symmetric key with the sender's new public key.
+    const { encryptionMetadata } = messageData;
+    const encryptedKeyBuf = this.base64ToArrayBuffer(encryptionMetadata.recipientEncryptedKey);
+
+    // Try all stored private keys (handles key rotation)
+    const allKeys = await this.store.getAllKeys();
+    const currentKeyId = await this.store.getItem('e2ee_current_key_id');
+    const keyIds = [];
+    // current key first
+    if (currentKeyId) keyIds.push(currentKeyId);
+    for (const k of allKeys) {
+      if (typeof k === 'string' && k.startsWith('e2ee_private_key_')) {
+        const id = k.replace('e2ee_private_key_', '');
+        if (!keyIds.includes(id)) keyIds.push(id);
+      }
+    }
+
+    let symmetricKeyBuf = null;
+    for (const kId of keyIds) {
+      try {
+        const privBase64 = await this.store.getItem('e2ee_private_key_' + kId);
+        if (!privBase64) continue;
+        const privBuf = this.base64ToArrayBuffer(privBase64);
+        const privKey = await window.crypto.subtle.importKey(
+          'pkcs8', privBuf,
+          { name: 'RSA-OAEP', hash: 'SHA-256' },
+          false, ['decrypt']
+        );
+        symmetricKeyBuf = await window.crypto.subtle.decrypt(
+          { name: 'RSA-OAEP' }, privKey, encryptedKeyBuf
+        );
+        break;
+      } catch (_) {}
+    }
+    if (!symmetricKeyBuf) {
+      throw new Error('reEncryptKeyForSender: could not decrypt recipientEncryptedKey with any stored key');
+    }
+
+    const senderPubKey = await this.importPublicKey(senderPublicKeyBase64, senderKeyId);
+    const newSenderEncryptedKey = await window.crypto.subtle.encrypt(
+      { name: 'RSA-OAEP' }, senderPubKey, symmetricKeyBuf
+    );
+    return this.arrayBufferToBase64(newSenderEncryptedKey);
   }
 
   async getSenderPublicKey() {

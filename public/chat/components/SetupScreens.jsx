@@ -48,8 +48,48 @@ window.KeyRestoreScreen = ({ passphrase, setPassphrase, passphraseError, restori
     </button>
   </SetupCard>
 );
+window.NewDeviceScreen = ({ passphrase, setPassphrase, passphraseError, restoringKeys, onRestore, onStartFresh }) => (
+  <SetupCard>
+    <h2 className="text-2xl font-bold text-gray-800 mb-2">New Device Detected</h2>
+    <p className="text-gray-600 mb-4">
+      Your account already has encryption keys on another device or browser.
+    </p>
+    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg mb-6 text-sm text-left">
+      <p className="font-semibold mb-1">&#9888; Do not start fresh unless necessary</p>
+      <p>If you start fresh, a new key pair will be generated. Messages sent to your old
+      device will no longer be decryptable here, and vice versa, until both parties send
+      new messages.</p>
+    </div>
+    <p className="text-gray-600 text-sm mb-4">
+      If you set a passphrase on your other device, enter it below to restore your keys and keep full access to your messages.
+    </p>
+    {passphraseError && (
+      <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{passphraseError}</div>
+    )}
+    <input
+      type="password"
+      placeholder="Passphrase from your other device"
+      value={passphrase}
+      onChange={e => setPassphrase(e.target.value)}
+      onKeyPress={e => e.key === 'Enter' && passphrase && onRestore(passphrase)}
+      className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:ring-2 focus:ring-primary focus:border-primary"
+    />
+    <button
+      onClick={() => onRestore(passphrase)}
+      disabled={!passphrase || restoringKeys}
+      className="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors font-medium mb-3 disabled:opacity-50"
+    >
+      {restoringKeys ? 'Restoring...' : 'Restore Keys'}
+    </button>
+    <button
+      onClick={onStartFresh}
+      className="w-full text-gray-500 py-2 px-6 rounded-lg hover:text-red-600 transition-colors text-sm border border-gray-200 hover:border-red-300"
+    >
+      Start fresh on this device (old messages will not be readable)
+    </button>
+  </SetupCard>
+);
 
-// ---- First-Time Setup Screen ----
 window.FirstTimeSetupScreen = ({ passphrase, setPassphrase, passphraseConfirm, setPassphraseConfirm, passphraseError, onSetup }) => (
   <SetupCard>
     <h2 className="text-2xl font-bold text-gray-800 mb-2">Set Up Secure Chat</h2>
