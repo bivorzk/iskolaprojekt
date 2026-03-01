@@ -1,12 +1,143 @@
+﻿class E2EEKeyStore {
+  constructor(dbName = 'e2ee_keys', storeName = 'keys') {
+    this.dbName = dbName;
+    this.storeName = storeName;
+    this.db = null;
+    this._ready = this._openDB();
+  }
+
+  _openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, 1);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.createObjectStore(this.storeName);
+        }
+      };
+      request.onsuccess = (event) => {
+        this.db = event.target.result;
+        resolve(this.db);
+      };
+      request.onerror = (event) => {
+        console.error('IndexedDB open error:', event.target.error);
+        reject(event.target.error);
+      };
+    });
+  }
+
+  async _ensureDB() {
+    if (!this.db) {
+      await this._ready;
+    }
+    return this.db;
+  }
+
+  async getItem(key) {
+    const db = await this._ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.storeName, 'readonly');
+      const store = tx.objectStore(this.storeName);
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async setItem(key, value) {
+    const db = await this._ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      const store = tx.objectStore(this.storeName);
+      const request = store.put(value, key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async removeItem(key) {
+    const db = await this._ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      const store = tx.objectStore(this.storeName);
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllKeys() {
+    const db = await this._ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.storeName, 'readonly');
+      const store = tx.objectStore(this.storeName);
+      const request = store.getAllKeys();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async clear() {
+    const db = await this._ensureDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      const store = tx.objectStore(this.storeName);
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+}
+
 class E2EECrypto {
   constructor() {
     this.keyPairs = new Map();
     this.importedPublicKeys = new Map();
-    this.debugMode = false; // Set to true for detailed logging
+    this.debugMode = false;
+    this.store = new E2EEKeyStore();
+    this._migrated = this._migrateFromLocalStorage();
+  }
+
+  // One-time migration from localStorage to IndexedDB
+  async _migrateFromLocalStorage() {
+    try {
+      await this.store._ensureDB();
+      const currentKeyId = localStorage.getItem('e2ee_current_key_id');
+      if (!currentKeyId) return;
+
+      const existingKeyId = await this.store.getItem('e2ee_current_key_id');
+      if (existingKeyId) return;
+
+      console.log('Migrating E2EE keys from localStorage to IndexedDB...');
+
+      const keysToMigrate = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('e2ee_')) {
+          keysToMigrate.push({ key, value: localStorage.getItem(key) });
+        }
+      }
+
+      for (const { key, value } of keysToMigrate) {
+        await this.store.setItem(key, value);
+        localStorage.removeItem(key);
+      }
+
+      console.log('Migrated ' + keysToMigrate.length + ' E2EE keys to IndexedDB');
+    } catch (error) {
+      console.warn('Migration from localStorage failed (non-critical):', error);
+    }
+  }
+
+  async _ensureReady() {
+    await this._migrated;
+    await this.store._ensureDB();
   }
 
   async generateKeyPair() {
     try {
+      await this._ensureReady();
+
       const keyPair = await window.crypto.subtle.generateKey(
         {
           name: 'RSA-OAEP',
@@ -14,7 +145,7 @@ class E2EECrypto {
           publicExponent: new Uint8Array([1, 0, 1]),
           hash: 'SHA-256'
         },
-        true, // extractable
+        true,
         ['encrypt', 'decrypt']
       );
 
@@ -23,11 +154,11 @@ class E2EECrypto {
 
       const privateKeyBuffer = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
       const privateKeyBase64 = this.arrayBufferToBase64(privateKeyBuffer);
-      
+
       const keyId = this.generateKeyId();
-      localStorage.setItem(`e2ee_private_key_${keyId}`, privateKeyBase64);
-      localStorage.setItem(`e2ee_public_key_${keyId}`, publicKeyBase64);
-      localStorage.setItem('e2ee_current_key_id', keyId);
+      await this.store.setItem('e2ee_private_key_' + keyId, privateKeyBase64);
+      await this.store.setItem('e2ee_public_key_' + keyId, publicKeyBase64);
+      await this.store.setItem('e2ee_current_key_id', keyId);
 
       return {
         keyId,
@@ -42,10 +173,11 @@ class E2EECrypto {
 
   async getCurrentPrivateKey() {
     try {
-      const keyId = localStorage.getItem('e2ee_current_key_id');
+      await this._ensureReady();
+      const keyId = await this.store.getItem('e2ee_current_key_id');
       if (!keyId) return null;
 
-      const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
+      const privateKeyBase64 = await this.store.getItem('e2ee_private_key_' + keyId);
       if (!privateKeyBase64) return null;
 
       if (this.keyPairs.has(keyId)) {
@@ -72,9 +204,6 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Import a public key from base64 string
-   */
   async importPublicKey(publicKeyBase64, keyId) {
     try {
       if (this.importedPublicKeys.has(keyId)) {
@@ -101,7 +230,6 @@ class E2EECrypto {
     }
   }
 
-
   async generateSymmetricKey() {
     return await window.crypto.subtle.generateKey(
       {
@@ -112,18 +240,16 @@ class E2EECrypto {
       ['encrypt', 'decrypt']
     );
   }
+
   async encryptMessage(message, recipientPublicKeyBase64, recipientKeyId) {
     try {
       const symmetricKey = await this.generateSymmetricKey();
-      
+
       const iv = window.crypto.getRandomValues(new Uint8Array(12));
-      
+
       const messageBuffer = new TextEncoder().encode(message);
       const encryptedMessage = await window.crypto.subtle.encrypt(
-        {
-          name: 'AES-GCM',
-          iv: iv
-        },
+        { name: 'AES-GCM', iv: iv },
         symmetricKey,
         messageBuffer
       );
@@ -132,9 +258,7 @@ class E2EECrypto {
 
       const recipientPublicKey = await this.importPublicKey(recipientPublicKeyBase64, recipientKeyId);
       const recipientEncryptedKey = await window.crypto.subtle.encrypt(
-        {
-          name: 'RSA-OAEP'
-        },
+        { name: 'RSA-OAEP' },
         recipientPublicKey,
         symmetricKeyBuffer
       );
@@ -144,14 +268,12 @@ class E2EECrypto {
         throw new Error('Sender private key not found');
       }
 
-      const senderKeyId = localStorage.getItem('e2ee_current_key_id');
+      const senderKeyId = await this.store.getItem('e2ee_current_key_id');
       const senderPublicKeyBase64 = await this.getSenderPublicKey();
       const senderPublicKey = await this.importPublicKey(senderPublicKeyBase64, senderKeyId);
-      
+
       const senderEncryptedKey = await window.crypto.subtle.encrypt(
-        {
-          name: 'RSA-OAEP'
-        },
+        { name: 'RSA-OAEP' },
         senderPublicKey,
         symmetricKeyBuffer
       );
@@ -171,196 +293,180 @@ class E2EECrypto {
     }
   }
 
+  async decryptMessage(encryptedData, isRecipient) {
+    if (isRecipient === undefined) isRecipient = true;
+    var startTime = performance.now();
 
-  async decryptMessage(encryptedData, isRecipient = true) {
-    const startTime = performance.now();
-    
     try {
       if (this.debugMode) {
         console.log('=== DECRYPTION DEBUG ===');
         console.log('Is recipient:', isRecipient);
       }
-      
-      const privateKey = await this.getCurrentPrivateKey();
+
+      var privateKey = await this.getCurrentPrivateKey();
       if (!privateKey) {
         throw new Error('Private key not found');
       }
 
-      const { encryptedContent, encryptionMetadata } = encryptedData;
-      
+      var encryptedContent = encryptedData.encryptedContent;
+      var encryptionMetadata = encryptedData.encryptionMetadata;
+
       if (!encryptedContent || !encryptionMetadata) {
-        throw new Error(`Missing required data: encryptedContent=${!!encryptedContent}, encryptionMetadata=${!!encryptionMetadata}`);
+        throw new Error('Missing required data: encryptedContent=' + !!encryptedContent + ', encryptionMetadata=' + !!encryptionMetadata);
       }
-      
-      const encryptedKeyBase64 = isRecipient 
-        ? encryptionMetadata.recipientEncryptedKey 
+
+      var encryptedKeyBase64 = isRecipient
+        ? encryptionMetadata.recipientEncryptedKey
         : encryptionMetadata.senderEncryptedKey;
-      
+
       if (!encryptedKeyBase64) {
-        throw new Error(`Missing encrypted key for ${isRecipient ? 'recipient' : 'sender'}`);
+        throw new Error('Missing encrypted key for ' + (isRecipient ? 'recipient' : 'sender'));
       }
-      
-      const encryptedKeyBuffer = this.base64ToArrayBuffer(encryptedKeyBase64);
-      
-      let symmetricKeyBuffer;
-      let decryptionSuccessful = false;
-      const privateKeysToTry = [];
-      
-      // Get current key first
-      const currentKeyId = localStorage.getItem('e2ee_current_key_id');
+
+      var encryptedKeyBuffer = this.base64ToArrayBuffer(encryptedKeyBase64);
+
+      var symmetricKeyBuffer;
+      var decryptionSuccessful = false;
+      var privateKeysToTry = [];
+
+      var currentKeyId = await this.store.getItem('e2ee_current_key_id');
       privateKeysToTry.push({ key: privateKey, keyId: currentKeyId });
-      
-      // Then get all other private keys, sorted by ID (newer keys have higher timestamps)
-      const otherKeyIds = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('e2ee_private_key_') && key !== `e2ee_private_key_${currentKeyId}`) {
-          const keyId = key.replace('e2ee_private_key_', '');
-          otherKeyIds.push(keyId);
+
+      var allKeys = await this.store.getAllKeys();
+      var otherKeyIds = [];
+      for (var ki = 0; ki < allKeys.length; ki++) {
+        var k = allKeys[ki];
+        if (typeof k === 'string' && k.indexOf('e2ee_private_key_') === 0 && k !== 'e2ee_private_key_' + currentKeyId) {
+          otherKeyIds.push(k.replace('e2ee_private_key_', ''));
         }
       }
-      
-      // Sort keys by creation time (newer first, then older)
-      otherKeyIds.sort((a, b) => {
-        const timestampA = parseInt(a.split('_')[1]) || 0;
-        const timestampB = parseInt(b.split('_')[1]) || 0;
-        return timestampB - timestampA; // Descending order (newer first)
+
+      otherKeyIds.sort(function(a, b) {
+        var timestampA = parseInt(a.split('_')[1]) || 0;
+        var timestampB = parseInt(b.split('_')[1]) || 0;
+        return timestampB - timestampA;
       });
-      
-      // Load and add other keys (with minimal logging)
-      for (const keyId of otherKeyIds) {
-        const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
+
+      for (var oi = 0; oi < otherKeyIds.length; oi++) {
+        var okId = otherKeyIds[oi];
+        var privateKeyBase64 = await this.store.getItem('e2ee_private_key_' + okId);
         if (privateKeyBase64) {
           try {
-            const privateKeyBuffer = this.base64ToArrayBuffer(privateKeyBase64);
-            const privKey = await window.crypto.subtle.importKey(
+            var privateKeyBuffer = this.base64ToArrayBuffer(privateKeyBase64);
+            var privKey = await window.crypto.subtle.importKey(
               'pkcs8',
               privateKeyBuffer,
-              {
-                name: 'RSA-OAEP',
-                hash: 'SHA-256'
-              },
+              { name: 'RSA-OAEP', hash: 'SHA-256' },
               false,
               ['decrypt']
             );
-            privateKeysToTry.push({ key: privKey, keyId });
+            privateKeysToTry.push({ key: privKey, keyId: okId });
           } catch (importError) {
             if (this.debugMode) {
-              console.warn(`Failed to import private key ${keyId}:`, importError);
+              console.warn('Failed to import private key ' + okId + ':', importError);
             }
           }
         }
       }
-      
+
       if (this.debugMode) {
-        console.log(`Trying decryption with ${privateKeysToTry.length} keys`);
+        console.log('Trying decryption with ' + privateKeysToTry.length + ' keys');
       }
-      
-      // Try to decrypt with available keys
-      let usedKeyId = null;
-      for (const { key, keyId } of privateKeysToTry) {
+
+      var usedKeyId = null;
+      for (var pi = 0; pi < privateKeysToTry.length; pi++) {
+        var entry = privateKeysToTry[pi];
         try {
           symmetricKeyBuffer = await window.crypto.subtle.decrypt(
-            {
-              name: 'RSA-OAEP'
-            },
-            key,
+            { name: 'RSA-OAEP' },
+            entry.key,
             encryptedKeyBuffer
           );
-          
-          usedKeyId = keyId;
+          usedKeyId = entry.keyId;
           decryptionSuccessful = true;
-          
-          if (this.debugMode && keyId !== currentKeyId) {
-            console.log(`Successfully decrypted with different key ${keyId}, but keeping current key ${currentKeyId}`);
+
+          if (this.debugMode && entry.keyId !== currentKeyId) {
+            console.log('Successfully decrypted with different key ' + entry.keyId);
           }
           break;
         } catch (keyDecryptError) {
-          // Silent failure for key attempts unless in debug mode
           if (this.debugMode) {
-            console.log(`Failed to decrypt with key ${keyId}:`, keyDecryptError.message);
+            console.log('Failed to decrypt with key ' + entry.keyId + ':', keyDecryptError.message);
           }
         }
       }
-      
+
       if (!decryptionSuccessful) {
-        // Implement smart error logging to prevent console spam
-        const errorCount = this.getDecryptionErrorCount();
-        const shouldLogError = this.debugMode || (errorCount < 5 && errorCount % 5 === 0);
-        
+        var errorCount = this.getDecryptionErrorCount();
+        var shouldLogError = this.debugMode || (errorCount < 5 && errorCount % 5 === 0);
+
         if (shouldLogError) {
-          console.warn(`=== E2EE Decryption Failed (${errorCount + 1} total) ===`);
+          console.warn('=== E2EE Decryption Failed (' + (errorCount + 1) + ' total) ===');
           console.warn('Available keys tried:', privateKeysToTry.length);
           console.warn('Current key ID:', currentKeyId);
           console.warn('Message role:', isRecipient ? 'RECIPIENT' : 'SENDER');
-          
+
           if (errorCount === 0) {
             console.warn('Tip: Use window.debugE2EE.enableDebug() for detailed logging');
           }
         }
-        
+
         this.incrementDecryptionErrorCount();
-        
         throw new Error('Symmetric key decryption failed with all available keys. This usually means the message was encrypted with a different public key.');
       }
 
-      const symmetricKey = await window.crypto.subtle.importKey(
+      var symmetricKey = await window.crypto.subtle.importKey(
         'raw',
         symmetricKeyBuffer,
-        {
-          name: 'AES-GCM'
-        },
+        { name: 'AES-GCM' },
         false,
         ['decrypt']
       );
 
-      const iv = this.base64ToArrayBuffer(encryptionMetadata.iv);
-      const encryptedMessageBuffer = this.base64ToArrayBuffer(encryptedContent);
-      
-      let decryptedMessageBuffer;
+      var ivBuf = this.base64ToArrayBuffer(encryptionMetadata.iv);
+      var encryptedMessageBuffer = this.base64ToArrayBuffer(encryptedContent);
+
+      var decryptedMessageBuffer;
       try {
         decryptedMessageBuffer = await window.crypto.subtle.decrypt(
-          {
-            name: 'AES-GCM',
-            iv: iv
-          },
+          { name: 'AES-GCM', iv: ivBuf },
           symmetricKey,
           encryptedMessageBuffer
         );
       } catch (messageDecryptError) {
         console.error('Failed to decrypt message content:', messageDecryptError.message);
-        throw new Error(`Message content decryption failed: ${messageDecryptError.message}. The message may be corrupted.`);
+        throw new Error('Message content decryption failed: ' + messageDecryptError.message + '. The message may be corrupted.');
       }
 
-      const decryptedText = new TextDecoder().decode(decryptedMessageBuffer);
-      
+      var decryptedText = new TextDecoder().decode(decryptedMessageBuffer);
+
       if (this.debugMode) {
-        const elapsed = performance.now() - startTime;
-        console.log(`Message decrypted successfully in ${elapsed.toFixed(2)}ms using key ${usedKeyId}`);
+        var elapsed = performance.now() - startTime;
+        console.log('Message decrypted successfully in ' + elapsed.toFixed(2) + 'ms using key ' + usedKeyId);
       }
-      
+
       return decryptedText;
     } catch (error) {
-      // Only log full error details in debug mode or for critical errors
       if (this.debugMode || !error.message.includes('Symmetric key decryption failed')) {
         console.error('Message decryption failed:', error.message);
       }
-      throw new Error(`Failed to decrypt message: ${error.message}`);
+      throw new Error('Failed to decrypt message: ' + error.message);
     }
   }
 
   async getSenderPublicKey() {
     try {
-      const keyId = localStorage.getItem('e2ee_current_key_id');
+      await this._ensureReady();
+      var keyId = await this.store.getItem('e2ee_current_key_id');
       if (!keyId) {
         throw new Error('No current key ID found');
       }
-      
-      const publicKey = localStorage.getItem(`e2ee_public_key_${keyId}`);
+
+      var publicKey = await this.store.getItem('e2ee_public_key_' + keyId);
       if (!publicKey) {
         throw new Error('Public key not found for current key ID');
       }
-      
+
       return publicKey;
     } catch (error) {
       console.error('Failed to get sender public key:', error);
@@ -368,116 +474,178 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Store public key locally
-   */
-  storePublicKey(keyId, publicKeyBase64) {
-    localStorage.setItem(`e2ee_public_key_${keyId}`, publicKeyBase64);
+  async storePublicKey(keyId, publicKeyBase64) {
+    await this._ensureReady();
+    await this.store.setItem('e2ee_public_key_' + keyId, publicKeyBase64);
   }
 
-  /**
-   * Utility: Convert ArrayBuffer to Base64
-   */
+  // --- Passphrase-based key backup for cross-device support ---
+
+  async _deriveKeyFromPassphrase(passphrase, salt) {
+    var encoder = new TextEncoder();
+    var keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(passphrase),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+
+    return await window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 600000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  async encryptPrivateKeyWithPassphrase(passphrase) {
+    await this._ensureReady();
+
+    var keyId = await this.store.getItem('e2ee_current_key_id');
+    if (!keyId) throw new Error('No current key to backup');
+
+    var privateKeyBase64 = await this.store.getItem('e2ee_private_key_' + keyId);
+    var publicKeyBase64 = await this.store.getItem('e2ee_public_key_' + keyId);
+    if (!privateKeyBase64 || !publicKeyBase64) throw new Error('Keys not found');
+
+    var salt = window.crypto.getRandomValues(new Uint8Array(16));
+    var iv = window.crypto.getRandomValues(new Uint8Array(12));
+    var derivedKey = await this._deriveKeyFromPassphrase(passphrase, salt);
+
+    var bundle = JSON.stringify({ privateKey: privateKeyBase64, publicKey: publicKeyBase64, keyId: keyId });
+    var encoded = new TextEncoder().encode(bundle);
+
+    var encrypted = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv },
+      derivedKey,
+      encoded
+    );
+
+    return {
+      encryptedPrivateKey: this.arrayBufferToBase64(encrypted),
+      salt: this.arrayBufferToBase64(salt),
+      iv: this.arrayBufferToBase64(iv)
+    };
+  }
+
+  async decryptPrivateKeyWithPassphrase(encryptedBundle, salt, iv, passphrase) {
+    var saltBuffer = this.base64ToArrayBuffer(salt);
+    var ivBuffer = this.base64ToArrayBuffer(iv);
+    var encryptedBuffer = this.base64ToArrayBuffer(encryptedBundle);
+
+    var derivedKey = await this._deriveKeyFromPassphrase(passphrase, saltBuffer);
+
+    var decrypted;
+    try {
+      decrypted = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: ivBuffer },
+        derivedKey,
+        encryptedBuffer
+      );
+    } catch (e) {
+      throw new Error('Wrong passphrase or corrupted backup');
+    }
+
+    var bundle = JSON.parse(new TextDecoder().decode(decrypted));
+
+    await this._ensureReady();
+    await this.store.setItem('e2ee_private_key_' + bundle.keyId, bundle.privateKey);
+    await this.store.setItem('e2ee_public_key_' + bundle.keyId, bundle.publicKey);
+    await this.store.setItem('e2ee_current_key_id', bundle.keyId);
+
+    this.keyPairs.clear();
+    this.importedPublicKeys.clear();
+    await this.getCurrentPrivateKey();
+
+    return {
+      keyId: bundle.keyId,
+      publicKey: bundle.publicKey,
+      privateKey: bundle.privateKey
+    };
+  }
+
+  // --- Utility helpers ---
+
   arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
+    var bytes = new Uint8Array(buffer);
+    var binary = '';
+    for (var i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
   }
 
-  /**
-   * Utility: Convert Base64 to ArrayBuffer
-   */
   base64ToArrayBuffer(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
+    var binary = atob(base64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
       bytes[i] = binary.charCodeAt(i);
     }
     return bytes.buffer;
   }
 
-  /**
-   * Generate a unique key ID
-   */
   generateKeyId() {
     return 'key_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
-  /**
-   * Check if E2EE is set up for current user
-   */
-  isE2EESetup() {
-    const keyId = localStorage.getItem('e2ee_current_key_id');
-    return !!keyId && !!localStorage.getItem(`e2ee_private_key_${keyId}`);
+  async isE2EESetup() {
+    await this._ensureReady();
+    var keyId = await this.store.getItem('e2ee_current_key_id');
+    if (!keyId) return false;
+    var pk = await this.store.getItem('e2ee_private_key_' + keyId);
+    return !!pk;
   }
 
-
-  // Key versioning 
   async versionKeys() {
-      try {
-        const keyId = localStorage.getItem('e2ee_current_key_id');
-        if (!keyId) {
-          throw new Error('No current key ID found for versioning');
-        }
-        const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
-        const publicKeyBase64 = localStorage.getItem(`e2ee_public_key_${keyId}`);
-        if (!privateKeyBase64 || !publicKeyBase64) {
-          throw new Error('Current keys not found for versioning');
-        }
-        const newKeyId = this.generateKeyId();
-        localStorage.setItem(`e2ee_private_key_${newKeyId}`, privateKeyBase64);
-        localStorage.setItem(`e2ee_public_key_${newKeyId}`, publicKeyBase64);
-        localStorage.setItem('e2ee_current_key_id', newKeyId);
-        console.log(`Keys versioned successfully. New key ID: ${newKeyId}`);
-        return newKeyId;
-      } catch (error) {
-        console.error('Key versioning failed:', error);
-        throw new Error('Failed to version keys');
-      }
+    try {
+      await this._ensureReady();
+      var keyId = await this.store.getItem('e2ee_current_key_id');
+      if (!keyId) throw new Error('No current key ID found for versioning');
+
+      var privateKeyBase64 = await this.store.getItem('e2ee_private_key_' + keyId);
+      var publicKeyBase64 = await this.store.getItem('e2ee_public_key_' + keyId);
+      if (!privateKeyBase64 || !publicKeyBase64) throw new Error('Current keys not found for versioning');
+
+      var newKeyId = this.generateKeyId();
+      await this.store.setItem('e2ee_private_key_' + newKeyId, privateKeyBase64);
+      await this.store.setItem('e2ee_public_key_' + newKeyId, publicKeyBase64);
+      await this.store.setItem('e2ee_current_key_id', newKeyId);
+      console.log('Keys versioned successfully. New key ID: ' + newKeyId);
+      return newKeyId;
+    } catch (error) {
+      console.error('Key versioning failed:', error);
+      throw new Error('Failed to version keys');
+    }
   }
 
-  /**
-   * Clear all stored keys (logout/reset)
-   */
-  clearKeys() {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('e2ee_')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+  async clearKeys() {
+    await this._ensureReady();
+    await this.store.clear();
     this.keyPairs.clear();
     this.importedPublicKeys.clear();
     console.log('All E2EE keys cleared');
   }
 
-  /**
-   * Reset E2EE completely - clear keys and force re-setup
-   */
   async resetE2EE() {
     try {
       console.log('Resetting E2EE completely...');
-      
-      // Clear local keys
-      this.clearKeys();
-      
-      // Notify server to disable E2EE
+      await this.clearKeys();
+
       try {
         await fetch('/chat/reset-e2ee', { method: 'POST' });
       } catch (error) {
         console.log('Server reset failed (continuing anyway):', error);
       }
-      
+
       console.log('E2EE reset complete. Page will reload to re-setup.');
-      
-      // Reload page to start fresh
       window.location.reload();
-      
       return true;
     } catch (error) {
       console.error('E2EE reset failed:', error);
@@ -485,40 +653,31 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Admin function: Clear ALL E2EE data from database
-   */
-  async clearAllE2EEFromDatabase(clearMessages = true) {
+  async clearAllE2EEFromDatabase(clearMessages) {
+    if (clearMessages === undefined) clearMessages = true;
     try {
       console.log('Clearing ALL E2EE data from database...');
-      
-      const response = await fetch('/chat/admin/clear-all-e2ee', {
+
+      var response = await fetch('/chat/admin/clear-all-e2ee', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ clearMessages })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearMessages: clearMessages })
       });
-      
+
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        throw new Error('Server error: ' + response.status + ' ' + response.statusText);
       }
-      
-      const result = await response.json();
+
+      var result = await response.json();
       console.log('Database clear result:', result);
-      
-      // Clear local keys too
-      this.clearKeys();
-      
-      alert(`Success! Cleared ${result.usersCleared} users and ${result.messagesDeleted} messages. Page will reload.`);
-      
-      // Reload page
+      await this.clearKeys();
+
+      alert('Success! Cleared ' + result.usersCleared + ' users and ' + result.messagesDeleted + ' messages. Page will reload.');
       window.location.reload();
-      
       return result;
     } catch (error) {
       console.error('Failed to clear database E2EE:', error);
-      alert(`Failed to clear database: ${error.message}`);
+      alert('Failed to clear database: ' + error.message);
       return false;
     }
   }
@@ -526,49 +685,49 @@ class E2EECrypto {
   async debugKeys() {
     try {
       console.log('=== E2EE Key Debug ===');
-      
-      const keyId = localStorage.getItem('e2ee_current_key_id');
+      await this._ensureReady();
+
+      var keyId = await this.store.getItem('e2ee_current_key_id');
       console.log('Current key ID:', keyId);
-      
+
       if (!keyId) {
         console.error('No key ID found');
         return false;
       }
-      
-      const privateKeyBase64 = localStorage.getItem(`e2ee_private_key_${keyId}`);
-      const publicKeyBase64 = localStorage.getItem(`e2ee_public_key_${keyId}`);
-      
-      console.log('Private key exists:', !!privateKeyBase64, 'Length:', privateKeyBase64?.length);
-      console.log('Public key exists:', !!publicKeyBase64, 'Length:', publicKeyBase64?.length);
-      
-      const privateKey = await this.getCurrentPrivateKey();
+
+      var privateKeyBase64 = await this.store.getItem('e2ee_private_key_' + keyId);
+      var publicKeyBase64 = await this.store.getItem('e2ee_public_key_' + keyId);
+
+      console.log('Private key exists:', !!privateKeyBase64, 'Length:', privateKeyBase64 ? privateKeyBase64.length : 0);
+      console.log('Public key exists:', !!publicKeyBase64, 'Length:', publicKeyBase64 ? publicKeyBase64.length : 0);
+
+      var privateKey = await this.getCurrentPrivateKey();
       console.log('Private key loaded successfully:', !!privateKey);
-      
+
       if (privateKey) {
         console.log('Private key algorithm:', privateKey.algorithm);
         console.log('Private key usages:', privateKey.usages);
       }
-      
+
       if (publicKeyBase64) {
-        const publicKey = await this.importPublicKey(publicKeyBase64, keyId);
+        var publicKey = await this.importPublicKey(publicKeyBase64, keyId);
         console.log('Public key imported successfully:', !!publicKey);
-        
+
         if (publicKey) {
           console.log('Public key algorithm:', publicKey.algorithm);
           console.log('Public key usages:', publicKey.usages);
         }
       }
-      
-      // Test encryption/decryption cycle
+
       console.log('Testing encryption/decryption cycle...');
-      const testMessage = 'Hello, E2EE test!';
-      const encrypted = await this.encryptMessage(testMessage, publicKeyBase64, keyId);
+      var testMessage = 'Hello, E2EE test!';
+      var encrypted = await this.encryptMessage(testMessage, publicKeyBase64, keyId);
       console.log('Test encryption successful');
-      
-      const decrypted = await this.decryptMessage(encrypted, true);
+
+      var decrypted = await this.decryptMessage(encrypted, true);
       console.log('Test decryption successful:', decrypted === testMessage);
       console.log('Decrypted message:', decrypted);
-      
+
       return true;
     } catch (error) {
       console.error('Key debug failed:', error);
@@ -576,46 +735,38 @@ class E2EECrypto {
     }
   }
 
-  /**
-   * Track decryption error count to reduce console spam
-   */
   getDecryptionErrorCount() {
-    const key = 'e2ee_decrypt_errors_' + (localStorage.getItem('e2ee_current_key_id') || 'unknown');
+    var key = 'e2ee_decrypt_errors';
     return parseInt(sessionStorage.getItem(key) || '0');
   }
-  
+
   incrementDecryptionErrorCount() {
-    const key = 'e2ee_decrypt_errors_' + (localStorage.getItem('e2ee_current_key_id') || 'unknown');
-    const count = this.getDecryptionErrorCount() + 1;
+    var key = 'e2ee_decrypt_errors';
+    var count = this.getDecryptionErrorCount() + 1;
     sessionStorage.setItem(key, count.toString());
-    
-    // Auto-enable debug mode if errors are excessive
+
     if (count === 10 && !this.debugMode) {
       console.warn('High number of decryption errors detected. Auto-enabling debug mode.');
       this.setDebugMode(true);
     }
   }
-  
+
   resetDecryptionErrorCount() {
-    // Clear all decryption error counts
-    const keysToRemove = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && key.startsWith('e2ee_decrypt_errors_')) {
+    var keysToRemove = [];
+    for (var i = 0; i < sessionStorage.length; i++) {
+      var key = sessionStorage.key(i);
+      if (key && key.indexOf('e2ee_decrypt_errors') === 0) {
         keysToRemove.push(key);
       }
     }
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    keysToRemove.forEach(function(key) { sessionStorage.removeItem(key); });
     console.log('Decryption error counts reset');
   }
-  
-  /**
-   * Enable/disable debug logging
-   */
+
   setDebugMode(enabled) {
     this.debugMode = enabled;
-    console.log(`🔧 E2EE debug mode ${enabled ? 'enabled' : 'disabled'}`);
-    
+    console.log('E2EE debug mode ' + (enabled ? 'enabled' : 'disabled'));
+
     if (enabled) {
       console.log('Debug commands:');
       console.log('  window.debugE2EE.status() - Current E2EE status');
@@ -629,37 +780,39 @@ class E2EECrypto {
 window.e2eeCrypto = new E2EECrypto();
 
 window.debugE2EE = {
-  checkKeys: () => window.e2eeCrypto.debugKeys(),
-  resetE2EE: () => window.e2eeCrypto.resetE2EE(),
-  clearKeys: () => window.e2eeCrypto.clearKeys(),
-  clearDatabase: (clearMessages = true) => window.e2eeCrypto.clearAllE2EEFromDatabase(clearMessages),
-  enableDebug: () => window.e2eeCrypto.setDebugMode(true),
-  disableDebug: () => window.e2eeCrypto.setDebugMode(false),
-  resetErrorCount: () => window.e2eeCrypto.resetDecryptionErrorCount(),
-  forceKeyRefresh: async () => {
-    console.log('🔄 Forcing key refresh...');
+  checkKeys: function() { return window.e2eeCrypto.debugKeys(); },
+  resetE2EE: function() { return window.e2eeCrypto.resetE2EE(); },
+  clearKeys: function() { return window.e2eeCrypto.clearKeys(); },
+  clearDatabase: function(clearMessages) { return window.e2eeCrypto.clearAllE2EEFromDatabase(clearMessages !== false); },
+  enableDebug: function() { window.e2eeCrypto.setDebugMode(true); },
+  disableDebug: function() { window.e2eeCrypto.setDebugMode(false); },
+  resetErrorCount: function() { window.e2eeCrypto.resetDecryptionErrorCount(); },
+  forceKeyRefresh: async function() {
+    console.log('Forcing key refresh...');
     window.e2eeCrypto.resetDecryptionErrorCount();
     window.e2eeCrypto.keyPairs.clear();
     window.e2eeCrypto.importedPublicKeys.clear();
-    console.log('✅ Key caches cleared. Try your operation again.');
+    console.log('Key caches cleared. Try your operation again.');
   },
-  status: () => {
-    const keyId = localStorage.getItem('e2ee_current_key_id');
-    const hasPrivateKey = !!localStorage.getItem(`e2ee_private_key_${keyId}`);
-    const hasPublicKey = !!localStorage.getItem(`e2ee_public_key_${keyId}`);
-    const errorCount = window.e2eeCrypto.getDecryptionErrorCount();
-    
-    const status = {
-      isSetup: window.e2eeCrypto.isE2EESetup(),
-      keyId,
-      hasPrivateKey,
-      hasPublicKey,
+  status: async function() {
+    await window.e2eeCrypto._ensureReady();
+    var keyId = await window.e2eeCrypto.store.getItem('e2ee_current_key_id');
+    var hasPrivateKey = !!(await window.e2eeCrypto.store.getItem('e2ee_private_key_' + keyId));
+    var hasPublicKey = !!(await window.e2eeCrypto.store.getItem('e2ee_public_key_' + keyId));
+    var errorCount = window.e2eeCrypto.getDecryptionErrorCount();
+    var allKeys = await window.e2eeCrypto.store.getAllKeys();
+
+    var status = {
+      isSetup: await window.e2eeCrypto.isE2EESetup(),
+      keyId: keyId,
+      hasPrivateKey: hasPrivateKey,
+      hasPublicKey: hasPublicKey,
       debugMode: window.e2eeCrypto.debugMode,
-      errorCount,
-      allLocalKeys: Object.keys(localStorage).filter(k => k.startsWith('e2ee_')),
+      errorCount: errorCount,
+      allLocalKeys: allKeys.filter(function(k) { return typeof k === 'string' && k.indexOf('e2ee_') === 0; }),
       recommendations: []
     };
-    
+
     if (errorCount > 5) {
       status.recommendations.push('Consider running window.debugE2EE.resetE2EE() to fix persistent errors');
     }
@@ -669,13 +822,12 @@ window.debugE2EE = {
     if (status.allLocalKeys.length > 6) {
       status.recommendations.push('Multiple key versions detected - old messages may not decrypt');
     }
-    
+
     console.table(status);
     return status;
   }
 };
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = E2EECrypto;
 }

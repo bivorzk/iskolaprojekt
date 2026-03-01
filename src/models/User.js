@@ -95,6 +95,23 @@ const userSchema = new mongoose.Schema({
     keyAlgorithm: {
       type: String,
       default: 'RSA-OAEP'
+    },
+
+    encryptedPrivateKey: {
+      type: String,
+      required: false
+    },
+    keySalt: {
+      type: String,
+      required: false
+    },
+    keyIv: {
+      type: String,
+      required: false
+    },
+    hasKeyBackup: {
+      type: Boolean,
+      default: false
     }
   }
 });

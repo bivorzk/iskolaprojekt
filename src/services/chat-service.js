@@ -368,13 +368,80 @@ router.post('/reset-e2ee', requireAuth, async (req, res) => {
     await User.findByIdAndUpdate(userId, {
       'encryption.publicKey': null,
       'encryption.keyGeneratedAt': null,
-      'encryption.isE2EEEnabled': false
+      'encryption.isE2EEEnabled': false,
+      'encryption.encryptedPrivateKey': null,
+      'encryption.keySalt': null,
+      'encryption.keyIv': null,
+      'encryption.hasKeyBackup': false
     });
     
     res.json({ success: true, message: 'E2EE reset successfully' });
   } catch (error) {
     console.error('Reset E2EE error:', error);
     res.status(500).json({ error: 'Failed to reset E2EE' });
+  }
+});
+
+// Backup encrypted private key to server
+router.post('/backup-keys', requireAuth, async (req, res) => {
+  try {
+    const { encryptedPrivateKey, salt, iv } = req.body;
+    const userId = req.session.user.id;
+
+    if (!encryptedPrivateKey || !salt || !iv) {
+      return res.status(400).json({ error: 'Missing backup data' });
+    }
+
+    await User.findByIdAndUpdate(userId, {
+      'encryption.encryptedPrivateKey': encryptedPrivateKey,
+      'encryption.keySalt': salt,
+      'encryption.keyIv': iv,
+      'encryption.hasKeyBackup': true
+    });
+
+    res.json({ success: true, message: 'Key backup stored successfully' });
+  } catch (error) {
+    console.error('Backup keys error:', error);
+    res.status(500).json({ error: 'Failed to backup keys' });
+  }
+});
+
+// Check if user has a key backup on the server
+router.get('/has-key-backup', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId, 'encryption');
+
+    res.json({
+      hasBackup: user?.encryption?.hasKeyBackup || false,
+      hasPublicKey: !!user?.encryption?.publicKey,
+      isE2EEEnabled: user?.encryption?.isE2EEEnabled || false
+    });
+  } catch (error) {
+    console.error('Check backup error:', error);
+    res.status(500).json({ error: 'Failed to check key backup' });
+  }
+});
+
+// Restore encrypted private key from server
+router.get('/restore-keys', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId, 'encryption');
+
+    if (!user?.encryption?.hasKeyBackup || !user?.encryption?.encryptedPrivateKey) {
+      return res.status(404).json({ error: 'No key backup found' });
+    }
+
+    res.json({
+      encryptedPrivateKey: user.encryption.encryptedPrivateKey,
+      salt: user.encryption.keySalt,
+      iv: user.encryption.keyIv,
+      publicKey: user.encryption.publicKey
+    });
+  } catch (error) {
+    console.error('Restore keys error:', error);
+    res.status(500).json({ error: 'Failed to restore keys' });
   }
 });
 
