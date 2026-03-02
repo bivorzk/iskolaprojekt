@@ -75,43 +75,48 @@ const userSchema = new mongoose.Schema({
   },
   userPersonalInfo: [userPersonalInfoSchema], // Subdocument for personal info
   
-  encryption: {
-    publicKey: {
-      type: String,
-      required: false
-    },
-    
-    keyGeneratedAt: {
-      type: Date,
-      required: false
-    },
-    
-    isE2EEEnabled: {
-      type: Boolean,
-      default: false
-    },
-    
-    keyAlgorithm: {
-      type: String,
-      default: 'RSA-OAEP'
-    },
+  // ── V2 E2EE identity (ECDH P-256) ────────────────────────────────────────
+  identity: {
+    publicKey:        { type: String },          // IK public SPKI base64
+    signingPublicKey: { type: String },          // ECDSA P-256 signing pub
+    keyId:            { type: String },          // SHA-256 fingerprint (first 16 hex chars)
+    registeredAt:     { type: Date },
+    isE2EEEnabled:    { type: Boolean, default: false }
+  },
 
-    encryptedPrivateKey: {
-      type: String,
-      required: false
-    },
-    keySalt: {
-      type: String,
-      required: false
-    },
-    keyIv: {
-      type: String,
-      required: false
-    },
-    hasKeyBackup: {
-      type: Boolean,
-      default: false
+  // ── Registered devices ────────────────────────────────────────────────────
+  devices: [{
+    deviceId:      { type: String, required: true },
+    publicKey:     { type: String, required: true },  // DIK public SPKI base64
+    label:         { type: String, default: 'Unknown device' },
+    registeredAt:  { type: Date,   default: Date.now },
+    lastSeenAt:    { type: Date,   default: Date.now },
+    signedPreKey: {
+      keyId:     { type: String },
+      publicKey: { type: String },
+      signature: { type: String },
+      createdAt: { type: Date }
     }
+  }],
+
+  // ── Recovery blob (AES-GCM; server is blind) ──────────────────────────────
+  recoveryBlob: {
+    encryptedData: { type: String },
+    iv:            { type: String },
+    salt:          { type: String },
+    storedAt:      { type: Date }
+  },
+
+  // ── V1 legacy fields (kept for migration, do not use for new messages) ────
+  encryption: {
+    publicKey:          { type: String },
+    keyGeneratedAt:     { type: Date },
+    isE2EEEnabled:      { type: Boolean, default: false },
+    keyAlgorithm:       { type: String,  default: 'RSA-OAEP' },
+    encryptedPrivateKey:{ type: String },
+    keySalt:            { type: String },
+    keyIv:              { type: String },
+    hasKeyBackup:       { type: Boolean, default: false }
   }
 });
 

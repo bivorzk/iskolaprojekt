@@ -457,9 +457,6 @@ class E2EECrypto {
   }
 
   async reEncryptKeyForSender(messageData, senderPublicKeyBase64, senderKeyId) {
-    // Called by RECIPIENT to help a sender whose new device can't decrypt their
-    // own senderEncryptedKey. We decrypt recipientEncryptedKey (which we can do),
-    // then re-encrypt the raw AES symmetric key with the sender's new public key.
     const { encryptionMetadata } = messageData;
     const encryptedKeyBuf = this.base64ToArrayBuffer(encryptionMetadata.recipientEncryptedKey);
 
