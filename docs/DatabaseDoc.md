@@ -17,18 +17,24 @@ A rendszer fő entitásai és kapcsolataik:
 - **Order** (Rendelés): Felhasználók rendelései.
 - **OrderItems** (Rendelés tételek): Egy rendeléshez tartozó menüelemek.
 - **Payment** (Kifizetés): Pénzügyi tranzakciók.
-- **Review** (Értékelés): Menüelemek értékelése.
+- **Review** (Értékelés): Menüelemek értékelése (beágyazott MenuItems-ben).
 - **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük.
 - **ParentStudent** (Szülő-Diák kapcsolat): Szülők és diákok összekapcsolása.
 - **SecurityLogs** (Biztonsági naplók): Események naplózása.
 - **UserLoyalty** (Hűségprogram): Felhasználók pontjai, kedvezményei és hűségszintje.
+- **DeviceSyncSession** (Eszköz szinkronizálási munkamenet): Eszközök közötti kulcs szinkronizálás.
+- **Message** (Üzenetek): E2EE chat üzenetek.
+- **PreKey** (Előzetes kulcsok): ECDH előzetes kulcsok.
+- **StorageBlob** (Tárolási blob): Titkosított üzenet/session történetek.
 
 Kapcsolatok:
-- User 1:N Payment, Order, Review, SecurityLogs, UserLoyalty.
+- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, DeviceSyncSession (opcionális).
 - User 1:N ParentStudent (szülőként vagy diákként).
-- MenuItems 1:N OrderItems (beágyazott Order-ben), Review.
+- MenuItems 1:N OrderItems (beágyazott Order-ben), Review (beágyazott).
 - Order 1:N OrderItems (beágyazott).
 - DailyMenu 1:N MenuItems (referenciákon keresztül).
+- Message 1:1 PreKey (opcionális, X3DH-hez).
+- StorageBlob 1:1 User (per blobType és partitionKey).
 
 Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok referenciákon alapulnak (ObjectId-k).
 
@@ -43,9 +49,23 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 | password | String | Jelszó (hash-elt) | Kötelező |
 | email | String | E-mail cím | Kötelező, egyedi, e-mail formátum, trim |
 | isVerified | Boolean | E-mail ellenőrzés státusza | Alapértelmezett: false |
-| usertype | String | Felhasználó típusa (admin, student, parent, teacher, frozen) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen'], alapértelmezett: 'student' |
+| usertype | String | Felhasználó típusa (admin, student, parent, teacher, frozen, editor) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], alapértelmezett: 'student' |
 | createdAt | Date | Fiók létrehozási dátuma | Alapértelmezett: jelenlegi idő |
 | balance | Number | Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz | Alapértelmezett: 0 |
+| isBanned | Boolean | Tiltott felhasználó | Alapértelmezett: false |
+| banReason | String | Tiltás oka | Opcionális |
+| userPersonalInfo | [Subdocument] | Személyes információk (név, születési dátum, osztály, iskola, cím) | Opcionális |
+| identity.publicKey | String | E2EE identitás nyilvános kulcs (ECDH P-256 SPKI base64) | Opcionális |
+| identity.signingPublicKey | String | E2EE aláíró nyilvános kulcs (ECDSA P-256) | Opcionális |
+| identity.keyId | String | Kulcs azonosító (SHA-256 fingerprint) | Opcionális |
+| identity.registeredAt | Date | E2EE regisztráció ideje | Opcionális |
+| identity.isE2EEEnabled | Boolean | E2EE engedélyezve | Alapértelmezett: false |
+| devices | [Array] | Regisztrált eszközök (deviceId, publicKey, label, stb.) | Opcionális |
+| recoveryBlob.encryptedData | String | Helyreállítási blob (AES-GCM titkosított) | Opcionális |
+| recoveryBlob.iv | String | IV a helyreállítási blob-hoz | Opcionális |
+| recoveryBlob.salt | String | Salt a helyreállítási blob-hoz | Opcionális |
+| recoveryBlob.storedAt | Date | Helyreállítási blob tárolási ideje | Opcionális |
+| encryption.* | Mixed | V1 legacy E2EE mezők (migrációhoz) | Opcionális |
 
 Üzleti szabályok: Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).
 
@@ -106,16 +126,19 @@ Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: n
 
 Üzleti szabályok: Minden tétel egy menüelemhez tartozik; mennyiség pozitív egész szám. Ez a séma be van ágyazva az Order séma items mezőjébe.
 
-#### Review (Értékelések)
+#### Review (Értékelések) - Beágyazott MenuItems-ben
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
 |-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Értékelő felhasználó | Kötelező |
-| menuItemId | ObjectId (ref: MenuItems) | Értékelt menüelem | Kötelező |
+| userId | ObjectId (ref: User) | Értékelő felhasználó | Opcionális |
 | rating | Number | Értékelés (1-5) | Kötelező, min: 1, max: 5 |
-| comment | String | Megjegyzés | Opcionális |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+| comment | String | Megjegyzés | Kötelező, maxlength: 500 |
+| date | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+| ipAddress | String | IP cím | Opcionális |
+| reported | Boolean | Jelentve | Alapértelmezett: false |
+| moderated | Boolean | Moderálva | Alapértelmezett: false |
+| moderatorNotes | String | Moderátor jegyzetek | Opcionális |
 
-Üzleti szabályok: Egy felhasználó többször is értékelhet különböző tételeket.
+Üzleti szabályok: Értékelések be vannak ágyazva a MenuItems kollekcióba. Egy felhasználó többször is értékelhet különböző tételeket.
 
 #### DailyMenu (Napi menü)
 | Mező neve | Típus | Jelentés/Szerep | Megszorítások |
@@ -194,6 +217,70 @@ const DISCOUNT_TYPES = {
 
 ```
 
+#### DeviceSyncSession (Eszköz szinkronizálási munkamenet)
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
+|-----------|-------|-----------------|---------------|
+| responderDeviceId | String | Az eszköz, amely várja a szinkronizálási payload-ot | Kötelező, index |
+| initiatorDeviceId | String | Az eszköz, amely feltöltötte a szinkronizálási payload-ot | Opcionális |
+| encryptedPayload | String | Titkosított szinkronizálási payload (ECDH + AES-GCM) | Kötelező |
+| iv | String | IV az AES-GCM titkosításhoz | Kötelező |
+| ephemeralKey | String | Ephemerális ECDH nyilvános kulcs | Kötelező |
+| expiresAt | Date | Lejárati idő (10 perc) | Alapértelmezett: jelenlegi idő + 10 perc |
+
+Üzleti szabályok: Ephemerális tábla eszközök közötti kulcs szinkronizáláshoz. TTL index automatikusan törli a dokumentumokat 10 perc után.
+
+#### Message (Üzenetek)
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
+|-----------|-------|-----------------|---------------|
+| senderId | ObjectId (ref: User) | Küldő felhasználó | Kötelező |
+| recipientId | ObjectId (ref: User) | Címzett felhasználó | Kötelező |
+| senderDeviceId | String | Küldő eszköz azonosító | Opcionális |
+| recipientDeviceId | String | Címzett eszköz azonosító | Opcionális |
+| schemaVersion | Number | Séma verzió (1 = legacy RSA, 2 = Double Ratchet) | Alapértelmezett: 2 |
+| header.dh | String | Double Ratchet header: DH nyilvános kulcs | Opcionális |
+| header.n | Number | Üzenet szám az aktuális láncban | Opcionális |
+| header.pn | Number | Előző küldési lánc üzenetei | Opcionális |
+| x3dhHeader.identityKey | String | X3DH bootstrap: identitás kulcs | Opcionális |
+| x3dhHeader.ephemeralKey | String | X3DH bootstrap: ephemerális kulcs | Opcionális |
+| x3dhHeader.spkKeyId | String | X3DH bootstrap: aláírt előzetes kulcs ID | Opcionális |
+| x3dhHeader.opkKeyId | Mixed | X3DH bootstrap: egyszeri előzetes kulcs ID | Opcionális |
+| x3dhHeader.recipientDeviceId | String | X3DH bootstrap: címzett eszköz | Opcionális |
+| ciphertext | String | AES-256-GCM titkosított szöveg (base64) | Opcionális |
+| iv | String | 96-bit GCM IV (base64) | Opcionális |
+| status | String | Státusz (sent, delivered, read, replaced) | Alapértelmezett: 'sent' |
+| messageType | String | Üzenet típus (text, file, image) | Alapértelmezett: 'text' |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+| readAt | Date | Olvasási idő | Opcionális |
+| encryptedContent | String | V1 legacy: titkosított tartalom | Opcionális |
+| encryptionMetadata.* | Mixed | V1 legacy: titkosítási metaadatok | Opcionális |
+
+Üzleti szabályok: E2EE chat üzenetek. Double Ratchet protokoll használata v2-ben. Indexek: sender/recipient/createdAt, recipient/status, recipientDeviceId/status.
+
+#### PreKey (Előzetes kulcsok)
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
+|-----------|-------|-----------------|---------------|
+| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index |
+| deviceId | String | Eszköz azonosító | Kötelező |
+| keyId | Number | Kulcs ID (monoton növekvő per user+device) | Kötelező |
+| publicKey | String | ECDH P-256 SPKI nyilvános kulcs (base64) | Kötelező |
+| used | Boolean | Használva | Alapértelmezett: false |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+
+Üzleti szabályok: Egyszeri előzetes kulcsok (OPKs) eszközönként. Magas churn: OPKs azonnal törlődnek használat után. Indexek: userId/deviceId/used, userId/keyId (egyedi).
+
+#### StorageBlob (Tárolási blob)
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
+|-----------|-------|-----------------|---------------|
+| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index |
+| blobType | String | Blob típus (message_log, session_state, skipped_keys) | Kötelező, enum |
+| partitionKey | String | Partíció kulcs (pl. conversationId vagy deviceId) | Kötelező |
+| encryptedPayload | String | AES-256-GCM titkosított payload (base64) | Kötelező |
+| iv | String | 96-bit GCM IV (base64) | Kötelező |
+| version | Number | Verzió | Alapértelmezett: 1 |
+| updatedAt | Date | Frissítési idő | Alapértelmezett: jelenlegi idő |
+
+Üzleti szabályok: Szerver-oldali titkosított üzenet/session történetek. A szerver vak a tartalomra. Indexek: userId/blobType/partitionKey (egyedi), userId/updatedAt.
+
 ## Fizikai és logikai szerkezet
 
 - **Táblák/Nézetek**: MongoDB kollekciók (collections) a fenti sémák alapján.
@@ -206,23 +293,25 @@ const DISCOUNT_TYPES = {
 - **Felhasználói regisztráció és autentikáció**: Diákok/szülők regisztrálnak, bejelentkeznek; adatok User kollekcióban.
 - **Menü kezelése**: Admin hozzáadja/szerkeszti MenuItems-t; diákok böngészik DailyMenu alapján.
 - **Rendelés leadása**: Diák kiválaszt tételeket OrderItems-ben, Order létrejön; Payment rögzíti kifizetést.
-- **Értékelés**: Felhasználók Review-t adnak MenuItems-hez.
+- **Értékelés**: Felhasználók Review-t adnak MenuItems-hez (beágyazott).
 - **Hűségprogram**: Vásárlások után UserLoyalty frissül.
 - **Biztonság**: Minden akció SecurityLogs-ban naplózódik.
 - **Admin műveletek**: Felhasználók listázása, statisztikák (User, Order stb. alapján), Redis cache-ből gyorsítottan.
+- **E2EE Chat**: Üzenetek Message kollekcióban, PreKey-ek X3DH-hez, StorageBlob-ok titkosított történetekhez.
+- **Eszköz szinkronizálás**: DeviceSyncSession ephemerális kulcs szinkronizáláshoz.
 
 ## Biztonság és hozzáférés
 
-- **Felhasználói szerepek**: Admin (teljes hozzáférés), Student/Parent/Teacher (korlátozott), Frozen (blokkolva).
+- **Felhasználói szerepek**: Admin (teljes hozzáférés), Student/Parent/Teacher (korlátozott), Frozen (blokkolva), Editor (szerkesztési jogok).
 - **Jogosultságok**: JWT tokenek, middleware-ek (pl. requireAdmin).
-- **Adatvédelmi szabályok**: E-mail ellenőrzés, GDPR-kompatibilis (pl. személyes adatok védelme), IP cím GDPR kombatibilis tárolás.
-- **Biztonság**: Jelszavak hash-elve (bcrypt), reCAPTCHA, IP naplózás, IP hashelés, VPN/Tor detektálás.
+- **Adatvédelmi szabályok**: E-mail ellenőrzés, GDPR-kompatibilis (pl. személyes adatok védelme), IP cím GDPR kompatibilis tárolás, E2EE chat üzenetek (szerver vak a tartalomra).
+- **Biztonság**: Jelszavak hash-elve (bcrypt), reCAPTCHA, IP naplózás, IP hashelés, VPN/Tor detektálás, Double Ratchet E2EE protokoll üzenetekhez.
 
 ## Karbantartás és üzemeltetés
 
-- **Biztonsági mentési eljárások**: MongoDB dump/export rendszeres mentéshez; Redis esetében adatok ideiglenesek, így külön mentés nem szükséges.
-- **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében.
-- **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.
+- **Biztonsági mentési eljárások**: MongoDB dump/export rendszeres mentéshez; Redis esetében adatok ideiglenesek, így külön mentés nem szükséges. DeviceSyncSession TTL miatt nem szükséges menteni.
+- **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében. Message és PreKey magas churn figyelése.
+- **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján. E2EE v1-ről v2-re migráció támogatása Message-ben.
 - **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
 
 ![Database Diagram](database.png)
