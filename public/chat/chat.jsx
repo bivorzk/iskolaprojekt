@@ -11,6 +11,7 @@ const E2EEChatApp = () => {
 
   const pendingResendsRef = useRef(new Set());
   const currentUserRef    = useRef(null);
+  const activeConversationRef = useRef(null);
   const bcRef             = useRef(null);
   const [passphrase, setPassphrase]             = useState('');
   const [passphraseConfirm, setPassphraseConfirm] = useState('');
@@ -31,6 +32,7 @@ const E2EEChatApp = () => {
   const [socket, setSocket]           = useState(null);
 
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+  useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
 
   useEffect(() => {
     initializeApp();
@@ -153,49 +155,61 @@ const E2EEChatApp = () => {
     };
 
 
-    const senderRecoveryNeededHandler = async ({ messageId, senderId, senderPublicKey, senderKeyId }) => {
+    const senderRecoveryNeededHandler = async () => {
       try {
-        const msgRes = await fetch(`/chat/message/${messageId}`);
-        if (!msgRes.ok) return;
-        const msg = await msgRes.json();
-        const newSenderEncryptedKey = await window.e2eeCrypto.reEncryptKeyForSender(
-          msg, senderPublicKey, senderKeyId
-        );
-        await fetch(`/chat/message/${messageId}/update-sender-key`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ newSenderEncryptedKey, requesterId: senderId })
-        }).catch(() => {});
+        const pendingRes = await fetch('/chat/pending-recovery');
+        if (!pendingRes.ok) return;
+        const { requests } = await pendingRes.json();
+        if (!requests || requests.length === 0) return;
+
+        for (const req of requests) {
+          try {
+            const msgRes = await fetch(`/chat/message/${req.messageId}`);
+            if (!msgRes.ok) continue;
+            const msg = await msgRes.json();
+            const newSenderEncryptedKey = await window.e2eeCrypto.reEncryptKeyForSender(
+              msg, req.senderPublicKey, req.senderKeyId
+            );
+            await fetch(`/chat/message/${req.messageId}/update-sender-key`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ newSenderEncryptedKey, requesterId: req.senderId })
+            });
+          } catch (recErr) {
+            console.warn('Recovery processing failed for', req.messageId, ':', recErr.message);
+            // Recipient can't decrypt either — mark as permanently failed
+            if (recErr.message?.includes('could not decrypt recipientEncryptedKey')) {
+              fetch(`/chat/message/${req.messageId}/recovery-failed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              }).catch(() => {});
+            }
+          }
+        }
       } catch (err) {
-        console.warn('Sender recovery failed (non-critical):', err.message);
+        console.warn('processPendingRecovery failed:', err.message);
       }
     };
 
 
-    const senderKeyUpdatedHandler = async ({ messageId, encryptedContent, encryptionMetadata }) => {
-      const id = String(messageId);
-      try {
-        const plaintext = await window.e2eeCrypto.decryptMessage(
-          { encryptedContent, encryptionMetadata }, false
-        );
-        setMessages(prev => {
-          const next = { ...prev };
-          for (const convId of Object.keys(next)) {
-            next[convId] = next[convId].map(m =>
-              String(m._id) === id ? { ...m, decryptedContent: plaintext } : m
-            );
-          }
-          return next;
-        });
-      } catch (err) {
-        console.warn('senderKeyUpdated re-decrypt failed:', err.message);
+    const senderKeyUpdatedHandler = async () => {
+      // The server has patched senderEncryptedKey — reload the active conversation
+      const conv = activeConversationRef.current;
+      const user = currentUserRef.current;
+      if (conv && user) {
+        try {
+          const { messages: decrypted } = await ChatAPI.loadMessages(conv._id, user);
+          setMessages(prev => ({ ...prev, [conv._id]: decrypted }));
+        } catch (err) {
+          console.warn('senderKeyUpdated reload failed:', err.message);
+        }
       }
     };
 
     socket.on('newMessage',           messageHandler);
     socket.on('resendRequired',        resendRequiredHandler);
     socket.on('messageReplaced',       messageReplacedHandler);
-    socket.on('senderRecoveryNeeded',  senderRecoveryNeededHandler);
+    socket.on('processPendingRecovery', senderRecoveryNeededHandler);
     socket.on('senderKeyUpdated',      senderKeyUpdatedHandler);
 
 
@@ -211,7 +225,7 @@ const E2EEChatApp = () => {
       socket.off('newMessage',           messageHandler);
       socket.off('resendRequired',        resendRequiredHandler);
       socket.off('messageReplaced',       messageReplacedHandler);
-      socket.off('senderRecoveryNeeded',  senderRecoveryNeededHandler);
+      socket.off('processPendingRecovery', senderRecoveryNeededHandler);
       socket.off('senderKeyUpdated',      senderKeyUpdatedHandler);
       bc.close();
       bcRef.current = null;
@@ -327,6 +341,8 @@ const E2EEChatApp = () => {
       }
       // For each message we sent but can't decrypt on this new device, ask
       // the recipient to re-encrypt the symmetric key with our current public key.
+      // (REST-based recovery was already queued in ChatAPI.loadMessages;
+      //  socket emit is kept as an additional real-time nudge)
       if (socket && senderRecoveryMessages?.length) {
         for (const msg of senderRecoveryMessages) {
           socket.emit('requestSenderRecovery', {
