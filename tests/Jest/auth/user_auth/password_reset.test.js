@@ -1,18 +1,16 @@
-// 🔹 Mock a password_reset route
 jest.mock('../../../../src/auth/password_reset', () => {
-  const express = require('express'); // 🔹 ide kell importálni
+  const express = require('express'); 
   const router = express.Router();
 
-  // GET token route
+
   router.get('/:token', (req, res) => res.status(200).send('OK'));
 
-  // POST token route
   router.post('/:token', (req, res) => res.status(200).send('Password reset'));
 
   return router;
 });
 
-const express = require('express'); // 🔹 normál import a tesztben
+const express = require('express'); 
 const request = require('supertest');
 
 describe('Password Reset Routes', () => {

@@ -1,4 +1,4 @@
-jest.mock('badwords-list', () => ({ array: [] })); // Mock ESM modul
+jest.mock('badwords-list', () => ({ array: [] }));
 
 const {
   validateUsername,

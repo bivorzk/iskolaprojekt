@@ -26,7 +26,7 @@ describe('Password reset POST /password-reset/:token', () => {
   const token = jwt.sign({ userId, email: 'test@example.com' }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
   test('Successful password reset', async () => {
-    // Mock user from DB
+
     const userMock = new User();
     userMock.username = 'testuser';
     userMock.save = jest.fn().mockResolvedValue(true);
@@ -65,6 +65,4 @@ describe('Password reset POST /password-reset/:token', () => {
     expect(res.status).toBe(400);
     expect(res.text).toBe('Both password fields are required');
   });
-
-  // Itt lehet további teszteket írni, pl. gyenge jelszó, tiltott szó, token hibák stb.
 });

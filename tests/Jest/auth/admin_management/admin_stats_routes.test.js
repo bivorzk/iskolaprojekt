@@ -39,7 +39,6 @@ describe('Admin Statistics & Utility Routes (Unit)', () => {
     app = express();
     app.use(express.json());
 
-    // Fake session
     app.use((req, res, next) => {
       req.session = {
         user: {
@@ -51,7 +50,7 @@ describe('Admin Statistics & Utility Routes (Unit)', () => {
       next();
     });
 
-    app.use('/', adminRouter); // ha nálad /admin prefix van, itt állítsd be
+    app.use('/', adminRouter);
   });
 
   test('usercount should return total users', async () => {

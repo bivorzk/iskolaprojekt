@@ -1,8 +1,7 @@
-const express = require('express'); // 🔹 Import express
+const express = require('express'); 
 const request = require('supertest');
 const bcrypt = require('bcrypt');
 
-// 🔹 Mock bcrypt hash és compare
 jest.spyOn(bcrypt, 'hash').mockImplementation(async (pw, salt) => 'fakehash');
 jest.spyOn(bcrypt, 'compare').mockImplementation(async (pw, hash) => pw === 'TestPass1!');
 

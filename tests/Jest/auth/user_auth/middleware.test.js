@@ -1,6 +1,6 @@
 const express = require('express');
 const request = require('supertest');
-const bodyParser = require('body-parser'); // kell a POST test body-hoz
+const bodyParser = require('body-parser'); 
 const { configureAuthMiddleware } = require('../../../../src/auth/middleware');
 
 describe('Auth Middleware', () => {
@@ -9,19 +9,15 @@ describe('Auth Middleware', () => {
   beforeEach(() => {
     app = express();
 
-    // Middleware konfigurálása
     configureAuthMiddleware(app);
 
-    // Body parser hozzáadása (urlencoded + JSON)
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
 
-    // Egyszerű GET route a clientIp teszteléséhez
     app.get('/test-ip', (req, res) => {
       res.json({ ip: req.clientIp });
     });
 
-    // Egyszerű POST route body teszteléshez
     app.post('/test-body', (req, res) => {
       res.json({ body: req.body });
     });

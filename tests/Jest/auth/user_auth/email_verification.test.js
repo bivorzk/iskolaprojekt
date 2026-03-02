@@ -1,4 +1,3 @@
-// Mockoljuk a SendGrid mail modult
 jest.mock('@sendgrid/mail', () => {
   return {
     setApiKey: jest.fn(),
@@ -30,10 +29,8 @@ describe('Email Verification', () => {
 
     const response = await sendVerificationEmail(email, token);
 
-    // Ellenőrizzük, hogy a SendGrid send meghívódott
     expect(sgMail.send).toHaveBeenCalledTimes(1);
 
-    // Ellenőrizzük a visszatérési struktúrát
     expect(response[0].statusCode).toBe(202);
     expect(response[0].headers['x-message-id']).toBe('test-message-id-123');
   });

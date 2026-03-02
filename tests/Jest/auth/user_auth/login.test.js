@@ -29,7 +29,6 @@ describe('LOGIN ROUTE (/login)', () => {
   });
 
   test('Failed login', async () => {
-    // Override compare to fail
     jest.spyOn(bcrypt, 'compare').mockImplementation((pw, h, cb) => cb(null, false));
 
     const res = await request(app)

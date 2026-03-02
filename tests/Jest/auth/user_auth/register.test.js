@@ -1,9 +1,7 @@
-// 🔥 mongoose open handle fix
 jest.mock('mongoose', () => ({
   connect: jest.fn().mockResolvedValue(true)
 }));
 
-// 🔥 HELYES PATH
 jest.mock('../../../../src/models/User', () => {
   const MockUser = function () {
     this.save = jest.fn().mockResolvedValue(true);

@@ -26,7 +26,6 @@ describe('Admin Menu Routes (Unit)', () => {
     app = express();
     app.use(express.json());
 
-    // Fake session middleware
     app.use((req, res, next) => {
       req.session = {
         user: {
@@ -37,7 +36,6 @@ describe('Admin Menu Routes (Unit)', () => {
       next();
     });
 
-    // Mount router (ha nálad nincs /admin prefix, töröld ki)
     app.use('/', adminRouter);
   });
 
@@ -45,7 +43,7 @@ describe('Admin Menu Routes (Unit)', () => {
     MenuItems.create.mockResolvedValue({});
 
     const response = await request(app)
-      .post('/create_menuitem')   // ha nálad más a path, itt javítsd
+      .post('/create_menuitem')  
       .send({
         id: '1',
         name: 'Pizza',
@@ -63,7 +61,7 @@ describe('Admin Menu Routes (Unit)', () => {
     MenuItems.findByIdAndUpdate.mockResolvedValue(null);
 
     const response = await request(app)
-      .put('/menuitem/123');  // ha nálad POST, akkor .post()
+      .put('/menuitem/123');  
 
     expect(response.status).toBe(404);
   });
@@ -72,7 +70,7 @@ describe('Admin Menu Routes (Unit)', () => {
     MenuItems.findByIdAndDelete.mockResolvedValue({});
 
     const response = await request(app)
-      .delete('/delete_menuitem/123'); // ha nálad más a path, javítsd
+      .delete('/delete_menuitem/123'); 
 
     expect(MenuItems.findByIdAndDelete).toHaveBeenCalled();
     expect(response.body).toEqual({ message: 'Menu item deleted' });

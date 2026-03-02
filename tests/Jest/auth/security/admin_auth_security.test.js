@@ -2,7 +2,7 @@ const request = require('supertest');
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const rateLimitMiddleware = require('../src/dashboard/admin/admin').rateLimit;
+const { rateLimit } = require('../src/dashboard/admin/admin'); // rateLimit middleware importálása
 const { body, validationResult } = require('express-validator');
 const redisLuaService = require('../src/services/redis-lua-service');
 
@@ -24,12 +24,12 @@ describe('Admin & Auth Security Tests', () => {
       next();
     });
 
-    // Rate limit endpoint
-    app.get('/admin/ratelimit', rateLimitMiddleware, (req, res) => res.status(200).send('OK'));
+    // Rate limit endpoint - a helyes útvonal: /dashboard/admin/ratelimit
+    app.get('/dashboard/admin/ratelimit', rateLimit, (req, res) => res.status(200).send('OK'));
 
-    // Admin create menu item endpoint (simplified)
+    // Admin create menu item endpoint (egyszerűsített teszt)
     app.post(
-      '/admin/menuitem',
+      '/dashboard/admin/menuitem',
       body('name').trim().escape().isLength({ min: 1 }),
       body('description').trim().escape().isLength({ max: 500 }),
       (req, res) => {
@@ -39,7 +39,7 @@ describe('Admin & Auth Security Tests', () => {
       }
     );
 
-    // Auth login endpoint (simplified)
+    // Auth login endpoint (egyszerűsített)
     app.post('/auth/login', (req, res) => {
       const { username } = req.body;
       if (typeof username !== 'string') return res.status(400).send('Invalid username');
@@ -48,44 +48,44 @@ describe('Admin & Auth Security Tests', () => {
   });
 
   // ------------------------
-  // RATE LIMIT TESTS
+  // RATE LIMIT TESZTEK
   // ------------------------
-  it('blocks admin requests when over limit', async () => {
+  it('blokkolja az admin kéréseket limit túllépésekor', async () => {
     redisLuaService.checkRateLimit.mockResolvedValue({ allowed: false, currentCount: 35 });
-    const res = await request(app).get('/admin/ratelimit');
+    const res = await request(app).get('/dashboard/admin/ratelimit');
     expect(res.statusCode).toBe(429);
   });
 
-  it('allows admin requests under limit', async () => {
+  it('engedélyezi az admin kéréseket limit alatt', async () => {
     redisLuaService.checkRateLimit.mockResolvedValue({ allowed: true, currentCount: 10 });
-    const res = await request(app).get('/admin/ratelimit');
+    const res = await request(app).get('/dashboard/admin/ratelimit');
     expect(res.statusCode).toBe(200);
     expect(res.text).toBe('OK');
   });
 
   // ------------------------
-  // XSS / Input Sanitization
+  // XSS / Input sanitization
   // ------------------------
-  it('escapes script tags in menu item creation', async () => {
+  it('escape-eli a script tageket menüelem létrehozásakor', async () => {
     const res = await request(app)
-      .post('/admin/menuitem')
+      .post('/dashboard/admin/menuitem')
       .send({ name: '<script>alert(1)</script>', description: '<img src=x>' });
     expect(res.statusCode).toBe(200);
     expect(res.body.name).toContain('&lt;script&gt;');
     expect(res.body.description).toContain('&lt;img');
   });
 
-  it('rejects empty name in menu item', async () => {
+  it('elutasítja az üres nevet menüelem létrehozásakor', async () => {
     const res = await request(app)
-      .post('/admin/menuitem')
-      .send({ name: '', description: 'Valid desc' });
+      .post('/dashboard/admin/menuitem')
+      .send({ name: '', description: 'Valid description' });
     expect(res.statusCode).toBe(400);
   });
 
   // ------------------------
-  // NoSQL Injection Prevention
+  // NoSQL Injection megelőzés
   // ------------------------
-  it('rejects object injection for login', async () => {
+  it('elutasítja az objektum injekciót login során', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ username: { $gt: '' } });
@@ -93,12 +93,11 @@ describe('Admin & Auth Security Tests', () => {
     expect(res.text).toBe('Invalid username');
   });
 
-  it('accepts valid string username', async () => {
+  it('elfogadja az érvényes string típusú felhasználónevet', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ username: 'validUser' });
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
   });
-
 });
