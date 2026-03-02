@@ -181,26 +181,26 @@ router.post('/item_information/:itemName/Review', [
     let containsProfanity = false;
 
     for (const word of words) {
-        for (const badWord of badwords.array) {
-            if (levenshtein.get(word, badWord.toLowerCase()) < 2) {
-                containsProfanity = true;
-                break;
-            }
-        }
-        if (containsProfanity) break;
-        // Check against all language lists in naughtiness
-        for (const lang in naughtiness) {
-            if (Array.isArray(naughtiness[lang])) {
-                for (const naughtyWord of naughtiness[lang]) {
-                    if (levenshtein.get(word, naughtyWord.toLowerCase()) < 2) {
-                        containsProfanity = true;
-                        break;
-                    }
+            for (const badWord of badwords.array) {
+                if (levenshtein.get(word, badWord.toLowerCase()) < 1) {
+                    containsProfanity = true;
+                    break;
                 }
-                if (containsProfanity) break;
             }
-        }
-        if (containsProfanity) break;
+            if (containsProfanity) break;
+            // Check against all language lists in naughtiness
+            for (const lang in naughtiness) {
+                if (Array.isArray(naughtiness[lang])) {
+                    for (const naughtyWord of naughtiness[lang]) {
+                        if (levenshtein.get(word, naughtyWord.toLowerCase()) < 1) {
+                            containsProfanity = true;
+                            break;
+                        }
+                    }
+                    if (containsProfanity) break;
+                }
+            }
+            if (containsProfanity) break;
     }
     if (containsProfanity) {
         await createSecurityLog({
