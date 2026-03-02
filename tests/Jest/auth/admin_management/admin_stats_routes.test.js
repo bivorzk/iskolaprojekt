@@ -23,79 +23,66 @@ jest.mock('mongoose', () => ({
   }
 }));
 
+const request = require('supertest');
+const express = require('express');
+
 const { MenuItems, Order, User } = require('../../../config/database_queries');
 const adminRouter = require('../../../src/dashboard/admin/admin');
 
 describe('Admin Statistics & Utility Routes (Unit)', () => {
 
-  let req;
-  let res;
+  let app;
 
   beforeEach(() => {
-    req = {
-      session: {
+    jest.clearAllMocks();
+
+    app = express();
+    app.use(express.json());
+
+    // Fake session
+    app.use((req, res, next) => {
+      req.session = {
         user: {
           IsLoggedIn: true,
           usertype: 'admin',
           username: 'AdminUser'
         }
-      }
-    };
+      };
+      next();
+    });
 
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      send: jest.fn()
-    };
-
-    jest.clearAllMocks();
+    app.use('/', adminRouter); // ha nálad /admin prefix van, itt állítsd be
   });
 
   test('usercount should return total users', async () => {
     User.countDocuments.mockResolvedValue(5);
 
-    const layer = adminRouter.stack.find(
-      layer => layer.route && layer.route.path === '/usercount'
-    );
-
-    await layer.route.stack[0].handle(req, res);
+    const response = await request(app).get('/usercount');
 
     expect(User.countDocuments).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ count: 5 });
+    expect(response.body).toEqual({ count: 5 });
   });
 
   test('itemcount should return total menu items', async () => {
     MenuItems.countDocuments.mockResolvedValue(10);
 
-    const layer = adminRouter.stack.find(
-      layer => layer.route && layer.route.path === '/itemcount'
-    );
-
-    await layer.route.stack[0].handle(req, res);
+    const response = await request(app).get('/itemcount');
 
     expect(MenuItems.countDocuments).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ count: 10 });
+    expect(response.body).toEqual({ count: 10 });
   });
 
   test('health endpoint should return OK', async () => {
-    const layer = adminRouter.stack.find(
-      layer => layer.route && layer.route.path === '/health'
-    );
+    const response = await request(app).get('/health');
 
-    await layer.route.stack[0].handle(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ status: 'OK' });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: 'OK' });
   });
 
   test('welcome-message should return username', async () => {
-    const layer = adminRouter.stack.find(
-      layer => layer.route && layer.route.path === '/welcome-message'
-    );
+    const response = await request(app).get('/welcome-message');
 
-    await layer.route.stack[0].handle(req, res);
-
-    expect(res.send).toHaveBeenCalledWith('AdminUser');
+    expect(response.text).toBe('AdminUser');
   });
 
 });
