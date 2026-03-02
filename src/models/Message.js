@@ -44,11 +44,19 @@ const messageSchema = new mongoose.Schema({
   status:      { type: String, enum: ['sent', 'delivered', 'read', 'replaced'], default: 'sent' },
   messageType: { type: String, enum: ['text', 'file', 'image'], default: 'text' },
   createdAt:   { type: Date,   default: Date.now },
-  readAt:      { type: Date }
+  readAt:      { type: Date },
+
+  senderKeyRecovery: {
+    needed:          { type: Boolean, default: false },
+    failed:          { type: Boolean, default: false },
+    senderPublicKey: { type: String },
+    senderKeyId:     { type: String }
+  }
 });
 
 messageSchema.index({ senderId: 1, recipientId: 1, createdAt: -1 });
 messageSchema.index({ recipientId: 1, status: 1 });
+messageSchema.index({ recipientId: 1, 'senderKeyRecovery.needed': 1 });
 messageSchema.index({ recipientDeviceId: 1, status: 1 });
 messageSchema.index({ createdAt: -1 });
 

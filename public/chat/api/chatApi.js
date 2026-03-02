@@ -27,7 +27,8 @@ window.ChatAPI = {
     }
 
     let hasKeyMismatchError = false;
-    let recentKeyMismatchCount = 0;
+    let recentKeyMismatchCount = 0;      // recipient-side only (sender used stale key for us)
+    let recentSenderRecoveryCount = 0;   // sender-side only (we can't decrypt our own sent msg)
     let totalKeyMismatchCount = 0;
     let successfulDecryptions = 0;
 
@@ -40,7 +41,10 @@ window.ChatAPI = {
           if (!isRecipient && !isSender) {
             return { ...message, decryptedContent: '[Not authorized to decrypt]' };
           }
-          if (!message.encryptedContent || !message.encryptionMetadata) {
+          // If sender-side recovery permanently failed, show a final message
+          if (isSender && message.senderKeyRecovery?.failed) {
+            return { ...message, decryptedContent: '[Message from previous encryption setup — cannot decrypt]' };
+          }          if (!message.encryptedContent || !message.encryptionMetadata) {
             return { ...message, decryptedContent: '[Invalid message format]' };
           }
 
@@ -68,7 +72,12 @@ window.ChatAPI = {
               // Flag for auto-resend — don't show a red error.
               return { ...message, decryptedContent: '[Wrong device key - ask sender to resend]', _needsResend: true };
             } else {
+              recentSenderRecoveryCount++;
               // New device: senderEncryptedKey was encrypted with the old public key.
+              // If recovery already failed permanently, don't keep retrying.
+              if (message.senderKeyRecovery?.failed) {
+                return { ...message, decryptedContent: '[Message from previous encryption setup — cannot decrypt]' };
+              }
               // Request the recipient to re-encrypt the symmetric key for us.
               return { ...message, decryptedContent: '[Sent from another device — recovery in progress...]', _needsSenderRecovery: true };
             }
@@ -83,8 +92,10 @@ window.ChatAPI = {
 
     const totalMessages = data.messages.length;
     if (totalMessages > 0) {
-      const failureRate = totalKeyMismatchCount / totalMessages;
-      if (failureRate > 0.5 && recentKeyMismatchCount > 2) {
+      // Auto-recovery only makes sense for RECIPIENT-side mismatches (sender used stale key for us).
+      // Sender-side recovery failures (our own sent messages we can't decrypt on a new device)
+      // are handled separately via the recovery flow — clearing local key cache won't help.
+      if (recentKeyMismatchCount > 2 && recentKeyMismatchCount / totalMessages > 0.5) {
         try {
           window.e2eeCrypto.resetDecryptionErrorCount();
           window.e2eeCrypto.keyPairs && window.e2eeCrypto.keyPairs.clear();
@@ -95,7 +106,11 @@ window.ChatAPI = {
           console.warn('Auto-recovery failed:', err);
         }
       }
-      console.log(`Decryption: ${successfulDecryptions}/${totalMessages} ok, ${totalKeyMismatchCount} mismatches`);
+      if (recentKeyMismatchCount > 0 || recentSenderRecoveryCount > 0) {
+        console.log(`Decryption: ${successfulDecryptions}/${totalMessages} ok, ${recentKeyMismatchCount} recipient-mismatches, ${recentSenderRecoveryCount} sender-recovery`);
+      } else {
+        console.log(`Decryption: ${successfulDecryptions}/${totalMessages} ok`);
+      }
     }
 
     // Collect messages that need transparent auto-resend
@@ -111,6 +126,58 @@ window.ChatAPI = {
         encryptedContent:   m.encryptedContent,
         encryptionMetadata: m.encryptionMetadata
       }));
+
+    // Use REST to queue sender-recovery requests (survives both parties being offline)
+    if (senderRecoveryMessages.length > 0) {
+      const byRecipient = {};
+      for (const msg of senderRecoveryMessages) {
+        if (!byRecipient[msg.recipientId]) byRecipient[msg.recipientId] = [];
+        byRecipient[msg.recipientId].push(msg._id);
+      }
+      for (const [recipientId, messageIds] of Object.entries(byRecipient)) {
+        fetch('/chat/request-sender-recovery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messageIds, recipientId })
+        }).catch(err => console.warn('REST sender-recovery queue failed:', err.message));
+      }
+    }
+
+    // As recipient, process any pending recovery work from other users
+    try {
+      const pendingRes = await fetch('/chat/pending-recovery');
+      if (pendingRes.ok) {
+        const { requests } = await pendingRes.json();
+        if (requests && requests.length > 0) {
+          for (const req of requests) {
+            try {
+              const msgRes = await fetch(`/chat/message/${req.messageId}`);
+              if (!msgRes.ok) continue;
+              const msg = await msgRes.json();
+              const newSenderEncryptedKey = await window.e2eeCrypto.reEncryptKeyForSender(
+                msg, req.senderPublicKey, req.senderKeyId
+              );
+              await fetch(`/chat/message/${req.messageId}/update-sender-key`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newSenderEncryptedKey, requesterId: req.senderId })
+              });
+            } catch (recErr) {
+              console.warn('Pending recovery processing failed for', req.messageId, ':', recErr.message);
+              // If the recipient can't decrypt either, mark permanently failed
+              if (recErr.message?.includes('could not decrypt recipientEncryptedKey')) {
+                fetch(`/chat/message/${req.messageId}/recovery-failed`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                }).catch(() => {});
+              }
+            }
+          }
+        }
+      }
+    } catch (pendingErr) {
+      console.warn('Pending recovery poll failed:', pendingErr.message);
+    }
 
     fetch(`/chat/messages/read/${otherUserId}`, { method: 'PUT' }).catch(err =>
       console.warn('Failed to mark messages as read:', err.message)

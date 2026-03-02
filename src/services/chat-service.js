@@ -33,8 +33,6 @@ async function invalidatePublicKey(userId) {
 let io;
 const userSockets = new Map();
 
-const pendingRecoveryRequests = new Map();
-
 const setSocketIO = (socketIOInstance) => {
   io = socketIOInstance;
 };
@@ -590,6 +588,83 @@ router.post('/admin/clear-all-e2ee', requireAuth, async (req, res) => {
   }
 });
 
+// Sender's new device marks messages as needing sender-key recovery (persisted in MongoDB)
+router.post('/request-sender-recovery', requireAuth, async (req, res) => {
+  try {
+    const senderId = req.session.user.id;
+    const { messageIds, recipientId } = req.body;
+    if (!messageIds?.length || !recipientId) {
+      return res.status(400).json({ error: 'messageIds and recipientId required' });
+    }
+
+    const sender = await User.findById(senderId, 'encryption');
+    if (!sender?.encryption?.publicKey) {
+      return res.status(400).json({ error: 'Sender public key not found on server — re-setup E2EE first' });
+    }
+
+    const ids = messageIds.slice(0, 100);
+    console.log(`[Recovery] Sender ${senderId} requesting recovery for ${ids.length} messages (recipient: ${recipientId})`);
+    const result = await Message.updateMany(
+      {
+        _id: { $in: ids },
+        senderId: senderId,
+        recipientId: recipientId,
+        status: { $ne: 'replaced' },
+        'senderKeyRecovery.needed': { $ne: true }
+      },
+      {
+        $set: {
+          'senderKeyRecovery.needed': true,
+          'senderKeyRecovery.senderPublicKey': sender.encryption.publicKey,
+          'senderKeyRecovery.senderKeyId': sender.encryption.keyId || senderId
+        }
+      }
+    );
+
+    // Also nudge recipient via socket if they're online
+    if (io) {
+      const recipientSockets = userSockets.get(recipientId);
+      const targetSocketId = recipientSockets && recipientSockets.size > 0
+        ? [...recipientSockets].at(-1) : null;
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('processPendingRecovery');
+      } else {
+        io.to(`user_${recipientId}`).emit('processPendingRecovery');
+      }
+    }
+
+    console.log(`[Recovery] Marked ${result.modifiedCount} messages as needing recovery`);
+    res.json({ success: true, queued: result.modifiedCount });
+  } catch (error) {
+    console.error('request-sender-recovery error:', error);
+    res.status(500).json({ error: 'Failed to queue recovery requests' });
+  }
+});
+
+// Recipient fetches messages needing sender-key recovery (from MongoDB, survives restarts)
+router.get('/pending-recovery', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const messages = await Message.find(
+      { recipientId: userId, 'senderKeyRecovery.needed': true },
+      '_id senderId senderKeyRecovery'
+    ).limit(100).lean();
+
+    const requests = messages.map(m => ({
+      messageId:       String(m._id),
+      senderId:        String(m.senderId),
+      senderPublicKey: m.senderKeyRecovery.senderPublicKey,
+      senderKeyId:     m.senderKeyRecovery.senderKeyId
+    }));
+
+    console.log(`[Recovery] Recipient ${userId} has ${requests.length} pending recovery requests`);
+    res.json({ requests });
+  } catch (error) {
+    console.error('pending-recovery error:', error);
+    res.status(500).json({ error: 'Failed to fetch pending recovery' });
+  }
+});
+
 // Recipient patches senderEncryptedKey so sender's new device can decrypt their own messages
 router.post('/message/:messageId/update-sender-key', requireAuth, async (req, res) => {
   try {
@@ -607,13 +682,13 @@ router.post('/message/:messageId/update-sender-key', requireAuth, async (req, re
       return res.status(403).json({ error: 'Only the recipient can update the sender key' });
     }
 
+    console.log(`[Recovery] Recipient ${userId} updating senderEncryptedKey for message ${messageId}`);
     await Message.findByIdAndUpdate(messageId, {
-      'encryptionMetadata.senderEncryptedKey': newSenderEncryptedKey
+      'encryptionMetadata.senderEncryptedKey': newSenderEncryptedKey,
+      'senderKeyRecovery.needed': false,
+      'senderKeyRecovery.senderPublicKey': null,
+      'senderKeyRecovery.senderKeyId': null
     });
-
-    // Remove from pending queue — recovery is now complete
-    const senderRecipientPending = pendingRecoveryRequests.get(String(message.recipientId));
-    if (senderRecipientPending) senderRecipientPending.delete(messageId);
 
     // Notify sender so their client re-decrypts the message immediately
     if (io) {
@@ -629,6 +704,30 @@ router.post('/message/:messageId/update-sender-key', requireAuth, async (req, re
   } catch (error) {
     console.error('Update sender key error:', error);
     res.status(500).json({ error: 'Failed to update sender key' });
+  }
+});
+
+// Recipient tried to recover but couldn't decrypt recipientEncryptedKey either — permanently unrecoverable
+router.post('/message/:messageId/recovery-failed', requireAuth, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.session.user.id;
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (String(message.recipientId) !== userId) {
+      return res.status(403).json({ error: 'Only the recipient can mark recovery as failed' });
+    }
+    console.log(`[Recovery] PERMANENTLY FAILED for message ${messageId} — recipient also lost their key`);
+    await Message.findByIdAndUpdate(messageId, {
+      'senderKeyRecovery.needed': false,
+      'senderKeyRecovery.failed': true,
+      'senderKeyRecovery.senderPublicKey': null,
+      'senderKeyRecovery.senderKeyId': null
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('recovery-failed error:', error);
+    res.status(500).json({ error: 'Failed to mark recovery as failed' });
   }
 });
 
@@ -648,14 +747,12 @@ const initializeChatSocket = (socketIOInstance) => {
         userSockets.get(socket.userId).add(socket.id);
         console.log(`User ${userId} authenticated and joined their room (socket ${socket.id})`);
 
-        // Flush any pending sender-recovery requests queued while this user was offline
-        const pending = pendingRecoveryRequests.get(String(userId));
-        if (pending && pending.size > 0) {
-          for (const payload of pending.values()) {
-            socket.emit('senderRecoveryNeeded', payload);
-          }
-          pending.clear();
-        }
+        // Check if this user has pending recovery work as a recipient (from MongoDB)
+        Message.countDocuments({ recipientId: userId, 'senderKeyRecovery.needed': true })
+          .then(count => {
+            if (count > 0) socket.emit('processPendingRecovery');
+          })
+          .catch(() => {});
       }
     });
 
@@ -712,7 +809,7 @@ const initializeChatSocket = (socketIOInstance) => {
     });
 
     // Sender's new device can't decrypt senderEncryptedKey.
-    // Relay to the recipient so they can re-encrypt the symmetric key for the sender.
+    // Persist the recovery flag in MongoDB and nudge the recipient.
     socket.on('requestSenderRecovery', async ({ messageId, senderId, recipientId }) => {
       if (!socket.userId || socket.userId !== String(senderId)) return;
       try {
@@ -722,32 +819,30 @@ const initializeChatSocket = (socketIOInstance) => {
         if (String(message.recipientId) !== String(recipientId)) return;
         if (message.status === 'replaced') return;
 
-        // Include sender's current public key so recipient can encrypt directly to it
-        const sender = await User.findById(senderId, 'encryption');
-        if (!sender?.encryption?.publicKey) return;
+        // Sender's current public key so the recipient can re-encrypt for it
+        const sender = await User.findById(senderId, 'encryption identity');
+        const senderPubKey = sender?.encryption?.publicKey || sender?.identity?.publicKey;
+        if (!senderPubKey) return;
 
+        // Persist to MongoDB (survives server restarts)
+        await Message.findByIdAndUpdate(messageId, {
+          $set: {
+            'senderKeyRecovery.needed':          true,
+            'senderKeyRecovery.senderPublicKey':  senderPubKey,
+            'senderKeyRecovery.senderKeyId':      sender?.encryption?.keyId || sender?.identity?.keyId || String(senderId)
+          }
+        });
+
+        // Nudge recipient to process pending recovery via REST
         const recipientSockets = userSockets.get(String(recipientId));
         const targetSocketId = recipientSockets && recipientSockets.size > 0
           ? [...recipientSockets].at(-1)
           : null;
 
-        const payload = {
-          messageId:       String(message._id),
-          senderId:        String(senderId),
-          senderPublicKey: sender.encryption.publicKey,
-          senderKeyId:     sender.encryption.keyId || String(senderId)
-        };
-
-        // Always queue the request so it survives recipient going offline
-        if (!pendingRecoveryRequests.has(String(recipientId))) {
-          pendingRecoveryRequests.set(String(recipientId), new Map());
-        }
-        pendingRecoveryRequests.get(String(recipientId)).set(String(message._id), payload);
-
         if (targetSocketId) {
-          io.to(targetSocketId).emit('senderRecoveryNeeded', payload);
+          io.to(targetSocketId).emit('processPendingRecovery');
         } else {
-          io.to(`user_${recipientId}`).emit('senderRecoveryNeeded', payload);
+          io.to(`user_${recipientId}`).emit('processPendingRecovery');
         }
       } catch (err) {
         console.error('requestSenderRecovery socket error:', err);
