@@ -33,6 +33,8 @@ async function invalidatePublicKey(userId) {
 let io;
 const userSockets = new Map();
 
+const pendingRecoveryRequests = new Map();
+
 const setSocketIO = (socketIOInstance) => {
   io = socketIOInstance;
 };
@@ -609,6 +611,10 @@ router.post('/message/:messageId/update-sender-key', requireAuth, async (req, re
       'encryptionMetadata.senderEncryptedKey': newSenderEncryptedKey
     });
 
+    // Remove from pending queue — recovery is now complete
+    const senderRecipientPending = pendingRecoveryRequests.get(String(message.recipientId));
+    if (senderRecipientPending) senderRecipientPending.delete(messageId);
+
     // Notify sender so their client re-decrypts the message immediately
     if (io) {
       const updated = await Message.findById(messageId);
@@ -641,6 +647,15 @@ const initializeChatSocket = (socketIOInstance) => {
         if (!userSockets.has(socket.userId)) userSockets.set(socket.userId, new Set());
         userSockets.get(socket.userId).add(socket.id);
         console.log(`User ${userId} authenticated and joined their room (socket ${socket.id})`);
+
+        // Flush any pending sender-recovery requests queued while this user was offline
+        const pending = pendingRecoveryRequests.get(String(userId));
+        if (pending && pending.size > 0) {
+          for (const payload of pending.values()) {
+            socket.emit('senderRecoveryNeeded', payload);
+          }
+          pending.clear();
+        }
       }
     });
 
@@ -722,6 +737,12 @@ const initializeChatSocket = (socketIOInstance) => {
           senderPublicKey: sender.encryption.publicKey,
           senderKeyId:     sender.encryption.keyId || String(senderId)
         };
+
+        // Always queue the request so it survives recipient going offline
+        if (!pendingRecoveryRequests.has(String(recipientId))) {
+          pendingRecoveryRequests.set(String(recipientId), new Map());
+        }
+        pendingRecoveryRequests.get(String(recipientId)).set(String(message._id), payload);
 
         if (targetSocketId) {
           io.to(targetSocketId).emit('senderRecoveryNeeded', payload);
