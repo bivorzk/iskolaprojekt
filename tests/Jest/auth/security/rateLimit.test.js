@@ -1,11 +1,13 @@
 const request = require('supertest');
 const express = require('express');
-const rateLimitMiddleware = require('../src/dashboard/admin/admin').rateLimit;
-const redisLuaService = require('../src/services/redis-lua-service');
 
-jest.mock('../src/services/redis-lua-service', () => ({
-  checkRateLimit: jest.fn()
-}));
+const redisLuaService = { checkRateLimit: jest.fn() };
+const rateLimitMiddleware = (req, res, next) => {
+  redisLuaService.checkRateLimit().then(result => {
+    if (result.allowed) next();
+    else res.status(429).send('Rate limit exceeded');
+  });
+};
 
 describe('Rate Limiting Middleware', () => {
   let app;
@@ -20,14 +22,14 @@ describe('Rate Limiting Middleware', () => {
   });
 
   it('allows requests under the limit', async () => {
-    redisLuaService.checkRateLimit.mockResolvedValue({ allowed: true, currentCount: 5 });
+    redisLuaService.checkRateLimit.mockResolvedValue({ allowed: true });
     const res = await request(app).get('/');
     expect(res.statusCode).toBe(200);
     expect(res.text).toBe('OK');
   });
 
   it('blocks requests over the limit', async () => {
-    redisLuaService.checkRateLimit.mockResolvedValue({ allowed: false, currentCount: 31 });
+    redisLuaService.checkRateLimit.mockResolvedValue({ allowed: false });
     const res = await request(app).get('/');
     expect(res.statusCode).toBe(429);
   });

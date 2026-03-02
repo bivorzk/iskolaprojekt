@@ -25,7 +25,8 @@ describe('XSS / Input Sanitization', () => {
       .send({ name: '<script>alert("xss")</script>' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.sanitizedName).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    // escape() most már a / karaktert &#x2F; formára cseréli
+    expect(res.body.sanitizedName).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;&#x2F;script&gt;');
   });
 
   it('rejects empty names', async () => {

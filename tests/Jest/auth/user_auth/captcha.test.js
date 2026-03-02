@@ -1,11 +1,13 @@
 const request = require('supertest');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { verifyCaptcha } = require('../src/auth/validation');
 
-jest.mock('../src/auth/validation', () => ({
+// Mock a src/auth/validation modult
+jest.mock('../../../../src/auth/validation', () => ({
   verifyCaptcha: jest.fn()
 }));
+
+const { verifyCaptcha } = require('../../../../src/auth/validation');
 
 describe('CAPTCHA Tests', () => {
   let app;
