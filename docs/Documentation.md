@@ -473,235 +473,79 @@ The SnapTray system follows several key design principles to ensure a robust, sc
 
 #### 5.2.1 Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása
 
-Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. A rendszer Redis-t használ gyorsítótárazáshoz a teljesítmény növelése érdekében.
+Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat, E2EE chatet és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. Redis-t használ gyorsítótárazáshoz és ideiglenes adatokhoz.
 
-Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Kiegészítőként Redis in-memory adatbázis gyorsítótárazáshoz.
+Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Redis in-memory adatbázis gyorsítótárazáshoz és session/ephemerális adatokhoz.
 
-### Adatbázis-terv és séma
+#### 5.2.2 Adatbázis-terv és séma
 
-#### Entitások és kapcsolatok (ER modell összefoglaló)
+##### Entitások és kapcsolatok (ER modell összefoglaló)
 
 A rendszer fő entitásai és kapcsolataik:
 
 - **User** (Felhasználó): Központi entitás, minden más entitáshoz kapcsolódik.
+- **UserPersonalInfo**: Egy felhasználóhoz tartozó személyes adatok (alágyazott dokumentum).
 - **MenuItems** (Menüelemek): Étkezési tételek.
 - **Order** (Rendelés): Felhasználók rendelései.
-- **OrderItems** (Rendelés tételek): Egy rendeléshez tartozó menüelemek.
+- **OrderItems** (Rendelés tételek): Egy rendeléshez tartozó menüelemek (Order-be ágyazva).
 - **Payment** (Kifizetés): Pénzügyi tranzakciók.
-- **Review** (Értékelés): Menüelemek értékelése.
-- **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük.
+- **Review** (Értékelés): Menüelemek értékelése (beágyazott MenuItems-ben).
+- **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük, több MenuItems-t tartalmaz (N:N kapcsolat linking table-lel).
 - **ParentStudent** (Szülő-Diák kapcsolat): Szülők és diákok összekapcsolása.
 - **SecurityLogs** (Biztonsági naplók): Események naplózása.
 - **UserLoyalty** (Hűségprogram): Felhasználók pontjai, kedvezményei és hűségszintje.
+- **DeviceSyncSession** (Eszköz szinkronizálási munkamenet): Eszközök közötti kulcs szinkronizálás (önálló, nem kapcsolódik más entitáshoz).
+- **Message** (Üzenetek): E2EE chat üzenetek.
+- **PreKey** (Előzetes kulcsok): ECDH előzetes kulcsok.
+- **StorageBlob** (Tárolási blob): Titkosított üzenet/session történetek.
 
 Kapcsolatok:
-- User 1:N Payment, Order, Review, SecurityLogs, UserLoyalty.
-- User 1:N ParentStudent (szülőként vagy diákként).
-- MenuItems 1:N OrderItems (beágyazott Order-ben), Review.
+- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent (szülőként vagy diákként).
+- MenuItems 1:N OrderItems (Order-be ágyazva), Review (beágyazott).
 - Order 1:N OrderItems (beágyazott).
-- DailyMenu 1:N MenuItems (referenciákon keresztül).
+- DailyMenu N:M MenuItems (linking table: DailyMenuMenuItems).
+- Message 1:1 PreKey (opcionális, X3DH-hez).
+- StorageBlob 1:1 User (per blobType és partitionKey).
+- DeviceSyncSession: önálló, nem kapcsolódik más entitáshoz.
 
-Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok referenciákon alapulnak (ObjectId-k).
+##### Példa: DailyMenu és MenuItems kapcsolata (dbdiagram.io stílusban)
 
-#### Relációs séma (táblázatok részletei)
+```dbml
+Table DailyMenu {
+  _id objectid [pk]
+  date date
+  schoolPeriod varchar
+  createdAt datetime
+}
 
-Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: név, típus, jelentés/szerep, megszorítások.
+Table MenuItems {
+  _id objectid [pk]
+  name varchar
+  // ...további mezők
+}
 
-##### User (Felhasználók)
-
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| username | String | Felhasználónév | Kötelező, egyedi |
-| password | String | Jelszó (hash-elt) | Kötelező |
-| email | String | E-mail cím | Kötelező, egyedi, e-mail formátum, trim |
-| isVerified | Boolean | E-mail ellenőrzés státusza | Alapértelmezett: false |
-| usertype | String | Felhasználó típusa (admin, student, parent, teacher, frozen) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen'], alapértelmezett: 'student' |
-| createdAt | Date | Fiók létrehozási dátuma | Alapértelmezett: jelenlegi idő |
-| balance | Number | Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz | Alapértelmezett: 0 |
-
-**Üzleti szabályok:** Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).
-
-##### Payment (Kifizetések)
-
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Fizető felhasználó | Opcionális |
-| amount | Number | Fizetett összeg | Kötelező |
-| currency | String | Pénznem (pl. USD, HUF) | Kötelező |
-| paymentMethod | String | Fizetési mód | Kötelező |
-| status | String | Státusz (Completed, Pending, Failed) | Kötelező, enum: ['Completed', 'Pending', 'Failed'] |
-| transactionId | String | Külső tranzakció referencia | Opcionális |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-
-Üzleti szabályok: Minden kifizetés egy felhasználóhoz tartozik, de opcionális lehet (pl. vendég kifizetések).
-
-##### MenuItems (Menüelemek)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| name | String | Menüelem neve | Kötelező |
-| description | String | Leírás | Kötelező |
-| stock | Number | Készlet mennyisége | Kötelező, alapértelmezett: 0 |
-| price | Number | Ár | Kötelező |
-| category | String | Kategória (Soup, Salad, stb.) | Kötelező, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], alapértelmezett: 'Other' |
-| available | Boolean | Elérhetőség | Alapértelmezett: true |
-| QRCode | String | QR kód a menüelemhez | Opcionális |
-| allergens | [String] | Allergének listája | Alapértelmezett: [] |
-| nutritionalInfo.calories | Number | Kalóriák | Opcionális |
-| nutritionalInfo.protein | Number | Fehérje | Opcionális |
-| nutritionalInfo.carbs | Number | Szénhidrát | Opcionális |
-| nutritionalInfo.fat | Number | Zsír | Opcionális |
-
-Üzleti szabályok: A készlet nem lehet negatív; kategóriák alapján szűrhető. Pre-save hook: Ha a készlet <= 0, akkor available = false, különben true.
-
-##### Order (Rendelések)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Rendelő felhasználó | Kötelező |
-| items | [OrderItemsScheme] | Rendelés tételei | Kötelező |
-| orderDate | Date | Rendelés dátuma | Alapértelmezett: jelenlegi idő |
-| status | String | Státusz (Pending, InProgress, Completed, Cancelled) | Kötelező, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], alapértelmezett: 'Pending' |
-| totalAmount | Number | Teljes összeg | Kötelező |
-| pickupTime | Date | Átvétel ideje | Opcionális |
-| notes | String | Megjegyzések | Opcionális, alapértelmezett: '' |
-| paypalOrderId | String | PayPal rendelés azonosító | Opcionális |
-| paymentMethod | String | Fizetési mód | Opcionális |
-| transactionId | String | Tranzakció azonosító | Opcionális |
-| publicID | String | Nyilvános azonosító | Kötelező, egyedi |
-
-Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; státusz változások követik az üzleti folyamatot. Pre-save hook: Ha a rendelés 'Pending' státuszban van és több mint 15 perc telt el a létrehozás óta, automatikusan 'Cancelled'-re változik.
-
-##### OrderItems (Rendelés tételek)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| menuItemId | ObjectId (ref: MenuItems) | Menüelem azonosító | Kötelező |
-| orderId | ObjectId (ref: Order) | Rendelés azonosító | Opcionális |
-| quantity | Number | Mennyiség | Kötelező, alapértelmezett: 1 |
-
-Üzleti szabályok: Minden tétel egy menüelemhez tartozik; mennyiség pozitív egész szám. Ez a séma be van ágyazva az Order séma items mezőjébe.
-
-##### Review (Értékelések)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Értékelő felhasználó | Kötelező |
-| menuItemId | ObjectId (ref: MenuItems) | Értékelt menüelem | Kötelező |
-| rating | Number | Értékelés (1-5) | Kötelező, min: 1, max: 5 |
-| comment | String | Megjegyzés | Opcionális |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-
-Üzleti szabályok: Egy felhasználó többször is értékelhet különböző tételeket.
-
-##### DailyMenu (Napi menü)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| date | Date | Dátum | Kötelező |
-| schoolPeriod | String | Iskolai periódus (morning, afternoon) | Kötelező, enum: ['morning', 'afternoon'] |
-| menuItems | [ObjectId] (ref: MenuItems) | Menüelemek listája | Kötelező |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-
-Üzleti szabályok: Napi menük periódusonként készülnek.
-
-##### ParentStudent (Szülő-Diák kapcsolat)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| parentId | ObjectId (ref: User) | Szülő felhasználó | Kötelező |
-| studentId | ObjectId (ref: User) | Diák felhasználó | Kötelező |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-
-Üzleti szabályok: Szülők több diákhoz is kapcsolódhatnak.
-
-##### SecurityLogs (Biztonsági naplók)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Opcionális |
-| action | String | Akció (pl. LOGIN_SUCCESS) | Kötelező |
-| type | String | Típus (INFO, WARNING, ERROR) | Kötelező |
-| ipAddress | String | IP cím (Hashelt) | Opcionális |
-| Timestamp | Date | Időbélyeg | Alapértelmezett: jelenlegi idő |
-| details | String | További információk | Opcionális |
-| country | String | Ország | Opcionális |
-| CountryCode | String | Országkód | Opcionális |
-| currency | String | Pénznem | Opcionális |
-| Continent | String | Kontinens | Opcionális |
-| IsVPN | Boolean | VPN használat | Opcionális |
-| isTor | Boolean | Tor használat | Opcionális |
-| isProxy | Boolean | Proxy használat | Opcionális |
-
-Üzleti szabályok: Naplók minden fontos eseményt rögzítenek.
-
-##### UserLoyalty (Hűségprogram)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Kötelező |
-| totalPoints | Number | Összes pont | Alapértelmezett: 0 |
-| userTier | String | Felhasználó hűségszintje | Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none' |
-| discounts | String | Kedvezmények listája | [Lásd tábla alatt]: |
-| lastUpdated | Date | Utolsó frissítés | Alapértelmezett: jelenlegi idő |
-
-Üzleti szabályok: Pontok vásárlások alapján gyűlnek. A hűségszint automatikusan frissül a pontok alapján (50 ponttól Bronze, 250-től Silver, 800-tól Gold, 2000-tól Platinum). Pre-save hook: Tier frissítése a totalPoints alapján. Post-save hook: Ha a tier változott, új kedvezmények hozzáadása a tier alapján (Bronze: 5% healthy; Silver: 10% healthy, 5% drink 90 napig; Gold: 15% healthy, 10% full_meal; Platinum: 20% healthy, 15% general).
-
-A `discounts` mező részletei (tömb elemei):
-
-```javascript
-discounts: [{
-    type: { type: String, enum: Object.values(DISCOUNT_TYPES), required: true }, // e.g., DISCOUNT_TYPES.HEALTHY
-    rate: { type: Number, enum: Object.values(DISCOUNT_RATES), required: true }, // e.g., DISCOUNT_RATES.FIVE
-    validUntil: { type: Date, required: false }
-}],
-
-const DISCOUNT_RATES = {
-  FIVE: 0.05,
-  TEN: 0.10,
-  FIFTEEN: 0.15,
-  TWENTY: 0.20,
-  TWENTY_FIVE: 0.25,
-};
-
-const DISCOUNT_TYPES = {
-  HEALTHY: 'healthy',
-  VEGETARIAN: 'vegetarian',
-  FULL_MEAL: 'full_meal',
-  DRINK: 'drink',
-  DESSERT: 'dessert',
-  GENERAL: 'general',
-};
-
+Table DailyMenuMenuItems {
+  dailyMenuId objectid [ref: > DailyMenu._id]
+  menuItemId objectid [ref: > MenuItems._id]
+  // Composite PK: [dailyMenuId, menuItemId]
+}
 ```
 
-### Fizikai és logikai szerkezet
+##### DeviceSyncSession
+Ez a tábla önálló, nem kapcsolódik más entitáshoz, csak eszköz-azonosítókat és titkosított adatokat tárol. Ez teljesen rendben van, mivel ephemerális, session típusú adatokat kezel.
 
-- **Táblák/Nézetek**: MongoDB kollekciók (collections) a fenti sémák alapján.
-- **Indexek**: alapértelmezett indexek az _id-re és egyedi mezőkre (pl. username, email).
-- **Tárolt eljárások/Függvények**: Nincs (JavaScript backend kezel mindent).
-- **Gyorsítótárazás (Cache)**: Redis in-memory adatbázis használata a teljesítmény növelésére, különösen a dashboard adatok gyors eléréséhez (pl. felhasználók listája, statisztikák), 5 perces lejárattal.
+---
 
-### Használati esetek (Use Cases) és forgatókönyvek
+## E2EE Chat és Üzenetkezelés az Adatbázisban
 
-- **Felhasználói regisztráció és autentikáció**: Diákok/szülők regisztrálnak, bejelentkeznek; adatok User kollekcióban.
-- **Menü kezelése**: Admin hozzáadja/szerkeszti MenuItems-t; diákok böngészik DailyMenu alapján.
-- **Rendelés leadása**: Diák kiválaszt tételeket OrderItems-ben, Order létrejön; Payment rögzíti kifizetést.
-- **Értékelés**: Felhasználók Review-t adnak MenuItems-hez.
-- **Hűségprogram**: Vásárlások után UserLoyalty frissül.
-- **Biztonság**: Minden akció SecurityLogs-ban naplózódik.
-- **Admin műveletek**: Felhasználók listázása, statisztikák (User, Order stb. alapján), Redis cache-ből gyorsítottan.
+A rendszer egyik legösszetettebb és legnagyobb része a végpontok közötti titkosított (E2EE) chat funkció, amely több adatbázis-entitást is érint. Az üzenetküldés a Double Ratchet protokollra és X3DH kulcscserére épül, így minden üzenet és kulcsmozgás külön dokumentumként jelenik meg a MongoDB-ben. A főbb komponensek:
 
-### Biztonság és hozzáférés
+- **Message**: Minden elküldött üzenet egy dokumentum, amely tartalmazza a küldő és címzett felhasználó és eszköz azonosítóját, a titkosított üzenettartalmat, státuszzt, időbélyegeket, valamint a Double Ratchet és X3DH protokollhoz szükséges metaadatokat (header, x3dhHeader, encryptionMetadata stb.).
+- **PreKey**: Az előzetes kulcsok (OPK, SPK) a kulcscsere protokollhoz, minden eszközre és felhasználóra külön dokumentumként tárolva. Ezek gyorsan cserélődnek, használat után törlődnek.
+- **StorageBlob**: Titkosított üzenet- és session-történetek, amelyek lehetővé teszik a kliensoldali visszaállítást vagy szinkronizációt. A szerver nem lát bele a tartalomba (zero-knowledge).
+- **DeviceSyncSession**: Ideiglenes, eszközök közötti kulcsszinkronizálási session-ök, amelyek automatikusan törlődnek (TTL index).
 
-- **Felhasználói szerepek**: Admin (teljes hozzáférés), Student/Parent/Teacher (korlátozott), Frozen (blokkolva).
-- **Jogosultságok**: JWT tokenek, middleware-ek (pl. requireAdmin).
-- **Adatvédelmi szabályok**: E-mail ellenőrzés, GDPR-kompatibilis (pl. személyes adatok védelme), IP cím GDPR kombatibilis tárolás.
-- **Biztonság**: Jelszavak hash-elve (bcrypt), reCAPTCHA, IP naplózás, IP hashelés, VPN/Tor detektálás.
-
-### Karbantartás és üzemeltetés
-
-- **Biztonsági mentési eljárások**: MongoDB dump/export rendszeres mentéshez; Redis esetében adatok ideiglenesek, így külön mentés nem szükséges.
-- **Teljesítményfigyelés**: Lekérdezések optimalizálása, Redis cache használata dashboard-on a gyorsabb válaszidők érdekében.
-- **Frissítési folyamatok**: Séma változásoknál migrációs szkriptek; verziókezelés Git-en keresztül. Redis konfiguráció környezeti változók alapján.
-- **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
-
-
-<div class="fullpage"><img src="database.png" alt="Database Diagram" style="width: 100%;"></div>
-
-
+A chat rendszer minden komponense úgy van kialakítva, hogy a szerver ne férjen hozzá a titkosított tartalomhoz, csak a szükséges metaadatokat tárolja. Az üzenetek, kulcsok és session-ök közötti kapcsolatok referenciákon (ObjectId) és eszközazonosítókon alapulnak. A Message kollekció indexei optimalizálják a keresést felhasználó, eszköz és státusz szerint. A PreKey és StorageBlob kollekciók magas churn-t kezelnek, mivel a kulcsok és session-ök gyorsan cserélődnek. Ez a felépítés biztosítja a biztonságos, skálázható és auditálható chat-funkciót az iskolai rendszerben.
 
 ### 5.3 Algorithms and Data Structures
 
@@ -1093,57 +937,56 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **Authentication**: JWT-based authentication with role-based access control (RBAC).
 - **Data Encryption**: Sensitive data encrypted at rest and in transit (TLS/SSL).
 - **Input Validation**: Comprehensive validation and sanitization of all user inputs.
-- **Rate Limiting**: Prevent brute-force attacks using express-rate-limit with Redis store and Redis rate limiting via Lua integration.
+- **Rate Limiting**: Prevent brute-force attacks using express-rate-limit with Redis store and Redis Lua scripting for dashboard/admin routes.
 - **Logging and Monitoring**: SecurityLogs collection for tracking user actions and potential security incidents.
 - **Regular Audits**: Periodic security audits and vulnerability assessments.
-- **Backup and Recovery**: Regular backups of the database and secure storage of backup files. NOT YET IMPLEMENTED
+- **Backup and Recovery**: Planned, not yet implemented (see Roadmap).
 - **Compliance**: Adherence to GDPR and other relevant data protection regulations.
 - **XSS Protection**: Use of libraries like *xss-clean* and *helmet* to mitigate XSS attacks.
-- **HTTP Pollution Protection**: Use of *helmet* to set secure HTTP headers.
-- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations to prevent cross-site request forgery attacks. NOT YET IMPLEMENTED
-- **Password Policies**: Enforcing strong password requirements..
-- **Two-Factor Authentication (2FA)**: Optional 2FA for enhanced security. NOT YET IMPLEMENTED
+- **HTTP Pollution Protection**: Use of *helmet* and *hpp* to set secure HTTP headers and prevent HTTP parameter pollution.
+- **CSRF Protection**: Partial implementation; CSRF tokens are planned for all state-changing operations (see Roadmap).
+- **Password Policies**: Strong password requirements enforced via zxcvbn and custom validation.
+- **Two-Factor Authentication (2FA)**: Basic 2FA endpoint implemented; full integration planned (see Roadmap).
 - **Session Management**: Secure session handling with appropriate expiration and invalidation.
-- **Proxy/VPN/Tor Detection**: Logging and potential blocking of suspicious IPs using third-party services. NOT YET IMPLEMENTED
-- **reCAPTCHA Integration**: To prevent automated bot interactions during registration and login.
-- **IP Hashing**: Hashing IP addresses before storage to enhance user privacy.
-- **NoSQL Injection Prevention**: Use of parameterized queries and ODM features and libraries to prevent injection attacks.
-- **Security Headers**: Implementation of security headers using Helmet.js to protect against common vulnerabilities.
-- **Content Security Policy (CSP)**: Define and enforce a strict CSP to mitigate XSS and data injection attacks.
-- **Detailed CSP Configuration**: The application implements a comprehensive CSP that restricts resource loading to approved domains only. This includes restrictions on script sources, style sources, image sources, and form actions. Inline scripts are prohibited except for specific nonces, and eval() is completely disabled.
+- **Proxy/VPN/Tor Detection**: Logging and blocking of suspicious IPs planned (see Roadmap).
+- **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into registration and login.
+- **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs.
+- **NoSQL Injection Prevention**: Use of parameterized queries, Mongoose ODM, and express-mongo-sanitize.
+- **Security Headers**: Helmet.js sets security headers, including CSP.
+- **Content Security Policy (CSP)**: Strict CSP enforced, no inline scripts except for specific nonces, eval() disabled.
 #### 5.4.2 Security Policies
 - **Access Control**: Strict role-based access control (RBAC) to limit user permissions.
 - **Data Retention**: Policies for data retention and deletion in compliance with regulations.
 - **Incident Response**: Procedures for responding to security incidents and breaches.
 - **User Education**: Informing users about security best practices.
 - **Regular Updates**: Keeping software and dependencies up to date with security patches.
-### 5.4.3 In depth Security Measures 
-- **Password Hashing**: All passwords are hashed using bcrypt with a salt of 12 rounds when registering and 10 rounds when resetting password. VERIFY 
--**JWT Authentication**: JSON Web Tokens (JWT) are used for stateless authentication between the client and server. JWT signing secrets are generated using cryptographically secure random values stored in environment variables. This approach ensures that token secrets are unpredictable and resistant to attacks. Standard JavaScript functions like Math.random(), which rely on algorithms such as xorshift128+, are not suitable for cryptographic purposes due to their predictability, highlighting the importance of using a secure random number generator for authentication secrets.
-- **Payment Security**: Integration with PayPal's and Google Pay's secure payment gateways, ensuring PCI compliance they are encrypting payment data via AES-256 encryption.
+
+#### 5.4.3 In depth Security Measures
+- **Password Hashing**: All passwords are hashed using bcrypt with a salt of 10 rounds for both registration and password reset.
+- **JWT Authentication**: JSON Web Tokens (JWT) are used for stateless authentication between the client and server. JWT signing secrets are generated using cryptographically secure random values stored in environment variables.
+- **Payment Security**: Integration with PayPal's and Google Pay's secure payment gateways, ensuring PCI compliance and encrypted payment data.
 - **XSS Protection**: Use of libraries like *xss-clean* and *helmet* to mitigate XSS attacks by sanitizing user inputs and setting secure HTTP headers.
-- **CSRF Protection**: Implementation of CSRF tokens for state-changing operations to prevent cross-site request forgery attacks.
-- **Rate Limiting**: The site has 2 different rate limiting methods, one via *express-rate-limit* with *Redis* store to limit requests per IP per time window, and another via Redis Lua scripting for the site's dashboard routes to prevent abuse and ensure fair resource usage.
-- **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs to enhance user privacy while maintaining the ability to track unique IPs.
-- **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into the registration and login processes to prevent automated bot interactions, using a score-based assessment to differentiate between human users and bots. The reCAPTCHA secret key is securely stored in environment variables. It uses Google's proprietary machine learning algorithm to assign a score between 0.1 and 1.0, with a threshold of 0.5 for human detection this helps to reduce spam and abuse on the platform.
-- **NoSQL Injection Prevention**: The application uses parameterized queries and ODM features to prevent NoSQL injection attacks, ensuring that user inputs are properly sanitized and validated before being used in database operations. It also uses libraries like *express-mongo-sanitize* to further protect against injection attacks.
-- **IP Detection** The site uses a third-party service (iplocate.io) to detect if an IP address is using a VPN, Proxy, or Tor network. This information is logged in the SecurityLogs collection for monitoring purposes and potential blocking of suspicious IPs. The service provides details such as country, country code, continent, and whether the IP is associated with VPN, Proxy, or Tor usage.The free tier of the service currently let's us have 1k requestes/day     NOT YET IMPLEMENTED FAR
-- **HTTP Parameter Pollution (HPP)** The application uses the *hpp* library middleware to protect against HTTP Parameter Pollution attacks by sanitizing query parameters and ensuring that only the first occurrence of a parameter is considered.
-- **CORS Policy**: The application implements a strict CORS policy using the *cors* middleware to control which domains can access the API, preventing unauthorized cross-origin requests, this is configured to only allow requests from the official frontend domain
-- **Security Headers**: The application uses Helmet.js to set various HTTP headers that enhance security, such as Content Security Policy (CSP), X-Content-Type-Options, X-Frame-Options, and others to protect against common web vulnerabilities.
-- **Database Security**: MongoDB connections use authentication with credentials stored in environment variables. The application implements connection pooling and timeout configurations to prevent resource exhaustion attacks. Database queries use Mongoose ODM which provides built-in protection against NoSQL injection through schema validation and type casting.
-- **Error Handling Security**: Sensitive information is never exposed in error messages sent to clients. Error responses are sanitized and provide minimal information to prevent information leakage that could aid attackers.
-- **API Security**: All API endpoints require authentication by default. Public endpoints (like registration) are explicitly marked and protected with additional rate limiting and bot detection.
-- **Environment Security**: All sensitive configuration (API keys, database credentials, JWT secrets) are stored in environment variables and never committed to version control. The application validates required environment variables on startup.
+- **CSRF Protection**: Partial; planned for all state-changing operations.
+- **Rate Limiting**: Two methods: *express-rate-limit* with Redis store for general routes, and Redis Lua scripting for dashboard/admin routes.
+- **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs.
+- **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into registration and login, using a score-based assessment.
+- **NoSQL Injection Prevention**: Parameterized queries, Mongoose ODM, and express-mongo-sanitize are used to prevent NoSQL injection attacks.
+- **IP Detection**: Planned integration with iplocate.io for VPN/Proxy/Tor detection (see Roadmap).
+- **HTTP Parameter Pollution (HPP)**: The *hpp* library middleware is used to protect against HTTP Parameter Pollution attacks.
+- **CORS Policy**: Strict CORS policy using the *cors* middleware, only allowing requests from the official frontend domain.
+- **Security Headers**: Helmet.js sets various HTTP headers for enhanced security.
+- **Database Security**: MongoDB connections use authentication with credentials stored in environment variables. Connection pooling and timeouts prevent resource exhaustion. Mongoose ODM provides schema validation and type casting.
+- **Error Handling Security**: Sensitive information is never exposed in error messages sent to clients.
+- **API Security**: All API endpoints require authentication by default. Public endpoints are explicitly marked and protected with additional rate limiting and bot detection.
+- **Environment Security**: All sensitive configuration is stored in environment variables and never committed to version control.
 
 ### 5.4.4 Security Testing and Validation
 
 - **Automated Security Testing**: The project includes security-focused test suites that validate authentication flows, input sanitization, and rate limiting effectiveness.
 - **Penetration Testing**: Periodic manual security assessments to identify vulnerabilities not caught by automated tools.
 
-## 6. Implementation
 
-### 6.1 Directory Structure 
+### 6.1 Directory Structure
 
 ```
 ├── .env
@@ -1179,7 +1022,7 @@ The algorithms are chosen to balance security, performance, maintainability, and
 ├── node_modules/
 ├── package-lock.json
 ├── package.json                # Node.js dependencies and scripts
-├── postcss.config.js          # PostCSS configuration
+├── postcss.config.js           # PostCSS configuration
 ├── public/                     # Static files served to client (Frontend)
 │   ├── favicon.ico
 │   ├── googlepay.js
@@ -1195,215 +1038,229 @@ The algorithms are chosen to balance security, performance, maintainability, and
 │   ├── 429/                    # 429 error pages
 │   │   ├── 429.html
 │   │   └── 429.jsx
+│   ├── chat/                   # Chat frontend
 │   ├── dashboard/              # Dashboard pages
 │   │   ├── admin/
-│   │   │   ├── admin.html
-│   │   │   ├── admin.jsx
-│   │   │   ├── AdminHeader.jsx
-│   │   │   ├── AdminSidebar.jsx
-│   │   │   ├── MenuItemsSection.jsx
-│   │   │   ├── SettingsSection.jsx
-│   │   │   ├── StatsSection.jsx
-│   │   │   ├── useAdminData.js
-│   │   │   └── UsersSection.jsx
 │   │   ├── parent/
-│   │   │   ├── parent.html
-│   │   │   ├── parent.jsx
-│   │   │   ├── ParentHeader.jsx
-│   │   │   ├── ParentOrdersSection.jsx
-│   │   │   ├── ParentSettingsSection.jsx
-│   │   │   ├── ParentSidebar.jsx
-│   │   │   ├── ParentStatsSection.jsx
-│   │   │   ├── ParentStudentsSection.jsx
-│   │   │   └── useParentData.js
 │   │   └── student/
-│   │       ├── components/
-│   │       ├── hooks/
-│   │       ├── LoyaltySection.jsx
-│   │       ├── OrdersSection.jsx
-│   │       ├── services/
-│   │       ├── SettingsSection.jsx
-│   │       ├── StatsSection.jsx
-│   │       ├── student.html
-│   │       ├── student.jsx
-│   │       ├── StudentHeader.jsx
-│   │       ├── StudentSidebar.jsx
-│   │       ├── TransactionsSection.jsx
-│   │       ├── useStudentData.js
-│   │       ├── utils/
-│   │       └── WalletSection.jsx
-│   ├── home_page/              # Home page files
-│   │   ├── home_page.html
-│   │   └── home_page.jsx
-│   ├── information/            # Information pages
-│   │   ├── index.html
-│   │   └── information.jsx
-│   ├── no_perm/                # No permission pages
-│   │   ├── index.html
-│   │   └── no_perm.jsx
-│   └── Order/                  # Order pages
-│       ├── Cart.jsx
-│       ├── Header.jsx
-│       ├── index.html
-│       ├── LoyaltyStatus.jsx
-│       ├── MenuItem.jsx
-│       ├── notifications.js
-│       ├── order.jsx
-│       ├── paymentHandlers.js
-│       └── useCart.js
+│   ├── home_page/
+│   ├── information/
+│   ├── no_perm/
+│   └── order/
 ├── readme.md                   # Project documentation
 ├── src/                        # Server-side source code (backend)
 │   ├── admin/
-│   │   └── admin.js
 │   ├── api.js
-│   ├── auth/                   # Authentication modules
-  │   │   ├── 2fa.js
-│   │   ├── email_verification.js
-│   │   ├── index.js
-│   │   ├── login.js
-│   │   ├── middleware.js
-│   │   ├── password_reset.js
-│   │   ├── passwordhash.js
-│   │   ├── register.js
-│   │   ├── security.js
-│   │   └── validation.js
+│   ├── auth/
 │   ├── chapta.js
 │   ├── dashboard/
-│   │   ├── admin/
-│   │   │   └── admin.js
-│   │   ├── dashboard.js
-│   │   ├── middleware/
-│   │   │   └── auth-middleware.js
-│   │   ├── parent/
-│   │   │   └── parent.js
-│   │   ├── services/
-│   │   │   └── cache-service.js
-│   │   ├── statistics/
-│   │   │   └── statistics.js
-│   │   └── student/
-│   │       └── student.js
 │   ├── database.js
 │   ├── examples/
-│   │   └── lua-demo.js
 │   ├── logout.js
 │   ├── LoyaltySystem/
-│   │   └── loyalty-service.js
 │   ├── main.js
 │   ├── middleware/
-│   │   └── security.js
 │   ├── models/
-│   │   └── User.js
 │   ├── Orders/
-│   │   └── Order.js
 │   ├── payments/
-│   │   ├── googlepay.js
-│   │   └── paypal.js
 │   ├── redis-lua.js
 │   ├── redis.js
 │   ├── Register.jsx
 │   ├── script-loader.js
 │   ├── scripts/
-│   │   ├── process_order.lua
-│   │   ├── rate_limit.lua
-│   │   ├── TODO.md
-│   │   └── wallet_update.lua
-│   ├── services/               # Service modules
-│       ├── googlepay-service.js
-│       ├── order-service.js
-│       ├── paypal-service.js
-│       └── redis-lua-service.js
+│   ├── services/
 │   └── verificationStore.js
-├── tailwind.config.js         # Tailwind CSS configuration
+├── tailwind.config.js          # Tailwind CSS configuration
 └── tests/                      # Test files
-    ├── code_analytic.py
-    ├── code_analytics.json
-    ├── creating_test_users.js
-    ├── database_testing.js
-    ├── fake_data.py
-    ├── menu_items.json
-    ├── Paypal_TestConfig.txt
-    ├── query_security_logs.js
-    ├── register_testing.py
-    ├── Jest/                   # Jest test directory
-    └── performance_tests/      # Performance test files
-        ├── artillery.yml
-        └── reports/
-            ├── 20260121_916.txt
-            └── 20260121_936.txt
-
+  ├── code_analytic.py
+  ├── code_analytics.json
+  ├── creating_test_users.js
+  ├── database_testing.js
+  ├── fake_data.py
+  ├── menu_items.json
+  ├── Paypal_TestConfig.txt
+  ├── query_security_logs.js
+  ├── register_testing.py
+  ├── Jest/
+  └── performance_tests/
 ```
 
 ### 6.2 Backend Implementation
 
 #### 6.2.1 Technology Stack
 
-The backend of the SnapTray system is built using a robust and scalable technology stack designed to handle high traffic, ensure data integrity, and provide a secure environment for users. The project leverages modern technologies and best practices to deliver a reliable service. The stack is used as follows:
-- **Runtime Environment**: Node.js
-- **Web Framework**: Express.js
-- **Database**: MongoDB (NoSQL)
-- **In-Memory Data Store**: Redis
-- **Authentication**: JSON Web Tokens (JWT)
-- **Payment Gateways**: PayPal, Google Pay
-- **Caching**: Redis with Lua scripting for atomic operations
+The SnapTray backend is built for scalability, security, and maintainability. The main technologies are:
 
-Express.js was chosen for its minimalistic and flexible nature, allowing for rapid development and easy integration with various middleware. MongoDB provides a flexible (schema-less) design that accommodates the dynamic nature of the application's data, while Redis enhances performance through caching and supports complex operations via Lua scripting.
-The backend is structured to separate concerns, with dedicated modules for authentication, payment processing, order management, and dashboard functionalities. This modular approach facilitates maintainability and scalability as the application grows. The application can be run without Redis running but some features will be limited or slower so it's recommended to run redis for the application to work as intended.
+- **Node.js** (runtime)
+- **Express.js** (web framework)
+- **MongoDB** (NoSQL database)
+- **Redis** (in-memory cache, rate limiting, atomic ops)
+- **JWT** (authentication)
+- **PayPal & Google Pay** (payment gateways)
 
+---
 
-#### 6.2.2 Key Modules and Components
+#### 6.2.2 Architecture Overview
 
-The main component of the backend is src/main.js this is where **Express** connects to the routers, this is where the Express's rate limiting is defined and applied to the routes
+> **[Insert system architecture diagram here]**
+>
+> _Diagram should show: Express.js app, MongoDB, Redis, and external services (PayPal, Google Pay), with arrows for data flow._
+
+---
+
+#### 6.2.3 Main Application Structure
+
+- **src/main.js**: Entry point, sets up Express, middleware, routers, and rate limiting.
+- **Routers**: Modularized for authentication, dashboard, orders, payments, chat, etc.
+- **Database Models**: Defined with Mongoose (see `src/models/`).
+- **Services**: Business logic (loyalty, caching, Redis Lua, payments, etc.).
+
+Example: Express app setup and rate limiting (src/main.js)
 ```javascript
 const express = require('express');
-// Rate limiter for all non-sensitive routes
-// HOUR = 1h
+const app = express();
+const rateLimit = require('express-rate-limit');
+const { RedisStore } = require('rate-limit-redis');
+const redisClient = require('./redis').redisClient;
+
 const limiter = rateLimit({
-  windowMs: HOUR, // 1 hour
-  max: 250, // Limit each IP to 250
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  store: createStore(),
-    handler: (req, res) => {
-    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 250,
+  store: new RedisStore({
+    sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
+  }),
+  handler: (req, res) => {
+    res.status(429).sendFile('public/429/429.html');
   },
-})
+});
+app.use('/api', limiter);
 ```
-Rate limiting is a web security feature which prevents DDoS attacks by limiting how many requests are sent to the website and how often, this is done by tracking the IP address of the requester and limiting the requests per time window, if the limit is exceeded the requester will get a 429 status code (Too many requests) and will be blocked from making further requests until the time window resets, this is done to prevent abuse and ensure fair resource usage.
 
-- The *windowMs* parameter defines the time window in milliseconds, in this case it's set to 1 hour (HOUR constant)
-- The *max* parameter defines the maximum number of requests allowed per IP address within the time window, in this case it's set to 250 requests. which in this case is safe for non-sensitive routes e.g. home page, menu browsing etc.
-- The *standardHeaders* parameter, when set to true, ensures that rate limit information is returned in the `RateLimit-*` headers, providing clients with details about their current rate limit status.
-- The *legacyHeaders* parameter, when set to false, disables the older `X-RateLimit-*` headers, promoting the use of the standardized headers for better compatibility and clarity.
-- The *store* parameter specifies the storage mechanism for tracking request counts, in this case, it's using a Redis store created by the *createStore()* function, which allows for distributed rate limiting across multiple server instances.
-- The *handler* parameter defines a custom function that is executed when a client exceeds the rate limit. In this case, it sets the response status to 429 (Too Many Requests), customizes the status message, and serves a static HTML file located at 'public/429/429.html' to inform the user about the rate limit being exceeded.
+---
 
-The site also has a second rate limiting method via Redis Lua scripting for the site's dashboard routes to prevent abuse and ensure fair resource usage.
+#### 6.2.4 Authentication & Security
+
+- **Registration**: Validates input, hashes passwords (bcrypt), uses reCAPTCHA, sends verification email, logs security events.
+- **Login**: Verifies password, issues JWT, logs IP/location, rate limits by IP.
+- **Session**: Stores user info and JWT in session.
+
+Example registration route (src/auth/register.js):
+```javascript
+router.post('/register', async (req, res) => {
+  // ...validation, rate limiting, captcha...
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = new User({ username, password: hashedPassword, email });
+  await user.save();
+  // ...send verification email...
+  res.status(200).json({ message: 'Registration successful!' });
+});
+```
+
+---
+
+#### 6.2.5 Order & Payment Processing
+
+- **Order API**: Validates cart, checks stock, creates order in DB, integrates with PayPal/Google Pay.
+- **Order Completion**: Updates order status, deducts stock, awards loyalty points, logs payment.
+
+Example PayPal order creation (src/api.js):
+```javascript
+router.post('/orders', async (req, res) => {
+  // ...validate user, stock...
+  const { jsonResponse, httpStatusCode } = await paypalService.createOrder(cart, currency, amount);
+  // ...save order to DB...
+  res.status(httpStatusCode).json(jsonResponse);
+});
+```
+
+---
+
+#### 6.2.6 Caching & Performance
+
+- **Redis**: Used for caching (menu items, sessions), atomic wallet/stock updates, and rate limiting.
+- **Cache Middleware**: Wraps API endpoints to serve cached data when available.
+
+Example cache middleware (src/dashboard/services/cache-service.js):
+```javascript
+function cacheResult(cacheKey, ttl = 300) {
+  return async (req, res, next) => {
+    if (!isRedisAvailable()) return next();
+    const key = typeof cacheKey === 'function' ? cacheKey(req) : cacheKey;
+    const cached = await redisClient.get(key);
+    if (cached) return res.status(200).json(JSON.parse(cached));
+    const originalJson = res.json;
+    res.json = function(data) {
+      redisClient.setEx(key, ttl, JSON.stringify(data));
+      return originalJson.call(this, data);
+    };
+    next();
+  };
+}
+```
+
+---
+
+#### 6.2.7 Loyalty System
+
+- **Points Calculation**: Points per order, with bonuses for holidays, healthy choices, and user tier.
+- **Awarding**: On order completion, points are calculated and added atomically.
+
+Example (src/LoyaltySystem/loyalty-service.js):
+```javascript
+function ConvertPoints(dollarAmount, tier, healthLevel, date) {
+  let total = 0;
+  for (let i = 0; i < Math.floor(dollarAmount); i++) {
+    total += Math.floor(Math.random() * 6) + 4; // 4-9 points per dollar
+  }
+  if (isHoliday(date)) total *= 1.5;
+  else if (isHolidaySeason(date)) total *= 1.2;
+  total *= 1 + (healthLevel * 0.2);
+  const tierBonus = DISCOUNT_RATES[tier] || 0;
+  total *= 1 + tierBonus;
+  return Math.floor(total);
+}
+```
+
+---
+
+#### 6.2.8 Rate Limiting (Advanced)
+
+- **Express Middleware**: For general API routes.
+- **Redis Lua Script**: For dashboard/admin, implements sliding window algorithm for fair, distributed rate limiting.
+
+Example Lua script (used via redis-lua-service):
 ```lua
--- Lua script for advanced rate limiting
--- KEYS: [1] rate_limit_key
--- ARGV: [1] window_size_seconds, [2] max_requests, [3] current_timestamp
----@diagnostic disable: undefined-global -- Disable undefined global warnings
-
+-- KEYS[1]: rate_limit_key
+-- ARGV[1]: window_size_seconds, ARGV[2]: max_requests, ARGV[3]: current_timestamp
 local key = KEYS[1]
 local window = tonumber(ARGV[1])
 local max_requests = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
-
--- Remove old entries outside the window
 redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
-
--- Count current requests in window
 local current_count = redis.call('ZCARD', key)
-
--- Check if limit exceeded
 if current_count >= max_requests then
-    return {0, current_count} -- 0 = blocked, current count
+    return {0, current_count}
 end
-
--- Add current request
 redis.call('ZADD', key, now, now)
+redis.call('EXPIRE', key, window)
+return {1, current_count + 1}
+```
 
+---
+
+#### 6.2.9 Extensibility & Maintainability
+
+- Modular folder structure: `src/auth/`, `src/dashboard/`, `src/services/`, etc.
+- All critical operations are logged.
+- Admin routes protected by middleware and advanced rate limiting.
+
+---
+
+> **[Insert additional diagrams here as needed, e.g., sequence diagrams for order/payment flow, caching, or loyalty point calculation.]**
+
+---
+
+## Router Modules and API Endpoints
 -- Set expiration on the key (cleanup)
 redis.call('EXPIRE', key, window)
 
@@ -1419,6 +1276,7 @@ return {1, current_count + 1} -- 1 = allowed, new count
 **Router Modules and API Endpoints:**
 ## Router Modules and API Endpoints
 
+
 ### Main Application Routes
 
 | Method | Endpoint                       | Description               |
@@ -1427,6 +1285,7 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/register`                   | Registration page         |
 | GET    | `/password-reset/:token`      | Password reset page       |
 | GET    | `/pay`                        | Payment page              |
+| GET    | `/chat`                       | Chat frontend (E2EE chat UI) |
 
 ### Authentication Routes
 
@@ -1539,89 +1398,107 @@ return {1, current_count + 1} -- 1 = allowed, new count
 |--------|--------------------------------------------|-------------------------------|
 | POST   | `/api/payments/paypal`                    | PayPal payment processing     |
 | POST   | `/api/payments/googlepay`                 | Google Pay payment processing |
+#
+### Chat API & WebSocket Routes
 
+| Method | Endpoint                                 | Description |
+|--------|------------------------------------------|-------------|
+| GET    | `/chat`                                 | Chat frontend (serves chat UI) |
+| WS     | `/chat`                                 | WebSocket endpoint for real-time chat |
+| POST   | `/chat/setup-e2ee`                      | Setup E2EE public key for user |
+| GET    | `/chat/public-key/:userId`              | Get E2EE public key for a user |
+| POST   | `/chat/send-message`                    | Send encrypted message (E2EE) |
+| GET    | `/chat/messages/:otherUserId`           | Get messages for a conversation |
+| GET    | `/chat/message/:messageId`              | Fetch a single message |
+| POST   | `/chat/message/:messageId/replace`      | Mark a message as replaced (auto-resend) |
+| PUT    | `/chat/messages/read/:otherUserId`      | Mark messages as read |
+| GET    | `/chat/conversations`                   | Get conversation list |
+| GET    | `/chat/search-users`                    | Search users for chat |
+| GET    | `/chat/e2ee-status`                     | Get E2EE status for current user |
+| POST   | `/chat/reset-e2ee`                      | Reset E2EE keys for user |
+| POST   | `/chat/backup-keys`                     | Backup encrypted private key to server |
+| GET    | `/chat/has-key-backup`                  | Check if user has a key backup |
+| GET    | `/chat/restore-keys`                    | Restore encrypted private key from server |
+| <span style="color:#d32f2f;font-weight:bold">POST</span>   | <span style="color:#d32f2f;font-weight:bold">`/chat/admin/clear-all-e2ee`</span>            | <span style="color:#d32f2f;font-weight:bold">Admin: clear all E2EE data/messages (admin only)</span> |
+| POST   | `/chat/request-sender-recovery`         | Mark messages as needing sender-key recovery |
+| GET    | `/chat/pending-recovery`                | Get messages needing sender-key recovery |
+
+**WebSocket events:**
+- `newMessage` (real-time message delivery)
+- `messageReplaced` (auto-resend notification)
+- `processPendingRecovery` (sender-key recovery)
+
+<span style="color:#d32f2f;font-weight:bold">**Admin-only routes are shown in red and are not accessible to normal users.**</span>
+
+**Notes:**
+- All chat API endpoints require authentication.
+- E2EE = End-to-End Encryption (all messages are encrypted client-side).
+- WebSocket endpoint is used for real-time chat updates and notifications.
 
 # 6.2.3 Database Integration and Models
 The backend uses MongoDB as the primary database for storing user data, orders, menu items, and security logs. Mongoose is used as the ODM (Object Data Modeling) library to define schemas and interact with the database.
-The database connection is established in config/database_queries.js and src/models/User.js defines the User schema
-The database is exported from the database_queries.js and used throughout the backend modules for CRUD operations.
-#6.2.4 Caching Strategy
-The backend employs Redis as an in-memory data store to cache frequently accessed data, such as menu items and user sessions. This reduces database load and improves response times for read-heavy operations.
-The caching logic is implemented in src/dashboard/services/cache-service.js, which provides functions to get and set cached data.
-```javascript 
-// ttl = Time to live in seconds, cacheKey can be a string or a function that returns a string
-function cacheResult(cacheKey, ttl = 300) {
-  return async (req, res, next) => {
-    if (!isRedisAvailable()) {
-      return next();
-    }
 
-    try {
-      // Support both string keys and functions that generate keys
-      const key = typeof cacheKey === 'function' ? cacheKey(req) : cacheKey;
+## User Model
+- **username**: String, required, unique
+- **password**: String, required, hashed with bcrypt (10 rounds)
+- **email**: String, required, unique, validated
+- **isVerified**: Boolean, default false
+- **usertype**: String, enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], default: 'student'
+- **createdAt**: Date, default now
+- **balance**: Number, default 0
+- **isBanned**: Boolean, default false
+- **banReason**: String, default ''
+- **userPersonalInfo**: Subdocument for personal info (firstName, lastName, etc.)
+- **identity**: E2EE identity fields
+- **devices**: Registered device info
+- **recoveryBlob**: For encrypted recovery data
+- **encryption**: Legacy E2EE fields
 
-      const cached = await redisClient.get(key);
-      if (cached) {
-        const parsedData = JSON.parse(cached);
-        return res.status(200).json(parsedData);
-      }
+## Loyalty System 
+- Points are awarded per order using a random value (4-9 points per dollar spent), with bonuses for holidays and healthy choices.
+- Tiers: NONE, BRONZE, SILVER, GOLD, PLATINUM (see config/DATABASE_CONSTANTS.JS for rates and names)
+- Tier bonuses and discounts are applied automatically.
+- See `src/LoyaltySystem/loyalty-service.js` for calculation details.
 
-      // Store original json method
-      const originalJson = res.json;
+## Admin Dashboard Features
+- Advanced rate limiting for all admin routes (30 requests/minute, Redis Lua-based)
+- User management: list, count, ban, change roles
+- Menu and order management: view, update, export
+- Statistics and analytics endpoints
+- All endpoints are protected by admin permission middleware
 
-      // Override json method to cache response
-      res.json = function(data) {
-        if (isRedisAvailable()) {
-          redisClient.setEx(key, ttl, JSON.stringify(data)).catch(err =>
-            console.error('Redis cache set error:', err)
-          );
-        }
-        // Call original json method
-        return originalJson.call(this, data);
-      };
+## Caching Strategy
+The backend employs Redis as an in-memory data store to cache frequently accessed data, such as menu items and user sessions. This reduces database load and improves response times for read-heavy operations. Caching is implemented in `src/dashboard/services/cache-service.js` and used throughout the dashboard and API routes. Redis Lua scripting is used for atomic operations (rate limiting, wallet updates).
 
-      next();
-    } catch (error) {
-      console.error('Cache middleware error:', error);
-      next();
-    }
-  };
-}
-``` 
-- This middleware checks if the requested data is in the Redis cache. If found, it returns the cached data; otherwise, it proceeds to fetch from the database and caches the result for future requests. This is to ensure that frequently requested data is served quickly, reducing latency and improving user experience, and reducing the load on the primary database. If Redis is unavailable, the middleware gracefully falls back to normal database queries without caching this is handled by the isRedisAvailable() function.
-```javascript
-let redisClient = null;
-try {
-  const { redisClient: client } = require('../../redis');
-  redisClient = client;
-} catch (error) {
-  console.log('Redis not available in cache service:', error.message);
-}
 
-function isRedisAvailable() {
-  return redisClient && redisClient.isOpen;
-}
-```
-- The cache expiration time (TTL) is configurable, allowing for flexibility based on data volatility.
-- The caching strategy is applied to routes that serve menu items and dashboard statistics, significantly improving performance for these endpoints.
-- The application also uses Redis Lua scripting for atomic operations, such as rate limiting and wallet updates, ensuring data consistency and integrity during concurrent access.
 
-```javascript
-async function invalidateCache(keys) {
-  if (!isRedisAvailable() || !keys || keys.length === 0) {
-    return;
-  }
 
-  try {
-    await redisClient.del(keys);
-  } catch (error) {
-    console.error('Cache invalidation error:', error);
-  }
-}
-```
-- The `invalidateCache` function is used to remove specific keys from the Redis cache when data changes, ensuring that stale data is not served to users. This is particularly important for dynamic data that may be updated frequently, such as menu items or user statistics.
-- The function checks if Redis is available and if there are keys to invalidate before attempting to delete them, handling any errors that may occur during the process.
-- This ensures that the cache remains accurate and up-to-date, enhancing the overall reliability of the caching strategy.
+
+
+
+# 13. Planned Features and Roadmap
+
+
+- Multi-language support (Hungarian/English)
+- In-app feedback and bug reporting
+- Push/pop notifications (WebSocket/SSE, SMS/email alerts)
+- Enhanced menu photos, nutritional info, allergen warnings
+- QR code integration for menu/table ordering
+- Super admin approval for critical changes
+- Admin impersonation and activity history
+- Admin rate limit dashboard (change limits from UI)
+- Password breach check (integration with breach databases)
+- Biometric authentication (fingerprint/face)
+- Advanced fraud detection (ML-based, IP geolocation anomaly)
+- Analytics and reporting (email summaries, user data export, API usage, health routes)
+- Advanced analytics dashboard (nutritional tracking, spending analysis, predictive analytics)
+- Parent spending analytics
+- Smart ordering features and menu recommendation engine
+- Enhanced dietary management
+- Achievement system and badges
+- Social/community features
+
+For details and progress, see `todo.md` and the project board.
 
 
 

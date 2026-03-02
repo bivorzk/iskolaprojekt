@@ -2,9 +2,9 @@
 
 ## Az adatbázis célja, funkciója és a benne tárolt információk összefoglalása
 
-Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. A rendszer Redis-t használ gyorsítótárazáshoz a teljesítmény növelése érdekében.
+Ez az adatbázis egy iskolai büfék rendszer (MERN stack projekt) részét képezi, amely lehetővé teszi a felhasználók (diákok, szülők, tanárok) számára az étkezés megrendelését, kifizetését és értékelését. A rendszer támogatja a felhasználói autentikációt, a menükezelést, rendeléseket, kifizetéseket, hűségprogramokat, E2EE chatet és biztonsági naplózást. A fő cél az iskolai étkezés hatékony és biztonságos kezelése, beleértve a készletkezelést, értékeléseket és a pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely egy NoSQL adatbázis, de sémákkal strukturált. Redis-t használ gyorsítótárazáshoz és ideiglenes adatokhoz.
 
-Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Kiegészítőként Redis in-memory adatbázis gyorsítótárazáshoz.
+Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (Mongoose queries). Redis in-memory adatbázis gyorsítótárazáshoz és session/ephemerális adatokhoz.
 
 ## Adatbázis-terv és séma
 
@@ -13,179 +13,220 @@ Az adatbázis-modell típusa: NoSQL (MongoDB), lekérdezési nyelv: JavaScript (
 A rendszer fő entitásai és kapcsolataik:
 
 - **User** (Felhasználó): Központi entitás, minden más entitáshoz kapcsolódik.
+- **UserPersonalInfo**: Egy felhasználóhoz tartozó személyes adatok (alágyazott dokumentum).
 - **MenuItems** (Menüelemek): Étkezési tételek.
 - **Order** (Rendelés): Felhasználók rendelései.
-- **OrderItems** (Rendelés tételek): Egy rendeléshez tartozó menüelemek.
+- **OrderItems** (Rendelés tételek): Egy rendeléshez tartozó menüelemek (Order-be ágyazva).
 - **Payment** (Kifizetés): Pénzügyi tranzakciók.
 - **Review** (Értékelés): Menüelemek értékelése (beágyazott MenuItems-ben).
-- **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük.
+- **DailyMenu** (Napi menü): Iskolai periódusok szerinti menük, több MenuItems-t tartalmaz (N:N kapcsolat linking table-lel).
 - **ParentStudent** (Szülő-Diák kapcsolat): Szülők és diákok összekapcsolása.
 - **SecurityLogs** (Biztonsági naplók): Események naplózása.
 - **UserLoyalty** (Hűségprogram): Felhasználók pontjai, kedvezményei és hűségszintje.
-- **DeviceSyncSession** (Eszköz szinkronizálási munkamenet): Eszközök közötti kulcs szinkronizálás.
+- **DeviceSyncSession** (Eszköz szinkronizálási munkamenet): Eszközök közötti kulcs szinkronizálás (önálló, nem kapcsolódik más entitáshoz).
 - **Message** (Üzenetek): E2EE chat üzenetek.
 - **PreKey** (Előzetes kulcsok): ECDH előzetes kulcsok.
 - **StorageBlob** (Tárolási blob): Titkosított üzenet/session történetek.
 
-Kapcsolatok:
-- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, DeviceSyncSession (opcionális).
-- User 1:N ParentStudent (szülőként vagy diákként).
-- MenuItems 1:N OrderItems (beágyazott Order-ben), Review (beágyazott).
+#### Kapcsolatok:
+- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent (szülőként vagy diákként).
+- MenuItems 1:N OrderItems (Order-be ágyazva), Review (beágyazott).
 - Order 1:N OrderItems (beágyazott).
-- DailyMenu 1:N MenuItems (referenciákon keresztül).
+- DailyMenu N:M MenuItems (linking table: DailyMenuMenuItems).
 - Message 1:1 PreKey (opcionális, X3DH-hez).
 - StorageBlob 1:1 User (per blobType és partitionKey).
+- DeviceSyncSession: önálló, nem kapcsolódik más entitáshoz.
 
-Nincs relációs adatbázis, így az ER diagram opcionális, de a kapcsolatok referenciákon alapulnak (ObjectId-k).
+#### Relációs séma (táblázatok részletei)
 
-### Relációs séma (táblázatok részletei)
+A részletes mezőleírásokat lásd lentebb minden entitásnál. A DailyMenu és MenuItems között N:M kapcsolat van, ezt a dbdiagram és relációs szemlélet miatt linking table-lel (DailyMenuMenuItems) is lehet ábrázolni.
 
-Az alábbi táblázatokban minden entitás (kollekció) mezőit dokumentálom: név, típus, jelentés/szerep, megszorítások.
+#### Példa: DailyMenu és MenuItems kapcsolata (dbdiagram.io stílusban)
 
-#### User (Felhasználók)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| username | String | Felhasználónév | Kötelező, egyedi |
-| password | String | Jelszó (hash-elt) | Kötelező |
-| email | String | E-mail cím | Kötelező, egyedi, e-mail formátum, trim |
-| isVerified | Boolean | E-mail ellenőrzés státusza | Alapértelmezett: false |
-| usertype | String | Felhasználó típusa (admin, student, parent, teacher, frozen, editor) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], alapértelmezett: 'student' |
-| createdAt | Date | Fiók létrehozási dátuma | Alapértelmezett: jelenlegi idő |
-| balance | Number | Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz | Alapértelmezett: 0 |
-| isBanned | Boolean | Tiltott felhasználó | Alapértelmezett: false |
-| banReason | String | Tiltás oka | Opcionális |
-| userPersonalInfo | [Subdocument] | Személyes információk (név, születési dátum, osztály, iskola, cím) | Opcionális |
-| identity.publicKey | String | E2EE identitás nyilvános kulcs (ECDH P-256 SPKI base64) | Opcionális |
-| identity.signingPublicKey | String | E2EE aláíró nyilvános kulcs (ECDSA P-256) | Opcionális |
-| identity.keyId | String | Kulcs azonosító (SHA-256 fingerprint) | Opcionális |
-| identity.registeredAt | Date | E2EE regisztráció ideje | Opcionális |
-| identity.isE2EEEnabled | Boolean | E2EE engedélyezve | Alapértelmezett: false |
-| devices | [Array] | Regisztrált eszközök (deviceId, publicKey, label, stb.) | Opcionális |
-| recoveryBlob.encryptedData | String | Helyreállítási blob (AES-GCM titkosított) | Opcionális |
-| recoveryBlob.iv | String | IV a helyreállítási blob-hoz | Opcionális |
-| recoveryBlob.salt | String | Salt a helyreállítási blob-hoz | Opcionális |
-| recoveryBlob.storedAt | Date | Helyreállítási blob tárolási ideje | Opcionális |
-| encryption.* | Mixed | V1 legacy E2EE mezők (migrációhoz) | Opcionális |
+```dbml
+Table DailyMenu {
+  _id objectid [pk]
+  date date
+  schoolPeriod varchar
+  createdAt datetime
+}
+
+Table MenuItems {
+  _id objectid [pk]
+  name varchar
+  // ...további mezők
+}
+
+Table DailyMenuMenuItems {
+  dailyMenuId objectid [ref: > DailyMenu._id]
+  menuItemId objectid [ref: > MenuItems._id]
+  // Composite PK: [dailyMenuId, menuItemId]
+}
+```
+
+#### DeviceSyncSession
+Ez a tábla önálló, nem kapcsolódik más entitáshoz, csak eszköz-azonosítókat és titkosított adatokat tárol. Ez teljesen rendben van, mivel ephemerális, session típusú adatokat kezel.
+
+---
+
+## Entitások részletes leírása
+
+(Az alábbiakban minden entitás mezőit, típusát, jelentését, megszorításait, indexeit, és üzleti szabályait részletezem. Lásd az eredeti dokumentáció folytatását.)
+
+### User (Felhasználók)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| username | String | Felhasználónév | Kötelező, egyedi | _id, username |
+| password | String | Jelszó (hash-elt) | Kötelező | _id, password |
+| email | String | E-mail cím | Kötelező, egyedi, e-mail formátum, trim | _id, email |
+| isVerified | Boolean | E-mail ellenőrzés státusza | Alapértelmezett: false | _id, isVerified |
+| usertype | String | Felhasználó típusa (admin, student, parent, teacher, frozen, editor) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], alapértelmezett: 'student' | _id, usertype |
+| createdAt | Date | Fiók létrehozási dátuma | Alapértelmezett: jelenlegi idő | _id, createdAt |
+| balance | Number | Felhasználó egyenlege alkalmazáson belüli vásárlásokhoz | Alapértelmezett: 0 | _id, balance |
+| isBanned | Boolean | Tiltott felhasználó | Alapértelmezett: false | _id, isBanned |
+| banReason | String | Tiltás oka | Opcionális | _id, banReason |
+| userPersonalInfo | [Subdocument] | Személyes információk (név, születési dátum, osztály, iskola, cím) | Opcionális | _id, userPersonalInfo |
+| identity.publicKey | String | E2EE identitás nyilvános kulcs (ECDH P-256 SPKI base64) | Opcionális | _id, identity.publicKey |
+| identity.signingPublicKey | String | E2EE aláíró nyilvános kulcs (ECDSA P-256) | Opcionális | _id, identity.signingPublicKey |
+| identity.keyId | String | Kulcs azonosító (SHA-256 fingerprint) | Opcionális | _id, identity.keyId |
+| identity.registeredAt | Date | E2EE regisztráció ideje | Opcionális | _id, identity.registeredAt |
+| identity.isE2EEEnabled | Boolean | E2EE engedélyezve | Alapértelmezett: false | _id, identity.isE2EEEnabled |
+| devices | [Array] | Regisztrált eszközök (deviceId, publicKey, label, stb.) | Opcionális | _id, devices |
+| recoveryBlob.encryptedData | String | Helyreállítási blob (AES-GCM titkosított) | Opcionális | _id, recoveryBlob.encryptedData |
+| recoveryBlob.iv | String | IV a helyreállítási blob-hoz | Opcionális | _id, recoveryBlob.iv |
+| recoveryBlob.salt | String | Salt a helyreállítási blob-hoz | Opcionális | _id, recoveryBlob.salt |
+| recoveryBlob.storedAt | Date | Helyreállítási blob tárolási ideje | Opcionális | _id, recoveryBlob.storedAt |
+| encryption.* | Mixed | V1 legacy E2EE mezők (migrációhoz) | Opcionális | _id, encryption.* |
 
 Üzleti szabályok: Minden felhasználónak egyedi felhasználóneve és e-mail címe van. A felhasználók típusa befolyásolja a hozzáférési jogokat (pl. admin mindenhez hozzáfér).
 
-#### Payment (Kifizetések)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Fizető felhasználó | Opcionális |
-| amount | Number | Fizetett összeg | Kötelező |
-| currency | String | Pénznem (pl. USD, HUF) | Kötelező |
-| paymentMethod | String | Fizetési mód | Kötelező |
-| status | String | Státusz (Completed, Pending, Failed) | Kötelező, enum: ['Completed', 'Pending', 'Failed'] |
-| transactionId | String | Külső tranzakció referencia | Opcionális |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+### Payment (Kifizetések)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Fizető felhasználó | Opcionális | _id, userId |
+| amount | Number | Fizetett összeg | Kötelező | _id, amount |
+| currency | String | Pénznem (pl. USD, HUF) | Kötelező | _id, currency |
+| paymentMethod | String | Fizetési mód | Kötelező | _id, paymentMethod |
+| status | String | Státusz (Completed, Pending, Failed) | Kötelező, enum: ['Completed', 'Pending', 'Failed'] | _id, status |
+| transactionId | String | Külső tranzakció referencia | Opcionális | _id, transactionId |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, createdAt |
 
 Üzleti szabályok: Minden kifizetés egy felhasználóhoz tartozik, de opcionális lehet (pl. vendég kifizetések).
 
-#### MenuItems (Menüelemek)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| name | String | Menüelem neve | Kötelező |
-| description | String | Leírás | Kötelező |
-| stock | Number | Készlet mennyisége | Kötelező, alapértelmezett: 0 |
-| price | Number | Ár | Kötelező |
-| category | String | Kategória (Soup, Salad, stb.) | Kötelező, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], alapértelmezett: 'Other' |
-| available | Boolean | Elérhetőség | Alapértelmezett: true |
-| QRCode | String | QR kód a menüelemhez | Opcionális |
-| allergens | [String] | Allergének listája | Alapértelmezett: [] |
-| nutritionalInfo.calories | Number | Kalóriák | Opcionális |
-| nutritionalInfo.protein | Number | Fehérje | Opcionális |
-| nutritionalInfo.carbs | Number | Szénhidrát | Opcionális |
-| nutritionalInfo.fat | Number | Zsír | Opcionális |
+### MenuItems (Menüelemek)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| name | String | Menüelem neve | Kötelező | _id, name |
+| description | String | Leírás | Kötelező | _id, description |
+| stock | Number | Készlet mennyisége | Kötelező, alapértelmezett: 0 | _id, stock |
+| price | Number | Ár | Kötelező | _id, price |
+| category | String | Kategória (Soup, Salad, stb.) | Kötelező, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], alapértelmezett: 'Other' | _id, category |
+| available | Boolean | Elérhetőség | Alapértelmezett: true | _id, available |
+| QRCode | String | QR kód a menüelemhez | Opcionális | _id, QRCode |
+| allergens | [String] | Allergének listája | Alapértelmezett: [] | _id, allergens |
+| nutritionalInfo.calories | Number | Kalóriák | Opcionális | _id, nutritionalInfo.calories |
+| nutritionalInfo.protein | Number | Fehérje | Opcionális | _id, nutritionalInfo.protein |
+| nutritionalInfo.carbs | Number | Szénhidrát | Opcionális | _id, nutritionalInfo.carbs |
+| nutritionalInfo.fat | Number | Zsír | Opcionális | _id, nutritionalInfo.fat |
 
 Üzleti szabályok: A készlet nem lehet negatív; kategóriák alapján szűrhető. Pre-save hook: Ha a készlet <= 0, akkor available = false, különben true.
 
-#### Order (Rendelések)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Rendelő felhasználó | Kötelező |
-| items | [OrderItemsScheme] | Rendelés tételei | Kötelező |
-| orderDate | Date | Rendelés dátuma | Alapértelmezett: jelenlegi idő |
-| status | String | Státusz (Pending, InProgress, Completed, Cancelled) | Kötelező, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], alapértelmezett: 'Pending' |
-| totalAmount | Number | Teljes összeg | Kötelező |
-| pickupTime | Date | Átvétel ideje | Opcionális |
-| notes | String | Megjegyzések | Opcionális, alapértelmezett: '' |
-| paypalOrderId | String | PayPal rendelés azonosító | Opcionális |
-| paymentMethod | String | Fizetési mód | Opcionális |
-| transactionId | String | Tranzakció azonosító | Opcionális |
-| publicID | String | Nyilvános azonosító | Kötelező, egyedi |
+### Order (Rendelések)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Rendelő felhasználó | Kötelező | _id, userId |
+| items | [OrderItemsScheme] | Rendelés tételei | Kötelező | _id, items |
+| orderDate | Date | Rendelés dátuma | Alapértelmezett: jelenlegi idő | _id, orderDate |
+| status | String | Státusz (Pending, InProgress, Completed, Cancelled) | Kötelező, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], alapértelmezett: 'Pending' | _id, status |
+| totalAmount | Number | Teljes összeg | Kötelező | _id, totalAmount |
+| pickupTime | Date | Átvétel ideje | Opcionális | _id, pickupTime |
+| notes | String | Megjegyzések | Opcionális, alapértelmezett: '' | _id, notes |
+| paypalOrderId | String | PayPal rendelés azonosító | Opcionális | _id, paypalOrderId |
+| paymentMethod | String | Fizetési mód | Opcionális | _id, paymentMethod |
+| transactionId | String | Tranzakció azonosító | Opcionális | _id, transactionId |
+| publicID | String | Nyilvános azonosító | Kötelező, egyedi | _id, publicID |
 
 Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; státusz változások követik az üzleti folyamatot. Pre-save hook: Ha a rendelés 'Pending' státuszban van és több mint 15 perc telt el a létrehozás óta, automatikusan 'Cancelled'-re változik.
 
-#### OrderItems (Rendelés tételek)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| menuItemId | ObjectId (ref: MenuItems) | Menüelem azonosító | Kötelező |
-| orderId | ObjectId (ref: Order) | Rendelés azonosító | Opcionális |
-| quantity | Number | Mennyiség | Kötelező, alapértelmezett: 1 |
+### OrderItems (Rendelés tételek)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| menuItemId | ObjectId (ref: MenuItems) | Menüelem azonosító | Kötelező | _id, menuItemId |
+| orderId | ObjectId (ref: Order) | Rendelés azonosító | Opcionális | _id, orderId |
+| quantity | Number | Mennyiség | Kötelező, alapértelmezett: 1 | _id, quantity |
 
 Üzleti szabályok: Minden tétel egy menüelemhez tartozik; mennyiség pozitív egész szám. Ez a séma be van ágyazva az Order séma items mezőjébe.
 
-#### Review (Értékelések) - Beágyazott MenuItems-ben
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Értékelő felhasználó | Opcionális |
-| rating | Number | Értékelés (1-5) | Kötelező, min: 1, max: 5 |
-| comment | String | Megjegyzés | Kötelező, maxlength: 500 |
-| date | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-| ipAddress | String | IP cím | Opcionális |
-| reported | Boolean | Jelentve | Alapértelmezett: false |
-| moderated | Boolean | Moderálva | Alapértelmezett: false |
-| moderatorNotes | String | Moderátor jegyzetek | Opcionális |
+### Review (Értékelések) - Beágyazott MenuItems-ben
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Értékelő felhasználó | Opcionális | _id, userId |
+| rating | Number | Értékelés (1-5) | Kötelező, min: 1, max: 5 | _id, rating |
+| comment | String | Megjegyzés | Kötelező, maxlength: 500 | _id, comment |
+| date | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, date |
+| ipAddress | String | IP cím | Opcionális | _id, ipAddress |
+| reported | Boolean | Jelentve | Alapértelmezett: false | _id, reported |
+| moderated | Boolean | Moderálva | Alapértelmezett: false | _id, moderated |
+| moderatorNotes | String | Moderátor jegyzetek | Opcionális | _id, moderatorNotes |
 
 Üzleti szabályok: Értékelések be vannak ágyazva a MenuItems kollekcióba. Egy felhasználó többször is értékelhet különböző tételeket.
 
-#### DailyMenu (Napi menü)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| date | Date | Dátum | Kötelező |
-| schoolPeriod | String | Iskolai periódus (morning, afternoon) | Kötelező, enum: ['morning', 'afternoon'] |
-| menuItems | [ObjectId] (ref: MenuItems) | Menüelemek listája | Kötelező |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+### DailyMenu (Napi menü)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| date | Date | Dátum | Kötelező | _id, date |
+| schoolPeriod | String | Iskolai periódus (morning, afternoon) | Kötelező, enum: ['morning', 'afternoon'] | _id, schoolPeriod |
+| menuItems | [ObjectId] (ref: MenuItems) | Menüelemek listája | Kötelező | _id, menuItems |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, createdAt |
 
 Üzleti szabályok: Napi menük periódusonként készülnek.
 
-#### ParentStudent (Szülő-Diák kapcsolat)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| parentId | ObjectId (ref: User) | Szülő felhasználó | Kötelező |
-| studentId | ObjectId (ref: User) | Diák felhasználó | Kötelező |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+### ParentStudent (Szülő-Diák kapcsolat)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| parentId | ObjectId (ref: User) | Szülő felhasználó | Kötelező | _id, parentId |
+| studentId | ObjectId (ref: User) | Diák felhasználó | Kötelező | _id, studentId |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, createdAt |
 
 Üzleti szabályok: Szülők több diákhoz is kapcsolódhatnak.
 
-#### SecurityLogs (Biztonsági naplók)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Opcionális |
-| action | String | Akció (pl. LOGIN_SUCCESS) | Kötelező |
-| type | String | Típus (INFO, WARNING, ERROR) | Kötelező |
-| ipAddress | String | IP cím (Hashelt) | Opcionális |
-| Timestamp | Date | Időbélyeg | Alapértelmezett: jelenlegi idő |
-| details | String | További információk | Opcionális |
-| country | String | Ország | Opcionális |
-| CountryCode | String | Országkód | Opcionális |
-| currency | String | Pénznem | Opcionális |
-| Continent | String | Kontinens | Opcionális |
-| IsVPN | Boolean | VPN használat | Opcionális |
-| isTor | Boolean | Tor használat | Opcionális |
-| isProxy | Boolean | Proxy használat | Opcionális |
+### SecurityLogs (Biztonsági naplók)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Felhasználó | Opcionális | _id, userId |
+| action | String | Akció (pl. LOGIN_SUCCESS) | Kötelező | _id, action |
+| type | String | Típus (INFO, WARNING, ERROR) | Kötelező | _id, type |
+| ipAddress | String | IP cím (Hashelt) | Opcionális | _id, ipAddress |
+| Timestamp | Date | Időbélyeg | Alapértelmezett: jelenlegi idő | _id, Timestamp |
+| details | String | További információk | Opcionális | _id, details |
+| country | String | Ország | Opcionális | _id, country |
+| CountryCode | String | Országkód | Opcionális | _id, CountryCode |
+| currency | String | Pénznem | Opcionális | _id, currency |
+| Continent | String | Kontinens | Opcionális | _id, Continent |
+| IsVPN | Boolean | VPN használat | Opcionális | _id, isVPN |
+| isTor | Boolean | Tor használat | Opcionális | _id, isTor |
+| isProxy | Boolean | Proxy használat | Opcionális | _id, isProxy |
 
 Üzleti szabályok: Naplók minden fontos eseményt rögzítenek.
 
-#### UserLoyalty (Hűségprogram)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Kötelező |
-| totalPoints | Number | Összes pont | Alapértelmezett: 0 |
-| userTier | String | Felhasználó hűségszintje | Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none' |
-| discounts | String | Kedvezmények listája | [Lásd tábla alatt]: |
-| lastUpdated | Date | Utolsó frissítés | Alapértelmezett: jelenlegi idő |
+### UserLoyalty (Hűségprogram)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Felhasználó | Kötelező | _id, userId |
+| totalPoints | Number | Összes pont | Alapértelmezett: 0 | _id, totalPoints |
+| userTier | String | Felhasználó hűségszintje | Enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'], alapértelmezett: 'none' | _id, userTier |
+| discounts | String | Kedvezmények listája | [Lásd tábla alatt]: | _id, discounts |
+| lastUpdated | Date | Utolsó frissítés | Alapértelmezett: jelenlegi idő | _id, lastUpdated |
 
 Üzleti szabályok: Pontok vásárlások alapján gyűlnek. A hűségszint automatikusan frissül a pontok alapján (50 ponttól Bronze, 250-től Silver, 800-tól Gold, 2000-tól Platinum). Pre-save hook: Tier frissítése a totalPoints alapján. Post-save hook: Ha a tier változott, új kedvezmények hozzáadása a tier alapján (Bronze: 5% healthy; Silver: 10% healthy, 5% drink 90 napig; Gold: 15% healthy, 10% full_meal; Platinum: 20% healthy, 15% general).
 
@@ -217,67 +258,71 @@ const DISCOUNT_TYPES = {
 
 ```
 
-#### DeviceSyncSession (Eszköz szinkronizálási munkamenet)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| responderDeviceId | String | Az eszköz, amely várja a szinkronizálási payload-ot | Kötelező, index |
-| initiatorDeviceId | String | Az eszköz, amely feltöltötte a szinkronizálási payload-ot | Opcionális |
-| encryptedPayload | String | Titkosított szinkronizálási payload (ECDH + AES-GCM) | Kötelező |
-| iv | String | IV az AES-GCM titkosításhoz | Kötelező |
-| ephemeralKey | String | Ephemerális ECDH nyilvános kulcs | Kötelező |
-| expiresAt | Date | Lejárati idő (10 perc) | Alapértelmezett: jelenlegi idő + 10 perc |
+### DeviceSyncSession (Eszköz szinkronizálási munkamenet)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| responderDeviceId | String | Az eszköz, amely várja a szinkronizálási payload-ot | Kötelező, index | _id, responderDeviceId |
+| initiatorDeviceId | String | Az eszköz, amely feltöltötte a szinkronizálási payload-ot | Opcionális | _id, initiatorDeviceId |
+| encryptedPayload | String | Titkosított szinkronizálási payload (ECDH + AES-GCM) | Kötelező | _id, encryptedPayload |
+| iv | String | IV az AES-GCM titkosításhoz | Kötelező | _id, iv |
+| ephemeralKey | String | Ephemerális ECDH nyilvános kulcs | Kötelező | _id, ephemeralKey |
+| expiresAt | Date | Lejárati idő (10 perc) | Alapértelmezett: jelenlegi idő + 10 perc | _id, expiresAt |
 
 Üzleti szabályok: Ephemerális tábla eszközök közötti kulcs szinkronizáláshoz. TTL index automatikusan törli a dokumentumokat 10 perc után.
 
-#### Message (Üzenetek)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| senderId | ObjectId (ref: User) | Küldő felhasználó | Kötelező |
-| recipientId | ObjectId (ref: User) | Címzett felhasználó | Kötelező |
-| senderDeviceId | String | Küldő eszköz azonosító | Opcionális |
-| recipientDeviceId | String | Címzett eszköz azonosító | Opcionális |
-| schemaVersion | Number | Séma verzió (1 = legacy RSA, 2 = Double Ratchet) | Alapértelmezett: 2 |
-| header.dh | String | Double Ratchet header: DH nyilvános kulcs | Opcionális |
-| header.n | Number | Üzenet szám az aktuális láncban | Opcionális |
-| header.pn | Number | Előző küldési lánc üzenetei | Opcionális |
-| x3dhHeader.identityKey | String | X3DH bootstrap: identitás kulcs | Opcionális |
-| x3dhHeader.ephemeralKey | String | X3DH bootstrap: ephemerális kulcs | Opcionális |
-| x3dhHeader.spkKeyId | String | X3DH bootstrap: aláírt előzetes kulcs ID | Opcionális |
-| x3dhHeader.opkKeyId | Mixed | X3DH bootstrap: egyszeri előzetes kulcs ID | Opcionális |
-| x3dhHeader.recipientDeviceId | String | X3DH bootstrap: címzett eszköz | Opcionális |
-| ciphertext | String | AES-256-GCM titkosított szöveg (base64) | Opcionális |
-| iv | String | 96-bit GCM IV (base64) | Opcionális |
-| status | String | Státusz (sent, delivered, read, replaced) | Alapértelmezett: 'sent' |
-| messageType | String | Üzenet típus (text, file, image) | Alapértelmezett: 'text' |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
-| readAt | Date | Olvasási idő | Opcionális |
-| encryptedContent | String | V1 legacy: titkosított tartalom | Opcionális |
-| encryptionMetadata.* | Mixed | V1 legacy: titkosítási metaadatok | Opcionális |
+### Message (Üzenetek)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| senderId | ObjectId (ref: User) | Küldő felhasználó | Kötelező | _id, senderId |
+| recipientId | ObjectId (ref: User) | Címzett felhasználó | Kötelező | _id, recipientId |
+| senderDeviceId | String | Küldő eszköz azonosító | Opcionális | _id, senderDeviceId |
+| recipientDeviceId | String | Címzett eszköz azonosító | Opcionális | _id, recipientDeviceId |
+| schemaVersion | Number | Séma verzió (1 = legacy RSA, 2 = Double Ratchet) | Alapértelmezett: 2 | _id, schemaVersion |
+| header.dh | String | Double Ratchet header: DH nyilvános kulcs | Opcionális | _id, header.dh |
+| header.n | Number | Üzenet szám az aktuális láncban | Opcionális | _id, header.n |
+| header.pn | Number | Előző küldési lánc üzenetei | Opcionális | _id, header.pn |
+| x3dhHeader.identityKey | String | X3DH bootstrap: identitás kulcs | Opcionális | _id, x3dhHeader.identityKey |
+| x3dhHeader.ephemeralKey | String | X3DH bootstrap: ephemerális kulcs | Opcionális | _id, x3dhHeader.ephemeralKey |
+| x3dhHeader.spkKeyId | String | X3DH bootstrap: aláírt előzetes kulcs ID | Opcionális | _id, x3dhHeader.spkKeyId |
+| x3dhHeader.opkKeyId | Mixed | X3DH bootstrap: egyszeri előzetes kulcs ID | Opcionális | _id, x3dhHeader.opkKeyId |
+| x3dhHeader.recipientDeviceId | String | X3DH bootstrap: címzett eszköz | Opcionális | _id, x3dhHeader.recipientDeviceId |
+| ciphertext | String | AES-256-GCM titkosított szöveg (base64) | Opcionális | _id, ciphertext |
+| iv | String | 96-bit GCM IV (base64) | Opcionális | _id, iv |
+| status | String | Státusz (sent, delivered, read, replaced) | Alapértelmezett: 'sent' | _id, status |
+| messageType | String | Üzenet típus (text, file, image) | Alapértelmezett: 'text' | _id, messageType |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, createdAt |
+| readAt | Date | Olvasási idő | Opcionális | _id, readAt |
+| encryptedContent | String | V1 legacy: titkosított tartalom | Opcionális | _id, encryptedContent |
+| encryptionMetadata.* | Mixed | V1 legacy: titkosítási metaadatok | Opcionális | _id, encryptionMetadata.* |
 
 Üzleti szabályok: E2EE chat üzenetek. Double Ratchet protokoll használata v2-ben. Indexek: sender/recipient/createdAt, recipient/status, recipientDeviceId/status.
 
-#### PreKey (Előzetes kulcsok)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index |
-| deviceId | String | Eszköz azonosító | Kötelező |
-| keyId | Number | Kulcs ID (monoton növekvő per user+device) | Kötelező |
-| publicKey | String | ECDH P-256 SPKI nyilvános kulcs (base64) | Kötelező |
-| used | Boolean | Használva | Alapértelmezett: false |
-| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő |
+### PreKey (Előzetes kulcsok)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index | _id, userId |
+| deviceId | String | Eszköz azonosító | Kötelező | _id, deviceId |
+| keyId | Number | Kulcs ID (monoton növekvő per user+device) | Kötelező | _id, keyId |
+| publicKey | String | ECDH P-256 SPKI nyilvános kulcs (base64) | Kötelező | _id, publicKey |
+| used | Boolean | Használva | Alapértelmezett: false | _id, used |
+| createdAt | Date | Létrehozási idő | Alapértelmezett: jelenlegi idő | _id, createdAt |
 
 Üzleti szabályok: Egyszeri előzetes kulcsok (OPKs) eszközönként. Magas churn: OPKs azonnal törlődnek használat után. Indexek: userId/deviceId/used, userId/keyId (egyedi).
 
-#### StorageBlob (Tárolási blob)
-| Mező neve | Típus | Jelentés/Szerep | Megszorítások |
-|-----------|-------|-----------------|---------------|
-| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index |
-| blobType | String | Blob típus (message_log, session_state, skipped_keys) | Kötelező, enum |
-| partitionKey | String | Partíció kulcs (pl. conversationId vagy deviceId) | Kötelező |
-| encryptedPayload | String | AES-256-GCM titkosított payload (base64) | Kötelező |
-| iv | String | 96-bit GCM IV (base64) | Kötelező |
-| version | Number | Verzió | Alapértelmezett: 1 |
-| updatedAt | Date | Frissítési idő | Alapértelmezett: jelenlegi idő |
+### StorageBlob (Tárolási blob)
+
+| Mező neve | Típus | Jelentés/Szerep | Megszorítások | Indexek |
+|-----------|-------|-----------------|---------------|---------|
+| userId | ObjectId (ref: User) | Felhasználó | Kötelező, index | _id, userId |
+| blobType | String | Blob típus (message_log, session_state, skipped_keys) | Kötelező, enum | _id, blobType |
+| partitionKey | String | Partíció kulcs (pl. conversationId vagy deviceId) | Kötelező | _id, partitionKey |
+| encryptedPayload | String | AES-256-GCM titkosított payload (base64) | Kötelező | _id, encryptedPayload |
+| iv | String | 96-bit GCM IV (base64) | Kötelező | _id, iv |
+| version | Number | Verzió | Alapértelmezett: 1 | _id, version |
+| updatedAt | Date | Frissítési idő | Alapértelmezett: jelenlegi idő | _id, updatedAt |
 
 Üzleti szabályok: Szerver-oldali titkosított üzenet/session történetek. A szerver vak a tartalomra. Indexek: userId/blobType/partitionKey (egyedi), userId/updatedAt.
 
@@ -298,7 +343,7 @@ const DISCOUNT_TYPES = {
 - **Biztonság**: Minden akció SecurityLogs-ban naplózódik.
 - **Admin műveletek**: Felhasználók listázása, statisztikák (User, Order stb. alapján), Redis cache-ből gyorsítottan.
 - **E2EE Chat**: Üzenetek Message kollekcióban, PreKey-ek X3DH-hez, StorageBlob-ok titkosított történetekhez.
-- **Eszköz szinkronizálás**: DeviceSyncSession ephemerális kulcs szinkronizáláshoz.
+- **Eszköz szinkronizálás**: DeviceSyncSession ephemerális kulcs szinkronizálási munkamenetekkel.
 
 ## Biztonság és hozzáférés
 
@@ -315,3 +360,14 @@ const DISCOUNT_TYPES = {
 - **További**: Tesztelés (database_testing.js), kapcsolatkezelés környezeti változók alapján.
 
 ![Database Diagram](database.png)
+
+## E2EE Chat és Üzenetkezelés az Adatbázisban
+
+A rendszer egyik legösszetettebb és legnagyobb része a végpontok közötti titkosított (E2EE) chat funkció, amely több adatbázis-@entitást is érint. Az üzenetküldés a Double Ratchet protokollra és X3DH kulcscserére épül, így minden üzenet és kulcsmozgás külön dokumentumként jelenik meg a MongoDB-ben. A főbb komponensek:
+
+- **Message**: Minden elküldött üzenet egy dokumentum, amely tartalmazza a küldő és címzett felhasználó és eszköz azonosítóját, a titkosított üzenettartalmat, státuszát, időbélyegeket, valamint a Double Ratchet és X3DH protokollhoz szükséges metaadatokat (header, x3dhHeader, encryptionMetadata stb.).
+- **PreKey**: Az előzetes kulcsok (OPK, SPK) a kulcscsere protokollhoz, minden eszközre és felhasználóra külön dokumentumként tárolva. Ezek gyorsan cserélődnek, használat után törlődnek.
+- **StorageBlob**: Titkosított üzenet- és session-történetek, amelyek lehetővé teszik a kliensoldali visszaállítást vagy szinkronizációt. A szerver nem lát bele a tartalomba (zero-knowledge).
+- **DeviceSyncSession**: Ideiglenes, eszközök közötti kulcsszinkronizálási session-ök, amelyek automatikusan törlődnek (TTL index).
+
+A chat rendszer minden komponense úgy van kialakítva, hogy a szerver ne férjen hozzá a titkosított tartalomhoz, csak a szükséges metaadatokat tárolja. Az üzenetek, kulcsok és session-ök közötti kapcsolatok referenciákon (ObjectId) és eszközazonosítókon alapulnak. A Message kollekció indexei optimalizálják a keresést felhasználó, eszköz és státusz szerint. A PreKey és StorageBlob kollekciók magas churn-t kezelnek, mivel a kulcsok és session-ök gyorsan cserélődnek. Ez a felépítés biztosítja a biztonságos, skálázható és auditálható chat-funkciót az iskolai rendszerben.
