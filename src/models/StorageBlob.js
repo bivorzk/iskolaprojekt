@@ -1,13 +1,4 @@
-/**
- * StorageBlob — server-side encrypted message/session history.
- * All payloads are AES-256-GCM ciphertext encrypted with the client-held SSK.
- * The server never holds SSK, so stored blobs are opaque to the server.
- *
- * blobType values:
- *   "message_log"   — encrypted batch of messages for a conversation
- *   "session_state" — Double Ratchet state for a conversation
- *   "skipped_keys"  — skipped message keys (for out-of-order delivery)
- */
+
 const mongoose = require('mongoose');
 const path = require('path');
 

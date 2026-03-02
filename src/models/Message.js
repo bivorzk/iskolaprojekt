@@ -6,7 +6,6 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
-// ── v2 Double-Ratchet message schema ─────────────────────────────────────────
 const messageSchema = new mongoose.Schema({
   // Routing
   senderId:          { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -14,11 +13,9 @@ const messageSchema = new mongoose.Schema({
   senderDeviceId:    { type: String },
   recipientDeviceId: { type: String },
 
-  // Schema version — 1 = legacy RSA, 2 = Double Ratchet
   schemaVersion:     { type: Number, default: 2 },
 
-  // ── v2 Double Ratchet fields ───────────────────────────────────────────────
-  // Ratchet header (contains DHs public key, message number, prev chain length)
+
   header: {
     dh:  { type: String },   // sender ratchet public key (SPKI base64)
     n:   { type: Number },   // message number in current chain
@@ -44,7 +41,6 @@ const messageSchema = new mongoose.Schema({
     algorithm:             { type: String, default: 'AES-GCM' }
   },
 
-  // ── Common fields ─────────────────────────────────────────────────────────
   status:      { type: String, enum: ['sent', 'delivered', 'read', 'replaced'], default: 'sent' },
   messageType: { type: String, enum: ['text', 'file', 'image'], default: 'text' },
   createdAt:   { type: Date,   default: Date.now },
