@@ -330,6 +330,8 @@ const SecurityLogsScheme = new mongoose.Schema({
     IsVPN: { type: Boolean, required: false },
     isTor: { type: Boolean, required: false },
     isProxy: { type: Boolean, required: false },
+    latitude: { type: Number, required: false },
+    longitude: { type: Number, required: false }
 });
 SecurityLogsScheme.index({ userId: 1 });
 SecurityLogsScheme.index({ action: 1 });

@@ -24,7 +24,9 @@ async function createSecurityLog({ userId, ipAddress, action, type, details, cou
     Continent,
     IsVPN,
     isTor,
-    isProxy
+    isProxy,
+    lattitude,
+    longitude
   });
   
   await log.save();

@@ -32,9 +32,7 @@
 - Check new password against known breach databases
 - Force password reset on breach detection
 
-# Biometric Authentication???
-- Fingerprint/face recognition for quick access
-- Enhanced child safety features
+
 
 # Advanced Fraud Detection
 - ML-based suspicious activity detection
