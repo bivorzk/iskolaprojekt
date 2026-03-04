@@ -24,6 +24,7 @@ const admin = require('./admin/admin');
 const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
 const chatService = require('./services/chat-service');
+const geosecurityService = require('./services/Geosecurity-service');
 const cors = require('cors');
 const {Server} = require('socket.io');
 
@@ -195,6 +196,7 @@ app.use('/', logoutRouter);
 app.use('/admin', admin);
 app.use('/order', Order);
 app.use('/chat', chatService);
+app.use('/api/geosecurity', geosecurityService);
 
 
 // 404 handler

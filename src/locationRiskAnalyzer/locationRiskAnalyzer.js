@@ -1,26 +1,35 @@
-async function analyzeLocationRisk({ country, CountryCode, Continent, IsVPN, isTor, isProxy }) {
-  var riskScore = 0;
-    if (IsVPN) riskScore += 3; 
-    if (isTor) riskScore += 4; 
-    if (isProxy) riskScore += 2; 
-    if (Continent === 'Asia' || Continent === 'Africa') riskScore += 1;
+const rules = [
+    ({ IsVPN }) => IsVPN ? 3 : 0,
+    ({ isTor }) => isTor ? 4 : 0,
+    ({ isProxy }) => isProxy ? 2 : 0,
+    ({ Continent }) => ['Asia', 'Africa'].includes(Continent) ? 1 : 0,
+    ({ country }) => ['India', 'Nigeria', 'Pakistan'].includes(country) ? 1 : 0,
+];
 
-    if (country === 'India' || country === 'Nigeria' || country === 'Pakistan') riskScore += 1; 
+async function analyzeLocationRisk(data) {
+    const riskScore = rules.reduce((total, rule) => total + rule(data), 0);
+    
+    const getLevel = (s) => (s >= 5 ? 'High' : s >= 3 ? 'Medium' : 'Low');
 
-    var riskLevel = 'Low';
-    riskLevel = riskScore >= 5 ? 'High' : riskScore >= 3 ? 'Medium' : 'Low';
-
-    return { riskScore, riskLevel };
+    return { riskScore, riskLevel: getLevel(riskScore) };
 }
+
+const speedThresholds = {
+    LOW: 100,
+    MEDIUM: 800,
+    HIGH: 1000
+};
+
 
 async function impossibleTravelCheck(lastLogin, currentLogin, lattitude, longitude) {
   if (!lastLogin || !currentLogin) return false;
   const timeDiff = Math.abs(new Date(currentLogin) - new Date(lastLogin)) / (1000 * 60 * 60);
-  if (timeDiff < 1) {
-    const distance = calculateDistance(lastLogin.lattitude, lastLogin.longitude, lattitude, longitude);
-    return distance > 450; 
-  }
-  return false;
+  const distance = calculateDistance(lattitude, longitude, lattitude, longitude);
+  const speed = distance /timeDiff;
+
+  const getRiskLevel = (s) => (s >= speedThresholds.HIGH ? 'High' : s >= speedThresholds.MEDIUM ? 'Medium' : s >= speedThresholds.LOW ? 'Low' : false);
+  
+  return getRiskLevel(speed);
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -32,3 +41,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; 
 }
+
+
+module.exports = { analyzeLocationRisk, impossibleTravelCheck };
