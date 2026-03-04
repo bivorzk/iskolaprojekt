@@ -772,17 +772,12 @@ const initializeChatSocket = (socketIOInstance) => {
       }
     });
 
-    // Recipient couldn't decrypt a message (sender used stale key).
-    // Relay the original encrypted payload to the sender so they can re-encrypt and resend.
     socket.on('requestResend', async ({ messageId, requesterId }) => {
       if (!socket.userId || socket.userId !== String(requesterId)) return;
       try {
         const message = await Message.findById(messageId);
         if (!message || String(message.recipientId) !== String(requesterId)) return;
         if (message.status === 'replaced') return;
-        // Emit to ONE socket for the sender — the most recently connected tab.
-        // This prevents multiple open tabs from each handling the resend and
-        // sending duplicate messages.
         const senderSockets = userSockets.get(String(message.senderId));
         const targetSocketId = senderSockets && senderSockets.size > 0
           ? [...senderSockets].at(-1) // most recently added
@@ -808,8 +803,6 @@ const initializeChatSocket = (socketIOInstance) => {
       }
     });
 
-    // Sender's new device can't decrypt senderEncryptedKey.
-    // Persist the recovery flag in MongoDB and nudge the recipient.
     socket.on('requestSenderRecovery', async ({ messageId, senderId, recipientId }) => {
       if (!socket.userId || socket.userId !== String(senderId)) return;
       try {
