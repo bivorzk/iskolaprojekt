@@ -102,7 +102,9 @@ router.post('/login', async (req, res) => {
         Continent: geo ? geo.continent : 'unknown' || 'unknown',
         IsVPN: geo ? geo.isVPN : false || false,
         isTor: geo ? geo.isTor : false || false,
-        isProxy: geo ? geo.isProxy : false || false
+        isProxy: geo ? geo.isProxy : false || false,
+        lattitude: geo ? geo.latitude : null,
+        longitude: geo ? geo.longitude : null
       });
     } else {
       // Normal login from known or new IP
@@ -118,7 +120,9 @@ router.post('/login', async (req, res) => {
         Continent: geo ? geo.continent : 'unknown' || 'unknown',
         IsVPN: geo ? geo.isVPN : false || false,
         isTor: geo ? geo.isTor : false || false,
-        isProxy: geo ? geo.isProxy : false || false
+        isProxy: geo ? geo.isProxy : false || false,
+        lattitude: geo ? geo.latitude : null,
+        longitude: geo ? geo.longitude : null
         
       });
     }

@@ -130,7 +130,9 @@ router.post('/register', async (req, res) => {
         Continent: "--",
         IsVPN: false,
         isTor: false,
-        isProxy: false
+        isProxy: false,
+        lattitude: null,
+        longitude: null
       });
       
       console.log('User registered:', username);
