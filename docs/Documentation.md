@@ -1100,14 +1100,6 @@ The SnapTray backend is built for scalability, security, and maintainability. Th
 
 ---
 
-#### 6.2.2 Architecture Overview
-
-> **[Insert system architecture diagram here]**
->
-> _Diagram should show: Express.js app, MongoDB, Redis, and external services (PayPal, Google Pay), with arrows for data flow._
-
----
-
 #### 6.2.3 Main Application Structure
 
 - **src/main.js**: Entry point, sets up Express, middleware, routers, and rate limiting.
@@ -1476,6 +1468,11 @@ The backend employs Redis as an in-memory data store to cache frequently accesse
 
 
 
+
+
+
+
+
 # 13. Planned Features and Roadmap
 
 
@@ -1497,12 +1494,6 @@ The backend employs Redis as an in-memory data store to cache frequently accesse
 - Enhanced dietary management
 - Achievement system and badges
 - Social/community features
-
-For details and progress, see `todo.md` and the project board.
-
-
-
-
 
 
 
