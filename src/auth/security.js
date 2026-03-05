@@ -4,7 +4,7 @@ require('dotenv').config();
 
 
 // Create a security log entry
-async function createSecurityLog({ userId, ipAddress, action, type, details, country, CountryCode, currency, Continent, IsVPN, isTor, isProxy }) {
+async function createSecurityLog({ userId, ipAddress, action, type, details, country, CountryCode, currency, Continent, IsVPN, isTor, isProxy,lattitude, longitude }) {
   // const hashedIP = crypto.createHash('sha256').update(ipAddress).digest('hex');
   
   // Hash IP address using HMAC with secret key from env variable for better security
