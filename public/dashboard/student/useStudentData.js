@@ -39,7 +39,7 @@ const useStudentData = () => {
             const menuData = await safeFetch('/api/menu-items', []);
             const welcomeData = await safeFetch('/dashboard/student/welcome-message', { message: 'Welcome, Student' });
             const transactionsData = await safeFetch('/dashboard/student/transactions', { transactions: [] });
-            const parentData = await safeFetch('/dashboard/student/parent', { linked: false, parentEmail: '' });
+            const parentDataRaw = await safeFetch('/dashboard/student/parent', null);
             const userData = await safeFetch('/dashboard/student/userinfo', { username: 'Student' });
             // Get wallet balance using the dedicated function
             const currentBalance = await refreshWalletBalance();
@@ -47,6 +47,15 @@ const useStudentData = () => {
                 // Fallback to direct API call if refreshWalletBalance fails
                 const walletData = await safeFetch('/dashboard/student/wallet/balance', { balance: 0 });
                 setWalletAmount(walletData.balance || 0);
+            }
+
+            // Process parent data
+            let parentData = { linked: false, parentEmail: '' };
+            if (parentDataRaw && parentDataRaw.parent) {
+                parentData = {
+                    linked: true,
+                    parentEmail: parentDataRaw.parent.email
+                };
             }
 
             setOrders(ordersData.orderData || []);

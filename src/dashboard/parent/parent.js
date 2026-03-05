@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const path = require('path');
+const { body } = require('express-validator');
 const { User } = require('../../../src/database');
 const { Payment, Order, ParentStudent } = require('../../../config/database_queries');
 const {requireParentAuth} = require('../middleware/auth-middleware');
@@ -150,6 +151,185 @@ router.get('/welcome-message', cacheResult((req) => `parent:welcome:${req.sessio
   const username = req.session.user.username;
   console.log('Username from session:', username);
   res.json({ message: `Welcome, ${username}` });
+});
+
+router.post('/transfer', async (req, res) => {
+  try {
+    const parentId = req.session.user.id;
+    const { studentId, amount } = req.body;
+
+    if (!studentId || !amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid student ID or amount' });
+    }
+
+    const link = await ParentStudent.findOne({ parentId, studentId });
+    if (!link) {
+      return res.status(403).json({ error: 'Student not linked to your account' });
+    }
+
+    const parent = await User.findById(parentId);
+    const student = await User.findById(studentId);
+
+    if (!parent || !student) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (parent.balance < amount) {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    }
+
+    parent.balance -= amount;
+    student.balance += amount;
+
+    await parent.save();
+    await student.save();
+
+    invalidateCache([
+      `parent:stats:${parentId}`,
+      `student:userinfo:${studentId}`,
+      `student:wallet:${studentId}`
+    ]);
+
+    res.json({ message: 'Transfer successful', newBalance: parent.balance });
+  } catch (error) {
+    console.error('Error transferring money:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/wallet/balance', async (req, res) => {
+  try {
+    const parentId = req.session.user.id;
+    const parent = await User.findById(parentId);
+
+    if (!parent) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ balance: parent.balance || 0 });
+  } catch (error) {
+    console.error('Error fetching wallet balance:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/userinfo', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId).select('username email IsVerified createdAt');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      username: user.username,
+      email: user.email,
+      IsVerified: user.IsVerified,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/transactions', async (req, res) => {
+  try {
+
+    res.json({ transactions: [] });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Add money to wallet
+router.post('/wallet/add',
+  [body('amount').isFloat({ gt: 0 }),
+    body('currency').isIn(['USD', 'HUF', 'EUR']),
+    body('paymentMethod').notEmpty(),
+    body('transactionId').optional().isString()
+  ], async (req, res) => {
+  try {
+    // Check session first
+    if (!req.session.user || !req.session.user.id) {
+      console.log('No valid session found');
+      return res.status(401).json({ error: 'No valid session' });
+    }
+
+    const userId = req.session.user.id;
+    const { amount, currency, paymentMethod, transactionId } = req.body;
+
+    console.log('Parent wallet add request:', { userId, amount, currency, paymentMethod, transactionId });
+
+    // Validate input
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    if (!paymentMethod) {
+      return res.status(400).json({ error: 'Payment method required' });
+    }
+
+    // Convert amount to USD for storage (if needed)
+    let usdAmount = parseFloat(amount);
+    if (currency === 'HUF') {
+      usdAmount = amount * 0.0027; // Simple conversion rate
+    } else if (currency === 'EUR') {
+      usdAmount = amount * 1.1; // Simple conversion rate
+    }
+
+    // Check if user exists first
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update database balance
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { balance: usdAmount } },
+      { new: true, upsert: false }
+    );
+    const newBalance = user.balance;
+
+    console.log('Parent wallet updated successfully:', newBalance);
+
+    // Invalidate balance cache
+    invalidateCache([`parent:stats:${userId}`]);
+
+    // Create payment record
+    try {
+      const paymentData = {
+        userId,
+        amount: usdAmount,
+        currency: 'USD',
+        paymentMethod,
+        transactionId: transactionId || 'wallet_' + Date.now(),
+        status: 'Completed'
+      };
+
+      const paymentRecord = await Payment.create(paymentData);
+      console.log('Parent payment record created successfully:', paymentRecord._id);
+
+      // Invalidate transactions cache if exists
+      invalidateCache([`parent:transactions:${userId}`]);
+    } catch (paymentError) {
+      console.error('Error creating parent payment record:', paymentError);
+      // Continue even if payment record fails, wallet is already updated
+    }
+
+    res.json({
+      success: true,
+      newBalance: newBalance,
+      message: 'Funds added successfully'
+    });
+
+  } catch (error) {
+    console.error('Error adding funds to parent wallet:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

@@ -1,41 +1,128 @@
-import { useState, useEffect } from 'react';
+const { useState, useEffect } = React;
 
-export function useParentData() {
-  const [students, setStudents] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({});
-  const [welcome, setWelcome] = useState('');
+const useParentData = () => {
+    const [students, setStudents] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [stats, setStats] = useState({
+        totalStudents: '--',
+        activeChildren: '--',
+        ordersMade: '--',
+        totalPayments: '--',
+        balance: 0
+    });
+    const [walletAmount, setWalletAmount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [transactions, setTransactions] = useState([]);
+    const [userData, setUserData] = useState({});
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [studentRes, ordersRes, statsRes, welcomeRes] = await Promise.all([
-          fetch('/dashboard/parent/studentlist'),
-          fetch('/dashboard/parent/orders'),
-          fetch('/dashboard/parent/stats'),
-          fetch('/dashboard/parent/welcome-message')
-        ]);
+    const loadDashboardData = async () => {
+        try {
+            // Helper function to safely fetch and parse JSON
+            const safeFetch = async (url, fallbackData = null) => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.warn(`API endpoint ${url} returned ${response.status}`);
+                        return fallbackData;
+                    }
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.warn(`Failed to fetch ${url}:`, error.message);
+                    return fallbackData;
+                }
+            };
 
-        const studentData = await studentRes.json();
-        setStudents(studentData.students || []);
+            // Fetch data with fallbacks
+            const studentsData = await safeFetch('/dashboard/parent/studentlist', { students: [] });
+            const ordersData = await safeFetch('/dashboard/parent/orders', { orders: [] });
+            const statsData = await safeFetch('/dashboard/parent/stats', {
+                totalStudents: 0,
+                activeChildren: 0,
+                ordersMade: 0,
+                totalPayments: 0,
+                balance: 0
+            });
+            const welcomeData = await safeFetch('/dashboard/parent/welcome-message', { message: 'Welcome, Parent' });
+            const transactionsData = await safeFetch('/dashboard/parent/transactions', { transactions: [] });
+            const userData = await safeFetch('/dashboard/parent/userinfo', { username: 'Parent' });
 
-        const ordersData = await ordersRes.json();
-        setOrders(ordersData.orders || []);
+            // Get wallet balance using the dedicated function
+            const currentBalance = await refreshWalletBalance();
+            if (currentBalance === null) {
+                // Fallback to direct API call if refreshWalletBalance fails
+                const walletData = await safeFetch('/dashboard/parent/wallet/balance', { balance: 0 });
+                setWalletAmount(walletData.balance || 0);
+            }
 
-        const statsData = await statsRes.json();
-        setStats(statsData);
+            setStudents(studentsData.students || []);
+            setOrders(ordersData.orders || []);
+            setWelcomeMessage(welcomeData.message || 'Welcome, Parent');
+            setTransactions(transactionsData.transactions || []);
+            setUserData(userData);
+            setStats({
+                totalStudents: statsData.totalStudents || 0,
+                activeChildren: statsData.activeChildren || 0,
+                ordersMade: statsData.ordersMade || 0,
+                totalPayments: statsData.totalPayments || 0,
+                balance: statsData.balance || 0
+            });
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            // Set fallback data
+            setStudents([]);
+            setOrders([]);
+            setWelcomeMessage('Welcome, Parent');
+            setTransactions([]);
+            setUserData({ username: 'Parent' });
+            setStats({
+                totalStudents: 0,
+                activeChildren: 0,
+                ordersMade: 0,
+                totalPayments: 0,
+                balance: 0
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        const welcomeData = await welcomeRes.json();
-        setWelcome(welcomeData.message || '');
-      } catch (err) {
-        console.error('Error fetching parent data:', err);
-      }
-    }
+    const refreshWalletBalance = async () => {
+        try {
+            const balanceResponse = await fetch('/dashboard/parent/wallet/balance');
+            if (balanceResponse.ok) {
+                const balanceData = await balanceResponse.json();
+                setWalletAmount(balanceData.balance || 0);
+                console.log('Wallet balance refreshed:', balanceData.balance);
+                return balanceData.balance;
+            } else {
+                console.warn('Failed to refresh wallet balance');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error refreshing wallet balance:', error);
+            return null;
+        }
+    };
 
-    fetchData();
-  }, []);
+    useEffect(() => {
+        loadDashboardData();
+    }, []);
 
-  return { students, orders, stats, welcome };
-}
+    return {
+        students,
+        orders,
+        stats,
+        walletAmount,
+        loading,
+        welcomeMessage,
+        transactions,
+        userData,
+        loadDashboardData,
+        refreshWalletBalance,
+        setWalletAmount
+    };
+};
 
 
