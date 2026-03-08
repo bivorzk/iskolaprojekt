@@ -35,8 +35,8 @@
 
 
 # Advanced Fraud Detection
-- ML-based suspicious activity detection
-- IP geolocation anomaly alerts
+- ML-based suspicious activity detection 
+- IP geolocation anomaly alerts 
 
 
 # ANALYTICS & REPORTING

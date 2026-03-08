@@ -18,7 +18,7 @@ router.get('/', (req, res) => {
 });
 
 // Apply auth middleware to all routes
-router.use(requireParentAuth);
+router.use('/',requireParentAuth);
 
 // Get list of students linked to the parent
 router.get('/studentlist', cacheResult((req) => `parent:studentlist:${req.session.user.id}`, 300), async (req, res) => {
