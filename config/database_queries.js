@@ -90,6 +90,12 @@ const OrderScheme = new mongoose.Schema({
     items: [OrderItemsScheme],
     orderDate: { type: Date, default: Date.now },
     status: { type: String, required: true, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending' },
+    subtotalAmount: { type: Number, required: true },
+    discount: {
+        type: { type: String, enum: Object.values(DISCOUNT_TYPES), required: false },
+        rate: { type: Number, enum: Object.values(DISCOUNT_RATES), required: false },
+        amount: { type: Number, required: false }
+    },
     totalAmount: { type: Number, required: true },
     pickupTime: { type: Date, required: false },
     notes: { type: String, required: false, default: '' },
@@ -125,8 +131,13 @@ const UserLoyaltyScheme = new mongoose.Schema({
     lastUpdated: { type: Date, default: Date.now },
     lastDecay: { type: Date, default: Date.now },
     pointHistory: [{ date: { type: Date, default: Date.now }, amount: Number, reason: String }], // For logging
-    milestonesAchieved: [{ type: String }] // e.g., 'BRONZE_FIRST', 'SILVER_FIRST'
-    
+    milestonesAchieved: [{ type: String }], // e.g., 'BRONZE_FIRST', 'SILVER_FIRST'
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    lastOrderDate: { type: Date },
+    healthyItemsThisWeek: { type: Number, default: 0 },
+    weekStartDate: { type: Date },
+    monthlyPerksIssuedAt: { type: Date }
 });
 
 // Add a static method for atomic point updates
@@ -302,12 +313,33 @@ DailyMenuScheme.index({ schoolPeriod: 1 });
 
 DailyMenuScheme.index({ date: 1, schoolPeriod: 1 }); 
 
+// Money Request Schema (for student money requests to parents)
+const MoneyRequestScheme = new mongoose.Schema({
+    studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    amount: { type: Number, required: true, min: 0.01 },
+    reason: { type: String, required: false, default: '' },
+    status: { type: String, enum: ['pending', 'approved', 'denied'], default: 'pending' },
+    createdAt: { type: Date, default: Date.now },
+    processedAt: { type: Date, required: false },
+    processedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }
+});
+
+MoneyRequestScheme.index({ studentId: 1 });
+MoneyRequestScheme.index({ parentId: 1 });
+MoneyRequestScheme.index({ status: 1 });
+MoneyRequestScheme.index({ createdAt: -1 });
+
+
 // Parent Student Schema
 
 const ParentStudentScheme = new mongoose.Schema({
     parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    createdAt: { type: Date, default: Date.now }
+    status: { type: String, enum: ['pending', 'approved', 'denied'], default: 'pending' },
+    createdAt: { type: Date, default: Date.now },
+    approvedAt: { type: Date },
+    deniedAt: { type: Date }
 });
 ParentStudentScheme.index({ parentId: 1 });
 ParentStudentScheme.index({ studentId: 1 });
@@ -339,6 +371,57 @@ SecurityLogsScheme.index({ Timestamp: -1 });
 SecurityLogsScheme.index({ userId: 1, Timestamp: -1 }); 
 
 
+// Reward catalog schema
+const RewardSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    description: { type: String },
+    category: {
+        type: String,
+        enum: ['drink', 'fruit', 'dessert', 'meal', 'upgrade', 'mystery', 'token'],
+        required: true
+    },
+    pointCost: { type: Number, required: true },
+    marketValue: { type: Number, required: true },
+    healthScore: { type: Number, default: 0 },
+    availableFrom: { type: Date },
+    availableUntil: { type: Date },
+    dailyStockLimit: { type: Number, default: null },
+    redeemedToday: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    minTier: {
+        type: String,
+        enum: ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'],
+        default: 'none'
+    }
+}, { timestamps: true });
+
+RewardSchema.index({ isActive: 1, category: 1 });
+
+// Redemption (voucher) schema
+const RedemptionSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward', required: true },
+    pointsSpent: { type: Number, required: true },
+    redemptionType: {
+        type: String,
+        enum: ['shop', 'cart_discount', 'tier_perk', 'streak_bonus'],
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'fulfilled', 'expired', 'cancelled'],
+        default: 'pending'
+    },
+    voucherCode: { type: String, unique: true, sparse: true },
+    voucherExpiresAt: { type: Date },
+    fulfilledAt: { type: Date },
+    fulfilledBy: { type: String },
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    ipAddress: { type: String }
+}, { timestamps: true });
+
+RedemptionSchema.index({ userId: 1, createdAt: -1 }); // voucherCode index created by unique:true on the field
+
 const Payment = mongoose.model('Payment', PaymentScheme);
 const UserLoyalty = mongoose.model('UserLoyalty', UserLoyaltyScheme);
 const MenuItems = mongoose.model('MenuItems', MenuItemsScheme);
@@ -347,6 +430,8 @@ const OrderItems = mongoose.model('OrderItems', OrderItemsScheme);
 const DailyMenu = mongoose.model('DailyMenu', DailyMenuScheme);
 const ParentStudent = mongoose.model('ParentStudent', ParentStudentScheme);
 const SecurityLogs = mongoose.model('SecurityLogs', SecurityLogsScheme);
+const Reward = mongoose.model('Reward', RewardSchema);
+const Redemption = mongoose.model('Redemption', RedemptionSchema);
 
 
 
@@ -364,5 +449,7 @@ module.exports = {
     OrderItems,
     DailyMenu,
     ParentStudent,
-    SecurityLogs
+    SecurityLogs,
+    Reward,
+    Redemption
 };

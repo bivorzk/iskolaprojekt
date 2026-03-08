@@ -192,9 +192,21 @@ const loadPayPalScript = () => {
     document.head.appendChild(paypalScript);
 };
 
-const handleGooglePayPayment = async (cart, currency, clearCart) => {
+const fulfillVoucher = (voucherCode) => {
+    fetch('/dashboard/student/loyalty/voucher/fulfill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voucherCode })
+    }).catch(err => console.error('Voucher fulfillment failed:', err));
+};
+
+const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
     try {
-        const amount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const discountAmount = selectedDiscount ? subtotal * selectedDiscount.rate : 0;
+        const voucherDeduction = appliedVoucher ? appliedVoucher.marketValue : 0;
+        const amount = Math.max(0, subtotal - discountAmount - voucherDeduction);
+
         if (!amount || amount <= 0) {
             alert('Your cart is empty');
             return;
@@ -252,6 +264,13 @@ const handleGooglePayPayment = async (cart, currency, clearCart) => {
                         },
                         body: JSON.stringify({
                             items: cart,
+                            subtotal: subtotal,
+                            discount: selectedDiscount ? {
+                                type: selectedDiscount.type,
+                                rate: selectedDiscount.rate,
+                                amount: discountAmount
+                            } : null,
+                            voucherCode: appliedVoucher ? appliedVoucher.voucherCode : null,
                             total: amount,
                             currency: currency,
                             paymentMethod: 'GooglePay',
@@ -264,6 +283,9 @@ const handleGooglePayPayment = async (cart, currency, clearCart) => {
                     if (saveResponse.ok) {
                         const saveResult = await saveResponse.json();
                         console.log('Order saved successfully:', saveResult);
+
+                        // Fulfill voucher if one was applied
+                        if (appliedVoucher) fulfillVoucher(appliedVoucher.voucherCode);
 
                         // Clear cart
                         clearCart();
@@ -306,10 +328,13 @@ const handleGooglePayPayment = async (cart, currency, clearCart) => {
     }
 };
 
-const handlePayPalPayment = async (cart, currency, clearCart) => {
+const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
     console.log('PayPal button clicked');
     try {
-        const amount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        const discountAmount = selectedDiscount ? subtotal * selectedDiscount.rate : 0;
+        const voucherDeduction = appliedVoucher ? appliedVoucher.marketValue : 0;
+        const amount = Math.max(0, subtotal - discountAmount - voucherDeduction);
         console.log('Cart total:', amount);
         if (!amount || amount <= 0) {
             alert('Your cart is empty');
@@ -319,6 +344,13 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
         // Store order data for use in PayPal callback
         window.orderData = {
             items: cart,
+            subtotal: subtotal,
+            discount: selectedDiscount ? {
+                type: selectedDiscount.type,
+                rate: selectedDiscount.rate,
+                amount: discountAmount
+            } : null,
+            voucherCode: appliedVoucher ? appliedVoucher.voucherCode : null,
             total: amount,
             currency: currency
         };
@@ -442,6 +474,9 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
                         },
                         body: JSON.stringify({
                             items: orderData.items,
+                            subtotal: orderData.subtotal,
+                            discount: orderData.discount,
+                            voucherCode: orderData.voucherCode || null,
                             total: orderData.total,
                             currency: orderData.currency,
                             paymentMethod: 'PayPal',
@@ -454,6 +489,9 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
                     if (saveResponse.ok) {
                         const saveResult = await saveResponse.json();
                         console.log('PayPal order saved successfully:', saveResult);
+
+                        // Fulfill voucher if one was applied
+                        if (orderData.voucherCode) fulfillVoucher(orderData.voucherCode);
 
                         // Clear cart
                         clearCart();
@@ -511,8 +549,11 @@ const handlePayPalPayment = async (cart, currency, clearCart) => {
     }
 };
 
-const handleBalancePayment = async (cart, currency, clearCart) => {
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const handleBalancePayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discountAmount = selectedDiscount ? subtotal * selectedDiscount.rate : 0;
+    const voucherDeduction = appliedVoucher ? appliedVoucher.marketValue : 0;
+    const total = Math.max(0, subtotal - discountAmount - voucherDeduction);
     fetch('/api/pay-with-balance', {
         method: 'POST',
         headers: {
@@ -520,12 +561,22 @@ const handleBalancePayment = async (cart, currency, clearCart) => {
         },
         body: JSON.stringify({
             items: cart,
+            subtotal: subtotal,
+            discount: selectedDiscount ? {
+                type: selectedDiscount.type,
+                rate: selectedDiscount.rate,
+                amount: discountAmount
+            } : null,
+            voucherCode: appliedVoucher ? appliedVoucher.voucherCode : null,
             total: total,
             currency: currency
         })
     }).then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Fulfill voucher if one was applied
+            if (appliedVoucher) fulfillVoucher(appliedVoucher.voucherCode);
+
             // Emit order completion event for loyalty refresh
             window.dispatchEvent(new CustomEvent('orderComplete', { detail: { orderId: data.orderId, points: data.loyaltyPointsAwarded } }));
             

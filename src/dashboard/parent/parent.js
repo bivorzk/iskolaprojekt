@@ -25,7 +25,7 @@ router.get('/studentlist', cacheResult((req) => `parent:studentlist:${req.sessio
   try {
     console.log('Fetching student list for parent:', req.session.user.id);
     const parentId = req.session.user.id;
-    const links = await ParentStudent.find({ parentId }).populate('studentId', 'username email createdAt balance');
+    const links = await ParentStudent.find({ parentId, status: 'approved' }).populate('studentId', 'username email createdAt balance');
     console.log('Found links:', links.length);
     const students = links.map(link => ({
       id: link.studentId._id,
@@ -39,6 +39,72 @@ router.get('/studentlist', cacheResult((req) => `parent:studentlist:${req.sessio
     res.json({ students });
   } catch (error) {
     console.error('Error fetching student list:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get pending link requests
+router.get('/link-requests', async (req, res) => {
+  try {
+    const parentId = req.session.user.id;
+
+    const requests = await ParentStudent.find({ parentId, status: 'pending' })
+      .populate('studentId', 'username email createdAt')
+      .sort({ createdAt: -1 });
+
+    const pendingRequests = requests.map(request => ({
+      id: request._id,
+      studentId: request.studentId._id,
+      studentName: request.studentId.username,
+      studentEmail: request.studentId.email,
+      requestedAt: request.createdAt
+    }));
+
+    res.json({ requests: pendingRequests });
+  } catch (error) {
+    console.error('Error fetching link requests:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Approve or deny link request
+router.post('/link-request/:requestId', [
+  body('action').isIn(['approve', 'deny'])
+], async (req, res) => {
+  try {
+    const parentId = req.session.user.id;
+    const { requestId } = req.params;
+    const { action } = req.body;
+
+    const request = await ParentStudent.findOne({
+      _id: requestId,
+      parentId,
+      status: 'pending'
+    });
+
+    if (!request) {
+      return res.status(404).json({ error: 'Link request not found' });
+    }
+
+    if (action === 'approve') {
+      request.status = 'approved';
+      request.approvedAt = new Date();
+    } else if (action === 'deny') {
+      request.status = 'denied';
+      request.deniedAt = new Date();
+    }
+
+    await request.save();
+
+    // Invalidate cache
+    invalidateCache([`parent:studentlist:${parentId}`, `parent:link-requests:${parentId}`]);
+
+    res.json({
+      success: true,
+      message: `Link request ${action}d successfully`
+    });
+  } catch (error) {
+    console.error('Error processing link request:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

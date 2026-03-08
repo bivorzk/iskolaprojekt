@@ -145,7 +145,7 @@ router.post('/orders', validateOrderInput, async (req, res) => {
 
 // Route to save completed orders (after payment is done)
 router.post('/save-order', validatePaymentInput, async (req, res) => {
-    const { items, total, currency, paymentMethod, transactionId } = req.body;
+    const { items, subtotal, discount, total, currency, paymentMethod, transactionId } = req.body;
 
     const userId = req.session && req.session.user ? req.session.user.id : null;
 
@@ -159,7 +159,7 @@ router.post('/save-order', validatePaymentInput, async (req, res) => {
 
     try {
         const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.saveCompletedOrder(
-            userId, items, total, currency, paymentMethod, transactionId
+            userId, items, subtotal, discount, total, currency, paymentMethod, transactionId
         );
 
         console.log('Order saved successfully for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);
@@ -353,7 +353,7 @@ router.post('/orders/:orderID/capture', async (req, res) => {
 
 // Order from balance
 router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
-    const { items, total, currency } = req.body;
+    const { items, subtotal, discount, total, currency } = req.body;
 
     const userId = req.session && req.session.user ? req.session.user.id : null;
 
@@ -367,7 +367,7 @@ router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
 
     try {
         const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.processBalancePayment(
-            userId, items, total, currency
+            userId, items, subtotal, discount, total, currency
         );
 
         console.log('Balance payment processed for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);

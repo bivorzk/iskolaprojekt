@@ -15,6 +15,7 @@ const useParentData = () => {
     const [welcomeMessage, setWelcomeMessage] = useState('');
     const [transactions, setTransactions] = useState([]);
     const [userData, setUserData] = useState({});
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     const loadDashboardData = async () => {
         try {
@@ -47,6 +48,7 @@ const useParentData = () => {
             const welcomeData = await safeFetch('/dashboard/parent/welcome-message', { message: 'Welcome, Parent' });
             const transactionsData = await safeFetch('/dashboard/parent/transactions', { transactions: [] });
             const userData = await safeFetch('/dashboard/parent/userinfo', { username: 'Parent' });
+            const requestsData = await safeFetch('/dashboard/parent/link-requests', { requests: [] });
 
             // Get wallet balance using the dedicated function
             const currentBalance = await refreshWalletBalance();
@@ -61,6 +63,7 @@ const useParentData = () => {
             setWelcomeMessage(welcomeData.message || 'Welcome, Parent');
             setTransactions(transactionsData.transactions || []);
             setUserData(userData);
+            setPendingRequests(requestsData.requests || []);
             setStats({
                 totalStudents: statsData.totalStudents || 0,
                 activeChildren: statsData.activeChildren || 0,
@@ -76,6 +79,7 @@ const useParentData = () => {
             setWelcomeMessage('Welcome, Parent');
             setTransactions([]);
             setUserData({ username: 'Parent' });
+            setPendingRequests([]);
             setStats({
                 totalStudents: 0,
                 activeChildren: 0,
@@ -119,6 +123,7 @@ const useParentData = () => {
         welcomeMessage,
         transactions,
         userData,
+        pendingRequests,
         loadDashboardData,
         refreshWalletBalance,
         setWalletAmount

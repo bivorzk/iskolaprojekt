@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const path = require('path');
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 const { User } = require('../../../src/database');
-const { Payment, ParentStudent, Order, UserLoyalty } = require('../../../config/database_queries');
+const { Payment, ParentStudent, Order, UserLoyalty, Reward, Redemption } = require('../../../config/database_queries');
 
 // Import loyalty service
 const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-service');
@@ -100,11 +102,23 @@ router.post('/parent/link', [
     if (!parentUser) {
       return res.status(404).json({ error: 'Parent user not found' });
     }
-    const existingLink = await ParentStudent.findOne({ parentId: parentUser._id, studentId });
+    const existingLink = await ParentStudent.findOne({
+      parentId: parentUser._id,
+      studentId,
+      $or: [{ status: 'pending' }, { status: 'approved' }]
+    });
     if (existingLink) {
-      return res.status(400).json({ error: 'Link already exists' });
+      if (existingLink.status === 'pending') {
+        return res.status(400).json({ error: 'Link request already sent, waiting for approval' });
+      } else {
+        return res.status(400).json({ error: 'Link already exists' });
+      }
     }
-    await ParentStudent.create({ parentId: parentUser._id, studentId });
+    await ParentStudent.create({
+      parentId: parentUser._id,
+      studentId,
+      status: 'pending'
+    });
     // Invalidate userinfo cache
     invalidateCache([`student:userinfo:${studentId}`]);
       res.status(202).json({ message: 'Parent linked successfully' });
@@ -305,6 +319,8 @@ router.get('/loyalty', cacheResult((req) => `student:loyalty:${req.session.user.
       lastUpdated: userLoyalty.lastUpdated,
       pointHistory: userLoyalty.pointHistory.slice(-20), // Last 20 entries
       milestonesAchieved: userLoyalty.milestonesAchieved,
+      currentStreak: userLoyalty.currentStreak || 0,
+      longestStreak: userLoyalty.longestStreak || 0,
       success: true
     });
   } catch (error) {
@@ -348,6 +364,8 @@ router.post('/loyalty/refresh', async (req, res) => {
       lastUpdated: userLoyalty.lastUpdated,
       pointHistory: userLoyalty.pointHistory.slice(-20), // Last 20 entries
       milestonesAchieved: userLoyalty.milestonesAchieved,
+      currentStreak: userLoyalty.currentStreak || 0,
+      longestStreak: userLoyalty.longestStreak || 0,
       success: true,
       refreshed: true
     });
@@ -530,5 +548,198 @@ router.get('/userinfo', cacheResult((req) => `student:userinfo:${req.session.use
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// Get reward catalog
+router.get('/loyalty/rewards', cacheResult((req) => `loyalty:rewards:${req.session.user.id}`, 300), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const tierOrder = ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'];
+    const [rewards, userLoyalty] = await Promise.all([
+      Reward.find({ isActive: true }).lean(),
+      UserLoyalty.findOne({ userId }).lean()
+    ]);
+
+    const userPoints = userLoyalty?.totalPoints ?? 0;
+    const userTierIdx = tierOrder.indexOf(userLoyalty?.userTier ?? 'none');
+
+    const catalog = rewards.map(r => {
+      const healthDiscount = r.healthScore >= 75;
+      const finalCost = healthDiscount ? Math.floor(r.pointCost * 0.8) : r.pointCost;
+      return {
+        ...r,
+        finalCost,
+        healthDiscount,
+        canAfford: userPoints >= finalCost,
+        tierLocked: tierOrder.indexOf(r.minTier) > userTierIdx
+      };
+    });
+
+    res.status(200).json({ rewards: catalog, userPoints, success: true });
+  } catch (error) {
+    console.error('Error fetching rewards:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Redeem a reward from the shop
+router.post('/loyalty/redeem',
+  [body('rewardId').notEmpty().isString()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const userId = req.session.user.id;
+    const { rewardId } = req.body;
+    const tierOrder = ['none', 'Bronze', 'Silver', 'Gold', 'Platinum'];
+
+    const session = await mongoose.startSession();
+    try {
+      let voucherCode, expiresAt;
+      await session.withTransaction(async () => {
+        const [reward, userLoyalty] = await Promise.all([
+          Reward.findById(rewardId).session(session),
+          UserLoyalty.findOne({ userId }).session(session)
+        ]);
+
+        if (!reward || !reward.isActive)
+          throw Object.assign(new Error('Reward not available'), { status: 404 });
+
+        if (tierOrder.indexOf(userLoyalty?.userTier ?? 'none') < tierOrder.indexOf(reward.minTier))
+          throw Object.assign(new Error('Your tier is too low for this reward'), { status: 403 });
+
+        const finalCost = reward.healthScore >= 75 ? Math.floor(reward.pointCost * 0.8) : reward.pointCost;
+        if ((userLoyalty?.totalPoints ?? 0) < finalCost)
+          throw Object.assign(new Error('Insufficient points'), { status: 400 });
+
+        if (reward.dailyStockLimit !== null && reward.redeemedToday >= reward.dailyStockLimit)
+          throw Object.assign(new Error('Daily limit reached for this reward'), { status: 409 });
+
+        await UserLoyalty.updatePointsAtomically(userId, -finalCost, `redeemed:${reward.name}`);
+
+        voucherCode = crypto.randomUUID();
+        expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        await Redemption.create([{
+          userId,
+          rewardId: reward._id,
+          pointsSpent: finalCost,
+          redemptionType: 'shop',
+          status: 'pending',
+          voucherCode,
+          voucherExpiresAt: expiresAt,
+          ipAddress: req.ip
+        }], { session });
+
+        await Reward.findByIdAndUpdate(rewardId, { $inc: { redeemedToday: 1 } }, { session });
+      });
+
+      invalidateCache([`student:loyalty:${userId}`, `loyalty:rewards:${userId}`]);
+      res.status(201).json({ voucherCode, expiresAt, success: true });
+    } catch (err) {
+      res.status(err.status || 500).json({ error: err.message });
+    } finally {
+      session.endSession();
+    }
+  }
+);
+
+// Get student's vouchers
+router.get('/loyalty/vouchers', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const vouchers = await Redemption.find({ userId })
+      .populate('rewardId', 'name category')
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    // Auto-expire pending vouchers past their expiry date
+    const now = new Date();
+    const toExpire = vouchers
+      .filter(v => v.status === 'pending' && v.voucherExpiresAt < now)
+      .map(v => v._id);
+
+    if (toExpire.length > 0) {
+      await Redemption.updateMany({ _id: { $in: toExpire } }, { $set: { status: 'expired' } });
+      vouchers.forEach(v => {
+        if (toExpire.some(id => id.equals(v._id))) v.status = 'expired';
+      });
+    }
+
+    res.status(200).json({ vouchers, success: true });
+  } catch (error) {
+    console.error('Error fetching vouchers:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Validate a voucher code for use at checkout (must belong to this user)
+router.post('/loyalty/voucher/validate',
+  [body('voucherCode').notEmpty().trim()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const userId = req.session.user.id;
+    const { voucherCode } = req.body;
+
+    try {
+      const redemption = await Redemption.findOne({ voucherCode, userId, status: 'pending' })
+        .populate('rewardId', 'name marketValue category');
+
+      if (!redemption) {
+        return res.status(404).json({ error: 'Voucher not found or already used' });
+      }
+
+      if (redemption.voucherExpiresAt < new Date()) {
+        await Redemption.findByIdAndUpdate(redemption._id, { status: 'expired' });
+        return res.status(410).json({ error: 'This voucher has expired' });
+      }
+
+      res.json({
+        valid: true,
+        voucherCode,
+        redemptionId: redemption._id,
+        rewardName: redemption.rewardId?.name || 'Reward',
+        rewardCategory: redemption.rewardId?.category,
+        marketValue: redemption.rewardId?.marketValue ?? 0,
+        expiresAt: redemption.voucherExpiresAt,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error validating voucher:', error);
+      res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+  }
+);
+
+// Mark a voucher as fulfilled (called automatically after checkout)
+router.post('/loyalty/voucher/fulfill',
+  [body('voucherCode').notEmpty().trim()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const userId = req.session.user.id;
+    const { voucherCode } = req.body;
+
+    try {
+      const redemption = await Redemption.findOneAndUpdate(
+        { voucherCode, userId, status: 'pending' },
+        { status: 'fulfilled', fulfilledAt: new Date() },
+        { new: true }
+      );
+
+      if (!redemption) {
+        return res.status(404).json({ error: 'Voucher not found or already used' });
+      }
+
+      res.json({ success: true, message: 'Voucher fulfilled' });
+    } catch (error) {
+      console.error('Error fulfilling voucher:', error);
+      res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+  }
+);
 
 module.exports = router;

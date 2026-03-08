@@ -27,12 +27,9 @@ const SettingsSection = ({ parentLinkStatus, userData }) => {
             const data = await response.json();
 
             if (response.ok) {
-                setLinkSuccess('Parent linked successfully!');
+                setLinkSuccess('Parent link request sent successfully! Waiting for approval.');
                 setParentEmail('');
-                // Refresh the page to update the parent link status
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                // Don't refresh immediately since it's pending
             } else {
                 setLinkError(data.error || 'Failed to link parent');
             }
@@ -154,7 +151,7 @@ const SettingsSection = ({ parentLinkStatus, userData }) => {
                         <p className="text-xs text-gray-500">
                             {parentLinkStatus.linked
                                 ? 'Your parent can now transfer money to your account and monitor your spending.'
-                                : 'Enter your parent\'s email address. They must have a parent account registered with the system.'
+                                : 'Enter your parent\'s email address. They must approve your link request before you can receive transfers.'
                             }
                         </p>
                     </div>

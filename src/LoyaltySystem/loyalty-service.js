@@ -22,6 +22,14 @@ function getHealthLevel(healthScore) {
 }
 
 
+const TIER = {
+    NONE: 'NONE',
+    BRONZE: 'FIVE',
+    SILVER: 'TEN',
+    GOLD: 'FIFTEEN',
+    PLATINUM: 'TWENTY',
+};
+
 function monthlyFreeDrinkPoints(tier) {
     switch (tier) {
         case TIER.BRONZE:
@@ -36,14 +44,6 @@ function monthlyFreeDrinkPoints(tier) {
             return 0;
     }
 }
-
-const TIER = {
-    NONE: 'NONE',
-    BRONZE: 'FIVE',
-    SILVER: 'TEN',
-    GOLD: 'FIFTEEN',
-    PLATINUM: 'TWENTY',
-};
 
 // if returns true holiday bonus applies 
 function isHoliday(date) {

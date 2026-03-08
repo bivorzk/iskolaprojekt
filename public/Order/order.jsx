@@ -10,6 +10,16 @@ const { useState, useEffect } = React;
             const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart();
             const { isMobileCartVisible, toggleMobileCart, hideMobileCart } = useMobileCart();
 
+            const [selectedDiscount, setSelectedDiscount] = React.useState(null);
+            const [appliedVoucher, setAppliedVoucher] = React.useState(null);
+
+            // Clear applied voucher after order completes
+            React.useEffect(() => {
+                const handler = () => setAppliedVoucher(null);
+                window.addEventListener('orderComplete', handler);
+                return () => window.removeEventListener('orderComplete', handler);
+            }, []);
+
             useEffect(() => {
                 loadMenuItems();
                 loadGooglePayScript();
@@ -132,9 +142,13 @@ const { useState, useEffect } = React;
                                     onRemoveFromCart={removeFromCart}
                                     currency={currency}
                                     onCurrencyChange={setCurrency}
-                                    onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart)}
-                                    onPayPal={() => handlePayPalPayment(cart, currency, clearCart)}
-                                    onBalance={() => handleBalancePayment(cart, currency, clearCart)}
+                                    onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
+                                    onPayPal={() => handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
+                                    onBalance={() => handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
+                                    selectedDiscount={selectedDiscount}
+                                    onDiscountChange={setSelectedDiscount}
+                                    appliedVoucher={appliedVoucher}
+                                    onVoucherChange={setAppliedVoucher}
                                 />
                             </div>
                         </div>
@@ -149,18 +163,22 @@ const { useState, useEffect } = React;
                         onCurrencyChange={setCurrency}
                         onGooglePay={() => {
                             hideMobileCart();
-                            handleGooglePayPayment(cart, currency, clearCart);
+                            handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
                         }}
                         onPayPal={() => {
                             hideMobileCart();
-                            handlePayPalPayment(cart, currency, clearCart);
+                            handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
                         }}
                         onBalance={() => {
                             hideMobileCart();
-                            handleBalancePayment(cart, currency, clearCart);
+                            handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
                         }}
                         isVisible={isMobileCartVisible}
                         onToggle={toggleMobileCart}
+                        selectedDiscount={selectedDiscount}
+                        onDiscountChange={setSelectedDiscount}
+                        appliedVoucher={appliedVoucher}
+                        onVoucherChange={setAppliedVoucher}
                     />
 
                     {/* Mobile Toast Notifications */}
@@ -172,4 +190,4 @@ const { useState, useEffect } = React;
             );
         };
 
-        ReactDOM.render(<OrderPage />, document.getElementById('root'));
+        ReactDOM.createRoot(document.getElementById('root')).render(<OrderPage />);

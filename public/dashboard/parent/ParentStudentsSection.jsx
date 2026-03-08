@@ -1,7 +1,31 @@
-const ParentStudentsSection = ({ students, refreshData }) => {
+const ParentStudentsSection = ({ students, pendingRequests, refreshData }) => {
     const [transferAmount, setTransferAmount] = React.useState('');
     const [selectedStudent, setSelectedStudent] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
+
+    const handleRequestAction = async (requestId, action) => {
+        try {
+            const response = await fetch(`/dashboard/parent/link-request/${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);
+                refreshData(); // Refresh all data including pending requests
+            } else {
+                alert(data.error || 'Action failed');
+            }
+        } catch (error) {
+            console.error('Error processing request:', error);
+            alert('Action failed');
+        }
+    };
 
     const handleTransfer = async (studentId) => {
         if (!transferAmount || transferAmount <= 0) {
@@ -44,6 +68,43 @@ const ParentStudentsSection = ({ students, refreshData }) => {
         <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Your Students</h2>
 
+            {/* Pending Link Requests */}
+            {pendingRequests.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Pending Link Requests</h3>
+                    <div className="space-y-3">
+                        {pendingRequests.map(request => (
+                            <div key={request.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-medium text-gray-800">{request.studentName}</h4>
+                                        <p className="text-sm text-gray-600">{request.studentEmail}</p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Requested on {new Date(request.requestedAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => handleRequestAction(request.id, 'approve')}
+                                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm"
+                                        >
+                                            Approve
+                                        </button>
+                                        <button
+                                            onClick={() => handleRequestAction(request.id, 'deny')}
+                                            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm"
+                                        >
+                                            Deny
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Linked Students */}
             {students.length === 0 ? (
                 <div className="text-center py-8">
                     <p className="text-gray-500 text-lg">No students linked yet.</p>

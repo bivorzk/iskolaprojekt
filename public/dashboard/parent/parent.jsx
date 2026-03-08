@@ -10,6 +10,7 @@ const ParentDashboard = () => {
         walletAmount,
         transactions,
         userData,
+        pendingRequests,
         loading,
         welcomeMessage,
         loadDashboardData,
@@ -20,7 +21,7 @@ const ParentDashboard = () => {
     const renderActiveSection = () => {
         switch (activeSection) {
             case 'students':
-                return <ParentStudentsSection students={students} refreshData={loadDashboardData} />;
+                return <ParentStudentsSection students={students} pendingRequests={pendingRequests} refreshData={loadDashboardData} />;
             case 'orders':
                 return <ParentOrdersSection orders={orders} />;
             case 'wallet':
@@ -40,7 +41,7 @@ const ParentDashboard = () => {
             case 'settings':
                 return <ParentSettingsSection userData={userData} />;
             default:
-                return <ParentStudentsSection students={students} refreshData={loadDashboardData} />;
+                return <ParentStudentsSection students={students} pendingRequests={pendingRequests} refreshData={loadDashboardData} />;
         }
     };
 

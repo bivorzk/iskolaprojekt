@@ -37,13 +37,13 @@ const convertCartToDbFormat = async (cart) => {
     return { dbOrderItems, totalAmount };
 };
 
-const convertItemsToDbFormat = async (items) => {
+const convertItemsToDbFormat = async (items, session = null) => {
     let dbOrderItems = [];
     let totalAmount = 0;
     
     if (Array.isArray(items) && items.length > 0) {
         for (const item of items) {
-            const menuItem = await MenuItems.findById(item._id);
+            const menuItem = await MenuItems.findById(item._id).session(session);
             if (menuItem) {
                 const quantity = item.quantity || 1;
                 
@@ -55,7 +55,7 @@ const convertItemsToDbFormat = async (items) => {
                 
                 // Reduce stock
                 menuItem.stock = Math.max(0, menuItem.stock - quantity);
-                await menuItem.save();
+                await menuItem.save({ session });
             }
         }
     }
@@ -63,14 +63,16 @@ const convertItemsToDbFormat = async (items) => {
     return { dbOrderItems, totalAmount };
 };
 
-const createOrderRecord = async (userId, dbOrderItems, totalAmount, paypalOrderId = null, status = 'Pending', paymentMethod = null, transactionId = null, notes = '') => {
+const createOrderRecord = async (userId, dbOrderItems, subtotalAmount, discount, totalAmount, paypalOrderId = null, status = 'Pending', paymentMethod = null, transactionId = null, notes = '', session = null) => {
     const publicId = nanoID.nanoid(6);
-    
+
     const newOrder = new Order({
         userId: userId,
         items: dbOrderItems,
         orderDate: new Date(),
         status: status,
+        subtotalAmount: subtotalAmount,
+        discount: discount,
         totalAmount: totalAmount,
         paypalOrderId: paypalOrderId,
         paymentMethod: paymentMethod,
@@ -78,25 +80,26 @@ const createOrderRecord = async (userId, dbOrderItems, totalAmount, paypalOrderI
         notes: notes,
         publicID: publicId
     });
-    
-    await newOrder.save();
+
+    await newOrder.save({ session });
     return newOrder;
 };
 
-const saveCompletedOrder = async (userId, items, total, currency, paymentMethod, transactionId) => {
+const saveCompletedOrder = async (userId, items, subtotal, discount, total, currency, paymentMethod, transactionId) => {
     const { dbOrderItems, totalAmount } = await convertItemsToDbFormat(items);
-    
+
     if (dbOrderItems.length === 0) {
         throw new Error('No valid items found in the order');
     }
-    
+
     const newOrder = await createOrderRecord(
-        userId, 
-        dbOrderItems, 
-        totalAmount, 
-        null, 
-        'Completed', 
-        paymentMethod, 
+        userId,
+        dbOrderItems,
+        subtotal,
+        discount,
+        total,
+        'Completed',
+        paymentMethod,
         transactionId
     );
     
@@ -143,86 +146,107 @@ const saveCompletedOrder = async (userId, items, total, currency, paymentMethod,
     };
 };
 
-const processBalancePayment = async (userId, items, total, currency) => {
-    // Get user and check balance
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new Error('User not found');
-    }
-    
-    // Convert total to USD for balance check
-    let totalInUSD = convertCurrencyToUSD(total, currency);
-    
-    if (user.balance < totalInUSD) {
-        throw new Error('Your account balance is insufficient to place this order');
-    }
-    
-    const { dbOrderItems, totalAmount } = await convertItemsToDbFormat(items);
-    
-    if (dbOrderItems.length === 0) {
-        throw new Error('No valid items found in the order');
-    }
-    
-    // Verify calculated total matches requested total
-    if (Math.abs(totalAmount - total) > 0.01) {
-        throw new Error('Order total does not match calculated amount');
-    }
-    
-    const newOrder = await createOrderRecord(
-        userId,
-        dbOrderItems,
-        totalAmount,
-        null,
-        'Completed',
-        'Balance',
-        'balance_' + Date.now()
-    );
-    
-    // Deduct balance (in USD)
-    user.balance -= totalInUSD;
-    await user.save();
-    
-    // Calculate and award loyalty points
-    let totalPoints = 0;
+const processBalancePayment = async (userId, items, subtotal, discount, total, currency) => {
+    // Round to avoid floating-point drift
+    const totalInUSD = Math.round(convertCurrencyToUSD(total, currency) * 100) / 100;
+
+    const session = await User.startSession();
+    session.startTransaction();
+
     try {
-        if (userId) {
-            const userLoyalty = await UserLoyalty.findOne({ userId });
-            let currentTier = 'NONE';
-            if (userLoyalty) {
-                currentTier = userLoyalty.userTier;
-            }
-            
-            for (const item of dbOrderItems) {
-                const menuItem = await MenuItems.findById(item.menuItemId);
-                if (menuItem) {
-                    const healthLevel = getHealthLevel(menuItem.healthScore);
-                    const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
-                    const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
-                    totalPoints += points;
+        // Get user within transaction
+        const user = await User.findById(userId).session(session);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Check balance (handle both number and string types)
+        const currentBalance = parseFloat(user.balance) || 0;
+        if (currentBalance < totalInUSD) {
+            throw new Error('Your account balance is insufficient to place this order');
+        }
+
+        // Deduct balance
+        user.balance = currentBalance - totalInUSD;
+        await user.save({ session });
+
+        // Process items and create order within transaction
+        const { dbOrderItems, totalAmount } = await convertItemsToDbFormat(items, session);
+
+        if (dbOrderItems.length === 0) {
+            throw new Error('No valid items found in the order');
+        }
+
+        // Verify calculated subtotal matches requested subtotal
+        if (Math.abs(totalAmount - subtotal) > 0.01) {
+            throw new Error('Order subtotal does not match calculated amount');
+        }
+
+        const newOrder = await createOrderRecord(
+            userId,
+            dbOrderItems,
+            subtotal,
+            discount,
+            total,
+            null,
+            'Completed',
+            'Balance',
+            'balance_' + Date.now(),
+            '',  // notes
+            session
+        );
+
+        // Commit the transaction
+        await session.commitTransaction();
+
+        // Calculate and award loyalty points (outside transaction since it's not critical)
+        let totalPoints = 0;
+        try {
+            if (userId) {
+                const userLoyalty = await UserLoyalty.findOne({ userId });
+                let currentTier = 'NONE';
+                if (userLoyalty) {
+                    currentTier = userLoyalty.userTier;
+                }
+                
+                for (const item of dbOrderItems) {
+                    const menuItem = await MenuItems.findById(item.menuItemId);
+                    if (menuItem) {
+                        const healthLevel = getHealthLevel(menuItem.healthScore);
+                        const itemTotal = menuItem.price * item.quantity;
+                        const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
+                        totalPoints += points;
+                    }
+                }
+                
+                if (totalPoints > 0) {
+                    await UserLoyalty.updatePointsAtomically(userId, totalPoints, 'balance_order_completion');
                 }
             }
-            
-            if (totalPoints > 0) {
-                await UserLoyalty.updatePointsAtomically(userId, totalPoints, 'balance_order_completion');
+        } catch (loyaltyError) {
+            console.error('Error calculating/awarding loyalty points for balance payment:', loyaltyError);
+            // Don't fail the order if loyalty points fail
+        }
+        
+        return {
+            orderId: newOrder.publicID,
+            loyaltyPointsAwarded: totalPoints,
+            orderDetails: {
+                id: newOrder.publicID,
+                total: totalAmount,
+                currency: currency,
+                paymentMethod: 'Balance',
+                items: dbOrderItems,
+                pointsEarned: totalPoints
             }
-        }
-    } catch (loyaltyError) {
-        console.error('Error calculating/awarding loyalty points for balance payment:', loyaltyError);
-        // Don't fail the order if loyalty points fail
+        };
+    } catch (error) {
+        // Abort transaction on any error
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
     }
-    
-    return {
-        orderId: newOrder.publicID,
-        loyaltyPointsAwarded: totalPoints,
-        orderDetails: {
-            id: newOrder.publicID,
-            total: totalAmount,
-            currency: currency,
-            paymentMethod: 'Balance',
-            items: dbOrderItems,
-            pointsEarned: totalPoints
-        }
-    };
 };
 
 const convertCurrencyToUSD = (amount, currency) => {
