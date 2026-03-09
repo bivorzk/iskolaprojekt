@@ -1,8 +1,3 @@
-import { createRoot } from 'react-dom/client';
-import '../styles/index.css';
-
-import React, { useState } from 'react';
-
 const HomePage = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
@@ -164,4 +159,4 @@ const HomePage = () => {
     );
 };
 
-createRoot(document.getElementById('root')).render(<HomePage />);
+ReactDOM.render(<HomePage />, document.getElementById('root'));
