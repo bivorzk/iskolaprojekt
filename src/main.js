@@ -4,7 +4,6 @@ const app = express();
 // Trust proxy for correct IP extraction
 app.set('trust proxy', 1);
 
-const port = 3000;
 const rateLimit = require('express-rate-limit');
 const session = require('express-session'); 
 const database = require('./database');
@@ -29,9 +28,9 @@ const cors = require('cors');
 const {Server} = require('socket.io');
 
 
-
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
+const port = process.env.PORT;
 
 let redisAvailable = false;
 const { redisClient, isRedisAvailable } = require('./redis');
@@ -55,7 +54,7 @@ redisClient.on('error', (err) => {
 
 // Add session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your_secret_key',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false } 
@@ -98,7 +97,6 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   store: createStore(),
     handler: (req, res) => {
-    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
 })
@@ -107,7 +105,6 @@ const registerLimiter = rateLimit({
   windowMs: HOUR, // 1 hour window
   max: 100, // start blocking after 100 requests
   handler: (req, res) => {
-    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
@@ -118,7 +115,6 @@ const LoginLimiter = rateLimit({
   windowMs: QUARTERHOUR, // 15 minutes window 
   max: 35,
   handler: (req, res) => {
-    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
@@ -128,8 +124,7 @@ const dashboardLimiter = rateLimit({
   windowMs: QUARTERHOUR, // 15 minutes window
   max: 1000, // start blocking after 1000 requests
   handler: (req, res) => {
-     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
   store: createStore(),
 });

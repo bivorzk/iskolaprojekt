@@ -305,9 +305,31 @@ számára. Célja, hogy a diákok biztonságosan tudjanak rendeléseket leadni,
 a szülők felügyelhessék a költéseket, az adminisztrátorok pedig kezelhessék
 a teljes rendszert.
 
-Az alkalmazás kliens–szerver architektúrát követ. A backend Node.js alapú,
-a frontend szerepkör-alapú dashboardokat biztosít. A rendszer Redis-t használ
-gyorsítótárazásra, rate limitingre és Lua scriptek segítségével atomi műveletekhez.
+Az alkalmazás kliens–szerver architektúrát követ. A backend Node.js alapú Express szerver,
+a frontend React komponensekből épül fel szerepkör-alapú dashboardokkal. A rendszer Redis-t használ
+gyorsítótárazásra, rate limitingre és Lua scriptek segítségével atomi műveletekhez. MongoDB
+adatbázis biztosítja az adatok perzisztens tárolását.
+
+### Megvalósított fő funkciók:
+
+**Felhasználókezelés és autentikáció:**
+- Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor)
+- Email alapú fiókellenőrzés és kétlépcsős azonosítás (2FA)
+- JWT alapú munkamenet-kezelés Redis tárolással
+- Jelszó biztonság bcrypt hasheléssel és erősség validációval
+
+**Rendelés és menü rendszer:**
+- Dinamikus menükezelés kategóriákkal és táplálkozási információkkal
+- Valós idejű készletkövetés riasztásokkal
+- Napi menü funkcionalitás menüelemek társításával
+- QR kód integráció menüelemekhez
+- Átfedhetetlen allergén és étrendi információk
+
+**Fizetés feldolgozás:**
+- PayPal és Google Pay API integráció
+- Pénztárca egyenleg rendszer atomi műveletekkel
+- Helyszín alapú pénznem támogatás
+- Biztonságos tranzakció naplózás és audit trail
 
 ---
 
@@ -345,20 +367,25 @@ gyorsítótárazásra, rate limitingre és Lua scriptek segítségével atomi m�
 
 A rendszer három fő rétegből áll:
 
-### 1️⃣ Megjelenítési réteg (Frontend)
-- HTML és JSX alapú felhasználói felület
-- Szerepkör-alapú dashboardok
+### Megjelenítési réteg (Frontend)
+- React.js komponensekből épülő felhasználói felület
+- Szerepkör-alapú dashboardok (diák, szülő, admin)
+- Tailwind CSS responsive design
 - REST API-n keresztüli kommunikáció a backenddel
+- Valós idejű frissítések Socket.IO-val
 
-### 2️⃣ Alkalmazási réteg (Backend)
-- Node.js és Express alapú szerver
-- Hitelesítés, jogosultságkezelés
-- Üzleti logika és fizetési folyamatok kezelése
+### Alkalmazási réteg (Backend)
+- Node.js és Express.js alapú szerver
+- JWT alapú hitelesítés és jogosultságkezelés
+- Üzleti logika szolgáltatásokban (order-service, payment services)
+- Redis Lua scriptek atomi műveletekhez
+- Rate limiting és security middleware
 
-### 3️⃣ Adatréteg
-- Perzisztens adatbázis
-- Redis cache és rate limiting
-- Lua scriptek az atomi műveletekhez
+### Adatréteg
+- MongoDB perzisztens adatbázis Mongoose ODM-mel
+- Redis cache munkamenetekhez és rate limitinghez
+- Stratégiai indexek teljesítmény optimalizáláshoz
+- Tranzakciók adat konzisztencia biztosításához
 
 ---
 
@@ -401,9 +428,13 @@ The technology stack for SnapTray was chosen to balance development speed, perfo
 - **bcrypt for Password Hashing**: Industry-standard for secure password storage, protecting against rainbow table and brute-force attacks.
 - **reCAPTCHA**: Integrated to prevent automated abuse while maintaining user experience.
 - **PayPal/Google Pay APIs**: Chosen for their robust security, global acceptance, and ease of integration for payment processing.
-- **Render**: Used for deployment due to its simplicity, scalability, and support for modern web applications.
-- **Git/GitHub**: For version control and collaborative development.
+- **Socket.IO**: Implemented for real-time bidirectional communication between clients and server, enabling live chat and order status updates.
+- **Express Validator**: Used for comprehensive server-side input validation and sanitization.
+- **Helmet**: Security middleware for setting various HTTP headers to protect against common web vulnerabilities.
 - **IPlocate.io**: Integrated for IP geolocation services to enhance security logging and fraud detection.
+- **Nodemailer**: Used for email verification and notifications.
+- **Artillery**: Implemented for load testing and performance validation.
+
 The architecture follows a monolithic approach rather than microservices due to the project's scope and team size, allowing for simpler deployment, debugging, and data consistency. Horizontal scaling is achieved through MongoDB sharding and Redis clustering when needed.
 
 ## 5. Design
@@ -570,91 +601,91 @@ Redis Lua scripts are used for atomic operations that require multiple Redis com
 
 **Key Lua Scripts in the System:**
 
-**Order Processing Script (process_order.lua):**
+**Rate Limiting Script (rate_limit.lua):**
 ```lua
--- Atomic order processing with inventory management
-local orderId = ARGV[1]
-local userId = ARGV[2]
-local items = cjson.decode(ARGV[3])
+-- Sliding window rate limiting using Redis sorted sets
+local key = KEYS[1]
+local window = tonumber(ARGV[1])
+local max_requests = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
 
--- Check inventory availability
-for i, item in ipairs(items) do
-    local stock = redis.call('GET', 'item:' .. item.id .. ':stock')
-    if not stock or tonumber(stock) < item.quantity then
-        return redis.error_reply('INSUFFICIENT_STOCK')
-    end
+-- Remove old entries outside the window
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+
+-- Count current requests in window
+local current_count = redis.call('ZCARD', key)
+
+-- Check if limit exceeded
+if current_count >= max_requests then
+    return {0, current_count} -- 0 = blocked, current count
 end
 
--- Deduct inventory atomically
-for i, item in ipairs(items) do
-    redis.call('DECRBY', 'item:' .. item.id .. ':stock', item.quantity)
-end
+-- Add current request
+redis.call('ZADD', key, now, now)
 
--- Create order record
-redis.call('HMSET', 'order:' .. orderId,
-    'userId', userId,
-    'status', 'CONFIRMED',
-    'timestamp', redis.call('TIME')[1]
-)
+-- Set expiration on the key (cleanup)
+redis.call('EXPIRE', key, window)
 
-return redis.status_reply('ORDER_CONFIRMED')
+return {1, current_count + 1} -- 1 = allowed, new count
 ```
-- **Purpose**: Atomic inventory deduction and order creation
-- **Benefits**: Prevents race conditions during high-traffic ordering
-- **Atomicity**: All operations succeed or all fail together
+- **Purpose**: Distributed sliding window rate limiting
+- **Algorithm**: Uses Redis sorted sets for precise time-based windows
+- **Benefits**: More accurate than fixed windows, handles burst traffic better
 
 **Wallet Update Script (wallet_update.lua):**
 ```lua
 -- Atomic wallet balance updates with validation
-local userId = ARGV[1]
-local amount = tonumber(ARGV[2])
-local operation = ARGV[3] -- 'add' or 'subtract'
+local wallet_key = KEYS[1]
+local amount = tonumber(ARGV[1])
 
-local walletKey = 'wallet:' .. userId
-local currentBalance = tonumber(redis.call('GET', walletKey) or '0')
+local current_balance = tonumber(redis.call('GET', wallet_key) or '0')
+local new_balance = current_balance + amount
 
-if operation == 'subtract' and currentBalance < amount then
+if new_balance < 0 then
     return redis.error_reply('INSUFFICIENT_FUNDS')
 end
 
-local newBalance = operation == 'add' and (currentBalance + amount) or (currentBalance - amount)
+redis.call('SET', wallet_key, new_balance)
 
-redis.call('SET', walletKey, newBalance)
-redis.call('PUBLISH', 'wallet_updates', userId .. ':' .. newBalance)
-
-return redis.status_reply('BALANCE_UPDATED:' .. newBalance)
+return new_balance
 ```
 - **Purpose**: Thread-safe wallet balance modifications
-- **Validation**: Prevents negative balances and insufficient funds
-- **Notifications**: Publishes balance changes for real-time updates
+- **Validation**: Prevents negative balances
+- **Atomicity**: Single operation ensures consistency
 
-**Rate Limiting Script (rate_limit.lua):**
+**Order Processing Script (process_order.lua):**
 ```lua
--- Sliding window rate limiting
-local key = KEYS[1]
-local window = tonumber(ARGV[1]) -- window size in seconds
-local limit = tonumber(ARGV[2])  -- max requests per window
-local current = redis.call('TIME')[1]
+-- Atomic order processing with inventory and wallet validation
+local inventory_key = KEYS[1]
+local wallet_key = KEYS[2]
+local order_key = KEYS[3]
+local quantity = tonumber(ARGV[1])
+local price = tonumber(ARGV[2])
+local user_id = ARGV[3]
 
--- Remove old entries outside the window
-redis.call('ZREMRANGEBYSCORE', key, 0, current - window)
-
--- Count current requests in window
-local count = redis.call('ZCARD', key)
-
-if count >= limit then
-    return redis.error_reply('RATE_LIMIT_EXCEEDED')
+-- Check inventory
+local current_stock = tonumber(redis.call('GET', inventory_key) or '0')
+if current_stock < quantity then
+    return redis.error_reply('INSUFFICIENT_STOCK')
 end
 
--- Add current request
-redis.call('ZADD', key, current, current)
-redis.call('EXPIRE', key, window)
+-- Check wallet balance
+local current_balance = tonumber(redis.call('GET', wallet_key) or '0')
+local total_cost = quantity * price
+if current_balance < total_cost then
+    return redis.error_reply('INSUFFICIENT_FUNDS')
+end
 
-return redis.status_reply('ALLOWED:' .. (limit - count - 1) .. '_remaining')
+-- Atomic operations: deduct inventory and balance, create order
+redis.call('DECRBY', inventory_key, quantity)
+redis.call('DECRBY', wallet_key, total_cost)
+redis.call('HMSET', order_key, 'user_id', user_id, 'quantity', quantity, 'total_cost', total_cost)
+
+return {current_stock - quantity, current_balance - total_cost, order_key}
 ```
-- **Purpose**: Distributed rate limiting across multiple server instances
-- **Algorithm**: Sliding window with sorted set for timestamp tracking
-- **Accuracy**: More precise than fixed window but maintains performance
+- **Purpose**: Atomic order processing with inventory and payment validation
+- **Benefits**: Prevents overselling and ensures payment consistency
+- **Error Handling**: Comprehensive validation before execution
 
 **Lua Script Benefits:**
 - **Atomicity**: Multiple Redis operations execute as one atomic unit
@@ -813,10 +844,34 @@ const invalidateUserCache = async (userId) => {
 
 ##### 5.3.2.6 Rate Limiting Algorithm
 
-**Token Bucket Algorithm (via express-rate-limit):**
-```javascript
-// Implemented through express-rate-limit middleware
-const limiter = rateLimit({
+**Sliding Window Algorithm (Redis Lua Implementation):**
+```lua
+-- Uses Redis sorted sets for precise sliding window rate limiting
+local key = KEYS[1]
+local window = tonumber(ARGV[1])
+local max_requests = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+-- Remove requests outside the current window
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+
+-- Count requests in current window
+local current_count = redis.call('ZCARD', key)
+
+if current_count >= max_requests then
+    return {0, current_count} -- Rate limit exceeded
+end
+
+-- Add current request and set expiration
+redis.call('ZADD', key, now, now)
+redis.call('EXPIRE', key, window)
+
+return {1, current_count + 1} -- Request allowed
+```
+- **Algorithm**: Sliding window using Redis sorted sets
+- **Benefits**: More accurate than fixed windows, handles burst traffic better
+- **Implementation**: Distributed across multiple server instances
+- **Data Structure**: Sorted set with timestamps as scores
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
     store: new RedisStore({ /* redis config */ })
@@ -948,7 +1003,7 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **Password Policies**: Strong password requirements enforced via zxcvbn and custom validation.
 - **Two-Factor Authentication (2FA)**: Basic 2FA endpoint implemented; full integration planned (see Roadmap).
 - **Session Management**: Secure session handling with appropriate expiration and invalidation.
-- **Proxy/VPN/Tor Detection**: Logging and blocking of suspicious IPs planned (see Roadmap).
+- **Location-based Security**: Implemented geolocation analysis with risk scoring for fraud detection.
 - **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into registration and login.
 - **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs.
 - **NoSQL Injection Prevention**: Use of parameterized queries, Mongoose ODM, and express-mongo-sanitize.
@@ -971,7 +1026,7 @@ The algorithms are chosen to balance security, performance, maintainability, and
 - **IP Hashing**: IP addresses are hashed using SHA-256 before storage in SecurityLogs.
 - **reCAPTCHA Integration**: Google reCAPTCHA v3 is integrated into registration and login, using a score-based assessment.
 - **NoSQL Injection Prevention**: Parameterized queries, Mongoose ODM, and express-mongo-sanitize are used to prevent NoSQL injection attacks.
-- **IP Detection**: Planned integration with iplocate.io for VPN/Proxy/Tor detection (see Roadmap).
+- **IP Detection**: Implemented integration with iplocate.io for VPN/Proxy/Tor detection and geolocation-based risk analysis.
 - **HTTP Parameter Pollution (HPP)**: The *hpp* library middleware is used to protect against HTTP Parameter Pollution attacks.
 - **CORS Policy**: Strict CORS policy using the *cors* middleware, only allowing requests from the official frontend domain.
 - **Security Headers**: Helmet.js sets various HTTP headers for enhanced security.

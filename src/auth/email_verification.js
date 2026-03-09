@@ -38,11 +38,11 @@ function sendVerificationEmail(email, verificationCode) {
         <p>Thank you for signing up. To complete your registration and start enjoying our services, please verify your email address using one of the methods below. Both options are valid for 10 minutes.</p>
         
         <h3 style="color: #4CAF50;">Option 1: Click the verification link</h3>
-        <p><a href="http://snaptray.onrender.com/email-verification/verify/${token}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify My Email</a></p>
+        <p><a href="${process.env.PRODUCTION_HOST}/email-verification/verify/${token}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify My Email</a></p>
         
         <h3 style="color: #4CAF50;">Option 2: Enter the verification code</h3>
         <p>Verification Code: <strong style="font-size: 18px; color: #333;">${verificationCode}</strong></p>
-        <p>Visit our <a href="http://snaptray.onrender.com/verify.html" style="color: #4CAF50;">verification page</a> and enter your email along with this code.</p>
+        <p>Visit our <a href="${process.env.PRODUCTION_HOST}/verify.html" style="color: #4CAF50;">verification page</a> and enter your email along with this code.</p>
         
         <p style="color: #666; font-size: 14px;">If you didn't create an account with SnapTray, please ignore this email.</p>
         

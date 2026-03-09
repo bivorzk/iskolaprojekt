@@ -447,13 +447,13 @@ const LoyaltySection = () => {
             {activeTab === 'overview' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Tier card */}
-                    <div className={`bg-gradient-to-r ${tierInfo.bgGradient} rounded-lg shadow-lg p-6 text-white`}>
+                    <div className={`bg-gradient-to-r ${tierInfo.bgGradient} rounded-lg shadow-lg p-6 text-black`}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                                 <div className="text-3xl">{tierInfo.icon}</div>
                                 <div>
                                     <h3 className="text-xl font-bold">{loyaltyData.totalPoints.toLocaleString()} Points</h3>
-                                    <p className="text-white/90">{tierInfo.name} Member</p>
+                                    <p className="text-black/90">{tierInfo.name} Member</p>
                                 </div>
                             </div>
                             <button

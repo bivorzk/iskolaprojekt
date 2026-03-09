@@ -1,4 +1,7 @@
-const { useState } = React;
+import { createRoot } from 'react-dom/client';
+import '../styles/index.css';
+
+import React, { useState } from 'react';
 
 const HomePage = () => {
     return (
@@ -161,4 +164,4 @@ const HomePage = () => {
     );
 };
 
-ReactDOM.render(<HomePage />, document.getElementById('root'));
+createRoot(document.getElementById('root')).render(<HomePage />);

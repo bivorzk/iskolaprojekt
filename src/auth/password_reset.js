@@ -42,7 +42,7 @@
         console.log('=== PASSWORD RESET TOKEN GENERATED ===');
         console.log('Email:', email);
         console.log('Token:', token);
-        console.log('Reset URL: http://snaptray.onrender.com/password-reset/' + token);
+        console.log('Reset URL: ' + process.env.PRODUCTION_HOST + '/password-reset/' + token);
         console.log('======================================');
 
         console.log('=== EMAIL CONFIGURATION DEBUG ===');
@@ -60,7 +60,7 @@
             subject: 'Password Reset - SnapTray',
             text: 'Hi,\n\n' +
             'We received a request to reset your password for your SnapTray account. If you made this request, please click the link below to securely reset your password. This link will expire in 15 minutes for your security.\n\n' +
-            'Reset Password: http://snaptray.onrender.com/password-reset/' + token + '\n\n' +
+            'Reset Password: ' + process.env.PRODUCTION_HOST + '/password-reset/' + token + '\n\n' +
             'If you didn\'t request a password reset, please ignore this email. Your password will remain unchanged.\n\n' +
             'For your security, please don\'t share this email or the link with anyone.\n\n' +
             'Thank you,\n' +

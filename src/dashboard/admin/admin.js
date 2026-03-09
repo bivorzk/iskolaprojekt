@@ -307,7 +307,7 @@ router.get('/welcome-message', (req, res) => {
   }
 });
 
-router.get('/health', async (req, res) => {
+router.get('/health', cacheResult('system:health', 30), async (req, res) => {
   const healthResults = {
     overall: 'ok',
     timestamp: new Date().toISOString(),
@@ -419,9 +419,15 @@ router.get('/health', async (req, res) => {
   try {
     const cacheTestKey = `admin:health_test:${Date.now()}`;
     const testData = { test: 'data', timestamp: Date.now() };
-    
-    healthResults.services.caching = 'healthy';
-    healthResults.details.caching = 'Cache system operational';
+    await redisClient.setEx(cacheTestKey, 60, JSON.stringify(testData));
+    const retrieved = await redisClient.get(cacheTestKey);
+    if (retrieved) {
+      healthResults.services.caching = 'healthy';
+      healthResults.details.caching = 'Cache set/get operations working';
+      await redisClient.del(cacheTestKey);
+    } else {
+      throw new Error('Cache retrieval failed');
+    }
   } catch (error) {
     healthResults.services.caching = 'unhealthy';
     healthResults.details.caching = `Cache error: ${error.message}`;
