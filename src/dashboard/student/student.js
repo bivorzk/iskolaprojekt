@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 
 const { User } = require('../../../src/database');
 const { Payment, ParentStudent, Order, UserLoyalty, Reward, Redemption } = require('../../../config/database_queries');
-
+const { requireStudent } = require('../middleware/auth-middleware');
 // Import loyalty service
 const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-service');
 
@@ -53,18 +53,6 @@ async function rateLimit(req, res, next) {
   }
 }
 
-// Student permission middleware
-function requireStudent(req, res, next) {
-  if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
-  }
-  // Allow both students and admins to access student routes
-  if (req.session.user.usertype === 'student' || req.session.user.usertype === 'admin') {
-    next();
-  } else {
-    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
-  }
-}
 
 // Apply middleware to all student routes
 router.use('/', requireStudent);

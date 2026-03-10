@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const { User } = require('../../../src/database');
-const { Payment, MenuItems, Order, UserLoyalty } = require('../../../config/database_queries');
+const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption } = require('../../../config/database_queries');
+const { requireAdmin } = require('../middleware/auth-middleware');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
@@ -46,17 +47,6 @@ async function rateLimit(req, res, next) {
     console.log('Rate limiting failed, allowing request:', error.message);
     next(); // Allow request if rate limiting fails
   }
-}
-
-// Admin permission middleware
-function requireAdmin(req, res, next) {
-  if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
-  }
-  if (req.session.user.usertype !== 'admin') {
-    return res.status(403).sendFile(path.join(__dirname, '../../../public/no_perm/index.html'));
-  }
-  next();
 }
 
 // Apply middleware to all admin routes
@@ -265,6 +255,149 @@ router.get('/menuitem_export', cacheResult('admin:menuitem_export', 300), async 
   try {
     const menuItems = await MenuItems.find({});
     res.json(menuItems);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Reward Management Endpoints
+
+router.post(
+  '/create_reward',
+  [
+    body('name').trim().escape().isLength({ min: 1, max: 100 }),
+    body('description').optional().trim().escape().isLength({ max: 500 }),
+    body('category').isIn(['drink', 'fruit', 'dessert', 'meal', 'upgrade', 'mystery', 'token']),
+    body('pointCost').isInt({ min: 1 }),
+    body('marketValue').isFloat({ min: 0 }),
+    body('healthScore').optional().isInt({ min: 0, max: 100 }),
+    body('minTier').optional().isIn(['none', 'Bronze', 'Silver', 'Gold', 'Platinum']),
+    body('dailyStockLimit').optional().isInt({ min: 0 })
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const {
+        name,
+        description,
+        category,
+        pointCost,
+        marketValue,
+        healthScore,
+        minTier,
+        dailyStockLimit,
+        availableFrom,
+        availableUntil
+      } = req.body;
+
+      const reward = await Reward.create({
+        name,
+        description,
+        category,
+        pointCost,
+        marketValue,
+        healthScore: healthScore || 0,
+        minTier: minTier || 'none',
+        dailyStockLimit,
+        availableFrom: availableFrom ? new Date(availableFrom) : undefined,
+        availableUntil: availableUntil ? new Date(availableUntil) : undefined
+      });
+
+      invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
+
+      res.status(201).json({ message: 'Reward created successfully', reward });
+    } catch (error) {
+      console.error('Error creating reward:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+router.get('/rewards_list', cacheResult('admin:rewards_list', 300), async (req, res) => {
+  try {
+    const rewards = await Reward.find({});
+    res.status(200).json({ rewards });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.put('/reward/:id', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      category,
+      pointCost,
+      marketValue,
+      healthScore,
+      minTier,
+      dailyStockLimit,
+      isActive,
+      availableFrom,
+      availableUntil
+    } = req.body;
+
+    const updatedReward = await Reward.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        description,
+        category,
+        pointCost,
+        marketValue,
+        healthScore,
+        minTier,
+        dailyStockLimit,
+        isActive,
+        availableFrom: availableFrom ? new Date(availableFrom) : undefined,
+        availableUntil: availableUntil ? new Date(availableUntil) : undefined
+      },
+      { new: true }
+    );
+
+    if (!updatedReward) {
+      return res.status(404).json({ error: 'Reward not found' });
+    }
+
+    invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
+    res.status(200).json({ message: 'Reward updated successfully', reward: updatedReward });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+router.delete('/reward/:id', async (req, res) => {
+  try {
+    const deletedReward = await Reward.findByIdAndDelete(req.params.id);
+    if (!deletedReward) {
+      return res.status(404).json({ error: 'Reward not found' });
+    }
+
+    invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
+    res.json({ message: 'Reward deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/reward_stats', cacheResult('admin:reward_stats', 300), async (req, res) => {
+  try {
+    const totalRewards = await Reward.countDocuments({});
+    const activeRewards = await Reward.countDocuments({ isActive: true });
+    const totalRedemptions = await Redemption.countDocuments({});
+    const pendingRedemptions = await Redemption.countDocuments({ status: 'pending' });
+
+    res.status(200).json({
+      totalRewards,
+      activeRewards,
+      totalRedemptions,
+      pendingRedemptions
+    });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

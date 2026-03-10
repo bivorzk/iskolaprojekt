@@ -1,11 +1,8 @@
-const MobileAdminNav = ({ activeSection, setActiveSection }) => {
+const MobileEditorNav = ({ activeSection, setActiveSection }) => {
     const navItems = [
-        { id: 'users', label: 'Users', icon: '👥' },
         { id: 'stats', label: 'Stats', icon: '📊' },
         { id: 'menu-items', label: 'Menu', icon: '🍽️' },
-        { id: 'rewards', label: 'Rewards', icon: '🎁' },
-        { id: 'health', label: 'Health', icon: '🏥' },
-        { id: 'settings', label: 'Settings', icon: '⚙️' }
+        { id: 'rewards', label: 'Rewards', icon: '🎁' }
     ];
 
     return (
@@ -37,7 +34,7 @@ const MobileAdminNav = ({ activeSection, setActiveSection }) => {
                     </button>
                 ))}
             </nav>
-            
+
             {/* Quick Action Button */}
             <div className="absolute top-0 right-4 transform -translate-y-1/2">
                 <button

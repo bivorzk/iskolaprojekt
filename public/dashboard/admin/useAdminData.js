@@ -15,18 +15,20 @@ const useAdminData = () => {
     });
     const [users, setUsers] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
+    const [rewards, setRewards] = useState([]);
     const [signupData, setSignupData] = useState([]);
     const [welcomeMessage, setWelcomeMessage] = useState('Welcome, Admin');
     const [loading, setLoading] = useState(true);
 
     const loadDashboardData = async () => {
         try {
-            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes, activeUsersRes] = await Promise.all([
+            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, rewardsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes, activeUsersRes] = await Promise.all([
                 fetch('/dashboard/admin/usercount'),
                 fetch('/dashboard/admin/orders'),
                 fetch('/dashboard/admin/userlist'),
                 fetch('/dashboard/admin/signup-stats'),
                 fetch('/dashboard/admin/menulist'),
+                fetch('/dashboard/admin/rewards_list'),
                 fetch('/dashboard/admin/welcome-message'),
                 fetch('/dashboard/admin/stats/most_bought_items'),
                 fetch('/dashboard/admin/stats/most_bought_items-lastweek'),
@@ -43,6 +45,7 @@ const useAdminData = () => {
             if (!userListRes.ok) console.error('userlist failed:', userListRes.status);
             if (!signupStatsRes.ok) console.error('signup-stats failed:', signupStatsRes.status);
             if (!menuItemsRes.ok) console.error('menulist failed:', menuItemsRes.status);
+            if (!rewardsRes.ok) console.error('rewards_list failed:', rewardsRes.status);
             if (!welcomeRes.ok) console.error('welcome-message failed:', welcomeRes.status);
             if (!mostBoughtItemsRes.ok) console.error('most_bought_items failed:', mostBoughtItemsRes.status);
             if (!mostBoughtItemsLastWeekRes.ok) console.error('most_bought_items_lastweek failed:', mostBoughtItemsLastWeekRes.status);
@@ -52,12 +55,13 @@ const useAdminData = () => {
             if (!paymentStatsRes.ok) console.error('paymentstats failed:', paymentStatsRes.status);
             if (!activeUsersRes.ok) console.error('activeusers failed:', activeUsersRes.status);
             
-            const [userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers] = await Promise.all([
+            const [userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers] = await Promise.all([
                 userCountRes.json(),
                 ordersRes.json(),
                 userListRes.json(),
                 signupStatsRes.json(),
                 menuItemsRes.json(),
+                rewardsRes.json(),
                 welcomeRes.json(),
                 mostBoughtItemsRes.json(),
                 mostBoughtItemsLastWeekRes.json(),
@@ -68,7 +72,7 @@ const useAdminData = () => {
                 activeUsersRes.json()
             ]);
 
-            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers });
+            console.log('API responses:', { userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers });
             setStats({
                 totalUsers: userCount.total || '--',
                 activeSessions: '--', // This might need a separate endpoint
@@ -86,6 +90,7 @@ const useAdminData = () => {
             setUsers(userList.users || []);
             setSignupData(signupStats || []);
             setMenuItems(menuData.menuItems || []);
+            setRewards(rewardsData.rewards || []);
             setWelcomeMessage(welcome.message || 'Welcome, Admin');
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -116,6 +121,7 @@ const useAdminData = () => {
         stats,
         users,
         menuItems,
+        rewards,
         signupData,
         welcomeMessage,
         loading,

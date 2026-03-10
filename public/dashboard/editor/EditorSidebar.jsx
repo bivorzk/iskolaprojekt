@@ -1,19 +1,8 @@
-const AdminSidebar = ({ activeSection, setActiveSection }) => {
+const EditorSidebar = ({ activeSection, setActiveSection }) => {
     return (
         <aside className="hidden lg:block w-64 bg-white shadow-lg min-h-screen">
             <nav className="mt-8">
                 <div className="px-4 space-y-2">
-                    <button
-                        onClick={() => setActiveSection('users')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'users'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">👥</span>
-                        Users Management
-                    </button>
                     <button
                         onClick={() => setActiveSection('stats')}
                         className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
@@ -23,7 +12,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
                         }`}
                     >
                         <span className="mr-3 text-lg">📊</span>
-                        Analytics & Stats
+                        Statistics
                     </button>
                     <button
                         onClick={() => setActiveSection('menu-items')}
@@ -47,30 +36,8 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
                         <span className="mr-3 text-lg">🎁</span>
                         Reward Management
                     </button>
-                    <button
-                        onClick={() => setActiveSection('health')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'health'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">🏥</span>
-                        System Health
-                    </button>
-                    <button
-                        onClick={() => setActiveSection('settings')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                            activeSection === 'settings'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-gray-700 hover:bg-accent hover:text-primary'
-                        }`}
-                    >
-                        <span className="mr-3 text-lg">⚙️</span>
-                        System Settings
-                    </button>
                 </div>
-                
+
                 <div className="px-4 mt-8">
                     <div className="border-t border-gray-200 pt-4">
                         <a

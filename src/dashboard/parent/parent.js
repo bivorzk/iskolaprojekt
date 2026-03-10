@@ -10,15 +10,12 @@ const {requireParentAuth} = require('../middleware/auth-middleware');
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
 
-// Middleware to check if user is authenticated and is a parent
-
+// Apply auth middleware to all routes
+router.use('/',requireParentAuth);
 
 router.get('/', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/dashboard/parent/parent.html'));
 });
-
-// Apply auth middleware to all routes
-router.use('/',requireParentAuth);
 
 // Get list of students linked to the parent
 router.get('/studentlist', cacheResult((req) => `parent:studentlist:${req.session.user.id}`, 300), async (req, res) => {

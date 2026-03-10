@@ -1,42 +1,34 @@
 const path = require('path');
 
-
-
-function requireAdmin(req, res, next) {
+function checkAuth(req, res, next, allowedTypes) {
   if (!req.session.user || !req.session.user.IsLoggedIn) {
     return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
   }
-  if (req.session.user.usertype !== 'admin') {
+  if (!allowedTypes.includes(req.session.user.usertype)) {
     return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
   }
   next();
 }
 
+function requireAdmin(req, res, next) {
+  checkAuth(req, res, next, ['admin']);
+}
 
 function requireStudent(req, res, next) {
-  if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
-  }
-  // Allow both students and admins to access student routes
-  if (req.session.user.usertype === 'student' || req.session.user.usertype === 'admin') {
-    next();
-  } else {
-    return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
-  }
+  checkAuth(req, res, next, ['student', 'admin']);
+}
+
+function requireEditor(req, res, next) {
+  checkAuth(req, res, next, ['editor', 'admin']);
 }
 
 function requireParentAuth(req, res, next) {
-  if (!req.session.user || !req.session.user.IsLoggedIn) {
-    return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
-  }
-  if (req.session.user.usertype !== 'parent' && req.session.user.usertype !== 'admin') {
-    return res.sendFile(path.join(process.cwd(), 'public/no_perm/index.html'));
-  }
-  next();
+  checkAuth(req, res, next, ['parent', 'admin']);
 }
 
 module.exports = {
   requireAdmin,
   requireStudent,
-  requireParentAuth
+  requireParentAuth,
+  requireEditor
 };

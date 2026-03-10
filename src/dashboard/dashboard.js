@@ -6,11 +6,15 @@ const path = require('path');
 const adminRouter = require('./admin/admin');
 const studentRouter = require('./student/student');
 const parentRouter = require('./parent/parent');
+const editorRouter = require('./editor/editor');
 const statisticsRouter = require('./statistics/statistics');
 
 // Apply middleware to all /admin routes
 router.use('/admin', adminRouter);
 router.use('/admin', statisticsRouter);
+
+// Apply middleware to all /editor routes
+router.use('/editor', editorRouter);
 
 // Apply middleware to all /student routes
 router.use('/student', studentRouter);
