@@ -72,6 +72,9 @@ MenuItemsScheme.pre('save', function(next) {
     next();
 });
 
+MenuItemsScheme.index({ name: 1 });
+MenuItemsScheme.index({ price: 1 });
+MenuItemsScheme.index({ healthScore: 1 });
 MenuItemsScheme.index({ available: 1 });
 MenuItemsScheme.index({ stock: 1 });
 MenuItemsScheme.index({ category: 1 });
@@ -114,7 +117,8 @@ OrderScheme.pre('save', function(next) {
 });
 
 
-
+OrderScheme.index({ userId: 1, status: 1 });
+OrderScheme.index({ orderDate: -1, status: 1 });
 OrderScheme.index({ userId: 1 });
 OrderScheme.index({ status: 1 });
 OrderScheme.index({ orderDate: 1 });
@@ -140,6 +144,9 @@ const UserLoyaltyScheme = new mongoose.Schema({
     weekStartDate: { type: Date },
     monthlyPerksIssuedAt: { type: Date }
 });
+
+
+UserLoyaltyScheme.index({ userTier: 1 });
 
 // Add a static method for atomic point updates
 UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, pointsToAdd, reason) {
