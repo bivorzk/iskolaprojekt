@@ -75,6 +75,7 @@ MenuItemsScheme.pre('save', function(next) {
 MenuItemsScheme.index({ available: 1 });
 MenuItemsScheme.index({ stock: 1 });
 MenuItemsScheme.index({ category: 1 });
+MenuItemsScheme.index({ category: 1, available: 1 }); // compound: covers {category, available} queries
 MenuItemsScheme.index({ name: 1, available: 1 });
 
 // Order Item Schema
