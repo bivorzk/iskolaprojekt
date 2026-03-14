@@ -432,19 +432,21 @@ router.post('/order', validateOrderInput, async (req, res) => {
         // Calculate total amount from cart items
         let totalAmount = 0;
         const orderItems = [];
-        
+
         for (const item of cart) {
-            const menuItem = await MenuItems.findById(item.menuItemId);
+            // Atomically check stock availability
+            const menuItem = await MenuItems.findOneAndUpdate(
+                { _id: item.menuItemId, available: true, stock: { $gte: item.quantity } },
+                {}, // No update, just check condition
+                { new: true }
+            );
             if (!menuItem) {
-                return res.status(400).json({ error: `Menu item ${item.menuItemId} not found` });
+                return res.status(400).json({ error: `Menu item ${item.menuItemId} is not available or insufficient stock` });
             }
-            if (!menuItem.available || menuItem.stock < item.quantity) {
-                return res.status(400).json({ error: `Menu item ${menuItem.name} is not available or insufficient stock` });
-            }
-            
+
             const itemTotal = menuItem.price * item.quantity;
             totalAmount += itemTotal;
-            
+
             orderItems.push({
                 menuItemId: item.menuItemId,
                 quantity: item.quantity
@@ -465,7 +467,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
 
         // Create PayPal order
         const paypalOrder = await createPayPalOrder(cart, totalAmount);
-        
+
         // Update the order with PayPal order ID
         savedOrder.paypalOrderId = paypalOrder.jsonResponse.id;
         await savedOrder.save();
@@ -478,7 +480,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
                 'daily_menu:available'
             ]);
         }
-        
+
         // Log successful order creation
         await createSecurityLog({
             userId: req.session.user ? req.session.user.id : null,
@@ -500,7 +502,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
 
     } catch (error) {
         console.error('Error creating order:', error);
-        
+
         // Log security error
         try {
             await createSecurityLog({
@@ -513,7 +515,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
         } catch (logError) {
             console.error('Failed to log security event:', logError);
         }
-        
+
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -548,8 +550,8 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
             if (!menuItem) {
                 return res.status(400).json({ error: `Menu item ${item.menuItemId} not found` });
             }
-            if (!menuItem.available) {
-                return res.status(400).json({ error: `Menu item ${menuItem.name} is not available` });
+            if (!menuItem.available || menuItem.stock < item.quantity) {
+                return res.status(400).json({ error: `Menu item ${menuItem.name} is not available or insufficient stock` });
             }
 
             const itemTotal = menuItem.price * item.quantity;

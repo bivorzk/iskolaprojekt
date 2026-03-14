@@ -35,7 +35,9 @@ const MenuItemsSection = ({ menuItems, loadDashboardData }) => {
                 stock: parseInt(menuForm.stock) || 0,
                 price: parseFloat(menuForm.price) || 0,
                 category: menuForm.category,
-                allergens: menuForm.allergens ? menuForm.allergens.split(',').map(item => item.trim()) : [],
+                allergens: Array.isArray(menuForm.allergens) 
+                    ? menuForm.allergens 
+                    : (menuForm.allergens ? menuForm.allergens.split(',').map(item => item.trim()) : []),
                 nutritionalInfo: {
                     calories: parseInt(menuForm.calories) || 0,
                     protein: parseInt(menuForm.protein) || 0
@@ -91,7 +93,18 @@ const MenuItemsSection = ({ menuItems, loadDashboardData }) => {
     };
 
     const editMenuItem = (item) => {
-        setMenuForm(item);
+        setMenuForm({
+            id: item._id || item.id,
+            name: item.name,
+            description: item.description,
+            stock: item.stock,
+            price: item.price,
+            category: item.category,
+            allergens: Array.isArray(item.allergens) ? item.allergens.join(', ') : item.allergens || '',
+            calories: item.nutritionalInfo?.calories || item.calories || '',
+            protein: item.nutritionalInfo?.protein || item.protein || '',
+            healthScore: item.healthScore
+        });
     };
 
     const deleteMenuItem = async (id) => {

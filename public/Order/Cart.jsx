@@ -1,4 +1,4 @@
-const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange }) => {
+﻿const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange }) => {
     const [activeTab, setActiveTab] = React.useState('cart');
     const [loyaltyData, setLoyaltyData] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
@@ -114,7 +114,12 @@ const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyCh
                                                 <span className="w-8 text-center">{item.quantity}</span>
                                                 <button
                                                     onClick={() => onUpdateQuantity(item._id, item.quantity + 1)}
-                                                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                                                    disabled={item.quantity >= item.stock}
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                                        item.quantity >= item.stock
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                            : 'bg-gray-200 hover:bg-gray-300'
+                                                    }`}
                                                 >
                                                     +
                                                 </button>

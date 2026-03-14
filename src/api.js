@@ -113,33 +113,47 @@ router.post('/orders', validateOrderInput, async (req, res) => {
             message: 'An unexpected error occurred while processing your payment',
             timestamp: new Date().toISOString()
         };
-
-        if (error.message.includes('temporarily unavailable')) {
-            statusCode = 503;
-            errorResponse = {
-                error: 'Service Unavailable',
-                message: 'PayPal service is temporarily unavailable. Please try again in a few minutes.',
-                retryAfter: 60,
-                timestamp: new Date().toISOString()
-            };
-            res.set('Retry-After', '60');
-        } else if (error.message.includes('PayPal API Error')) {
-            statusCode = 502;
-            errorResponse = {
-                error: 'Bad Gateway',
-                message: 'There was an issue communicating with PayPal. Please try again.',
-                timestamp: new Date().toISOString()
-            };
-        } else if (error.message.includes('insufficient stock')) {
-            statusCode = 400;
-            errorResponse = {
-                error: 'Insufficient Stock',
-                message: error.message,
-                timestamp: new Date().toISOString()
-            };
+        
+        switch (true) {
+            case error.message.toLowerCase().includes('temporarily unavailable'):
+                statusCode = 503;
+                errorResponse = {
+                    error: 'Service Unavailable',
+                    message: 'PayPal service is temporarily unavailable. Please try again in a few minutes.',
+                    retryAfter: 60,
+                    timestamp: new Date().toISOString()
+                };
+                res.set('Retry-After', '60');
+                break;
+            case error.message.toLowerCase().includes('paypal api error'):
+                statusCode = 502;
+                errorResponse = {
+                    error: 'Bad Gateway',
+                    message: 'There was an issue communicating with PayPal. Please try again.',
+                    timestamp: new Date().toISOString()
+                };
+                break;
+            case error.message.toLowerCase().includes('insufficient stock'):
+                statusCode = 400;
+                errorResponse = {
+                    error: 'Insufficient Stock',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                break;
+            case error.message.toLowerCase().includes('currency not supported'):
+            case error.message.toLowerCase().includes('no valid items'):
+            case error.message.toLowerCase().includes('total does not match'):
+                statusCode = 400;
+                errorResponse = {
+                    error: 'Invalid Order',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                break;
         }
-
         res.status(statusCode).json(errorResponse);
+    
     }
 });
 
@@ -215,22 +229,24 @@ router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        if (error.message.includes('insufficient stock')) {
-            statusCode = 400;
-            errorResponse = {
-                error: 'Insufficient Stock',
-                message: error.message,
-                timestamp: new Date().toISOString()
-            };
-        } else if (error.message.includes('No valid items')) {
-            statusCode = 400;
-            errorResponse = {
-                error: 'Invalid Cart',
-                message: error.message,
-                timestamp: new Date().toISOString()
-            };
+        switch (true) {
+            case error.message.toLowerCase().includes('insufficient stock'):
+                statusCode = 400;
+                errorResponse = {
+                    error: 'Insufficient Stock',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                break;
+            case error.message.toLowerCase().includes('no valid items'):
+                statusCode = 400;
+                errorResponse = {
+                    error: 'Invalid Cart',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                break;
         }
-
         res.status(statusCode).json(errorResponse);
     }
 });
@@ -275,7 +291,7 @@ router.post('/orders/googlepay/complete', async (req, res) => {
         let statusCode = 500;
         let errorMessage = 'An unexpected error occurred while completing your payment';
 
-        if (error.message.includes('not found')) {
+        if (error.message.toLowerCase().includes('not found')) {
             statusCode = 404;
             errorMessage = error.message;
         }
@@ -329,23 +345,25 @@ router.post('/orders/:orderID/capture', async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        if (error.message.includes('temporarily unavailable')) {
-            statusCode = 503;
-            errorResponse = {
-                error: 'Service Unavailable',
-                message: 'PayPal service is temporarily unavailable. Please try again in a few minutes.',
-                retryAfter: 60,
-                timestamp: new Date().toISOString()
-            };
-            res.set('Retry-After', '60');
-        } else if (error.message.includes('PayPal API Error')) {
-            statusCode = 502;
-            errorResponse = {
-                error: 'Bad Gateway',
-                message: 'There was an issue communicating with PayPal. Please try again.',
-                timestamp: new Date().toISOString()
-            };
-        }
+
+        switch (true) {
+            case error.message.toLowerCase().includes('not found'):
+                statusCode = 404;
+                errorResponse = {
+                    error: 'Not Found',
+                    message: 'The specified order was not found. Please check your order ID and try again.',
+                    timestamp: new Date().toISOString()
+                };
+                break;
+            case error.message.toLowerCase().includes('already captured'):
+                statusCode = 400;
+                errorResponse = {
+                    error: 'Bad Request',
+                    message: 'This order has already been captured. Please check your order status.',
+                    timestamp: new Date().toISOString()
+                };
+                break;
+            }
 
         res.status(statusCode).json(errorResponse);
     }
@@ -386,17 +404,21 @@ router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
         let statusCode = 500;
         let errorMessage = 'Failed to process balance payment';
 
-        if (error.message.includes('not found')) {
-            statusCode = 401;
-            errorMessage = error.message;
-        } else if (error.message.includes('insufficient')) {
-            statusCode = 400;
-            errorMessage = error.message;
-        } else if (error.message.includes('Currency not supported') ||
-                   error.message.includes('No valid items') ||
-                   error.message.includes('total does not match')) {
-            statusCode = 400;
-            errorMessage = error.message;
+        switch (true) {
+            case error.message.toLowerCase().includes('not found'):
+                statusCode = 404;
+                errorMessage = error.message;
+                break;
+            case error.message.toLowerCase().includes('insufficient'):
+                statusCode = 400;
+                errorMessage = error.message;
+                break;
+            case error.message.toLowerCase().includes('currency not supported'):
+            case error.message.toLowerCase().includes('no valid items'):
+            case error.message.toLowerCase().includes('total does not match'):
+                statusCode = 400;
+                errorMessage = error.message;
+                break;
         }
 
         res.status(statusCode).json({
