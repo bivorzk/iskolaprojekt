@@ -1517,13 +1517,136 @@ The backend uses MongoDB as the primary database for storing user data, orders, 
 ## Caching Strategy
 The backend employs Redis as an in-memory data store to cache frequently accessed data, such as menu items and user sessions. This reduces database load and improves response times for read-heavy operations. Caching is implemented in `src/dashboard/services/cache-service.js` and used throughout the dashboard and API routes. Redis Lua scripting is used for atomic operations (rate limiting, wallet updates).
 
+- The project uses the following redis keys as seen in: `src/cache/KeyRegistry.js`
 
 
 
+```javascript
 
 
 
+const keyRegistry = {
 
+  /*
+  These are the keys that are in a MongoDB database collection (tables)
+  */
+
+  users: (userId) => [
+    `user:username:${userId}`,
+    `student:userinfo:${userId}`,
+    'admin:usercount',
+    'admin:userlist',
+    'admin:activeusers',
+    'admin:signup-stats',
+    'admin:stats',
+    'editor:usercount',
+    'editor:activeusers',
+  ],
+
+  menuitems: (itemName) => [
+    `menu_item:${itemName}`,
+    'admin:menulist',
+    'admin:itemcount',
+    'admin:stockalerts',
+    'admin:soldout',
+    'admin:menuitem_export',
+    'editor:menulist',
+    'editor:itemcount',
+  ],
+
+  dailymenus: () => [
+    'daily_menu:available',
+    'admin:menulist',
+    'editor:menulist',
+  ],
+
+  orders: (orderId) => [
+    `order:${orderId}`,
+    'admin:orders',
+    'editor:orders',
+    'admin:most_bought_items_alltime',
+    'admin:most_bought_items_lastweek',
+    'admin:average_order_value',
+  ],
+
+  orderitems: (userId) => [
+    `student:order_history:${userId}`,
+    `parent:orders:${userId}`,
+  ],
+
+  payments: (userId) => [
+    `student:transactions:${userId}`,
+    `parent:transactions:${userId}`,
+    'admin:paymentstats',
+    'admin:revenue_lastmonth',
+    'admin:total_revenue',
+    'admin:stats',
+  ],
+
+  userloyalties: (userId) => [
+    `student:loyalty:${userId}`,
+    `loyalty:rewards:${userId}`,
+    `wallet:user:${userId}`,
+    `student:wallet_balance:${userId}`,
+    `student:wallet:${userId}`,
+    'admin:totalpoints',
+    'editor:totalpoints',
+    `parent:stats:${userId}`,
+  ],
+
+  rewards: () => [
+    'admin:rewards_list',
+    'admin:reward_stats',
+    'editor:rewards_list',
+    'editor:reward_stats',
+  ],
+
+  redemptions: (userId) => [
+    `student:loyalty:${userId}`,
+    `loyalty:rewards:${userId}`,
+    'admin:reward_stats',
+    'editor:reward_stats',
+  ],
+
+  parentstudents: (userId) => [
+    `parent:studentlist:${userId}`,
+    `parent:welcome:${userId}`,
+    `parent:link-requests:${userId}`,
+    `parent:stats:${userId}`,
+  ],
+
+  prekeys: (userId) => [
+    `e2ee:pubkey:${userId}`,
+  ],
+    
+    // ———————————— Does not fit into any collection, but still requires caching —————————————————— //
+
+  verification: (email) => [
+    `verification:${email}`,
+  ],
+
+  loginAttempts: (ip) => [
+    `login_attempts:${ip}`,
+  ],
+
+  regAttempts: (ip) => [
+    `reg_attempts:${ip}`,
+  ],
+
+  rateLimit: (role, identifier) => [
+    `ratelimit:${role}:${identifier}`,
+  ],
+
+  chatRateLimit: (userId) => [
+    `rate_limit:user:${userId}`,
+  ],
+
+  system: () => [
+    'system:health',
+  ],
+
+};
+```
 
 
 

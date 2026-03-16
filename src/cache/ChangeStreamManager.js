@@ -33,7 +33,7 @@ async function resolveOrderItemsIds(doc) {
   }
 }
 
-// ─── Key Invalidation ─────────────────────────────────────────────────────────
+          // ─────── Key Invalidation ───────── 
 
 async function invalidateKeys(collectionName, ids) {
   if (!getCacheService().isRedisAvailable()) return;
@@ -59,7 +59,7 @@ async function invalidateKeys(collectionName, ids) {
   }
 }
 
-// ─── Change Event Handler ─────────────────────────────────────────────────────
+// ──────────── Change Event Handler ───────────────────
 
 function getDocument(change) {
   return change.fullDocument ?? { _id: change.documentKey?._id };
@@ -86,7 +86,7 @@ async function handleChange(collectionName, change) {
   }
 }
 
-// ─── Stream Lifecycle ─────────────────────────────────────────────────────────
+// ──────────── Stream Lifecycle ───────────────────────────────────────────────
 
 const activeStreams = new Map();
 
