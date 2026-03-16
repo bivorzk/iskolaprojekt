@@ -24,6 +24,7 @@ const redisLuaService = require('./services/redis-lua-service');
 const chatService = require('./services/chat-service');
 const geosecurityService = require('./services/Geosecurity-service');
 const cors = require('cors');
+const { startChangeStreams, stopChangeStreams } = require('./dashboard/services/cache-service');
 const {Server} = require('socket.io');
 
 
@@ -45,6 +46,17 @@ redisClient.on('connect', async () => {
     console.error('Failed to initialize Redis Lua service:', error);
   }
 });
+
+// Start MongoDB change streams once the connection is open
+const mongoose = require('mongoose');
+if (mongoose.connection.readyState === 1) {
+  startChangeStreams();
+} else {
+  mongoose.connection.once('open', startChangeStreams);
+}
+
+process.on('SIGTERM', stopChangeStreams);
+process.on('SIGINT',  stopChangeStreams);
 redisClient.on('error', (err) => {
   console.log('Redis Client Error in main.js', err);
   redisAvailable = false;

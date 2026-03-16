@@ -11,11 +11,7 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
-/**
- * Middleware to cache API responses
- * @param {string|function} cacheKey - Cache key or function that returns cache key
- * @param {number} ttl - Time to live in seconds
- */
+
 function cacheResult(cacheKey, ttl = 300) {
   return async (req, res, next) => {
     if (!isRedisAvailable()) {
@@ -54,10 +50,7 @@ function cacheResult(cacheKey, ttl = 300) {
   };
 }
 
-/**
- * Invalidate multiple cache keys
- * @param {string[]} keys - Array of cache keys to invalidate
- */
+
 async function invalidateCache(keys) {
   if (!isRedisAvailable() || !keys || keys.length === 0) {
     return;
@@ -70,11 +63,6 @@ async function invalidateCache(keys) {
   }
 }
 
-/**
- * Get cached value
- * @param {string} key - Cache key
- * @returns {Promise<any|null>} - Cached value or null
- */
 async function getCached(key) {
   if (!isRedisAvailable()) {
     return null;
@@ -89,12 +77,6 @@ async function getCached(key) {
   }
 }
 
-/**
- * Set cached value
- * @param {string} key - Cache key
- * @param {any} value - Value to cache
- * @param {number} ttl - Time to live in seconds
- */
 async function setCached(key, value, ttl = 300) {
   if (!isRedisAvailable()) {
     return;
@@ -107,10 +89,14 @@ async function setCached(key, value, ttl = 300) {
   }
 }
 
+const { startChangeStreams, stopChangeStreams } = require('../../cache/ChangeStreamManager');
+
 module.exports = {
   cacheResult,
   invalidateCache,
   getCached,
   setCached,
-  isRedisAvailable
+  isRedisAvailable,
+  startChangeStreams,
+  stopChangeStreams,
 };

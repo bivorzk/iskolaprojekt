@@ -115,7 +115,7 @@ router.get('/activeusers', cacheResult('editor:activeusers', 300), async (req, r
 router.post(
   '/create_menuitem',
   [
-    body('id').trim().notEmpty(),
+    body('id').optional().trim().notEmpty(),
     body('name').trim().escape().isLength({ min: 1, max: 100 }),
     body('description').trim().escape().isLength({ max: 500 }),
     body('stock').isInt({ min: 0 }).toInt(),
@@ -144,8 +144,7 @@ router.post(
         healthScore
       } = req.body;
 
-      await MenuItems.create({
-        _id: id,
+      const menuItemData = {
         name,
         description,
         stock,
@@ -154,7 +153,14 @@ router.post(
         allergens,
         nutritionalInfo,
         healthScore
-      });
+      };
+
+      // Only set _id if id is provided
+      if (id) {
+        menuItemData._id = id;
+      }
+
+      await MenuItems.create(menuItemData);
 
       invalidateCache([
         'editor:menulist',
