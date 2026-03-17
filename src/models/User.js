@@ -73,6 +73,11 @@ const userSchema = new mongoose.Schema({
       default: ''
     }
   },
+  lastActive : {
+    type: Date,
+    default: Date.now
+  }
+  ,
   userPersonalInfo: [userPersonalInfoSchema], // Subdocument for personal info
   
   // ── V2 E2EE identity (ECDH P-256) ────────────────────────────────────────

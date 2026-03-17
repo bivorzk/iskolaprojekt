@@ -75,7 +75,7 @@ const useAdminData = () => {
             console.log('API responses:', { userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers });
             setStats({
                 totalUsers: userCount.total || '--',
-                activeSessions: '--', // This might need a separate endpoint
+                activeSessions: activeUsers.activeUsers || '--', 
                 ordersMade: orders.total || '--',
                 totalMenuItems: menuData.menuItems ? menuData.menuItems.length : '--',
                 paymentStats: paymentStatsData.totalAmount || '--',
@@ -83,8 +83,7 @@ const useAdminData = () => {
                 mostBoughtItemsLastWeek: mostBoughtItemsLastWeek || [],
                 revenueLastMonth: revenueLastMonth || '--',
                 averageOrderValue: averageOrderValue || '--',
-                totalRevenue: totalRevenue || '--',
-                activeUsers: activeUsers.activeUsers || '--'
+                totalRevenue: totalRevenue || '--'
             });
 
             setUsers(userList.users || []);

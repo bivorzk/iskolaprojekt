@@ -28,7 +28,7 @@ const AdminDashboard = () => {
 
                 {/* Main Content */}
                 <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
-                    {activeSection === 'users' && <UsersSection users={users} />}
+                    {activeSection === 'users' && <UsersSection users={users} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'stats' && <StatsSection stats={stats} signupData={signupData} />}
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'rewards' && <RewardsSection rewards={rewards} loadDashboardData={loadDashboardData} />}

@@ -71,12 +71,86 @@ router.get('/usercount', cacheResult('admin:usercount', 300), async (req, res) =
 
 router.get('/userlist', cacheResult('admin:userlist', 300), async (req, res) => {
   try {
-    const users = await User.find({}, 'username email usertype createdAt');
+    const users = await User.find({}, 'username email usertype createdAt isBanned isVerified balance lastActive');
     res.status(202).json({ users });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+router.get('/user/:id', async (req, res) => {
+  try {
+    if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    const user = await User.findById(req.params.id, 'username email usertype createdAt isBanned isVerified balance lastActive');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.patch('/user/:id/ban',
+  [
+    body('isBanned').isBoolean(),
+    body('banReason').optional().trim().escape().isLength({ max: 300 })
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    try {
+      if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      const target = await User.findById(req.params.id, 'usertype');
+      if (!target) return res.status(404).json({ error: 'User not found' });
+      if (target.usertype === 'admin') {
+        return res.status(403).json({ error: 'Cannot ban another admin' });
+      }
+      const updated = await User.findByIdAndUpdate(
+        req.params.id,
+        { isBanned: req.body.isBanned },
+        { new: true, select: 'username email usertype isBanned' }
+      );
+      invalidateCache(['admin:userlist']);
+      res.status(200).json({ message: `User ${req.body.isBanned ? 'banned' : 'unbanned'} successfully`, user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+router.patch('/user/:id/role',
+  [
+    body('usertype').isIn(['student', 'parent', 'teacher', 'frozen', 'editor'])
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    try {
+      if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      const target = await User.findById(req.params.id, 'usertype');
+      if (!target) return res.status(404).json({ error: 'User not found' });
+      if (target.usertype === 'admin') {
+        return res.status(403).json({ error: 'Cannot change role of another admin' });
+      }
+      const updated = await User.findByIdAndUpdate(
+        req.params.id,
+        { usertype: req.body.usertype },
+        { new: true, select: 'username email usertype isBanned' }
+      );
+      invalidateCache(['admin:userlist']);
+      res.status(200).json({ message: 'Role updated successfully', user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
 
 router.get('/orders', cacheResult('admin:orders', 300), async (req, res) => {
   try {

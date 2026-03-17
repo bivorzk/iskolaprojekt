@@ -127,6 +127,9 @@ router.post('/login', async (req, res) => {
       });
     }
     
+    // Update last active timestamp
+    await User.findByIdAndUpdate(user._id, { lastActive: Date.now() });
+
     // Set up user session
     req.session.user = {
       id: user.id,
