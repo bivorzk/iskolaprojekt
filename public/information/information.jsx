@@ -9,6 +9,9 @@ const ItemInformation = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [cartMessage, setCartMessage] = useState('');
+
+    const { addToCart } = useCart();
 
     useEffect(() => {
         loadItemInformation();
@@ -274,14 +277,20 @@ const ItemInformation = () => {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        // Future: Add to cart functionality
-                                        alert('Add to cart functionality coming soon!');
+                                        addToCart(item);
+                                        setCartMessage('Added to cart!');
+                                        setTimeout(() => setCartMessage(''), 3000);
                                     }}
                                     className="flex-1 bg-secondary text-white py-3 px-6 rounded-lg hover:bg-primary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors font-medium text-lg"
                                 >
                                     Add to Cart
                                 </button>
                             </div>
+                            {cartMessage && (
+                                <div className="mt-3 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg text-center font-medium">
+                                    {cartMessage}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
