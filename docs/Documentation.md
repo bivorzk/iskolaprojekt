@@ -277,7 +277,45 @@ section {
         - [5.3.4.1 reCAPTCHA Verification](#5341-recaptcha-verification)
       - [5.3.5 Algorithm Selection Rationale](#535-algorithm-selection-rationale)
     - [5.4 Security Design](#54)
+      - [5.4.1 Security Features](#541-security-features)
+      - [5.4.2 Security Policies](#542-security-policies)
+      - [5.4.3 In depth Security Measures](#543-in-depth-security-measures)
+      - [5.4.4 Security Testing and Validation](#544-security-testing-and-validation)
   - [6. Implementation](#6-implementation)
+    - [6.1 Directory Structure](#61-directory-structure)
+    - [6.2 Backend Implementation](#62-backend-implementation)
+      - [6.2.1 Technology Stack](#621-technology-stack)
+      - [6.2.3 Main Application Structure](#623-main-application-structure)
+      - [6.2.4 Authentication & Security](#624-authentication--security)
+      - [6.2.5 Order & Payment Processing](#625-order--payment-processing)
+      - [6.2.6 Caching & Performance](#626-caching--performance)
+      - [6.2.7 Loyalty System](#627-loyalty-system)
+      - [6.2.8 Rate Limiting (Advanced)](#628-rate-limiting-advanced)
+      - [6.2.9 Extensibility & Maintainability](#629-extensibility--maintainability)
+        - [6.2.9.1 Modular Architecture and Separation of Concerns](#6291-modular-architecture-and-separation-of-concerns)
+        - [6.2.9.2 Configuration Management and Environment Handling](#6292-configuration-management-and-environment-handling)
+        - [6.2.9.3 Error Handling and Resilience](#6293-error-handling-and-resilience)
+        - [6.2.9.4 Logging and Monitoring](#6294-logging-and-monitoring)
+        - [6.2.9.5 Testing and Quality Assurance](#6295-testing-and-quality-assurance)
+        - [6.2.9.6 Code Quality and Development Practices](#6296-code-quality-and-development-practices)
+        - [6.2.9.7 Scalability Considerations](#6297-scalability-considerations)
+        - [6.2.9.8 Future Extensibility](#6298-future-extensibility)
+        - [6.2.9.9 Maintenance Procedures](#6299-maintenance-procedures)
+    - [6.3 Frontend Implementation](#63-frontend-implementation)
+      - [6.3.1 Technology Stack](#631-technology-stack)
+      - [6.3.2 Application Architecture](#632-application-architecture)
+      - [6.3.3 Component Structure](#633-component-structure)
+      - [6.3.4 State Management](#634-state-management)
+      - [6.3.5 Routing and Navigation](#635-routing-and-navigation)
+      - [6.3.6 API Integration Layer](#636-api-integration-layer)
+      - [6.3.7 UI/UX Design Implementation](#637-uiux-design-implementation)
+      - [6.3.8 Form Handling and Validation](#638-form-handling-and-validation)
+      - [6.3.9 Authentication Handling (Frontend)](#639-authentication-handling-frontend)
+      - [6.3.10 Performance Optimization](#6310-performance-optimization)
+      - [6.3.11 Error Handling and User Feedback](#6311-error-handling-and-user-feedback)
+      - [6.3.12 Accessibility (Optional but strong)](#6312-accessibility-optional-but-strong)
+      - [6.3.13 Responsiveness (Mobile/Desktop)](#6313-responsiveness-mobile-desktop)
+  - [Router Modules and API Endpoints](#router-modules-and-api-endpoints)
   - [7. Testing and Validation](#7-testing-and-validation)
   - [8. User Manual](#8-user-manual)
   - [9. Deployment and Maintenance](#9-deployment-and-maintenance)
@@ -539,28 +577,9 @@ Kapcsolatok:
 - StorageBlob 1:1 User (per blobType és partitionKey).
 - DeviceSyncSession: önálló, nem kapcsolódik más entitáshoz.
 
-##### Példa: DailyMenu és MenuItems kapcsolata (dbdiagram.io stílusban)
+##### Példa: DailyMenu és MenuItems kapcsolata
 
-```dbml
-Table DailyMenu {
-  _id objectid [pk]
-  date date
-  schoolPeriod varchar
-  createdAt datetime
-}
-
-Table MenuItems {
-  _id objectid [pk]
-  name varchar
-  // ...további mezők
-}
-
-Table DailyMenuMenuItems {
-  dailyMenuId objectid [ref: > DailyMenu._id]
-  menuItemId objectid [ref: > MenuItems._id]
-  // Composite PK: [dailyMenuId, menuItemId]
-}
-```
+![Daily Menu és menuitems kapcsolata](menuitemsanddailymenu.png)
 
 ##### DeviceSyncSession
 Ez a tábla önálló, nem kapcsolódik más entitáshoz, csak eszköz-azonosítókat és titkosított adatokat tárol. Ez teljesen rendben van, mivel ephemerális, session típusú adatokat kezel.
@@ -1044,42 +1063,33 @@ The algorithms are chosen to balance security, performance, maintainability, and
 ### 6.1 Directory Structure
 
 ```
-├── .env
-├── .git/
-├── .gitattributes
-├── .github/
-├── .gitignore
-├── .idea/
-├── .vscode/
-├── code_analytics.json         # Code analytics data
-├── config/                     # Configuration files
+├── code_analytics.json
+├── package.json
+├── postcss.config.js
+├── readme.md
+├── tailwind.config.js
+├── todo.md
+├── config/
 │   ├── DATABASE_CONSTANTS.JS
 │   ├── database_queries.js
 │   └── hu.json
-├── data/                       # Data files
+├── data/
 │   ├── disposable_email_list.json
 │   ├── Most_used_passwords.json
 │   ├── password_characters.json
-│   └── database_test/          # Test database files
+│   └── database_test/
 │       ├── Food_Items.json
 │       └── menu_items.json
-├── docs/                       # Documentation
-│   ├── database.png
+├── docs/
+│   ├── a.md
 │   ├── DatabaseDoc.md
-│   ├── DatabaseDoc.pdf
 │   ├── Documentation.html
 │   ├── Documentation.md
-│   ├── Documentation.pdf
+│   ├── E2EE_Chat_README.md
 │   ├── Paypal_TestDetails.txt
-│   ├── RedisLua_README.md
-│   ├── snaptraySTACK.png
-│   └── sourcefor_security_checks.txt
-├── node_modules/
-├── package-lock.json
-├── package.json                # Node.js dependencies and scripts
-├── postcss.config.js           # PostCSS configuration
-├── public/                     # Static files served to client (Frontend)
-│   ├── favicon.ico
+│   ├── sourcefor_security_checks.txt
+│   └── TODO.md
+├── public/
 │   ├── googlepay.js
 │   ├── index.html
 │   ├── password_reset.html
@@ -1087,57 +1097,112 @@ The algorithms are chosen to balance security, performance, maintainability, and
 │   ├── paypal.js
 │   ├── register.html
 │   ├── verify.html
-│   ├── 404/                    # 404 error pages
+│   ├── 404/
 │   │   ├── 404.html
 │   │   └── 404.jsx
-│   ├── 429/                    # 429 error pages
+│   ├── 429/
 │   │   ├── 429.html
 │   │   └── 429.jsx
-│   ├── chat/                   # Chat frontend
-│   ├── dashboard/              # Dashboard pages
+│   ├── chat/
+│   │   ├── chat-styles.css
+│   │   ├── chat.jsx
+│   │   ├── index.html
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── config/
+│   │   └── utils/
+│   ├── css/
+│   │   └── mobile-enhancements.css
+│   ├── dashboard/
+│   │   ├── TODO.txt
 │   │   ├── admin/
+│   │   ├── editor/
 │   │   ├── parent/
 │   │   └── student/
 │   ├── home_page/
+│   │   ├── home_page.html
+│   │   └── home_page.jsx
 │   ├── information/
+│   │   ├── index.html
+│   │   └── information.jsx
+│   ├── js/
+│   │   ├── e2ee-crypto.js
+│   │   └── mobile-utils.js
 │   ├── no_perm/
-│   └── order/
-├── readme.md                   # Project documentation
-├── src/                        # Server-side source code (backend)
-│   ├── admin/
+│   │   ├── index.html
+│   │   └── no_perm.jsx
+│   └── Order/
+│       ├── Cart.jsx
+│       ├── Header.jsx
+│       ├── index.html
+│       ├── LoyaltyStatus.jsx
+│       ├── MenuItem.jsx
+│       ├── MobileCart.jsx
+│       ├── MobileToast.jsx
+│       ├── notifications.js
+│       ├── order.jsx
+│       ├── paymentHandlers.js
+│       ├── useCart.js
+│       └── useMobileCart.js
+├── src/
 │   ├── api.js
-│   ├── auth/
-│   ├── chapta.js
-│   ├── dashboard/
 │   ├── database.js
-│   ├── examples/
 │   ├── logout.js
-│   ├── LoyaltySystem/
 │   ├── main.js
-│   ├── middleware/
-│   ├── models/
-│   ├── Orders/
-│   ├── payments/
 │   ├── redis-lua.js
 │   ├── redis.js
 │   ├── Register.jsx
 │   ├── script-loader.js
+│   ├── verificationStore.js
+│   ├── auth/
+│   │   ├── 2fa.js
+│   │   ├── email_verification.js
+│   │   ├── index.js
+│   │   ├── login.js
+│   │   ├── middleware.js
+│   │   ├── password_reset.js
+│   │   ├── passwordhash.js
+│   │   ├── register.js
+│   │   │   ├── security.js
+│   │   └── validation.js
+│   ├── cache/
+│   │   ├── ChangeStreamManager.js
+│   │   └── KeyRegistry.js
+│   ├── dashboard/
+│   │   ├── dashboard.js
+│   │   ├── admin/
+│   │   ├── editor/
+│   │   ├── middleware/
+│   │   ├── parent/
+│   │   ├── services/
+│   │   ├── statistics/
+│   │   └── student/
+│   ├── examples/
+│   │   └── lua-demo.js
+│   ├── locationRiskAnalyzer/
+│   │   └── locationRiskAnalyzer.js
+│   ├── LoyaltySystem/
+│   │   └── loyalty-service.js
+│   ├── middleware/
+│   │   └── ...
+│   ├── models/
+│   │   └── ...
+│   ├── Orders/
+│   ├── payments/
 │   ├── scripts/
-│   ├── services/
-│   └── verificationStore.js
-├── tailwind.config.js          # Tailwind CSS configuration
-└── tests/                      # Test files
-  ├── code_analytic.py
-  ├── code_analytics.json
-  ├── creating_test_users.js
-  ├── database_testing.js
-  ├── fake_data.py
-  ├── menu_items.json
-  ├── Paypal_TestConfig.txt
-  ├── query_security_logs.js
-  ├── register_testing.py
-  ├── Jest/
-  └── performance_tests/
+│   └── services/
+└── tests/
+    ├── code_analytic.py
+    ├── code_analytics.json
+    ├── creating_test_users.js
+    ├── database_testing.js
+    ├── fake_data.py
+    ├── menu_items.json
+    ├── Paypal_TestConfig.txt
+    ├── query_security_logs.js
+    ├── register_testing.py
+    ├── seed_rewards.js
+    └── performance_tests/
 ```
 
 ### 6.2 Backend Implementation
@@ -1162,25 +1227,57 @@ The SnapTray backend is built for scalability, security, and maintainability. Th
 - **Database Models**: Defined with Mongoose (see `src/models/`).
 - **Services**: Business logic (loyalty, caching, Redis Lua, payments, etc.).
 
-Example: Express app setup and rate limiting (src/main.js)
+Example: Express app setup and initialization (src/main.js)
 ```javascript
 const express = require('express');
 const app = express();
-const rateLimit = require('express-rate-limit');
-const { RedisStore } = require('rate-limit-redis');
-const redisClient = require('./redis').redisClient;
 
-const limiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 250,
-  store: new RedisStore({
-    sendCommand: async (command, ...args) => await redisClient.sendCommand([command, ...args]),
-  }),
-  handler: (req, res) => {
-    res.status(429).sendFile('public/429/429.html');
-  },
+// Trust proxy for correct IP extraction
+app.set('trust proxy', 1);
+
+const rateLimit = require('express-rate-limit');
+const session = require('express-session'); 
+const database = require('./database');
+const path = require('path');
+const emailverification = require('./auth/email_verification');
+const api = require('./api');
+const { RedisStore } = require('rate-limit-redis');
+const favicon = require('serve-favicon');
+const googlepayRouter = require('./payments/googlepay');
+const paypalRouter = require('./payments/paypal');
+const password_reset = require('./auth/password_reset');
+const database_queries = require('../config/database_queries');
+const TwoFA = require('./auth/2fa');
+const dashboardRouter = require('./dashboard/dashboard');
+const logoutRouter = require('./logout');
+const Order = require('./Orders/Order');
+const redisLuaService = require('./services/redis-lua-service');
+const chatService = require('./services/chat-service');
+const geosecurityService = require('./services/Geosecurity-service');
+const cors = require('cors');
+const { startChangeStreams, stopChangeStreams } = require('./dashboard/services/cache-service');
+const {Server} = require('socket.io');
+
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const port = process.env.PORT;
+
+let redisAvailable = false;
+const { redisClient, isRedisAvailable } = require('./redis');
+
+redisClient.on('connect', async () => {
+  console.log('Redis connected in main.js');
+  redisAvailable = true;
+
+  // Initialize Redis Lua service
+  try {
+    await redisLuaService.initialize();
+  } catch (error) {
+    console.error('Failed to initialize Redis Lua service:', error);
+  }
 });
-app.use('/api', limiter);
+
+// Start MongoDB change streams once the connection is open
 ```
 
 ---
@@ -1194,12 +1291,67 @@ app.use('/api', limiter);
 Example registration route (src/auth/register.js):
 ```javascript
 router.post('/register', async (req, res) => {
-  // ...validation, rate limiting, captcha...
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User({ username, password: hashedPassword, email });
-  await user.save();
-  // ...send verification email...
-  res.status(200).json({ message: 'Registration successful!' });
+  try {
+    const { username, password, email } = req.body;
+    const clientIp = req.clientIp || req.ip || 'unknown';
+
+    // Rate limiting
+    if (isRedisAvailable) {
+      const rateLimitKey = `reg_attempts:${clientIp}`;
+      const attempts = await redisClient.get(rateLimitKey);
+      const attemptCount = attempts ? parseInt(attempts) : 0;
+      
+      if (attemptCount >= 5) {
+        return res.status(429).send('Too many registration attempts. Please try again later.');
+      }
+      
+      await redisClient.setEx(rateLimitKey, 3600, (attemptCount + 1).toString());
+    }
+
+    // reCAPTCHA verification
+    const captchaResponse = req.body['g-recaptcha-response'];
+    const captchaResult = await verifyCaptcha(captchaResponse, secretKey);
+    if (!captchaResult.success) {
+      return res.status(400).json({ error: captchaResult.error, details: captchaResult.details });
+    }
+
+    // Validation
+    const usernameError = validateUsername(username, password);
+    if (usernameError) return res.status(400).send(usernameError);
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return res.status(400).send(passwordError);
+
+    const emailError = validateEmail(email);
+    if (emailError) return res.status(400).send(emailError);
+
+    // Check existing users
+    const existingUser = await User.findOne({ username });
+    const existingEmail = await User.findOne({ email });
+    
+    let shouldCreateUser = !existingUser && !existingEmail;
+    let shouldSendEmail = shouldCreateUser || (existingEmail && !existingEmail.isVerified);
+
+    // Send verification email
+    if (shouldSendEmail) {
+      const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+      await setVerificationCode(email, verificationCode);
+      await sendVerificationEmail.sendVerificationEmail(email, verificationCode);
+    }
+
+    // Create user if not exists
+    if (shouldCreateUser) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = new User({ username, password: hashedPassword, email });
+      await user.save();
+      await createSecurityLog('USER_REGISTER', { username, email }, clientIp);
+    }
+
+    res.status(200).json({ message: 'Registration successful! Please check your email for verification.' });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 ```
 
@@ -1297,22 +1449,274 @@ return {1, current_count + 1}
 
 #### 6.2.9 Extensibility & Maintainability
 
-- Modular folder structure: `src/auth/`, `src/dashboard/`, `src/services/`, etc.
-- All critical operations are logged.
-- Admin routes protected by middleware and advanced rate limiting.
+The SnapTray backend is designed with extensibility and maintainability as core principles, ensuring the system can evolve with changing requirements while remaining easy to understand, modify, and scale. This section details the architectural decisions, patterns, and practices that support long-term software sustainability.
+
+##### 6.2.9.1 Modular Architecture and Separation of Concerns
+
+The backend follows a modular architecture that separates concerns into distinct layers and modules, promoting high cohesion within modules and loose coupling between them. This design allows for independent development, testing, and deployment of components.
+
+- **Layered Architecture**: The system is organized into presentation (routes), business logic (services), data access (models), and infrastructure (middleware, utilities) layers. This separation enables changes in one layer without affecting others.
+  
+- **Module Organization**: Code is structured into logical modules (e.g., `src/auth/`, `src/dashboard/`, `src/services/`, `src/payments/`), each responsible for a specific domain. This organization facilitates:
+  - Easier navigation and understanding of the codebase
+  - Parallel development by multiple team members
+  - Selective testing and deployment of features
+
+- **Service-Oriented Design**: Business logic is encapsulated in service modules (e.g., `loyalty-service.js`, `paypal-service.js`), which provide clean APIs for controllers. This abstraction allows for:
+  - Reusable business logic across different endpoints
+  - Easier unit testing of individual services
+  - Potential future migration to microservices
+
+Example service structure (src/services/order-service.js):
+```javascript
+class OrderService {
+  async validateOrderStock(cart) {
+    // Validate inventory levels
+    for (const item of cart) {
+      const menuItem = await MenuItems.findById(item.id);
+      if (!menuItem || menuItem.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${menuItem.name}`);
+      }
+    }
+  }
+
+  async convertCartToDbFormat(cart) {
+    // Convert frontend cart format to database format
+    const dbOrderItems = [];
+    let totalAmount = 0;
+    for (const item of cart) {
+      const menuItem = await MenuItems.findById(item.id);
+      dbOrderItems.push({
+        menuItem: item.id,
+        quantity: item.quantity,
+        price: menuItem.price
+      });
+      totalAmount += menuItem.price * item.quantity;
+    }
+    return { dbOrderItems, totalAmount };
+  }
+
+  async createOrderRecord(userId, dbOrderItems, totalAmount, paypalOrderId) {
+    // Create order record in database
+    const newOrder = new Order({
+      user: userId,
+      items: dbOrderItems,
+      totalAmount,
+      paypalOrderId,
+      status: 'pending'
+    });
+    return await newOrder.save();
+  }
+}
+
+module.exports = new OrderService();
+```
+
+##### 6.2.9.2 Configuration Management and Environment Handling
+
+The system uses environment-based configuration to support multiple deployment environments (development, staging, production) without code changes.
+
+- **Environment Variables**: Sensitive data (database credentials, API keys, JWT secrets) are stored in environment variables, loaded via `dotenv`. This approach:
+  - Prevents hardcoding of secrets in source code
+  - Enables different configurations per environment
+  - Supports secure deployment practices
+
+- **Configuration Modules**: Centralized configuration in modules like `config/database_queries.js` and `config/DATABASE_CONSTANTS.JS` allows for easy tuning of system parameters.
+
+Example environment configuration:
+```javascript
+// .env file structure
+MONGODB_URI=example
+DB_NAME=example
+PORT=300 // example port
+
+# Recaptcha configuration
+Client_Side_Captha=example
+Server_Side_Captha=example
+
+SENDGRID_API_KEY=SG.example.com
+# Email configuration
+EMAIL_USER=example@example.com
+EMAIL_PASS=examplePassword1;
+SMTP_HOST=example
+SMTP_PORT=464 // example
+
+PAYPAL_CLIENT_ID=example
+PAYPAL_CLIENT_SECRET=example
+
+IP_HASH_SECRET=examplehash
+JWT_SECRET=examplehash
+JWT_EMAIL_SECRET=examplehash
+JWT_LOGIN_SECRET=examplehash
+SESSION_SECRET=examplehash
+ARTILLERY_API_KEY=examplehash
+
+REDIS_HOST=127.0.0.1:6379 //example
+
+GEOIP=exampleAPI_key
+```
+
+##### 6.2.9.3 Error Handling and Resilience
+
+Comprehensive error handling ensures system stability and provides meaningful feedback to users and developers.
+
+- **Centralized Error Handling**: Express error middleware catches and processes errors uniformly, logging details while exposing safe messages to clients.
+
+- **Graceful Degradation**: The system continues operating even when non-critical components fail (e.g., Redis unavailability falls back to database-only operations).
+
+- **Retry Mechanisms**: Critical operations (e.g., payment processing) include retry logic with exponential backoff.
+
+Example error handling middleware:
+```javascript
+// src/middleware/errorHandler.js
+const errorHandler = (err, req, res, next) => {
+  console.error('Error:', err);
+
+  // Log security-related errors
+  if (err.name === 'ValidationError' || err.name === 'CastError') {
+    createSecurityLog('VALIDATION_ERROR', { error: err.message, path: req.path }, req.ip);
+  }
+
+  // Determine error response
+  let statusCode = 500;
+  let message = 'Internal server error';
+
+  if (err.name === 'ValidationError') {
+    statusCode = 400;
+    message = 'Invalid input data';
+  } else if (err.message.includes('Insufficient stock')) {
+    statusCode = 409;
+    message = err.message;
+  }
+
+  res.status(statusCode).json({
+    error: message,
+    timestamp: new Date().toISOString()
+  });
+};
+
+module.exports = errorHandler;
+```
+
+##### 6.2.9.4 Logging and Monitoring
+
+Comprehensive logging supports debugging, auditing, and monitoring system health.
+
+- **Structured Logging**: All critical operations are logged with consistent formats, including user actions, errors, and performance metrics.
+
+- **Security Logging**: Sensitive operations (authentication, payments) are logged to the SecurityLogs collection for audit trails.
+
+- **Performance Monitoring**: Response times and error rates are tracked to identify bottlenecks.
+
+Example logging in authentication:
+```javascript
+// src/auth/login.js
+const loginAttempt = await User.findOne({ username });
+if (!loginAttempt) {
+  await createSecurityLog('LOGIN_FAILED', { username, reason: 'User not found' }, clientIp);
+  return res.status(401).json({ error: 'Invalid credentials' });
+}
+
+// Successful login
+await createSecurityLog('LOGIN_SUCCESS', { userId: loginAttempt._id, username }, clientIp);
+```
+
+##### 6.2.9.5 Testing and Quality Assurance
+
+The system includes automated testing to ensure reliability and facilitate maintenance.
+
+- **Unit Testing**: Individual functions and modules are tested in isolation using Jest or Mocha.
+
+- **Integration Testing**: API endpoints and database interactions are tested end-to-end.
+
+- **Security Testing**: Automated tests validate authentication flows, input sanitization, and rate limiting.
+
+- **Performance Testing**: Load testing with Artillery ensures the system handles expected traffic.
+
+Example unit test (tests/auth.test.js):
+```javascript
+const request = require('supertest');
+const app = require('../src/main');
+
+describe('Authentication', () => {
+  test('should register a new user', async () => {
+    const response = await request(app)
+      .post('/register')
+      .send({
+        username: 'testuser',
+        password: 'TestPass123!',
+        email: 'test@example.com',
+        'g-recaptcha-response': 'mock-captcha-token'
+      });
+    
+    expect(response.status).toBe(200);
+    expect(response.body.message).toContain('Registration successful');
+  });
+});
+```
+
+##### 6.2.9.6 Code Quality and Development Practices
+
+Maintaining code quality ensures long-term maintainability.
+
+- **Linting and Formatting**: ESLint and Prettier enforce consistent code style and catch potential issues.
+
+- **Version Control**: Git is used with feature branches, pull requests, and code reviews to maintain code quality.
+
+- **Documentation**: Inline comments, JSDoc, and this comprehensive documentation support knowledge transfer.
+
+- **Dependency Management**: `package.json` and `package-lock.json` ensure reproducible builds and security updates.
+
+##### 6.2.9.7 Scalability Considerations
+
+The architecture supports horizontal scaling and performance optimization.
+
+- **Stateless Design**: JWT-based authentication and external session storage allow for load balancing across multiple server instances.
+
+- **Caching Strategy**: Redis caching reduces database load and improves response times.
+
+- **Database Optimization**: Indexes, query optimization, and connection pooling support growing data volumes.
+
+- **Microservices Readiness**: Modular design allows for future decomposition into microservices if needed.
+
+##### 6.2.9.8 Future Extensibility
+
+The system is designed to accommodate future enhancements:
+
+- **Plugin Architecture**: Service modules can be extended or replaced without core changes.
+
+- **API Versioning**: RESTful API design supports versioning for backward compatibility.
+
+- **Feature Flags**: Configuration-driven feature toggles allow for gradual rollouts.
+
+- **Third-Party Integrations**: Modular payment and authentication services support adding new providers.
+
+##### 6.2.9.9 Maintenance Procedures
+
+Regular maintenance ensures system health:
+
+- **Dependency Updates**: Regular security audits and dependency updates using tools like `npm audit`.
+
+- **Database Maintenance**: Index optimization, backup verification, and data archiving.
+
+- **Performance Tuning**: Monitoring and optimizing slow queries and endpoints.
+
+- **Security Patches**: Prompt application of security updates to dependencies and infrastructure.
+
+This comprehensive approach to extensibility and maintainability ensures that SnapTray can evolve with the school's needs while remaining reliable, secure, and cost-effective to maintain.
 
 ---
 
-> **[Insert additional diagrams here as needed, e.g., sequence diagrams for order/payment flow, caching, or loyalty point calculation.]**
 
----
+
+![Order Placement Flow](order_placement.png)
 
 ## Router Modules and API Endpoints
 -- Set expiration on the key (cleanup)
 redis.call('EXPIRE', key, window)
 
 return {1, current_count + 1} -- 1 = allowed, new count
-```
+
 - The Lua script implements a sliding window rate limiting algorithm using Redis sorted sets to track request timestamps.
 (The sliding window algorithm provides a more accurate rate limiting mechanism compared to fixed window algorithms by allowing requests to be counted over a rolling time frame, reducing the chances of burst traffic exceeding limits at the edges of fixed windows.) This is particularly useful for dashboard routes where users may perform multiple actions in a short period.
 - The script uses Redis commands like `ZREMRANGEBYSCORE` to remove old entries, `ZCARD` to count current requests, and `ZADD` to add new request timestamps. 
@@ -1334,6 +1738,36 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/pay`                        | Payment page              |
 | GET    | `/chat`                       | Chat frontend (E2EE chat UI) |
 
+#### GET /login
+**Authentication:** None required (public page)  
+**Sample Request:** `GET /login`  
+**Sample Response:** HTML page content  
+**Error Codes:** None
+
+#### GET /register
+**Authentication:** None required (public page)  
+**Sample Request:** `GET /register`  
+**Sample Response:** HTML page content  
+**Error Codes:** None
+
+#### GET /password-reset/:token
+**Authentication:** None required (token-based access)  
+**Sample Request:** `GET /password-reset/abc123token`  
+**Sample Response:** HTML form for password reset  
+**Error Codes:** None
+
+#### GET /pay
+**Authentication:** Session required  
+**Sample Request:** `GET /pay` (with valid session)  
+**Sample Response:** HTML payment page  
+**Error Codes:** 401 Unauthorized (if not logged in)
+
+#### GET /chat
+**Authentication:** Session required  
+**Sample Request:** `GET /chat` (with valid session)  
+**Sample Response:** HTML chat interface  
+**Error Codes:** 401 Unauthorized (if not logged in)
+
 ### Authentication Routes
 
 | Method | Endpoint                       | Description               |
@@ -1344,12 +1778,117 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/logout`                     | Logout confirmation       |
 | POST   | `/2fa`                        | Two-factor authentication |
 
+#### POST /register
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "username": "johndoe",
+  "password": "SecurePass123!",
+  "email": "john@example.com",
+  "isParent": "false",
+  "g-recaptcha-response": "recaptcha_token_here"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Registration successful! Check your email for verification code."
+}
+```
+**Error Codes:**  
+- 400 Bad Request (missing fields, invalid input, CAPTCHA failed)  
+- 429 Too Many Requests (rate limited)  
+- 500 Internal Server Error
+
+#### POST /login
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "username": "johndoe",
+  "password": "SecurePass123!"
+}
+```
+**Sample Response:** `Welcome, johndoe` (text/plain)  
+**Error Codes:**  
+- 400 Bad Request (missing username/password)  
+- 401 Unauthorized (invalid credentials)  
+- 429 Too Many Requests (rate limited)  
+- 500 Internal Server Error
+
+#### POST /logout
+**Authentication:** Session required  
+**Sample Request:** `POST /logout` (with valid session)  
+**Sample Response:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (no active session)  
+- 500 Internal Server Error
+
+#### GET /logout
+**Authentication:** Session required  
+**Sample Request:** `GET /logout` (with valid session)  
+**Sample Response:** Redirect to `/login`  
+**Error Codes:**  
+- 401 Unauthorized (no active session)  
+- 500 Internal Server Error
+
+#### POST /2fa
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "email": "john@example.com"
+}
+```
+**Sample Response:**
+```json
+{
+  "token": "jwt_token_here"
+}
+```
+**Error Codes:**  
+- 404 Not Found (user not found)  
+- 500 Internal Server Error
+
 ### Email Verification Routes
 
 | Method | Endpoint                                 | Description                  |
 |--------|------------------------------------------|------------------------------|
 | POST   | `/email-verification/verify-code`        | Verify email code            |
 | GET    | `/email-verification/verify/:token`      | Verify email with token      |
+
+#### POST /email-verification/verify-code
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "email": "john@example.com",
+  "code": "ABC123"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Email verified successfully"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (missing email/code, invalid/expired code)  
+- 500 Internal Server Error
+
+#### GET /email-verification/verify/:token
+**Authentication:** None required  
+**Sample Request:** `GET /email-verification/verify/jwt_token_here`  
+**Sample Response:** `Email verified successfully` (text/plain)  
+**Error Codes:**  
+- 400 Bad Request (invalid/expired token)  
+- 500 Internal Server Error
 
 ### Password Reset Routes
 
@@ -1360,6 +1899,69 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | POST   | `/password-reset/:token`      | Submit new password           |
 | POST   | `/forgot-password/`           | Forgot password request       |
 
+#### POST /password-reset/
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "email": "john@example.com"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "If an account with that email exists, a password reset link has been sent"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (missing email)  
+- 500 Internal Server Error
+
+#### GET /password-reset/:token
+**Authentication:** None required  
+**Sample Request:** `GET /password-reset/jwt_token_here`  
+**Sample Response:** `Token is valid. You may now reset your password.` (text/plain)  
+**Error Codes:**  
+- 400 Bad Request (invalid/expired token)  
+- 500 Internal Server Error
+
+#### POST /password-reset/:token
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "newPassword": "NewSecurePass123!",
+  "confirmPassword": "NewSecurePass123!"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Password has been reset successfully"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (missing fields, passwords don't match, weak password, invalid token)  
+- 500 Internal Server Error
+
+#### POST /forgot-password/
+**Authentication:** None required  
+**Sample Request:**
+```json
+{
+  "email": "john@example.com"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "If an account with that email exists, a password reset link has been sent"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (missing email)  
+- 500 Internal Server Error
+
 ### Dashboard Routes
 
 | Method | Endpoint                       | Description                   |
@@ -1367,6 +1969,28 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/dashboard/`                 | Main dashboard                |
 | GET    | `/dashboard/admin`            | Admin dashboard page          |
 | GET    | `/dashboard/student`          | Student dashboard page        |
+
+#### GET /dashboard/
+**Authentication:** Session required  
+**Sample Request:** `GET /dashboard/` (with valid session)  
+**Sample Response:** HTML dashboard page  
+**Error Codes:** 401 Unauthorized (if not logged in)
+
+#### GET /dashboard/admin
+**Authentication:** Session required (admin role)  
+**Sample Request:** `GET /dashboard/admin` (with admin session)  
+**Sample Response:** HTML admin dashboard page  
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)
+
+#### GET /dashboard/student
+**Authentication:** Session required (student/parent role)  
+**Sample Request:** `GET /dashboard/student` (with student session)  
+**Sample Response:** HTML student dashboard page  
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not student/parent)
 
 ### Admin Dashboard API Routes
 
@@ -1389,6 +2013,137 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | POST   | `/dashboard/admin/create_menuitem`         | Create new menu item          |
 | PUT    | `/dashboard/admin/menuitem/:id`            | Update menu item              |
 
+#### GET /dashboard/admin/usercount
+**Authentication:** Session required (admin role)  
+**Sample Request:** `GET /dashboard/admin/usercount`  
+**Sample Response:**
+```json
+{
+  "total": 150
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)  
+- 500 Internal Server Error
+
+#### GET /dashboard/admin/userlist
+**Authentication:** Session required (admin role)  
+**Sample Request:** `GET /dashboard/admin/userlist`  
+**Sample Response:**
+```json
+{
+  "users": [
+    {
+      "username": "johndoe",
+      "email": "john@example.com",
+      "usertype": "student",
+      "createdAt": "2023-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)  
+- 500 Internal Server Error
+
+#### GET /dashboard/admin/health
+**Authentication:** Session required (admin role)  
+**Sample Request:** `GET /dashboard/admin/health`  
+**Sample Response:**
+```json
+{
+  "overall": "ok",
+  "timestamp": "2023-01-15T10:30:00.000Z",
+  "services": {
+    "database": "healthy",
+    "redis": "healthy",
+    "userModel": "healthy",
+    "menuModel": "healthy",
+    "orderModel": "healthy",
+    "paymentModel": "healthy",
+    "loyaltyModel": "healthy",
+    "adminEndpoints": "healthy",
+    "redisLua": "healthy",
+    "sessions": "healthy",
+    "caching": "healthy",
+    "externalServices": {
+      "paypal": "configured",
+      "googlepay": "configured"
+    }
+  },
+  "details": {
+    "database": "MongoDB connection established and responding",
+    "redis": "Redis connection established and responding"
+  }
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)  
+- 500 Internal Server Error
+
+#### POST /dashboard/admin/create_menuitem
+**Authentication:** Session required (admin role)  
+**Sample Request:**
+```json
+{
+  "name": "Cheeseburger",
+  "description": "Delicious cheeseburger with fries",
+  "stock": 50,
+  "price": 8.99,
+  "category": "Main Course",
+  "allergens": ["gluten", "dairy"],
+  "nutritionalInfo": {
+    "calories": 650,
+    "protein": 25
+  },
+  "healthScore": 75
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Menu item created"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (validation errors)  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)  
+- 500 Internal Server Error
+
+#### PUT /dashboard/admin/menuitem/:id
+**Authentication:** Session required (admin role)  
+**Sample Request:**
+```json
+{
+  "name": "Cheeseburger Deluxe",
+  "stock": 45,
+  "price": 9.49,
+  "available": true
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Menu item updated",
+  "item": {
+    "_id": "menu_item_id",
+    "name": "Cheeseburger Deluxe",
+    "stock": 45,
+    "price": 9.49,
+    "available": true
+  }
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)  
+- 404 Not Found (item not found)  
+- 500 Internal Server Error
+
 ### Student Dashboard Routes
 
 | Method | Endpoint                                   | Description                   |
@@ -1396,22 +2151,116 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/dashboard/student/freeze_account`        | Freeze student account        |
 | POST   | `/dashboard/student/parent/link`           | Link parent account           |
 
+#### GET /dashboard/student/freeze_account
+**Authentication:** Session required (student role)  
+**Sample Request:** `GET /dashboard/student/freeze_account`  
+**Sample Response:** HTML page for account freezing  
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not student)
+
+#### POST /dashboard/student/parent/link
+**Authentication:** Session required (student role)  
+**Sample Request:**
+```json
+{
+  "parentEmail": "parent@example.com"
+}
+```
+**Sample Response:**
+```json
+{
+  "message": "Parent link request sent"
+}
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not student)  
+- 400 Bad Request (invalid email)  
+- 500 Internal Server Error
+
 ### Order Management Routes
 
 | Method | Endpoint                                   | Description                   |
 |--------|--------------------------------------------|-------------------------------|
 | GET    | `/Order/`                                 | Order page                    |
-| GET    | `/Order/menu_items`                       | Get menu items for ordering   |
+| GET    | `/Order/menu_items`                        | Get menu items for ordering   |
 | GET    | `/Order/:orderID`                         | Get specific order details    |
 | POST   | `/Order/Order`                            | Create new order              |
 | PUT    | `/Order/:orderID/status`                  | Update order status           |
 | POST   | `/Order/:orderID/capture`                 | Capture order payment         |
+
+#### GET /Order/
+**Authentication:** Session required  
+**Sample Request:** `GET /Order/`  
+**Sample Response:** HTML order page  
+**Error Codes:** 401 Unauthorized (if not logged in)
+
+#### GET /Order/menu_items
+**Authentication:** Session required  
+**Sample Request:** `GET /Order/menu_items`  
+**Sample Response:**
+```json
+[
+  {
+    "_id": "item_id",
+    "name": "Cheeseburger",
+    "description": "Delicious cheeseburger",
+    "price": 8.99,
+    "available": true,
+    "stock": 50
+  }
+]
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
+#### POST /Order/Order
+**Authentication:** Session required  
+**Sample Request:**
+```json
+{
+  "cart": [
+    {
+      "id": "item_id",
+      "quantity": 2,
+      "price": 8.99
+    }
+  ],
+  "currency": "USD",
+  "amount": 17.98
+}
+```
+**Sample Response:** PayPal order JSON (varies by PayPal API)  
+**Error Codes:**  
+- 400 Bad Request (invalid cart, insufficient stock)  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
+#### POST /Order/:orderID/capture
+**Authentication:** Session required  
+**Sample Request:** `POST /Order/ABC123/capture`  
+**Sample Response:** PayPal capture JSON (varies by PayPal API)  
+**Error Codes:**  
+- 400 Bad Request (invalid order ID, already captured)  
+- 401 Unauthorized (if not logged in)  
+- 404 Not Found (order not found)  
+- 500 Internal Server Error
 
 ### Admin Management Routes
 
 | Method | Endpoint                                   | Description                   |
 |--------|--------------------------------------------|-------------------------------|
 | GET    | `/admin/changeuser`                       | Change user permissions       |
+
+#### GET /admin/changeuser
+**Authentication:** Session required (admin role)  
+**Sample Request:** `GET /admin/changeuser`  
+**Sample Response:** HTML page for user management  
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not admin)
 
 ---
 
@@ -1425,12 +2274,89 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/api/current_user`           | Get current logged-in user    |
 | GET    | `/api/menu-items`             | Get available menu items      |
 
+#### GET /api/test
+**Authentication:** None required  
+**Sample Request:** `GET /api/test`  
+**Sample Response:** `Test route working!` (text/plain)  
+**Error Codes:** None
+
+#### GET /api/current_user
+**Authentication:** Session required  
+**Sample Request:** `GET /api/current_user`  
+**Sample Response:**
+```json
+{
+  "loggedIn": true,
+  "user": {
+    "id": "user_id",
+    "username": "johndoe",
+    "usertype": "student",
+    "email": "john@example.com"
+  }
+}
+```
+**Error Codes:** None (returns loggedIn: false if not authenticated)
+
+#### GET /api/menu-items
+**Authentication:** Session required  
+**Sample Request:** `GET /api/menu-items`  
+**Sample Response:**
+```json
+[
+  {
+    "_id": "item_id",
+    "name": "Cheeseburger",
+    "description": "Delicious cheeseburger",
+    "price": 8.99,
+    "available": true,
+    "stock": 50,
+    "category": "Main Course",
+    "allergens": ["gluten", "dairy"]
+  }
+]
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
 ### Order API Routes
 
 | Method | Endpoint                                   | Description                   |
 |--------|--------------------------------------------|-------------------------------|
 | POST   | `/api/orders`                             | Create PayPal order           |
 | POST   | `/api/orders/:orderID/capture`            | Capture PayPal payment        |
+
+#### POST /api/orders
+**Authentication:** Session required  
+**Sample Request:**
+```json
+{
+  "cart": [
+    {
+      "id": "item_id",
+      "quantity": 2,
+      "price": 8.99
+    }
+  ],
+  "currency": "USD",
+  "amount": 17.98
+}
+```
+**Sample Response:** PayPal order JSON (includes order ID, status, links, etc.)  
+**Error Codes:**  
+- 400 Bad Request (invalid cart, insufficient stock)  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
+#### POST /api/orders/:orderID/capture
+**Authentication:** Session required  
+**Sample Request:** `POST /api/orders/ABC123/capture`  
+**Sample Response:** PayPal capture JSON (includes transaction details)  
+**Error Codes:**  
+- 400 Bad Request (invalid order ID, already captured)  
+- 401 Unauthorized (if not logged in)  
+- 404 Not Found (order not found)  
+- 500 Internal Server Error
 
 ### Google Pay API Routes
 
@@ -1439,12 +2365,85 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | POST   | `/api/orders/googlepay`                   | Create Google Pay order       |
 | POST   | `/api/orders/googlepay/complete`          | Complete Google Pay transaction|
 
+#### POST /api/orders/googlepay
+**Authentication:** Session required  
+**Sample Request:**
+```json
+{
+  "cart": [
+    {
+      "id": "item_id",
+      "quantity": 1,
+      "price": 8.99
+    }
+  ],
+  "currency": "USD",
+  "amount": 8.99
+}
+```
+**Sample Response:**
+```json
+{
+  "success": true,
+  "orderId": "order_123",
+  "totalAmount": 8.99,
+  "currency": "USD"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (invalid cart, insufficient stock)  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
+#### POST /api/orders/googlepay/complete
+**Authentication:** Session required  
+**Sample Request:**
+```json
+{
+  "orderId": "order_123",
+  "paymentMethodData": { /* Google Pay payment data */ },
+  "transactionId": "txn_456"
+}
+```
+**Sample Response:**
+```json
+{
+  "success": true,
+  "orderId": "order_123",
+  "transactionId": "txn_456",
+  "loyaltyPointsAwarded": 8
+}
+```
+**Error Codes:**  
+- 400 Bad Request (invalid data)  
+- 401 Unauthorized (if not logged in)  
+- 404 Not Found (order not found)  
+- 500 Internal Server Error
+
 ### Payment Integration Routes
 
 | Method | Endpoint                                   | Description                   |
 |--------|--------------------------------------------|-------------------------------|
 | POST   | `/api/payments/paypal`                    | PayPal payment processing     |
 | POST   | `/api/payments/googlepay`                 | Google Pay payment processing |
+
+#### POST /api/payments/paypal
+**Authentication:** Session required  
+**Sample Request:** Similar to /api/orders (PayPal order creation)  
+**Sample Response:** PayPal payment JSON  
+**Error Codes:**  
+- 400 Bad Request (invalid payment data)  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
+
+#### POST /api/payments/googlepay
+**Authentication:** Session required  
+**Sample Request:** Similar to /api/orders/googlepay/complete  
+**Sample Response:** Google Pay payment JSON  
+**Error Codes:**  
+- 400 Bad Request (invalid payment data)  
+- 401 Unauthorized (if not logged in)  
+- 500 Internal Server Error
 #
 ### Chat API & WebSocket Routes
 
@@ -1468,6 +2467,78 @@ return {1, current_count + 1} -- 1 = allowed, new count
 | GET    | `/chat/restore-keys`                    | Restore encrypted private key from server |
 | <span style="color:#d32f2f;font-weight:bold">POST</span>   | <span style="color:#d32f2f;font-weight:bold">`/chat/admin/clear-all-e2ee`</span>            | <span style="color:#d32f2f;font-weight:bold">Admin: clear all E2EE data/messages (admin only)</span> |
 | POST   | `/chat/request-sender-recovery`         | Mark messages as needing sender-key recovery |
+
+#### GET /chat
+**Authentication:** Session required  
+**Sample Request:** `GET /chat`  
+**Sample Response:** HTML chat interface  
+**Error Codes:** 401 Unauthorized (if not logged in)
+
+#### WS /chat
+**Authentication:** Session required (WebSocket upgrade)  
+**Sample Message (send):**
+```json
+{
+  "type": "send_message",
+  "to": "user_id",
+  "encryptedContent": "encrypted_message_data"
+}
+```
+**Sample Message (receive):**
+```json
+{
+  "type": "new_message",
+  "from": "user_id",
+  "encryptedContent": "encrypted_message_data",
+  "timestamp": "2023-01-15T10:30:00.000Z"
+}
+```
+**Error Codes:** WebSocket connection errors
+
+#### POST /chat/send-message
+**Authentication:** Session required  
+**Sample Request:**
+```json
+{
+  "to": "recipient_user_id",
+  "encryptedContent": "e2ee_encrypted_message",
+  "messageType": "text"
+}
+```
+**Sample Response:**
+```json
+{
+  "success": true,
+  "messageId": "msg_123",
+  "timestamp": "2023-01-15T10:30:00.000Z"
+}
+```
+**Error Codes:**  
+- 400 Bad Request (invalid data)  
+- 401 Unauthorized (if not logged in)  
+- 404 Not Found (recipient not found)  
+- 500 Internal Server Error
+
+#### GET /chat/messages/:otherUserId
+**Authentication:** Session required  
+**Sample Request:** `GET /chat/messages/user_456`  
+**Sample Response:**
+```json
+[
+  {
+    "id": "msg_123",
+    "from": "user_123",
+    "to": "user_456",
+    "encryptedContent": "e2ee_data",
+    "timestamp": "2023-01-15T10:30:00.000Z",
+    "status": "sent"
+  }
+]
+```
+**Error Codes:**  
+- 401 Unauthorized (if not logged in)  
+- 403 Forbidden (if not authorized to view conversation)  
+- 500 Internal Server Error
 | GET    | `/chat/pending-recovery`                | Get messages needing sender-key recovery |
 
 **WebSocket events:**
@@ -1520,11 +2591,7 @@ The backend employs Redis as an in-memory data store to cache frequently accesse
 - The project uses the following redis keys as seen in: `src/cache/KeyRegistry.js`
 
 
-
 ```javascript
-
-
-
 const keyRegistry = {
 
   /*
@@ -1647,33 +2714,35 @@ const keyRegistry = {
 
 };
 ```
+### 6.3 Frontend Implementation
 
+#### 6.3.1 Technology Stack
 
+- **React**: 
 
+#### 6.3.2 Application Architecture
 
-# 13. Planned Features and Roadmap
+#### 6.3.3 Component Structure
 
+#### 6.3.4 State Management
 
-- Multi-language support (Hungarian/English)
-- In-app feedback and bug reporting
-- Push/pop notifications (WebSocket/SSE, SMS/email alerts)
-- Enhanced menu photos, nutritional info, allergen warnings
-- QR code integration for menu/table ordering
-- Super admin approval for critical changes
-- Admin impersonation and activity history
-- Admin rate limit dashboard (change limits from UI)
-- Password breach check (integration with breach databases)
-- Biometric authentication (fingerprint/face)
-- Advanced fraud detection (ML-based, IP geolocation anomaly)
-- Analytics and reporting (email summaries, user data export, API usage, health routes)
-- Advanced analytics dashboard (nutritional tracking, spending analysis, predictive analytics)
-- Parent spending analytics
-- Smart ordering features and menu recommendation engine
-- Enhanced dietary management
-- Achievement system and badges
-- Social/community features
+#### 6.3.5 Routing and Navigation
 
+#### 6.3.6 API Integration Layer
 
+#### 6.3.7 UI/UX Design Implementation
+
+#### 6.3.8 Form Handling and Validation
+
+#### 6.3.9 Authentication Handling (Frontend)
+
+#### 6.3.10 Performance Optimization
+
+#### 6.3.11 Error Handling and User Feedback
+
+#### 6.3.12 Accessibility (Optional but strong)
+
+#### 6.3.13 Responsiveness (Mobile/Desktop)
 
 ## 7. Testing and Validation
 
