@@ -2716,9 +2716,10 @@ const keyRegistry = {
 ```
 ### 6.3 Frontend Implementation
 
+
 #### 6.3.1 Technology Stack
 
-- **React**: 
+
 
 #### 6.3.2 Application Architecture
 

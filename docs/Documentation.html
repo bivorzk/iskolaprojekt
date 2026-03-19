@@ -333,10 +333,63 @@ section {
 <li><a href="#535-algorithm-selection-rationale">5.3.5 Algorithm Selection Rationale</a></li>
 </ul>
 </li>
-<li><a href="#54">5.4 Security Design</a></li>
+<li><a href="#54">5.4 Security Design</a>
+<ul>
+<li><a href="#541-security-features">5.4.1 Security Features</a></li>
+<li><a href="#542-security-policies">5.4.2 Security Policies</a></li>
+<li><a href="#543-in-depth-security-measures">5.4.3 In depth Security Measures</a></li>
+<li><a href="#544-security-testing-and-validation">5.4.4 Security Testing and Validation</a></li>
 </ul>
 </li>
-<li><a href="#6-implementation">6. Implementation</a></li>
+</ul>
+</li>
+<li><a href="#6-implementation">6. Implementation</a>
+<ul>
+<li><a href="#61-directory-structure">6.1 Directory Structure</a></li>
+<li><a href="#62-backend-implementation">6.2 Backend Implementation</a>
+<ul>
+<li><a href="#621-technology-stack">6.2.1 Technology Stack</a></li>
+<li><a href="#623-main-application-structure">6.2.3 Main Application Structure</a></li>
+<li><a href="#624-authentication--security">6.2.4 Authentication &amp; Security</a></li>
+<li><a href="#625-order--payment-processing">6.2.5 Order &amp; Payment Processing</a></li>
+<li><a href="#626-caching--performance">6.2.6 Caching &amp; Performance</a></li>
+<li><a href="#627-loyalty-system">6.2.7 Loyalty System</a></li>
+<li><a href="#628-rate-limiting-advanced">6.2.8 Rate Limiting (Advanced)</a></li>
+<li><a href="#629-extensibility--maintainability">6.2.9 Extensibility &amp; Maintainability</a>
+<ul>
+<li><a href="#6291-modular-architecture-and-separation-of-concerns">6.2.9.1 Modular Architecture and Separation of Concerns</a></li>
+<li><a href="#6292-configuration-management-and-environment-handling">6.2.9.2 Configuration Management and Environment Handling</a></li>
+<li><a href="#6293-error-handling-and-resilience">6.2.9.3 Error Handling and Resilience</a></li>
+<li><a href="#6294-logging-and-monitoring">6.2.9.4 Logging and Monitoring</a></li>
+<li><a href="#6295-testing-and-quality-assurance">6.2.9.5 Testing and Quality Assurance</a></li>
+<li><a href="#6296-code-quality-and-development-practices">6.2.9.6 Code Quality and Development Practices</a></li>
+<li><a href="#6297-scalability-considerations">6.2.9.7 Scalability Considerations</a></li>
+<li><a href="#6298-future-extensibility">6.2.9.8 Future Extensibility</a></li>
+<li><a href="#6299-maintenance-procedures">6.2.9.9 Maintenance Procedures</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#63-frontend-implementation">6.3 Frontend Implementation</a>
+<ul>
+<li><a href="#631-technology-stack">6.3.1 Technology Stack</a></li>
+<li><a href="#632-application-architecture">6.3.2 Application Architecture</a></li>
+<li><a href="#633-component-structure">6.3.3 Component Structure</a></li>
+<li><a href="#634-state-management">6.3.4 State Management</a></li>
+<li><a href="#635-routing-and-navigation">6.3.5 Routing and Navigation</a></li>
+<li><a href="#636-api-integration-layer">6.3.6 API Integration Layer</a></li>
+<li><a href="#637-uiux-design-implementation">6.3.7 UI/UX Design Implementation</a></li>
+<li><a href="#638-form-handling-and-validation">6.3.8 Form Handling and Validation</a></li>
+<li><a href="#639-authentication-handling-frontend">6.3.9 Authentication Handling (Frontend)</a></li>
+<li><a href="#6310-performance-optimization">6.3.10 Performance Optimization</a></li>
+<li><a href="#6311-error-handling-and-user-feedback">6.3.11 Error Handling and User Feedback</a></li>
+<li><a href="#6312-accessibility-optional-but-strong">6.3.12 Accessibility (Optional but strong)</a></li>
+<li><a href="#6313-responsiveness-mobile-desktop">6.3.13 Responsiveness (Mobile/Desktop)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#router-modules-and-api-endpoints">Router Modules and API Endpoints</a></li>
 <li><a href="#7-testing-and-validation">7. Testing and Validation</a></li>
 <li><a href="#8-user-manual">8. User Manual</a></li>
 <li><a href="#9-deployment-and-maintenance">9. Deployment and Maintenance</a></li>
@@ -578,26 +631,9 @@ adatbázis biztosítja az adatok perzisztens tárolását.</p>
 <li>StorageBlob 1:1 User (per blobType és partitionKey).</li>
 <li>DeviceSyncSession: önálló, nem kapcsolódik más entitáshoz.</li>
 </ul>
-<h5 id="példa-dailymenu-és-menuitems-kapcsolata-dbdiagramio-stílusban">Példa: DailyMenu és MenuItems kapcsolata (<a href="http://dbdiagram.io">dbdiagram.io</a> stílusban) </h5>
-<pre data-role="codeBlock" data-info="dbml" class="language-dbml dbml"><code>Table DailyMenu {
-  _id objectid [pk]
-  date date
-  schoolPeriod varchar
-  createdAt datetime
-}
-
-Table MenuItems {
-  _id objectid [pk]
-  name varchar
-  // ...további mezők
-}
-
-Table DailyMenuMenuItems {
-  dailyMenuId objectid [ref: &gt; DailyMenu._id]
-  menuItemId objectid [ref: &gt; MenuItems._id]
-  // Composite PK: [dailyMenuId, menuItemId]
-}
-</code></pre><h5 id="devicesyncsession">DeviceSyncSession </h5>
+<h5 id="példa-dailymenu-és-menuitems-kapcsolata">Példa: DailyMenu és MenuItems kapcsolata </h5>
+<p><img src="menuitemsanddailymenu.png" alt="Daily Menu és menuitems kapcsolata"></p>
+<h5 id="devicesyncsession">DeviceSyncSession </h5>
 <p>Ez a tábla önálló, nem kapcsolódik más entitáshoz, csak eszköz-azonosítókat és titkosított adatokat tárol. Ez teljesen rendben van, mivel ephemerális, session típusú adatokat kezel.</p>
 <hr>
 <h2 id="e2ee-chat-és-üzenetkezelés-az-adatbázisban">E2EE Chat és Üzenetkezelés az Adatbázisban </h2>
@@ -1672,10 +1708,7 @@ module<span class="token punctuation">.</span><span class="token property-access
 </ul>
 <p>This comprehensive approach to extensibility and maintainability ensures that SnapTray can evolve with the school's needs while remaining reliable, secure, and cost-effective to maintain.</p>
 <hr>
-<blockquote>
-<p><strong>[Insert additional diagrams here as needed, e.g., sequence diagrams for order/payment flow, caching, or loyalty point calculation.]</strong></p>
-</blockquote>
-<hr>
+<p><img src="order_placement.png" alt="Order Placement Flow"></p>
 <h2>Router Modules and API Endpoints</h2>
 <p>-- Set expiration on the key (cleanup)<br>
 redis.call('EXPIRE', key, window)</p>
@@ -3005,7 +3038,21 @@ redis.call('EXPIRE', key, window)</p>
   <span class="token punctuation">]</span><span class="token punctuation">,</span>
 
 <span class="token punctuation">}</span><span class="token punctuation">;</span>
-</code></pre><h2>7. Testing and Validation</h2>
+</code></pre><h3>6.3 Frontend Implementation</h3>
+<h4>6.3.1 Technology Stack</h4>
+<h4>6.3.2 Application Architecture</h4>
+<h4>6.3.3 Component Structure</h4>
+<h4>6.3.4 State Management</h4>
+<h4>6.3.5 Routing and Navigation</h4>
+<h4>6.3.6 API Integration Layer</h4>
+<h4>6.3.7 UI/UX Design Implementation</h4>
+<h4>6.3.8 Form Handling and Validation</h4>
+<h4>6.3.9 Authentication Handling (Frontend)</h4>
+<h4>6.3.10 Performance Optimization</h4>
+<h4>6.3.11 Error Handling and User Feedback</h4>
+<h4>6.3.12 Accessibility (Optional but strong)</h4>
+<h4>6.3.13 Responsiveness (Mobile/Desktop)</h4>
+<h2>7. Testing and Validation</h2>
 <h2>8. User Manual</h2>
 <h2>9. Deployment and Maintenance</h2>
 <h2>10. Conclusion and Future Work</h2>
