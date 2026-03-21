@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Teacher Dashboard - SnapTray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../css/mobile-enhancements.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#FFC857',
+                        accent: '#FFE5DC',
+                        gray: '#6C757D',
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- PWA and mobile optimizations -->
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SnapTray">
+</head>
+<body>
+    <div id="root"></div>
+
+```
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script src="../../js/mobile-utils.js"></script>
+
+<!-- Custom hook -->
+<script type="text/babel" src="useTeacherData.js"></script>
+
+<!-- Components -->
+<script type="text/babel" src="TeacherHeader.jsx"></script>
+<script type="text/babel" src="TeacherSidebar.jsx"></script>
+<script type="text/babel" src="MobileTeacherNav.jsx"></script>
+
+<!-- Sections -->
+<script type="text/babel" src="OrdersSection.jsx"></script>
+<script type="text/babel" src="StatsSection.jsx"></script>
+<script type="text/babel" src="SettingsSection.jsx"></script>
+
+<!-- Teacher specifikus -->
+<script type="text/babel" src="TeacherStudentsSection.jsx"></script>
+
+<!-- Main component -->
+<script type="text/babel" src="teacher.jsx"></script>
+```
+
+</body>
+</html>
