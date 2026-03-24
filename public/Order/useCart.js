@@ -76,3 +76,5 @@ const useCart = () => {
         clearCart
     };
 };
+
+window.useCart = useCart;
