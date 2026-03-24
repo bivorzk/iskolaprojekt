@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
-      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.21\crossnote\dependencies\katex\katex.min.css">
+      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.22\crossnote\dependencies\katex\katex.min.css">
       
       
       
@@ -261,6 +261,8 @@ li { margin: 0.5rem 0; }
 <li>Valós idejű frissítések Redis pub/sub-on és Socket.IO-n keresztül érkeznek.</li>
 <li>Minden jelentős esemény naplózásra kerül a SecurityLogs kollekcióba.</li>
 </ol>
+<p><img src="user_registration_activity_diagram_placeholder.png" alt="User Registration Activity Diagram"></p>
+<p><img src="order_processing_activity_diagram_placeholder.png" alt="Order Processing Activity Diagram"></p>
 <h3 id="43-technologies">4.3 Technologies </h3>
 <table>
 <thead>
@@ -304,6 +306,7 @@ li { margin: 0.5rem 0; }
 </tr>
 </tbody>
 </table>
+<p><img src="system_component_diagram_placeholder.png" alt="System Component Diagram"></p>
 <hr>
 <h2 id="5-design">5. Design </h2>
 <h3 id="51-design-principles">5.1 Design Principles </h3>
@@ -350,77 +353,1244 @@ li { margin: 0.5rem 0; }
 </tbody>
 </table>
 <h3 id="52-database-design">5.2 Database Design </h3>
-<h4 id="521-az-adatbázis-célja">5.2.1 Az adatbázis célja </h4>
-<p>Ez az adatbázis egy iskolai büfé rendszer (MERN stack projekt) részét képezi. Lehetővé teszi a felhasználók számára az étkezés megrendelését, kifizetését és értékelését, valamint támogatja az autentikációt, menükezelést, hűségprogramot, E2EE chatet és biztonsági naplózást. MongoDB-t használ Mongoose ODM-mel, Redis-t a gyorsítótárazáshoz.</p>
-<h4 id="522-entitások-és-kapcsolatok">5.2.2 Entitások és kapcsolatok </h4>
-<p><strong>Fő entitások:</strong></p>
+<h4 id="521-purpose-function-and-summary-of-stored-information">5.2.1 Purpose, Function, and Summary of Stored Information </h4>
+<p>This database is part of a school cafeteria system (MERN stack project) that allows users (students, parents, teachers) to order meals, pay for them, and rate them. The system supports user authentication, menu management, orders, payments, loyalty programs, E2EE chat, and security logging. The main goal is the efficient and secure management of school meals, including inventory, ratings, and financial transactions. The database uses MongoDB with Mongoose ODM, which is a NoSQL database but structured with schemas. Redis is used for caching and temporary data.</p>
+<p>The database model type: NoSQL (MongoDB), query language: JavaScript (Mongoose queries). Redis in-memory database for caching, sessions, and ephemeral data.</p>
+<h4 id="522-database-plan-and-schema">5.2.2 Database Plan and Schema </h4>
+<h5 id="entities-and-relationships-er-model-summary">Entities and Relationships (ER Model Summary) </h5>
+<p>The system's main entities and their relationships:</p>
+<ul>
+<li><strong>User</strong> (User): Central entity, all others connect to it.</li>
+<li><strong>UserPersonalInfo</strong>: Personal data for a user (embedded document).</li>
+<li><strong>MenuItems</strong> (Menu Items): Meal items.</li>
+<li><strong>Order</strong> (Order): User orders.</li>
+<li><strong>OrderItems</strong> (Order Items): Menu items for an order (embedded in Order).</li>
+<li><strong>Payment</strong> (Payment): Financial transactions.</li>
+<li><strong>Review</strong> (Review): Ratings for menu items (embedded in MenuItems).</li>
+<li><strong>DailyMenu</strong> (Daily Menu): School period-based menus containing multiple MenuItems (N:N relationship with linking table).</li>
+<li><strong>ParentStudent</strong> (Parent-Student Relationship): Linking parents and students.</li>
+<li><strong>SecurityLogs</strong> (Security Logs): Event logging.</li>
+<li><strong>UserLoyalty</strong> (Loyalty Program): User points, discounts, and loyalty level.</li>
+<li><strong>DeviceSyncSession</strong> (Device Sync Session): Device key synchronization (standalone, not connected to others).</li>
+<li><strong>Message</strong> (Messages): E2EE chat messages.</li>
+<li><strong>PreKey</strong> (Prekeys): ECDH prekeys.</li>
+<li><strong>StorageBlob</strong> (Storage Blob): Encrypted message/session history.</li>
+</ul>
+<h5 id="relationships">Relationships: </h5>
+<ul>
+<li>User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent (as parent or student).</li>
+<li>MenuItems 1:N OrderItems (embedded in Order), Review (embedded).</li>
+<li>Order 1:N OrderItems (embedded).</li>
+<li>DailyMenu N:M MenuItems (linking table: DailyMenuMenuItems).</li>
+<li>Message 1:1 PreKey (optional, for X3DH).</li>
+<li>StorageBlob 1:1 User (per blobType and partitionKey).</li>
+<li>DeviceSyncSession: standalone, not connected to others.</li>
+</ul>
+<p><img src="er_diagram_placeholder.png" alt="Entity Relationship Diagram"></p>
+<h5 id="relational-schema-table-details">Relational Schema (Table Details) </h5>
+<p>Detailed field descriptions for each entity below. For the DailyMenu and MenuItems N:M relationship, a linking table can also be represented.</p>
+<h5 id="example-dailymenu-and-menuitems-relationship-dbdiagramio-style">Example: DailyMenu and MenuItems Relationship (<a href="http://dbdiagram.io">dbdiagram.io</a> style) </h5>
+<pre data-role="codeBlock" data-info="dbml" class="language-dbml dbml"><code>Table DailyMenu {
+  _id objectid [pk]
+  date date
+  schoolPeriod varchar
+  createdAt datetime
+}
+
+Table MenuItems {
+  _id objectid [pk]
+  name varchar
+  // ...additional fields
+}
+
+Table DailyMenuMenuItems {
+  dailyMenuId objectid [ref: &gt; DailyMenu._id]
+  menuItemId objectid [ref: &gt; MenuItems._id]
+  // Composite PK: [dailyMenuId, menuItemId]
+}
+</code></pre><p><img src="database_schema_diagram_placeholder.png" alt="Database Schema Diagram"></p>
+<h5 id="devicesyncsession">DeviceSyncSession </h5>
+<p>This table is standalone, not connected to others, storing only device identifiers and encrypted data. This is completely fine, as it handles ephemeral, session-type data.</p>
+<hr>
+<h4 id="523-detailed-entity-descriptions">5.2.3 Detailed Entity Descriptions </h4>
+<p>(The following details every entity's fields, types, meanings, constraints, indexes, and business rules. See the continuation of the original documentation.)</p>
+<h5 id="user-users">User (Users) </h5>
 <table>
 <thead>
 <tr>
-<th>Entitás</th>
-<th>Leírás</th>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>User</td>
-<td>Központi entitás, minden máshoz kapcsolódik</td>
+<td>username</td>
+<td>String</td>
+<td>Username</td>
+<td>Required, unique</td>
+<td>_id, username</td>
 </tr>
 <tr>
-<td>MenuItems</td>
-<td>Étkezési tételek, beágyazott értékelésekkel</td>
+<td>password</td>
+<td>String</td>
+<td>Password (hashed)</td>
+<td>Required</td>
+<td>_id, password</td>
 </tr>
 <tr>
-<td>Order</td>
-<td>Felhasználói rendelések, beágyazott OrderItems-szel</td>
+<td>email</td>
+<td>String</td>
+<td>Email address</td>
+<td>Required, unique, email format, trim</td>
+<td>_id, email</td>
 </tr>
 <tr>
-<td>Payment</td>
-<td>Pénzügyi tranzakciók</td>
+<td>isVerified</td>
+<td>Boolean</td>
+<td>Email verification status</td>
+<td>Default: false</td>
+<td>_id, isVerified</td>
 </tr>
 <tr>
-<td>DailyMenu</td>
-<td>Napi menük (N:M kapcsolat MenuItems-szel)</td>
+<td>usertype</td>
+<td>String</td>
+<td>User type (admin, student, parent, teacher, frozen, editor)</td>
+<td>Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], default: 'student'</td>
+<td>_id, usertype</td>
 </tr>
 <tr>
-<td>ParentStudent</td>
-<td>Szülő-diák összerendelés</td>
+<td>createdAt</td>
+<td>Date</td>
+<td>Account creation date</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
 </tr>
 <tr>
-<td>SecurityLogs</td>
-<td>Biztonsági események naplója</td>
+<td>balance</td>
+<td>Number</td>
+<td>User balance for in-app purchases</td>
+<td>Default: 0</td>
+<td>_id, balance</td>
 </tr>
 <tr>
-<td>UserLoyalty</td>
-<td>Hűségpontok, tier, kedvezmények</td>
+<td>isBanned</td>
+<td>Boolean</td>
+<td>Banned user</td>
+<td>Default: false</td>
+<td>_id, isBanned</td>
 </tr>
 <tr>
-<td>Message</td>
-<td>E2EE chat üzenetek (Double Ratchet + X3DH)</td>
+<td>banReason</td>
+<td>String</td>
+<td>Ban reason</td>
+<td>Optional</td>
+<td>_id, banReason</td>
 </tr>
 <tr>
-<td>PreKey</td>
-<td>ECDH előzetes kulcsok az X3DH protokollhoz</td>
+<td>userPersonalInfo</td>
+<td>[Subdocument]</td>
+<td>Personal info (name, birth date, class, school, address)</td>
+<td>Optional</td>
+<td>_id, userPersonalInfo</td>
 </tr>
 <tr>
-<td>StorageBlob</td>
-<td>Titkosított session/üzenet történetek (zero-knowledge)</td>
+<td>identity.publicKey</td>
+<td>String</td>
+<td>E2EE identity public key (ECDH P-256 SPKI base64)</td>
+<td>Optional</td>
+<td>_id, identity.publicKey</td>
 </tr>
 <tr>
-<td>DeviceSyncSession</td>
-<td>Ephemerális eszközszinkronizációs munkamenetek (TTL index)</td>
+<td>identity.signingPublicKey</td>
+<td>String</td>
+<td>E2EE signing public key (ECDSA P-256)</td>
+<td>Optional</td>
+<td>_id, identity.signingPublicKey</td>
+</tr>
+<tr>
+<td>identity.keyId</td>
+<td>String</td>
+<td>Key identifier (SHA-256 fingerprint)</td>
+<td>Optional</td>
+<td>_id, identity.keyId</td>
+</tr>
+<tr>
+<td>identity.registeredAt</td>
+<td>Date</td>
+<td>E2EE registration time</td>
+<td>Optional</td>
+<td>_id, identity.registeredAt</td>
+</tr>
+<tr>
+<td>identity.isE2EEEnabled</td>
+<td>Boolean</td>
+<td>E2EE enabled</td>
+<td>Default: false</td>
+<td>_id, identity.isE2EEEnabled</td>
+</tr>
+<tr>
+<td>devices</td>
+<td>[Array]</td>
+<td>Registered devices (deviceId, publicKey, label, etc.)</td>
+<td>Optional</td>
+<td>_id, devices</td>
+</tr>
+<tr>
+<td>recoveryBlob.encryptedData</td>
+<td>String</td>
+<td>Recovery blob (AES-GCM encrypted)</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.encryptedData</td>
+</tr>
+<tr>
+<td>recoveryBlob.iv</td>
+<td>String</td>
+<td>IV for recovery blob</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.iv</td>
+</tr>
+<tr>
+<td>recoveryBlob.salt</td>
+<td>String</td>
+<td>Salt for recovery blob</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.salt</td>
+</tr>
+<tr>
+<td>recoveryBlob.storedAt</td>
+<td>Date</td>
+<td>Recovery blob storage time</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.storedAt</td>
+</tr>
+<tr>
+<td>encryption.*</td>
+<td>Mixed</td>
+<td>V1 legacy E2EE fields (for migration)</td>
+<td>Optional</td>
+<td>_id, encryption.*</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Kapcsolatok:</strong></p>
+<p>Business Rules: Every user has a unique username and email. User type affects access rights (e.g., admin has access to everything).</p>
+<h5 id="payment-payments">Payment (Payments) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Paying user</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Number</td>
+<td>Paid amount</td>
+<td>Required</td>
+<td>_id, amount</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Currency (e.g., USD, HUF)</td>
+<td>Required</td>
+<td>_id, currency</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Payment method</td>
+<td>Required</td>
+<td>_id, paymentMethod</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Status (Completed, Pending, Failed)</td>
+<td>Required, enum: ['Completed', 'Pending', 'Failed']</td>
+<td>_id, status</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>External transaction reference</td>
+<td>Optional</td>
+<td>_id, transactionId</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Every payment belongs to a user, but can be optional (e.g., guest payments).</p>
+<h5 id="menuitems-menu-items">MenuItems (Menu Items) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Menu item name</td>
+<td>Required</td>
+<td>_id, name</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Description</td>
+<td>Required</td>
+<td>_id, description</td>
+</tr>
+<tr>
+<td>stock</td>
+<td>Number</td>
+<td>Stock quantity</td>
+<td>Required, default: 0</td>
+<td>_id, stock</td>
+</tr>
+<tr>
+<td>price</td>
+<td>Number</td>
+<td>Price</td>
+<td>Required</td>
+<td>_id, price</td>
+</tr>
+<tr>
+<td>category</td>
+<td>String</td>
+<td>Category (Soup, Salad, etc.)</td>
+<td>Required, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], default: 'Other'</td>
+<td>_id, category</td>
+</tr>
+<tr>
+<td>available</td>
+<td>Boolean</td>
+<td>Availability</td>
+<td>Default: true</td>
+<td>_id, available</td>
+</tr>
+<tr>
+<td>QRCode</td>
+<td>String</td>
+<td>QR code for menu item</td>
+<td>Optional</td>
+<td>_id, QRCode</td>
+</tr>
+<tr>
+<td>allergens</td>
+<td>[String]</td>
+<td>Allergen list</td>
+<td>Default: []</td>
+<td>_id, allergens</td>
+</tr>
+<tr>
+<td>nutritionalInfo.calories</td>
+<td>Number</td>
+<td>Calories</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.calories</td>
+</tr>
+<tr>
+<td>nutritionalInfo.protein</td>
+<td>Number</td>
+<td>Protein</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.protein</td>
+</tr>
+<tr>
+<td>nutritionalInfo.carbs</td>
+<td>Number</td>
+<td>Carbohydrates</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.carbs</td>
+</tr>
+<tr>
+<td>nutritionalInfo.fat</td>
+<td>Number</td>
+<td>Fat</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.fat</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Stock cannot be negative; filterable by categories. Pre-save hook: If stock &lt;= 0, available = false, else true.</p>
+<h5 id="order-orders">Order (Orders) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Ordering user</td>
+<td>Required</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>items</td>
+<td>[OrderItemsScheme]</td>
+<td>Order items</td>
+<td>Required</td>
+<td>_id, items</td>
+</tr>
+<tr>
+<td>orderDate</td>
+<td>Date</td>
+<td>Order date</td>
+<td>Default: current time</td>
+<td>_id, orderDate</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Status (Pending, InProgress, Completed, Cancelled)</td>
+<td>Required, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending'</td>
+<td>_id, status</td>
+</tr>
+<tr>
+<td>totalAmount</td>
+<td>Number</td>
+<td>Total amount</td>
+<td>Required</td>
+<td>_id, totalAmount</td>
+</tr>
+<tr>
+<td>pickupTime</td>
+<td>Date</td>
+<td>Pickup time</td>
+<td>Optional</td>
+<td>_id, pickupTime</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>String</td>
+<td>Notes</td>
+<td>Optional, default: ''</td>
+<td>_id, notes</td>
+</tr>
+<tr>
+<td>paypalOrderId</td>
+<td>String</td>
+<td>PayPal order ID</td>
+<td>Optional</td>
+<td>_id, paypalOrderId</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Payment method</td>
+<td>Optional</td>
+<td>_id, paymentMethod</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>Transaction ID</td>
+<td>Optional</td>
+<td>_id, transactionId</td>
+</tr>
+<tr>
+<td>publicID</td>
+<td>String</td>
+<td>Public ID</td>
+<td>Required, unique</td>
+<td>_id, publicID</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Every order belongs to a user; status changes follow business process. Pre-save hook: If order is 'Pending' and more than 15 minutes have passed since creation, automatically set to 'Cancelled'.</p>
+<h5 id="orderitems-order-items">OrderItems (Order Items) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>menuItemId</td>
+<td>ObjectId (ref: MenuItems)</td>
+<td>Menu item ID</td>
+<td>Required</td>
+<td>_id, menuItemId</td>
+</tr>
+<tr>
+<td>orderId</td>
+<td>ObjectId (ref: Order)</td>
+<td>Order ID</td>
+<td>Optional</td>
+<td>_id, orderId</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Number</td>
+<td>Quantity</td>
+<td>Required, default: 1</td>
+<td>_id, quantity</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Every item belongs to a menu item; quantity is positive integer. This schema is embedded in the Order schema's items field.</p>
+<h5 id="review-reviews---embedded-in-menuitems">Review (Reviews) - Embedded in MenuItems </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Reviewing user</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>rating</td>
+<td>Number</td>
+<td>Rating (1-5)</td>
+<td>Required, min: 1, max: 5</td>
+<td>_id, rating</td>
+</tr>
+<tr>
+<td>comment</td>
+<td>String</td>
+<td>Comment</td>
+<td>Required, maxlength: 500</td>
+<td>_id, comment</td>
+</tr>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, date</td>
+</tr>
+<tr>
+<td>ipAddress</td>
+<td>String</td>
+<td>IP address</td>
+<td>Optional</td>
+<td>_id, ipAddress</td>
+</tr>
+<tr>
+<td>reported</td>
+<td>Boolean</td>
+<td>Reported</td>
+<td>Default: false</td>
+<td>_id, reported</td>
+</tr>
+<tr>
+<td>moderated</td>
+<td>Boolean</td>
+<td>Moderated</td>
+<td>Default: false</td>
+<td>_id, moderated</td>
+</tr>
+<tr>
+<td>moderatorNotes</td>
+<td>String</td>
+<td>Moderator notes</td>
+<td>Optional</td>
+<td>_id, moderatorNotes</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Reviews are embedded in the MenuItems collection. A user can rate different items multiple times.</p>
+<h5 id="dailymenu-daily-menu">DailyMenu (Daily Menu) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td>Date</td>
+<td>Required</td>
+<td>_id, date</td>
+</tr>
+<tr>
+<td>schoolPeriod</td>
+<td>String</td>
+<td>School period (morning, afternoon)</td>
+<td>Required, enum: ['morning', 'afternoon']</td>
+<td>_id, schoolPeriod</td>
+</tr>
+<tr>
+<td>menuItems</td>
+<td>[ObjectId] (ref: MenuItems)</td>
+<td>Item list</td>
+<td>Required</td>
+<td>_id, menuItems</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Daily menus are created per period.</p>
+<h5 id="parentstudent-parent-student-relationship">ParentStudent (Parent-Student Relationship) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>parentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Parent user</td>
+<td>Required</td>
+<td>_id, parentId</td>
+</tr>
+<tr>
+<td>studentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Student user</td>
+<td>Required</td>
+<td>_id, studentId</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Parents can be linked to multiple students.</p>
+<h5 id="securitylogs-security-logs">SecurityLogs (Security Logs) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>action</td>
+<td>String</td>
+<td>Action (e.g., LOGIN_SUCCESS)</td>
+<td>Required</td>
+<td>_id, action</td>
+</tr>
+<tr>
+<td>type</td>
+<td>String</td>
+<td>Type (INFO, WARNING, ERROR)</td>
+<td>Required</td>
+<td>_id, type</td>
+</tr>
+<tr>
+<td>ipAddress</td>
+<td>String</td>
+<td>IP address (hashed)</td>
+<td>Optional</td>
+<td>_id, ipAddress</td>
+</tr>
+<tr>
+<td>Timestamp</td>
+<td>Date</td>
+<td>Timestamp</td>
+<td>Default: current time</td>
+<td>_id, Timestamp</td>
+</tr>
+<tr>
+<td>details</td>
+<td>String</td>
+<td>Additional info</td>
+<td>Optional</td>
+<td>_id, details</td>
+</tr>
+<tr>
+<td>country</td>
+<td>String</td>
+<td>Country</td>
+<td>Optional</td>
+<td>_id, country</td>
+</tr>
+<tr>
+<td>CountryCode</td>
+<td>String</td>
+<td>Country code</td>
+<td>Optional</td>
+<td>_id, CountryCode</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Currency</td>
+<td>Optional</td>
+<td>_id, currency</td>
+</tr>
+<tr>
+<td>Continent</td>
+<td>String</td>
+<td>Continent</td>
+<td>Optional</td>
+<td>_id, Continent</td>
+</tr>
+<tr>
+<td>IsVPN</td>
+<td>Boolean</td>
+<td>VPN usage</td>
+<td>Optional</td>
+<td>_id, isVPN</td>
+</tr>
+<tr>
+<td>isTor</td>
+<td>Boolean</td>
+<td>Tor usage</td>
+<td>Optional</td>
+<td>_id, isTor</td>
+</tr>
+<tr>
+<td>isProxy</td>
+<td>Boolean</td>
+<td>Proxy usage</td>
+<td>Optional</td>
+<td>_id, isProxy</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Logs record all important events.</p>
+<h5 id="devicesyncsession-device-sync-session">DeviceSyncSession (Device Sync Session) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>responderDeviceId</td>
+<td>String</td>
+<td>Responder device ID</td>
+<td>Required</td>
+<td>responderDeviceId</td>
+</tr>
+<tr>
+<td>initiatorDeviceId</td>
+<td>String</td>
+<td>Initiator device ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptedPayload</td>
+<td>String</td>
+<td>Encrypted payload</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>Initialization vector</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>ephemeralKey</td>
+<td>String</td>
+<td>Ephemeral key</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>expiresAt</td>
+<td>Date</td>
+<td>Expiration time</td>
+<td>Default: current time + 10 minutes</td>
+<td>expiresAt (TTL)</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Ephemeral session for synchronizing encryption keys between devices. Automatically deleted after 10 minutes via TTL index. Used in E2EE key management to facilitate secure device pairing.</p>
+<h5 id="message-messages">Message (Messages) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>senderId</td>
+<td>ObjectId (ref: User)</td>
+<td>Sender user ID</td>
+<td>Required</td>
+<td>senderId, recipientId, createdAt</td>
+</tr>
+<tr>
+<td>recipientId</td>
+<td>ObjectId (ref: User)</td>
+<td>Recipient user ID</td>
+<td>Required</td>
+<td>recipientId, status</td>
+</tr>
+<tr>
+<td>senderDeviceId</td>
+<td>String</td>
+<td>Sender device ID</td>
+<td>Optional</td>
+<td>recipientDeviceId, status</td>
+</tr>
+<tr>
+<td>recipientDeviceId</td>
+<td>String</td>
+<td>Recipient device ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>schemaVersion</td>
+<td>Number</td>
+<td>Schema version</td>
+<td>Default: 2</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>header.dh</td>
+<td>String</td>
+<td>Sender ratchet public key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>header.n</td>
+<td>Number</td>
+<td>Message number in chain</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td><a href="http://header.pn">header.pn</a></td>
+<td>Number</td>
+<td>Previous chain message count</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.identityKey</td>
+<td>String</td>
+<td>Identity key for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.ephemeralKey</td>
+<td>String</td>
+<td>Ephemeral key for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.spkKeyId</td>
+<td>String</td>
+<td>Signed prekey ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.opkKeyId</td>
+<td>Mixed</td>
+<td>One-time prekey ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.recipientDeviceId</td>
+<td>String</td>
+<td>Recipient device for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>ciphertext</td>
+<td>String</td>
+<td>Encrypted message content</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>GCM IV</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptedContent</td>
+<td>String</td>
+<td>Legacy encrypted content</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.senderEncryptedKey</td>
+<td>String</td>
+<td>Legacy sender key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.recipientEncryptedKey</td>
+<td>String</td>
+<td>Legacy recipient key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.iv</td>
+<td>String</td>
+<td>Legacy IV</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.algorithm</td>
+<td>String</td>
+<td>Encryption algorithm</td>
+<td>Default: 'AES-GCM'</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Message status</td>
+<td>Enum: ['sent', 'delivered', 'read', 'replaced'], default: 'sent'</td>
+<td>status</td>
+</tr>
+<tr>
+<td>messageType</td>
+<td>String</td>
+<td>Message type</td>
+<td>Enum: ['text', 'file', 'image'], default: 'text'</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>createdAt</td>
+</tr>
+<tr>
+<td>readAt</td>
+<td>Date</td>
+<td>Read time</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.needed</td>
+<td>Boolean</td>
+<td>Key recovery needed</td>
+<td>Default: false</td>
+<td>senderKeyRecovery.needed</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.failed</td>
+<td>Boolean</td>
+<td>Key recovery failed</td>
+<td>Default: false</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.senderPublicKey</td>
+<td>String</td>
+<td>Recovery public key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.senderKeyId</td>
+<td>String</td>
+<td>Recovery key ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Stores end-to-end encrypted messages using Double Ratchet protocol. Includes X3DH headers for initial key exchange. Status tracks delivery and read state. Supports key recovery for lost encryption keys. Legacy fields maintained for migration. Indexes optimized for conversation retrieval and status updates.</p>
+<h5 id="prekey-prekeys">PreKey (Prekeys) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User ID</td>
+<td>Required</td>
+<td>userId, deviceId, used</td>
+</tr>
+<tr>
+<td>deviceId</td>
+<td>String</td>
+<td>Device ID</td>
+<td>Required</td>
+<td>userId, keyId (unique)</td>
+</tr>
+<tr>
+<td>keyId</td>
+<td>Number</td>
+<td>Key ID</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>publicKey</td>
+<td>String</td>
+<td>ECDH public key</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>used</td>
+<td>Boolean</td>
+<td>Whether key has been used</td>
+<td>Default: false</td>
+<td>used</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Stores one-time prekeys (OPKs) for X3DH key exchange in E2EE messaging. Each key is used once and marked as used. Unique keyId per user ensures no duplicates. High-churn collection with keys deleted after use to maintain forward secrecy.</p>
+<h5 id="storageblob-storage-blobs">StorageBlob (Storage Blobs) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User ID</td>
+<td>Required</td>
+<td>userId, blobType, partitionKey (unique)</td>
+</tr>
+<tr>
+<td>blobType</td>
+<td>String</td>
+<td>Blob type</td>
+<td>Required, enum: ['message_log', 'session_state', 'skipped_keys']</td>
+<td>blobType</td>
+</tr>
+<tr>
+<td>partitionKey</td>
+<td>String</td>
+<td>Partition key (e.g., conversation ID)</td>
+<td>Required</td>
+<td>partitionKey</td>
+</tr>
+<tr>
+<td>encryptedPayload</td>
+<td>String</td>
+<td>Encrypted data</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>GCM IV</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>version</td>
+<td>Number</td>
+<td>Version number</td>
+<td>Default: 1</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>updatedAt</td>
+<td>Date</td>
+<td>Last update time</td>
+<td>Default: current time</td>
+<td>updatedAt</td>
+</tr>
+</tbody>
+</table>
+<p>Business Rules: Encrypted storage for E2EE-related data including message logs, session states, and skipped message keys. Partitioned by user, type, and key for efficient access. Unique constraints prevent data overwrites. Used for persistent storage of cryptographic state across sessions.</p>
+<hr>
+<h4 id="524-physical-and-logical-structure">5.2.4 Physical and Logical Structure </h4>
+<p>The database uses MongoDB as the primary NoSQL store with Mongoose for schema enforcement. Collections are designed for document-based storage, with embedded subdocuments for related data (e.g., OrderItems in Order, Reviews in MenuItems). References use ObjectId for relationships. Redis handles ephemeral data like sessions, rate limiting, and caching.</p>
+<p>Logical structure follows ER model with entities as collections, relationships via references or embedding. Physical structure includes indexes for performance, TTL for temporary data, and change streams for cache invalidation.</p>
+<h4 id="525-use-cases">5.2.5 Use Cases </h4>
 <ul>
-<li><code>User</code> 1:N → Payment, Order, SecurityLogs, UserLoyalty, Message, PreKey, StorageBlob, ParentStudent</li>
-<li><code>MenuItems</code> 1:N → OrderItems (beágyazva az Order-be), Review (beágyazva)</li>
-<li><code>DailyMenu</code> N:M ↔ MenuItems (linking table)</li>
+<li>User registration and authentication with role-based access.</li>
+<li>Menu browsing, ordering, and payment processing.</li>
+<li>Loyalty point accumulation and discount application.</li>
+<li>E2EE messaging with key management.</li>
+<li>Security monitoring and audit logging.</li>
+<li>Inventory management and stock updates.</li>
+<li>Parent-student account linking for oversight.</li>
 </ul>
-<p><img src="menuitemsanddailymenu.png" alt="Daily Menu és MenuItems kapcsolata"></p>
-<h4 id="523-e2ee-chat-az-adatbázisban">5.2.3 E2EE Chat az adatbázisban </h4>
-<p>A chat rendszer Double Ratchet protokollra és X3DH kulcscserére épül. A szerver nem fér hozzá az üzenetek tartalmához — csak a szükséges metaadatokat tárolja. Az üzenetek és kulcsok gyorsan cserélődnek; a PreKey és DeviceSyncSession kollekciók magas churn-t kezelnek TTL indexekkel.</p>
+<h4 id="526-security-and-access">5.2.6 Security and Access </h4>
+<ul>
+<li>Authentication via JWT, passwords hashed with bcrypt.</li>
+<li>Role-based permissions (admin, student, etc.).</li>
+<li>IP hashing for GDPR compliance.</li>
+<li>Encrypted blobs for sensitive data.</li>
+<li>Rate limiting to prevent abuse.</li>
+<li>Audit logs for all security events.</li>
+</ul>
+<h4 id="527-maintenance-and-operations">5.2.7 Maintenance and Operations </h4>
+<ul>
+<li>Regular index maintenance and monitoring.</li>
+<li>Backup strategies for MongoDB and Redis.</li>
+<li>Data migration for schema updates.</li>
+<li>Performance tuning based on query analysis.</li>
+<li>Cleanup of expired sessions and logs.</li>
+</ul>
+<h4 id="528-e2ee-chat-and-messaging">5.2.8 E2EE Chat and Messaging </h4>
+<p>The system implements Double Ratchet protocol with X3DH key exchange for end-to-end encrypted messaging. Messages are stored encrypted, with ratchet metadata for forward secrecy. Prekeys and storage blobs manage key distribution and session state.</p>
+<h4 id="529-codebase-mapping-documentation-extension">5.2.9 Codebase Mapping (Documentation Extension) </h4>
+<p>This section complements the above database schema description by providing direct references to the implementing code and system operation locations.</p>
+<h5 id="main-mongodb-models-and-locations">Main MongoDB Models and Locations </h5>
+<ul>
+<li><code>src/models/User.js</code>: <code>User</code> and sub-schemas (<code>userPersonalInfo</code>, <code>identity</code>, <code>devices</code>, <code>recoveryBlob</code>, <code>encryption</code>).</li>
+<li><code>config/database_queries.js</code>: <code>Payment</code>, <code>MenuItems</code>, <code>Order</code>, <code>OrderItems</code>, <code>DailyMenu</code>, <code>ParentStudent</code>, <code>SecurityLogs</code>, <code>UserLoyalty</code>, <code>Reward</code>, <code>Redemption</code>, <code>MoneyRequest</code> and regular indexes + pre-save hooks.</li>
+<li><code>src/models/DeviceSyncSession.js</code>: <code>DeviceSyncSession</code>, TTL index <code>expiresAt</code>.</li>
+<li><code>src/models/Message.js</code>: <code>Message</code> (E2EE metadata, state-tracking, indexes, markAsRead helper).</li>
+<li><code>src/models/PreKey.js</code>: <code>PreKey</code> (X3DH keys, <code>userId</code>/<code>deviceId</code> indexes and <code>keyId</code> uniqueness).</li>
+<li><code>src/models/StorageBlob.js</code>: <code>StorageBlob</code> (saved encrypted session data, <code>userId/blobType/partitionKey</code> unique index).</li>
+</ul>
+<h5 id="data-operations-and-service-layer">Data Operations and Service Layer </h5>
+<ul>
+<li><code>src/api.js</code>: Central REST endpoints, where Order and Payment processes, and email control occur.
+<ul>
+<li><code>/api/orders</code> CRUD + PayPal/Google Pay + balance payment + <code>save-order</code> task.</li>
+<li><code>orderService</code> and <code>paypalService</code>, <code>googlePayService</code> imports, <code>validateOrderInput</code> + <code>validatePaymentInput</code> middleware.</li>
+</ul>
+</li>
+<li><code>src/Orders/Order.js</code> and <code>src/LoyaltySystem/*</code>: Tools for order processing, <code>UserLoyalty</code> point updates, loyalty point calculation.</li>
+<li><code>src/auth/*.js</code>: User auth events (<code>register.js</code>, <code>login.js</code>, <code>2fa.js</code>, <code>password_reset.js</code>, <code>email_verification.js</code>), <code>SecurityLogs</code> usage,
+<ul>
+<li>On login <code>SecurityLogs</code> recording and <code>User.lastActive</code> update.</li>
+</ul>
+</li>
+<li><code>src/services/*</code>: Logic for transparent database updates, accurate calculations (rate, coupon, rewards).</li>
+</ul>
+<h5 id="database-integration-and-startup-steps">Database Integration and Startup Steps </h5>
+<ol>
+<li>Load <code>.env</code> variables (e.g., <code>MONGODB_URI</code>, <code>DB_NAME</code>) in different places (<code>src/models/User.js</code>, <code>config/database_queries.js</code>).</li>
+<li>Initial <code>mongoose.connect</code> binding in two main components (User auth and db query wrapper).</li>
+<li><code>module.exports</code> of models, imported in other modules (<code>src/api.js</code>, <code>src/auth/login.js</code>, <code>src/dashboard/...</code>).</li>
+<li>Redis connection in <code>src/redis.js</code> and <code>src/cache/*</code> layer (rate limit, cache, Change Stream Manager, key registry).</li>
+</ol>
+<h5 id="key-functions-and-data-flows-in-main-modules">Key Functions and Data Flows in Main Modules </h5>
+<ul>
+<li><strong>Order Submission</strong>: <code>src/api.js</code> -&gt; <code>orderService.validateOrderStock</code> -&gt; <code>orderService.convertCartToDbFormat</code> -&gt; <code>Order.create/Order.save</code> =&gt; <code>UserLoyalty.updatePointsAtomically</code> (save) -&gt; <code>SecurityLogs</code> environment.</li>
+<li><strong>Recipient and Parent-Student Relationships</strong>: <code>ParentStudent</code> schema via, admin/access via <code>src/dashboard/*</code> and <code>src/models/User.js</code> according to <code>userPersonalInfo</code> connection.</li>
+<li><strong>E2EE Messages</strong>: <code>src/models/Message.js</code> and <code>src/models/PreKey.js</code> + <code>src/models/StorageBlob.js</code> + <code>src/LoyaltySystem</code> (additional consistency, audit) + <code>src/chat/**</code> frontend.</li>
+</ul>
+<h5 id="security-and-maintainability-notes">Security and Maintainability Notes </h5>
+<ul>
+<li>Passwords: <code>bcrypt</code> in <code>src/auth/passwordhash.js</code> summarizes (hash + compare).</li>
+<li>Logging: All important operations (<code>SecurityLogs</code>) in <code>src/auth/login.js</code>, <code>src/auth/register.js</code>, <code>src/api.js</code> endpoints occur.</li>
+</ul>
+<p><img src="menuitemsanddailymenu.png" alt="Database Diagram"></p>
 <h3 id="53-algorithms-and-data-structures">5.3 Algorithms and Data Structures </h3>
 <h4 id="531-data-structures">5.3.1 Data Structures </h4>
 <ul>
@@ -574,11 +1744,50 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 </tr>
 </tbody>
 </table>
-<h4 id="542-security-testing">5.4.2 Security Testing </h4>
+<h4 id="542-threat-modeling">5.4.2 Threat Modeling </h4>
+<h5 id="identified-threats">Identified Threats </h5>
+<ul>
+<li><strong>Authentication Bypass</strong>: Brute force attacks, credential stuffing, JWT token theft.</li>
+<li><strong>Data Injection</strong>: SQL/NoSQL injection, XSS, CSRF attacks.</li>
+<li><strong>Denial of Service</strong>: Rate limiting bypass, resource exhaustion.</li>
+<li><strong>Data Breach</strong>: Unauthorized access to user data, payment information.</li>
+<li><strong>E2EE Compromise</strong>: Weak key exchange, man-in-the-middle attacks on chat.</li>
+<li><strong>Insider Threats</strong>: Admin privilege abuse, data exfiltration.</li>
+</ul>
+<h5 id="mitigation-strategies">Mitigation Strategies </h5>
+<ul>
+<li>Multi-layered authentication with reCAPTCHA and geolocation risk scoring.</li>
+<li>Comprehensive input sanitization and parameterized queries.</li>
+<li>Distributed rate limiting with Redis to prevent DoS.</li>
+<li>Encryption at rest and in transit (HTTPS, E2EE for chat).</li>
+<li>Least privilege access and audit logging for all actions.</li>
+<li>Regular security audits and dependency vulnerability scanning.</li>
+</ul>
+<h4 id="543-incident-response-plan">5.4.3 Incident Response Plan </h4>
+<ol>
+<li><strong>Detection</strong>: Automated monitoring via SecurityLogs, rate limit alerts, and anomaly detection.</li>
+<li><strong>Assessment</strong>: Incident severity classification (low/medium/high) based on data exposure and system impact.</li>
+<li><strong>Containment</strong>: Immediate isolation of affected systems, token revocation, account lockdowns.</li>
+<li><strong>Eradication</strong>: Root cause analysis, patch deployment, key rotation for E2EE.</li>
+<li><strong>Recovery</strong>: System restoration from backups, user notification, service resumption.</li>
+<li><strong>Lessons Learned</strong>: Post-incident review, documentation updates, preventive measures.</li>
+</ol>
+<h4 id="544-compliance-and-privacy">5.4.4 Compliance and Privacy </h4>
+<ul>
+<li><strong>GDPR Compliance</strong>: Data minimization, consent management, right to erasure, IP hashing for anonymization.</li>
+<li><strong>PCI DSS</strong>: Payment data never stored locally; all transactions via certified gateways.</li>
+<li><strong>Data Retention</strong>: SecurityLogs retained for 2 years, user data until account deletion.</li>
+<li><strong>Privacy by Design</strong>: Default encryption, access controls, and audit trails.</li>
+</ul>
+<h4 id="545-security-testing">5.4.5 Security Testing </h4>
 <ul>
 <li>Automated test suites for authentication flows, input sanitization, and rate limiting.</li>
 <li>Periodic manual penetration testing for vulnerabilities not caught by automated tools.</li>
+<li>Dependency scanning with <code>npm audit</code> and Snyk integration.</li>
+<li>OWASP ZAP for dynamic application security testing.</li>
 </ul>
+<p><img src="security_architecture_diagram_placeholder.png" alt="Security Architecture Diagram"></p>
+<p><img src="threat_model_diagram_placeholder.png" alt="Threat Model Diagram"></p>
 <hr>
 <h2 id="6-implementation">6. Implementation </h2>
 <h3 id="61-directory-structure">6.1 Directory Structure </h3>
@@ -647,29 +1856,136 @@ router<span class="token punctuation">.</span><span class="token method function
   res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span>httpStatusCode<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span>jsonResponse<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre><h4 id="625-caching--performance">6.2.5 Caching &amp; Performance </h4>
-<p>Redis is used for caching menu items, sessions, and dashboard data. A <code>cacheResult</code> middleware wraps endpoints to serve cached responses when available, with MongoDB change streams used to invalidate stale cache entries atomically.</p>
-<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-function">function</span> <span class="token function">cacheResult</span><span class="token punctuation">(</span><span class="token parameter">cacheKey<span class="token punctuation">,</span> ttl <span class="token operator">=</span> <span class="token number">300</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<p>Redis serves as the primary caching layer across the entire application, providing sub-millisecond response times for frequently accessed data and enabling complex atomic operations via Lua scripting. The system implements a multi-tier caching strategy combining Redis with MongoDB change streams for cache invalidation.</p>
+<h5 id="redis-usage-across-the-site">Redis Usage Across the Site </h5>
+<ul>
+<li><strong>Session Management</strong>: User sessions are stored in Redis with automatic expiration (TTL), allowing stateless horizontal scaling of the backend. Sessions include user ID, role, and temporary tokens.</li>
+<li><strong>Dashboard Data Caching</strong>: Admin and user dashboard statistics (user counts, order totals, menu item availability) are cached for 5-10 minutes to reduce database load during peak hours.</li>
+<li><strong>Menu Items Cache</strong>: Daily menu and available items are cached with change stream invalidation when stock levels change or new items are added.</li>
+<li><strong>Rate Limiting Store</strong>: Both general API rate limits and admin-specific sliding window limits use Redis as the backing store for distributed enforcement.</li>
+<li><strong>Loyalty Points Cache</strong>: User loyalty data (points, tier, discounts) is cached briefly to avoid repeated calculations on dashboard loads.</li>
+<li><strong>Security Logs Aggregation</strong>: Recent security events are cached for quick admin access, with periodic refresh from MongoDB.</li>
+<li><strong>Payment Session Cache</strong>: Temporary payment intents and PayPal/Google Pay session data are stored in Redis during transaction processing.</li>
+</ul>
+<h5 id="cache-invalidation-strategy">Cache Invalidation Strategy </h5>
+<p>The system uses MongoDB change streams (<code>src/cache/ChangeStreamManager.js</code>) to listen for database writes and automatically invalidate related Redis keys. For example:</p>
+<ul>
+<li>Menu item updates trigger invalidation of menu cache keys.</li>
+<li>User balance changes invalidate loyalty and dashboard caches.</li>
+<li>New orders invalidate statistics caches.</li>
+</ul>
+<h5 id="performance-optimizations">Performance Optimizations </h5>
+<ul>
+<li><strong>Connection Pooling</strong>: Redis connections are pooled and reused to minimize overhead.</li>
+<li><strong>Key Naming Convention</strong>: Structured keys (e.g., <code>menu:items:category:soup</code>) enable pattern-based invalidation.</li>
+<li><strong>TTL Management</strong>: Automatic expiration prevents memory leaks, with longer TTLs for stable data (24h for user profiles) and shorter for volatile data (5min for stats).</li>
+<li><strong>Fallback Handling</strong>: If Redis is unavailable, the system gracefully degrades to direct MongoDB queries with logging.</li>
+</ul>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Expanded cacheResult middleware with invalidation hooks</span>
+<span class="token keyword keyword-function">function</span> <span class="token function">cacheResult</span><span class="token punctuation">(</span><span class="token parameter">cacheKey<span class="token punctuation">,</span> ttl <span class="token operator">=</span> <span class="token number">300</span><span class="token punctuation">,</span> invalidationPatterns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow keyword-return">return</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> next</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isRedisAvailable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword keyword-const">const</span> key <span class="token operator">=</span> <span class="token keyword keyword-typeof">typeof</span> cacheKey <span class="token operator">===</span> <span class="token string">'function'</span> <span class="token operator">?</span> <span class="token function">cacheKey</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span> <span class="token operator">:</span> cacheKey<span class="token punctuation">;</span>
     <span class="token keyword keyword-const">const</span> cached <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> redisClient<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>cached<span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>cached<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>cached<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      res<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'X-Cache'</span><span class="token punctuation">,</span> <span class="token string">'HIT'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow keyword-return">return</span> res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>cached<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    res<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'X-Cache'</span><span class="token punctuation">,</span> <span class="token string">'MISS'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword keyword-const">const</span> originalJson <span class="token operator">=</span> res<span class="token punctuation">.</span><span class="token property-access">json</span><span class="token punctuation">;</span>
     res<span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">json</span> <span class="token operator">=</span> <span class="token keyword keyword-function">function</span><span class="token punctuation">(</span><span class="token parameter">data</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
       redisClient<span class="token punctuation">.</span><span class="token method function property-access">setEx</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> ttl<span class="token punctuation">,</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">stringify</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// Register invalidation patterns for change streams</span>
+      invalidationPatterns<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">pattern</span> <span class="token arrow operator">=&gt;</span> <span class="token function">registerInvalidation</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
       <span class="token keyword control-flow keyword-return">return</span> originalJson<span class="token punctuation">.</span><span class="token method function property-access">call</span><span class="token punctuation">(</span><span class="token keyword keyword-this">this</span><span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span><span class="token punctuation">;</span>
     <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
-</code></pre><h4 id="626-loyalty-system">6.2.6 Loyalty System </h4>
+</code></pre><h5 id="monitoring-and-metrics">Monitoring and Metrics </h5>
+<p>Redis performance is monitored via built-in INFO commands, tracking hit rates (&gt;90% target), memory usage, and eviction rates. Slow queries are logged for optimization.</p>
+<p><img src="redis_caching_architecture_placeholder.png" alt="Redis Caching Architecture Diagram"></p>
+<h4 id="626-loyalty-system">6.2.6 Loyalty System </h4>
 <p>Points are calculated per order using a random value (4–9 points per dollar), multiplied by holiday, health score, and tier bonuses. Tiers: NONE → BRONZE (1200 pts) → SILVER (2500) → GOLD (8000) → PLATINUM (20000). See <code>src/LoyaltySystem/loyalty-service.js</code> and <code>config/DATABASE_CONSTANTS.JS</code> for rates.</p>
 <h4 id="627-rate-limiting">6.2.7 Rate Limiting </h4>
 <p>Two strategies are used: <code>express-rate-limit</code> with a Redis store for general API routes, and a custom Redis Lua sliding window script for admin/dashboard routes (30 req/min). The Lua implementation is atomic — it runs as a single uninterruptible transaction, preventing race conditions under high concurrency. See the Lua script in section 5.3.2.</p>
 <h4 id="628-extensibility--maintainability">6.2.8 Extensibility &amp; Maintainability </h4>
 <p>The backend uses a layered, service-oriented architecture (routes → services → models). Configuration is environment-based via <code>.env</code>. Error handling is centralized through Express error middleware, which logs security events and returns safe messages to clients. The stateless JWT design and Redis session storage allow horizontal scaling. Dependencies are managed with <code>npm audit</code> and kept up to date.</p>
 <h3 id="63-frontend-implementation">6.3 Frontend Implementation </h3>
-<p><em>(Section to be completed)</em></p>
+<h4 id="631-technology-stack">6.3.1 Technology Stack </h4>
+<p>React.js with JSX, Tailwind CSS for styling, <a href="http://Socket.IO">Socket.IO</a> client for real-time communication, Custom E2EE crypto library, Mobile-first responsive design.</p>
+<h4 id="632-main-application-structure">6.3.2 Main Application Structure </h4>
+<ul>
+<li><strong>Static HTML Pages</strong>: Entry points in <code>public/</code> (e.g., <code>index.html</code>, <code>login.html</code>, <code>chat/index.html</code>).</li>
+<li><strong>React Components</strong>: Modular JSX components loaded via <code>&lt;script&gt;</code> tags, using ReactDOM for rendering.</li>
+<li><strong>State Management</strong>: Local component state with <code>useState</code>, <code>useEffect</code>, and custom hooks (e.g., <code>useAdminData.js</code>).</li>
+<li><strong>Routing</strong>: Client-side routing via URL hash changes and conditional rendering.</li>
+<li><strong>Styling</strong>: Tailwind CSS classes for responsive, utility-first design.</li>
+</ul>
+<h4 id="633-key-components-and-features">6.3.3 Key Components and Features </h4>
+<h5 id="dashboard-system">Dashboard System </h5>
+<p>The admin dashboard (<code>public/dashboard/admin/admin.jsx</code>) features a sidebar navigation with sections for users, statistics, menu items, rewards, health checks, and settings. It uses a custom hook <code>useAdminData</code> to fetch and manage data from REST APIs.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Admin Dashboard Structure — public/dashboard/admin/admin.jsx</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function"><span class="token maybe-class-name">AdminDashboard</span></span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>activeSection<span class="token punctuation">,</span> setActiveSection<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'users'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">{</span> stats<span class="token punctuation">,</span> users<span class="token punctuation">,</span> menuItems<span class="token punctuation">,</span> rewards<span class="token punctuation">,</span> loading <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAdminData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">(</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>min-h-screen bg-gradient-to-br from-accent to-white<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">AdminHeader</span></span> <span class="token punctuation">/&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">AdminSidebar</span></span> <span class="token attr-name">activeSection</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>activeSection<span class="token punctuation">}</span></span> <span class="token attr-name">setActiveSection</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>setActiveSection<span class="token punctuation">}</span></span> <span class="token punctuation">/&gt;</span></span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>main</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex-1 p-4<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+                    </span><span class="token punctuation">{</span>activeSection <span class="token operator">===</span> <span class="token string">'users'</span> <span class="token operator">&amp;&amp;</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">UsersSection</span></span> <span class="token attr-name">users</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>users<span class="token punctuation">}</span></span> <span class="token punctuation">/&gt;</span></span><span class="token punctuation">}</span><span class="token plain-text">
+                    </span><span class="token punctuation">{</span><span class="token comment">/* Other sections */</span><span class="token punctuation">}</span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>main</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="order-and-cart-system">Order and Cart System </h5>
+<p>The order page (<code>public/order/order.jsx</code>) implements a shopping cart with <code>useCart</code> hook for state management, real-time stock validation, and payment integration.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Cart Management — public/order/useCart.js</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function">useCart</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>cart<span class="token punctuation">,</span> setCart<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token function-variable function">addToCart</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">item</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token function">setCart</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token spread operator">...</span>cart<span class="token punctuation">,</span> item<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... validation, total calculation</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">{</span> cart<span class="token punctuation">,</span> addToCart<span class="token punctuation">,</span> removeFromCart<span class="token punctuation">,</span> getTotal <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="e2ee-chat-interface">E2EE Chat Interface </h5>
+<p>The chat system (<code>public/chat/chat.jsx</code>) handles end-to-end encryption setup, key exchange, and real-time messaging via <a href="http://Socket.IO">Socket.IO</a>. It includes device synchronization and key recovery features.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Chat State Management — public/chat/chat.jsx</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function"><span class="token maybe-class-name">E2EEChatApp</span></span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>conversations<span class="token punctuation">,</span> setConversations<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>activeConversation<span class="token punctuation">,</span> setActiveConversation<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>messages<span class="token punctuation">,</span> setMessages<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... E2EE setup, message sending/receiving</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="mobile-responsiveness">Mobile Responsiveness </h5>
+<p>Mobile-specific components (e.g., <code>MobileAdminNav.jsx</code>, <code>MobileCart.jsx</code>) provide touch-friendly interfaces with collapsible navigation and toast notifications.</p>
+<h4 id="634-state-management-and-data-fetching">6.3.4 State Management and Data Fetching </h4>
+<ul>
+<li><strong>Local State</strong>: React hooks for component-specific state (loading, errors, form data).</li>
+<li><strong>API Integration</strong>: Fetch API for REST calls, with error handling and loading states.</li>
+<li><strong>Real-time Updates</strong>: <a href="http://Socket.IO">Socket.IO</a> for chat messages and live notifications.</li>
+<li><strong>Caching</strong>: Browser localStorage for user preferences and session data.</li>
+</ul>
+<h4 id="635-uiux-design-principles">6.3.5 UI/UX Design Principles </h4>
+<ul>
+<li><strong>Accessibility</strong>: ARIA labels, keyboard navigation, high contrast colors.</li>
+<li><strong>Performance</strong>: Lazy loading of components, optimized images, minimal re-renders.</li>
+<li><strong>User Experience</strong>: Progressive enhancement, error boundaries, loading indicators.</li>
+<li><strong>Security</strong>: Input sanitization, XSS protection via React's built-in escaping.</li>
+</ul>
+<h4 id="636-build-and-deployment">6.3.6 Build and Deployment </h4>
+<ul>
+<li><strong>Development</strong>: Hot reloading with browser dev tools.</li>
+<li><strong>Production</strong>: Minified bundles served statically from <code>public/</code>.</li>
+<li><strong>Cross-browser</strong>: Tested on modern browsers with fallbacks for older versions.</li>
+</ul>
+<h4 id="637-extensibility-and-maintainability">6.3.7 Extensibility and Maintainability </h4>
+<p>The frontend follows a component-based architecture with reusable UI elements. Tailwind's utility classes ensure consistent styling. Custom hooks encapsulate complex logic, making components testable and maintainable. The mobile-first approach ensures scalability across devices.</p>
+<p><img src="frontend_architecture_placeholder.png" alt="Frontend Architecture Diagram"></p>
 <hr>
 <h2 id="7-api-reference">7. API Reference </h2>
 <p>All endpoints require an active session unless marked as <strong>public</strong>. Authentication failures return <code>401 Unauthorized</code>; insufficient permissions return <code>403 Forbidden</code>. Admin-only routes are highlighted in <span style="color:#d32f2f;font-weight:bold">red</span>.</p>
@@ -1277,7 +2593,68 @@ router<span class="token punctuation">.</span><span class="token method function
   <span class="token comment">// ... (see KeyRegistry.js for full list)</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span>
 </code></pre><hr>
-<h2 id="8-testing-and-validation">8. Testing and Validation </h2>
+<h2 id="8-data-model-and-codebase-mapping">8. Data Model and Codebase Mapping </h2>
+<h3 id="81-summary">8.1 Summary </h3>
+<p>This section consolidates the database schema details from <code>DatabaseDoc.md</code> and connects them with the implementation files in the codebase. It is written in English and kept as a reference for developers and reviewers.</p>
+<h3 id="82-main-database-entities-mongodb-mongoose">8.2 Main Database Entities (MongoDB, Mongoose) </h3>
+<ul>
+<li><code>User</code> (in <code>src/models/User.js</code>): core user account entity with authentication fields, roles, status flags, balance, ban details, E2EE identity, registered devices, recovery blob, and legacy encryption fields.</li>
+<li><code>Payment</code> (in <code>config/database_queries.js</code>): payment records with amount, currency, payment method, status, transaction reference, and created timestamp.</li>
+<li><code>MenuItems</code> (in <code>config/database_queries.js</code>): items menu with stock, pricing, category, availability, QR code, allergens, nutrition, and embedded reviews.</li>
+<li><code>Order</code> (in <code>config/database_queries.js</code>): user orders with items, totals, statuses, pickup time, payment references, and public ID.</li>
+<li><code>OrderItems</code> (embedded in <code>Order</code> schema): link catalog items to order quantity.</li>
+<li><code>UserLoyalty</code> (in <code>config/database_queries.js</code>): loyalty points, tier, discounts, history, streaks, decay management.</li>
+<li><code>DailyMenu</code> (in <code>config/database_queries.js</code>): date-specific menu collection tied to MenuItems.</li>
+<li><code>ParentStudent</code> (in <code>config/database_queries.js</code>): connection records between parent and student users.</li>
+<li><code>SecurityLogs</code> (in <code>config/database_queries.js</code>): security event audit trails with action, type, IP and geolocation metadata.</li>
+<li><code>DeviceSyncSession</code> (in <code>src/models/DeviceSyncSession.js</code>): ephemeral session data for E2EE sync, TTL index on <code>expiresAt</code>.</li>
+<li><code>Message</code> (in <code>src/models/Message.js</code>): E2EE message container (Double Ratchet/X3DH metadata), status tracking, indexes for efficient retrieval.</li>
+<li><code>PreKey</code> (in <code>src/models/PreKey.js</code>): prekeys for X3DH bootstrapping, unique and index constraints.</li>
+<li><code>StorageBlob</code> (in <code>src/models/StorageBlob.js</code>): encrypted storage blobs for session/message state, unique per user/blobType/partition.</li>
+<li><code>Reward</code> and <code>Redemption</code> (in <code>config/database_queries.js</code>): expanded loyalty program with catalog and voucher entities.</li>
+</ul>
+<h3 id="83-entity-mapping-to-code-modules">8.3 Entity mapping to code modules </h3>
+<ul>
+<li>Authentication routes: <code>src/auth/register.js</code>, <code>src/auth/login.js</code>, <code>src/auth/2fa.js</code>, <code>src/auth/password_reset.js</code>, <code>src/auth/email_verification.js</code>.</li>
+<li>API orchestration: <code>src/api.js</code> handles orders (<code>/orders</code>, <code>/orders/googlepay</code>, <code>/orders/:orderID/capture</code>, etc.), payments, and maps to <code>orderService</code>, <code>paypalService</code>, and <code>googlePayService</code>.</li>
+<li>Dashboard &amp; admin endpoints: mounted from <code>src/dashboard/*</code> via <code>src/main.js</code>.</li>
+<li>Cache and high-throughput operations: <code>src/cache/ChangeStreamManager.js</code>, <code>src/cache/KeyRegistry.js</code>, <code>src/redis.js</code>.</li>
+<li>E2EE logic: <code>src/models/Message.js</code>, <code>src/models/PreKey.js</code>, <code>src/models/StorageBlob.js</code>, <code>src/models/DeviceSyncSession.js</code>, and frontend chat components under <code>public/chat</code>.</li>
+</ul>
+<h3 id="84-database-logic-and-constraints">8.4 Database logic and constraints </h3>
+<ul>
+<li><code>MenuItems</code> has pre-save hook: <code>available</code> is false when <code>stock &lt;= 0</code>.</li>
+<li><code>Order</code> has pre-save hook: <code>Pending</code> orders older than 15 minutes become <code>Cancelled</code>.</li>
+<li><code>UserLoyalty</code> includes <code>updatePointsAtomically</code> static method with transaction logic, decay rules, tier updates, and discount recalculation.</li>
+<li><code>DeviceSyncSession</code> has TTL index: <code>expiresAt</code> with <code>expireAfterSeconds: 0</code> for automatic pruning.</li>
+<li><code>Message</code> indexes: <code>senderId/recipientId/createdAt</code>, <code>recipientId/status</code>, <code>recipientDeviceId/status</code>, <code>createdAt</code>, and a <code>participants</code> virtual.</li>
+<li><code>PreKey</code> indexes: <code>userId/deviceId/used</code> and unique <code>userId/keyId</code>.</li>
+<li><code>StorageBlob</code> indexes: unique <code>(userId, blobType, partitionKey)</code>, and <code>userId/updatedAt</code>.</li>
+</ul>
+<h3 id="85-business-process-flow-cross-document">8.5 Business process flow (cross-document) </h3>
+<ol>
+<li>User creates an order via the frontend route <code>/api/orders</code>.</li>
+<li><code>api.js</code> validates order input and stock via <code>orderService.validateOrderStock</code>.</li>
+<li>If PayPal/Google Pay, correspondig external API call is made and then <code>orderService.saveCompletedOrder</code> or <code>orderService.completePaypalOrder</code> finalizes database state.</li>
+<li>Order is written to <code>Order</code> collection and <code>Payment</code> record created.</li>
+<li><code>UserLoyalty.updatePointsAtomically</code> updates points and tiers in <code>UserLoyalty</code>.</li>
+<li>Security logs are written to <code>SecurityLogs</code>.</li>
+<li>If order affects menu stock, <code>MenuItems</code> sorted set cache is invalidated via <code>KeyRegistry</code> and, when needed, <code>ChangeStreamManager</code> triggers cache invalidation.</li>
+</ol>
+<h3 id="86-environment-and-config-essentials">8.6 Environment and config essentials </h3>
+<ul>
+<li><code>.env</code> values: <code>MONGODB_URI</code>, <code>DB_NAME</code>, <code>JWT_LOGIN_SECRET</code>, <code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_SECRET</code>, <code>GOOGLE_PAY_MERCHANT_ID</code>, <code>RECAPTCHA_SECRET</code>, and <code>REDIS_URL</code>.</li>
+<li><code>mongoose.connect</code> invoked in <code>src/models/User.js</code> and <code>config/database_queries.js</code>. Use connection pooling and monitoring.</li>
+<li><code>dotenv</code> usage imported in both files as <code>require('dotenv').config()</code>.</li>
+</ul>
+<h3 id="87-testing-references">8.7 Testing references </h3>
+<ul>
+<li>Unit/integration tests are in <code>tests/</code> and <code>tests/performance_tests/</code>.</li>
+<li>Existing seed scripts: <code>tests/creating_test_users.js</code>, <code>tests/seed_rewards.js</code>.</li>
+<li>Security and regression tests: <code>tests/query_security_logs.js</code>, <code>tests/register_testing.py</code>.</li>
+</ul>
+<hr>
+<h2 id="9-testing-and-validation">9. Testing and Validation </h2>
 <p><em>(Section to be completed)</em></p>
 <hr>
 <h2 id="9-user-manual">9. User Manual </h2>

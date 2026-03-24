@@ -256,6 +256,60 @@ const DISCOUNT_TYPES = {
   GENERAL: 'general',
 };
 
+---
+
+## 8. Codebase Mapping (Dokumentáció kiterjesztése)
+
+Ez a szakasz jól kiegészíti a fenti adatbázis-séma leírást azzal, hogy direkt hivatkozásokat ad a megvalósító kódra és a rendszer működési helyszíneire.
+
+### 8.1 Fő MongoDB modellek és elérési helyük
+
+- `src/models/User.js`: `User` és al-sémák (`userPersonalInfo`, `identity`, `devices`, `recoveryBlob`, `encryption`).
+- `config/database_queries.js`: `Payment`, `MenuItems`, `Order`, `OrderItems`, `DailyMenu`, `ParentStudent`, `SecurityLogs`, `UserLoyalty`, `Reward`, `Redemption`, `MoneyRequest` és a rendszeres indexek + pre-save hook-ok.
+- `src/models/DeviceSyncSession.js`: `DeviceSyncSession`, TTL index `expiresAt`.
+- `src/models/Message.js`: `Message` (E2EE metaadatok, state-tracking, indexek, markAsRead helper).
+- `src/models/PreKey.js`: `PreKey` (X3DH kulcsok, `userId`/`deviceId` indexek és `keyId` egyediség).
+- `src/models/StorageBlob.js`: `StorageBlob` (mentett titkosított session-adatok, `userId/blobType/partitionKey` egyedi index).
+
+### 8.2 Adat-műveletek és szolgáltatás réteg
+
+- `src/api.js`: központi REST végpontok, ahol az Order és Payment folyamat, valamint email kontrollálás történik.
+  -  `/api/orders` CRUD + PayPal/Google Pay + balance payment + `save-order` faladat.
+  -  `orderService` és `paypalService`, `googlePayService` importálása, `validateOrderInput` + `validatePaymentInput` közteselt.
+- `src/Orders/Order.js` és `src/LoyaltySystem/*`: eszközök a rendelés feldolgozásához, `UserLoyalty` frissítéshez, hűségpont-számításhoz.
+- `src/auth/*.js`: user auth események (`register.js`, `login.js`, `2fa.js`, `password_reset.js`, `email_verification.js`), `SecurityLogs` használat,
+  - Bejelentkezéskor `SecurityLogs` rögzítése és `User.lastActive` update.
+- `src/services/*`: logika a transzparens adatbázis-frissítéshez, pontos számításokhoz (rate, coupon, rewards).
+
+### 8.3 Adatbázis integráció és lépések a rendszerindításkor
+
+1. `.env` változók betöltése (pl. `MONGODB_URI`, `DB_NAME`) a `require('dotenv').config()` eltérő helyeken (`src/models/User.js`, `config/database_queries.js`).
+2. `mongoose.connect` kezdeti kötés a két fő komponensben (User auth és db query wrapper).
+3. `module.exports` a modellekre, amik más modulokban importálva vannak (`src/api.js`, `src/auth/login.js`, `src/dashboard/...`).
+4. Redis-hez kapcsolódás a `src/redis.js` és `src/cache/*` réteghez (rate limit, cache, Chage Stream Manager, key registry).
+
+### 8.4 Kulcsfontosságú funkciók és adatfolyamok a fő modulokban
+
+- **Rendelésfeladás**: `src/api.js` -> `orderService.validateOrderStock` -> `orderService.convertCartToDbFormat` -> `Order.create/Order.save` => `UserLoyalty.updatePointsAtomically` (mentes) -> `SecurityLogs` környezet.
+- **Címzett- és szülő-diák kapcsolatok**: `ParentStudent` sémán át, admin/hozzáférés a `src/dashboard/*` és `src/models/User.js` szerinti `userPersonalInfo` kapcsolattal.
+- **E2EE üzenetek**: `src/models/Message.js` és `src/models/PreKey.js` + `src/models/StorageBlob.js` + `src/LoyaltySystem` (további konzisztencia, audit) + `src/chat/**` frontend.
+
+### 8.5 Biztonsági és fenntarthatósági megjegyzések
+
+- Jelszavak: `bcrypt` a `src/auth/passwordhash.js` foglalja össze (hash + compare).
+- Naplózás: minden fontos művelet (`SecurityLogs`) a `src/auth/login.js`, `src/auth/register.js`, `src/api.js` végpontokban történik.
+- Indexek a query-gyorsításhoz mapperálva a `config/database_queries.js`-ben teszi hatékonyá.
+- TTL megoldás `DeviceSyncSession`-ben `expiresAt` mező és MongoDB `expireAfterSeconds`.
+
+### 8.6 Gyakori karbantartási feladatok
+
+- `dbconnected` állapot ellenőrzése: logok a startnál (`Connected to MongoDB ...`, `Could not connect ...`).
+- `mongoose.set('debug', true)` ideiglenesen `config/database_queries.js`-ben az adatelemzéshez.
+- Üzleti szabályok tesztelése: `tests/database_testing.js`, `tests/performance_tests/*`, `tests/register_testing.py`.
+- Adat tisztán tartása: `SecurityLogs`, `StorageBlob`, `DeviceSyncSession` TTL/archiválás.
+
+---
+
 ```
 
 ### DeviceSyncSession (Eszköz szinkronizálási munkamenet)
