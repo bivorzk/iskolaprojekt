@@ -2,7 +2,6 @@ const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
 
-// 🔧 MOCK MONGOOSE, nem valódi DB kell
 jest.mock('mongoose', () => ({
   connection: {
     db: {
@@ -13,10 +12,8 @@ jest.mock('mongoose', () => ({
   }
 }));
 
-// Router (amit tesztelünk)
 const adminRouter = require('../../../../src/dashboard/admin/admin');
 
-// 🔧 MOCK DB MODELEK
 jest.mock('../../../../src/database', () => ({
   User: {
     countDocuments: jest.fn(),
@@ -45,25 +42,19 @@ const { User } = require('../../../../src/database');
 const { MenuItems, Order, UserLoyalty } = require('../../../../config/database_queries');
 
 describe('ADMIN FEATURES - Integration Tests', () => {
-  let app;
-
   const createAppWithSession = (user) => {
     const app = express();
     app.use(express.json());
-
     app.use(session({
       secret: 'test',
       resave: false,
       saveUninitialized: true
     }));
-
     app.use((req, res, next) => {
       req.session.user = user;
       next();
     });
-
     app.use('/admin', adminRouter);
-
     return app;
   };
 
@@ -71,25 +62,19 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     jest.clearAllMocks();
   });
 
-  // =========================
-  // 🔐 AUTH TESTS
-  // =========================
-  test('❌ should block non-admin user', async () => {
+  test('should block non-admin user', async () => {
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'student' });
     const res = await request(app).get('/admin/usercount');
     expect(res.statusCode).toBe(403);
   });
 
-  test('❌ should block unauthenticated user', async () => {
+  test('should block unauthenticated user', async () => {
     const app = createAppWithSession(null);
     const res = await request(app).get('/admin/usercount');
     expect(res.statusCode).toBe(403);
   });
 
-  // =========================
-  // 👤 USER STATS
-  // =========================
-  test('✅ should return user count', async () => {
+  test('should return user count', async () => {
     User.countDocuments.mockResolvedValue(10);
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app).get('/admin/usercount');
@@ -97,7 +82,7 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.body.total).toBe(10);
   });
 
-  test('✅ should return user list', async () => {
+  test('should return user list', async () => {
     User.find.mockResolvedValue([{ username: 'test', email: 'test@test.com', usertype: 'student' }]);
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app).get('/admin/userlist');
@@ -105,10 +90,7 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.body.users.length).toBe(1);
   });
 
-  // =========================
-  // 📦 ORDERS
-  // =========================
-  test('✅ should return order count', async () => {
+  test('should return order count', async () => {
     Order.countDocuments.mockResolvedValue(5);
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app).get('/admin/orders');
@@ -116,10 +98,7 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.body.total).toBe(5);
   });
 
-  // =========================
-  // 🍔 MENU ITEMS
-  // =========================
-  test('✅ should create menu item', async () => {
+  test('should create menu item', async () => {
     MenuItems.create.mockResolvedValue({});
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app)
@@ -129,15 +108,15 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.body.message).toBe('Menu item created');
   });
 
-  test('❌ should fail validation when creating menu item', async () => {
+  test('should fail validation when creating menu item', async () => {
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app)
       .post('/admin/create_menuitem')
-      .send({ name: '' }); // invalid
+      .send({ name: '' }); 
     expect(res.statusCode).toBe(400);
   });
 
-  test('✅ should update menu item', async () => {
+  test('should update menu item', async () => {
     MenuItems.findByIdAndUpdate.mockResolvedValue({ _id: '1' });
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app)
@@ -146,7 +125,7 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.statusCode).toBe(202);
   });
 
-  test('❌ should return 404 if menu item not found', async () => {
+  test('should return 404 if menu item not found', async () => {
     MenuItems.findByIdAndUpdate.mockResolvedValue(null);
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app)
@@ -155,10 +134,7 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  // =========================
-  // ⭐ LOYALTY
-  // =========================
-  test('✅ should return total points', async () => {
+  test('should return total points', async () => {
     UserLoyalty.aggregate.mockResolvedValue([{ totalPoints: 100 }]);
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app).get('/admin/totalpoints');
@@ -166,15 +142,11 @@ describe('ADMIN FEATURES - Integration Tests', () => {
     expect(res.body.totalPoints).toBe(100);
   });
 
-  // =========================
-  // ❤️ HEALTH CHECK
-  // =========================
-  test('✅ should return health status', async () => {
+  test('should return health status', async () => {
     const app = createAppWithSession({ IsLoggedIn: true, usertype: 'admin' });
     const res = await request(app).get('/admin/health');
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
   });
-
 });
 

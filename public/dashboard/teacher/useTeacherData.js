@@ -27,15 +27,29 @@ const useTeacherData = () => {
 
             const studentsData = await safeFetch('/dashboard/teacher/students', []);
             const menuData = await safeFetch('/api/menu-items', []);
+            const ordersData = await safeFetch('/dashboard/teacher/student-orders', []);
             const welcomeData = await safeFetch('/dashboard/teacher/welcome-message', { message: 'Welcome, Teacher' });
-            const userData = await safeFetch('/dashboard/teacher/userinfo', { username: 'Teacher' });
+            const userInfo = await safeFetch('/dashboard/teacher/userinfo', { username: 'Teacher' });
 
-            setStudents(studentsData || []);
+            // Add latest order & status to each student
+            const enrichedStudents = studentsData.map(s => {
+                const latestOrder = ordersData
+                    .filter(o => o.studentId === s._id)
+                    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))[0];
+
+                return {
+                    ...s,
+                    latestOrder: latestOrder ? latestOrder.orderId : null,
+                    orderStatus: latestOrder ? latestOrder.status : null
+                };
+            });
+
+            setStudents(enrichedStudents);
             setWelcomeMessage(welcomeData.message || 'Welcome, Teacher');
-            setUserData(userData);
+            setUserData(userInfo);
             setStats({
-                totalStudents: studentsData?.length || 0,
-                totalOrders: studentsData?.reduce((sum, s) => sum + (s.ordersMade || 0), 0),
+                totalStudents: studentsData.length || 0,
+                totalOrders: ordersData.length || 0,
                 totalMenuItems: menuData.length || 0
             });
         } catch (error) {
@@ -63,5 +77,5 @@ const useTeacherData = () => {
     };
 };
 
-// Export to window for global access
+// Export to global
 window.useTeacherData = useTeacherData;

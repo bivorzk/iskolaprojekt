@@ -2,29 +2,28 @@ const { useState } = React;
 
 const TeacherDashboard = () => {
     const [activeSection, setActiveSection] = useState('orders');
-
     const {
         orders,
         stats,
-        parentLinkStatus,  // ha kell, maradhat
+        parentLinkStatus, 
         userData,
         loading,
         welcomeMessage,
-        loadDashboardData
+        students
     } = useTeacherData();
 
     const renderActiveSection = () => {
         switch (activeSection) {
             case 'orders':
-                return <OrdersSection orders={orders} />;
-            case 'students':  // teacher-specifikus
-                return <TeacherStudentsSection />;
+                return <TeacherOrdersSection orders={orders} />;
+            case 'students': 
+                return <TeacherStudentsSection students={students} />;
             case 'stats':
-                return <StatsSection stats={stats} />; // walletAmount kikerült
+                return <TeacherStatsSection stats={stats} />;
             case 'settings':
-                return <SettingsSection parentLinkStatus={parentLinkStatus} userData={userData} />;
+                return <TeacherSettingsSection userData={userData} />;
             default:
-                return <OrdersSection orders={orders} />;
+                return <TeacherOrdersSection orders={orders} />;
         }
     };
 

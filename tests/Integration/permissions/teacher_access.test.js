@@ -6,6 +6,12 @@ const app = express();
 app.use(express.json());
 app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
+// Middleware a session beállításához minden tesztnél
+const setSessionUser = (user) => (req, res, next) => {
+  req.session.user = user;
+  next();
+};
+
 app.get('/teacher/dashboard', (req, res) => {
   if (req.session.user && req.session.user.role === 'TEACHER') {
     res.status(200).json({ username: 'teacheruser' });
@@ -17,16 +23,16 @@ app.get('/teacher/dashboard', (req, res) => {
 describe('Teacher Access', () => {
   test('Teacher can access teacher dashboard', async () => {
     const agent = request.agent(app);
-    agent.app.request.session = { user: { id: '1', role: 'TEACHER' } };
+    app.use(setSessionUser({ id: '1', role: 'TEACHER' }));
 
     const res = await agent.get('/teacher/dashboard');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('username');
+    expect(res.body).toHaveProperty('username', 'teacheruser');
   });
 
   test('Student cannot access teacher route', async () => {
     const agent = request.agent(app);
-    agent.app.request.session = { user: { id: '2', role: 'STUDENT' } };
+    app.use(setSessionUser({ id: '2', role: 'STUDENT' }));
 
     const res = await agent.get('/teacher/dashboard');
     expect(res.statusCode).toBe(403);

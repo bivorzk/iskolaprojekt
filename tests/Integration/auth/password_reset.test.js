@@ -3,13 +3,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-// ===== MOCKS ===== //
-// Mock zxcvbn
 jest.mock('zxcvbn', () => jest.fn(() => ({ score: 4, feedback: { warning: '', suggestions: [] } })));
-// Mock badwords-list
 jest.mock('badwords-list', () => ({ array: ['badword1', 'badword2'] }));
 
-// Mock MongoDB User model
 jest.mock('../../../src/models/User', () => {
   const mockUsers = [];
   return {
@@ -25,27 +21,23 @@ jest.mock('../../../src/models/User', () => {
   };
 });
 
-// Mock SendGrid
 jest.mock('@sendgrid/mail', () => ({
   setApiKey: jest.fn(),
   send: jest.fn().mockResolvedValue([{ statusCode: 202, headers: { 'x-message-id': 'msg123' } }])
 }));
 
-// ===== APP SETUP ===== //
-const User = require('../../../src/models/User'); // a mockolt verzió
+const User = require('../../../src/models/User'); 
 const passwordResetRouter = require('../../../src/auth/password_reset');
 const app = express();
 app.use(express.json());
 app.use('/password-reset', passwordResetRouter);
 
-// JWT secret
 process.env.JWT_SECRET = 'testsecret';
 
 describe('Password Reset Integration Tests', () => {
   let testUser;
 
   beforeAll(async () => {
-    // initial password hash
     const hashedPassword = await bcrypt.hash('initial', 10);
     testUser = {
       _id: 'user123',
@@ -57,7 +49,7 @@ describe('Password Reset Integration Tests', () => {
     User.__mockUsers.push(testUser);
   });
 
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -95,7 +87,6 @@ describe('Password Reset Integration Tests', () => {
     expect(res.status).toBe(200);
     expect(res.text).toMatch(/Password has been reset successfully/i);
 
-    // check password was hashed correctly
     const updatedUser = User.__mockUsers.find(u => u._id === testUser._id);
     const match = await bcrypt.compare('StrongPass1!', updatedUser.password);
     expect(match).toBe(true);

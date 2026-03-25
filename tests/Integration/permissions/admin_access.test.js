@@ -1,43 +1,57 @@
 const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
-const adminRouter = require('../../../routes/admin'); // Admin router importálása
-const { createSecurityLog } = require('../../../auth/security'); // Biztosítsuk, hogy a mock működjön
+const adminRouter = require('../../../routes/admin');
+const { createSecurityLog } = require('../../../auth/security');
 
-// Mockolt createSecurityLog függvény
 jest.mock('../../../auth/security', () => ({
-  createSecurityLog: jest.fn().mockResolvedValue(true), // Mockoljunk egy sikeres választ
+  createSecurityLog: jest.fn().mockResolvedValue(true),
 }));
 
-const app = express();
-app.use(express.json());
-app.use(session({ secret: 'test', resave: false, saveUninitialized: true })); // Session kezelése
-app.use('/admin', adminRouter); // Admin router hozzáadása
+// Middleware, ami lehetővé teszi a session beállítást minden tesztnél
+const mockSessionMiddleware = (user) => (req, res, next) => {
+  req.session.user = user;
+  next();
+};
 
 describe('Admin Access', () => {
+  let app;
+
   beforeEach(() => {
-    jest.clearAllMocks(); // Minden teszt előtt töröljük a mockokat
+    jest.clearAllMocks();
+    app = express();
+    app.use(express.json());
+    app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
   });
 
   test('Admin user can access protected route', async () => {
-    const agent = request.agent(app);
+    app.use(mockSessionMiddleware({ id: '1', role: 'ADMIN' }));
+    app.use('/admin', adminRouter);
 
-    // Mock session beállítása admin jogokkal
-    agent.app.request.session = { user: { id: '1', role: 'ADMIN' } };
+    const res = await request(app).get('/admin/dashboard');
 
-    const res = await agent.get('/admin/dashboard'); // Admin dashboard lekérése
-    expect(res.statusCode).toBe(200); // Ellenőrizzük, hogy a válasz státusza 200
-    expect(res.body).toHaveProperty('success', true); // Ellenőrizzük, hogy van 'success' mező
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(createSecurityLog).toHaveBeenCalled(); // Ellenőrizzük a log hívást
   });
 
   test('Non-admin user cannot access admin route', async () => {
-    const agent = request.agent(app);
+    app.use(mockSessionMiddleware({ id: '2', role: 'STUDENT' }));
+    app.use('/admin', adminRouter);
 
-    // Mock session beállítása nem admin felhasználóval
-    agent.app.request.session = { user: { id: '2', role: 'STUDENT' } };
+    const res = await request(app).get('/admin/dashboard');
 
-    const res = await agent.get('/admin/dashboard'); // Admin dashboard lekérése nem admin felhasználóval
-    expect(res.statusCode).toBe(403); // Ellenőrizzük, hogy a válasz státusza 403 (hozzáférés megtagadva)
-    expect(res.body.error).toMatch(/Access denied/); // Ellenőrizzük, hogy van 'Access denied' hibaüzenet
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toMatch(/Access denied/);
+  });
+
+  test('Unauthenticated user cannot access admin route', async () => {
+    app.use(mockSessionMiddleware(null));
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).get('/admin/dashboard');
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toMatch(/Access denied/);
   });
 });

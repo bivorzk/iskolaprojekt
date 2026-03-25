@@ -24,17 +24,19 @@ const TeacherStudentsSection = ({ students }) => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {students.map((student, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.fullName}</td>
+                            {students.map((student) => (
+                                <tr key={student._id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.username}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.studentId}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student._id}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.latestOrder || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                            student.orderStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                                            student.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-gray-100 text-gray-800'
+                                            student.orderStatus === 'completed'
+                                                ? 'bg-green-100 text-green-800'
+                                                : student.orderStatus === 'pending'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-gray-100 text-gray-800'
                                         }`}>
                                             {student.orderStatus || 'N/A'}
                                         </span>

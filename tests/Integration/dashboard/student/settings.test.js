@@ -2,28 +2,42 @@ const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
 
-// Mock adatok
 const usersMock = [
-  { username: 'teststudent', email: 'student@example.com', usertype: 'student', isVerified: true, parentEmail: 'parent@example.com', linked: true }
+  { 
+    username: 'teststudent', 
+    email: 'student@example.com', 
+    usertype: 'student', 
+    isVerified: true, 
+    parentEmail: 'parent@example.com', 
+    linked: true 
+  }
 ];
 
-// Mini Express app
 const createApp = () => {
   const app = express();
   app.use(express.json());
   app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
+  // session mock
   app.use((req, res, next) => {
     req.session.user = usersMock[0];
     next();
   });
 
+  // GET user info
   app.get('/dashboard/student/userinfo', (req, res) => {
-    res.status(200).json({ username: req.session.user.username, email: req.session.user.email });
+    res.status(200).json({ 
+      username: req.session.user.username, 
+      email: req.session.user.email 
+    });
   });
 
+  // GET parent info
   app.get('/dashboard/student/parent', (req, res) => {
-    res.status(200).json({ linked: req.session.user.linked, parentEmail: req.session.user.parentEmail });
+    res.status(200).json({ 
+      linked: req.session.user.linked, 
+      parentEmail: req.session.user.parentEmail 
+    });
   });
 
   return app;
@@ -37,12 +51,13 @@ describe('Student Dashboard Settings', () => {
     const res = await request(app).get('/dashboard/student/userinfo');
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('username', 'teststudent');
+    expect(res.body).toHaveProperty('email', 'student@example.com');
   });
 
-  test('Parent link status is returned correctly', async () => {
+  test('GET /dashboard/student/parent returns parent link status correctly', async () => {
     const res = await request(app).get('/dashboard/student/parent');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('linked');
-    expect(res.body).toHaveProperty('parentEmail');
+    expect(res.body).toHaveProperty('linked', true);
+    expect(res.body).toHaveProperty('parentEmail', 'parent@example.com');
   });
 });

@@ -2,34 +2,48 @@ const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
 
-// Ha az app.js nem található, próbáljuk meg helyesen importálni az express alkalmazást
 const app = express();
 app.use(express.json());
 app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
-// Mock route for the students list
+app.post('/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === 'teacher1' && password === 'password123') {
+    req.session.user = { username, role: 'TEACHER' };
+    return res.status(200).send('Logged in');
+  }
+  return res.status(401).send('Invalid credentials');
+});
+
 app.get('/dashboard/teacher/students', (req, res) => {
-  if (req.session.user && req.session.user.role === 'TEACHER') {
-    return res.status(200).json([
-      { id: '1', name: 'Student 1', classId: 'class123' },
-      { id: '2', name: 'Student 2', classId: 'class123' }
-    ]);
-  } else {
+  if (!(req.session.user && req.session.user.role === 'TEACHER')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
+  const allStudents = [
+    { id: '1', name: 'Student 1', classId: 'class123' },
+    { id: '2', name: 'Student 2', classId: 'class123' },
+    { id: '3', name: 'Student 3', classId: 'class456' }
+  ];
+
+  const { classId } = req.query;
+  const filteredStudents = classId
+    ? allStudents.filter(s => s.classId === classId)
+    : allStudents;
+
+  return res.status(200).json(filteredStudents);
 });
 
 describe('Teacher Students Integration', () => {
   let teacherSession = null;
 
   beforeAll(async () => {
-    // Login mint tanár
     const res = await request(app)
       .post('/auth/login')
       .send({ username: 'teacher1', password: 'password123' });
     
     expect(res.statusCode).toBe(200);
-    teacherSession = res.headers['set-cookie']; // session cookie
+    teacherSession = res.headers['set-cookie']; 
   });
 
   test('GET /dashboard/teacher/students returns students list', async () => {
@@ -51,9 +65,10 @@ describe('Teacher Students Integration', () => {
       .get('/dashboard/teacher/students');
 
     expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('error', 'Unauthorized');
   });
 
-  test('GET /dashboard/teacher/students?classId=abc filters by class', async () => {
+  test('GET /dashboard/teacher/students?classId=class123 filters by class', async () => {
     const res = await request(app)
       .get('/dashboard/teacher/students')
       .query({ classId: 'class123' })

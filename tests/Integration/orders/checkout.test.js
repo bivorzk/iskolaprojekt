@@ -4,7 +4,6 @@ const session = require('express-session');
 const ordersRouter = require('../../../routes/orders');
 const { MenuItems, Order, Payment, UserLoyalty } = require('../../../config/database_queries');
 
-// Mock database and Redis
 jest.mock('../../../config/database_queries', () => ({
   MenuItems: {
     findById: jest.fn(),
@@ -34,9 +33,8 @@ jest.mock('../../../services/redis-lua-service', () => ({
   processOrder: jest.fn().mockResolvedValue({ newBalance: 50, newStock: 10 })
 }));
 
-// Mock security
 jest.mock('../../../auth/security', () => ({
-  createSecurityLog: jest.fn().mockResolvedValue(true) // Mockoljunk egy sikeres választ
+  createSecurityLog: jest.fn().mockResolvedValue(true)
 }));
 
 const app = express();
@@ -56,28 +54,43 @@ describe('Checkout API', () => {
   });
 
   test('POST /orders/order/wallet processes successful wallet order', async () => {
-    // Mock menu item
-    MenuItems.findById.mockResolvedValue({ _id: '1', name: 'Burger', price: 20, available: true, stock: 10 });
+    // Mock a valid menu item
+    MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Burger', price: 20, available: true, stock: 10 });
 
     const res = await request(app)
       .post('/orders/order/wallet')
       .send({ cart: [{ menuItemId: '1', quantity: 1 }] })
-      .set('Cookie', ['connect.sid=123']); // simulate logged-in user
+      .set('Cookie', ['connect.sid=123']); 
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.newBalance).toBe(50);
-    expect(res.body.newStock).toBe(10);
+    expect(res.body.newBalance).toBe(50);  // Expect wallet balance after purchase
+    expect(res.body.newStock).toBe(10);    // Ensure stock has been checked
   });
 
   test('POST /orders/order/wallet fails insufficient balance', async () => {
-    MenuItems.findById.mockResolvedValue({ _id: '1', name: 'Expensive', price: 200, available: true, stock: 10 });
+    // Mock an expensive item
+    MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Expensive', price: 200, available: true, stock: 10 });
+
+    const res = await request(app)
+      .post('/orders/order/wallet')
+      .send({ cart: [{ menuItemId: '1', quantity: 1 }] })
+      .set('Cookie', ['connect.sid=123']); 
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/Insufficient wallet balance/);
+  });
+
+  test('POST /orders/order/wallet fails due to item not available', async () => {
+    // Simulate an unavailable item
+    MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Burger', price: 20, available: false, stock: 0 });
+
     const res = await request(app)
       .post('/orders/order/wallet')
       .send({ cart: [{ menuItemId: '1', quantity: 1 }] })
       .set('Cookie', ['connect.sid=123']);
 
     expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/Insufficient wallet balance/);
+    expect(res.body.error).toMatch(/Item not available/);
   });
 });

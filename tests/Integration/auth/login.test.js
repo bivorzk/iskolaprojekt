@@ -1,16 +1,14 @@
 const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
+const bcrypt = require('bcrypt');
 
-// Mockoljunk minden Mongoose-t a tesztből
 const User = {
   findOne: jest.fn(),
 };
 
-// Mock security log
 const createSecurityLog = jest.fn().mockResolvedValue(true);
 
-// A login router-t mockoljuk a teszt környezethez
 const loginRouter = express.Router();
 loginRouter.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -24,17 +22,13 @@ loginRouter.post('/login', async (req, res) => {
       return res.status(401).send('Invalid credentials');
     }
 
-    // Mock bcrypt compare
-    const bcrypt = require('bcrypt');
     const match = await bcrypt.compare(password, user.password || '');
     if (!match) {
       return res.status(401).send('Invalid credentials');
     }
 
-    // Simulate session
     req.session.user = { id: user._id, username: user.username };
 
-    // Success
     res.status(200).send(`Welcome, ${user.username}`);
   } catch (err) {
     await createSecurityLog({ userId: null, action: 'LOGIN_ERROR', details: err.message });
@@ -71,12 +65,13 @@ describe('POST /auth/login', () => {
       username: 'testuser',
       password: 'hashedpass',
     });
-    const bcrypt = require('bcrypt');
-    jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
+    const compareSpy = jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
 
     const res = await request(app).post('/auth/login').send({ username: 'testuser', password: 'wrongpass' });
     expect(res.statusCode).toBe(401);
     expect(res.text).toBe('Invalid credentials');
+
+    compareSpy.mockRestore();
   });
 
   it('should return 200 on successful login', async () => {
@@ -85,12 +80,13 @@ describe('POST /auth/login', () => {
       username: 'testuser',
       password: 'hashedpass',
     });
-    const bcrypt = require('bcrypt');
-    jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+    const compareSpy = jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
     const res = await request(app).post('/auth/login').send({ username: 'testuser', password: 'hashedpass' });
     expect(res.statusCode).toBe(200);
     expect(res.text).toBe('Welcome, testuser');
+
+    compareSpy.mockRestore();
   });
 
   it('should handle server errors gracefully', async () => {

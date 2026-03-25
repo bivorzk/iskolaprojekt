@@ -2,7 +2,6 @@ const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
 
-// Mock adatok
 const ordersMock = [
   { id: '1', items: [], total: 10, userId: 'teststudent' }
 ];
@@ -10,31 +9,32 @@ const usersMock = [
   { username: 'teststudent', password: 'hashedpassword', usertype: 'student', isVerified: true }
 ];
 
-// Mock model
 const Order = {
   find: jest.fn(async ({ userId }) => ordersMock.filter(o => o.userId === userId)),
-  create: jest.fn(async (data) => ({ id: 'paypal123', ...data }))
+  create: jest.fn(async (data) => ({ id: `order_${Date.now()}`, ...data }))
 };
 
-// Mini Express app
 const createApp = () => {
   const app = express();
   app.use(express.json());
   app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
+  // session mock
   app.use((req, res, next) => {
-    req.session.user = usersMock[0]; // bejelentkezett student
+    req.session.user = usersMock[0]; 
     next();
   });
 
+  // GET order history
   app.get('/dashboard/student/order_history', async (req, res) => {
     const orderData = await Order.find({ userId: req.session.user.username });
     res.status(200).json({ orderData });
   });
 
+  // POST create order
   app.post('/api/orders', async (req, res) => {
     const order = await Order.create({ ...req.body, userId: req.session.user.username });
-    res.status(201).json({ id: order.id });
+    res.status(201).json({ id: order.id, userId: order.userId, cart: req.body.cart, amount: req.body.amount });
   });
 
   return app;
@@ -49,13 +49,16 @@ describe('Student Dashboard Orders', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('orderData');
     expect(Array.isArray(res.body.orderData)).toBe(true);
+    expect(res.body.orderData.length).toBeGreaterThanOrEqual(1);
   });
 
-  test('POST /orders creates a new PayPal order', async () => {
-    const res = await request(app)
-      .post('/api/orders')
-      .send({ cart: [{ menuItemId: '1', quantity: 1 }], currency: 'USD', amount: 10 });
+  test('POST /api/orders creates a new PayPal order', async () => {
+    const orderPayload = { cart: [{ menuItemId: '1', quantity: 1 }], currency: 'USD', amount: 10 };
+    const res = await request(app).post('/api/orders').send(orderPayload);
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('id');
+    expect(res.body.userId).toBe(usersMock[0].username);
+    expect(res.body.cart).toEqual(orderPayload.cart);
+    expect(res.body.amount).toBe(orderPayload.amount);
   });
 });
