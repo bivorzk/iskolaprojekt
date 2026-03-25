@@ -107,37 +107,37 @@ li { margin: 0.5rem 0; }
 .schema-table tr:nth-child(even) { background: #f8f9fa; }
 </style>
 
-# SnapTray szoftver dokument�ci�ja
+# SnapTray szoftver dokumentációja
 
-## Tartalomjegyz�k
+## Tartalomjegyzék
 
-- [1. Bevezet�s](#1-bevezetes)
-- [2. Rendszer �ttekint�se](#2-rendszer-attekinte�se)
-- [3. K�vetelm�nyek](#3-requirements-specification)
-- [4. Rendszerarchitekt�ra](#4-system-architecture)
+- [1. Bevezetés](#1-bevezetes)
+- [2. Rendszer áttekintése](#2-rendszer-attekinteese)
+- [3. Követelmények](#3-requirements-specification)
+- [4. Rendszerarchitektúra](#4-system-architecture)
   - [4.1 Komponensek/modulok](#41-komponensekmodulok)
   - [4.2 Adatfolyam](#42-adatfolyam)
-  - [4.3 Technol�gi�k](#43-technologiak)
-- [5. Tervez�s](#5-Tervez�s)
-  - [5.1 Tervez�si elvek](#51-tervezesi-elvek)
-  - [5.2 Adatb�zis tervez�s](#52-adatbazis-tervezes)
-  - [5.3 Algoritmusok �s adatszerkezetek](#53-algoritmusok-es-adatszerkezetek)
-  - [5.4 Biztons�gi tervez�s](#54-biztonsagi-tervezes)
-- [6. Megval�s�t�s](#6-Megval�s�t�s)
+  - [4.3 Technológiák](#43-technologiak)
+- [5. Tervezés](#5-tervezes)
+  - [5.1 Tervezési elvek](#51-tervezesi-elvek)
+  - [5.2 Adatbázis tervezés](#52-adatbazis-tervezes)
+  - [5.3 Algoritmusok és adatszerkezetek](#53-algoritmusok-es-adatszerkezetek)
+  - [5.4 Biztonsági tervezés](#54-biztonsagi-tervezes)
+- [6. Megvalósítás](#6-megvalositas)
   - [6.1 Directory Structure](#61-directory-structure)
-  - [6.2 Backend Megval�s�t�s](#62-backend-Megval�s�t�s)
-  - [6.3 Frontend Megval�s�t�s](#63-frontend-Megval�s�t�s)
+  - [6.2 Backend Megvalósítás](#62-backend-megvalositás)
+  - [6.3 Frontend Megvalósítás](#63-frontend-megvalositas)
 - [7. API referencia](#7-api-reference)
-- [8. Tesztel�s �s �rv�nyes�t�s](#8-testing-and-validation)
-- [9. Felhaszn�l�i k�zik�nyv](#9-user-manual)
-- [10. Telep�t�s �s karbantart�s](#10-deployment-and-maintenance)
-- [11. K�vetkeztet�s �s j�vobeni munka](#11-conclusion-and-future-work)
-- [12. Hivatkoz�sok](#12-Hivatkoz�sok)
-- [13. Mell�kletek](#13-Mell�kletek)
+- [8. Tesztelés és érvényesítés](#8-testing-and-validation)
+- [9. Felhasználói kézikönyv](#9-user-manual)
+- [10. Telepítés és karbantartás](#10-deployment-and-maintenance)
+- [11. Következtetés és jövőbeni munka](#11-conclusion-and-future-work)
+- [12. Hivatkozások](#12-Hivatkozások)
+- [13. Mellékletek](#13-Mellékletek)
 
 ---
 
-## 1. Bevezet�s
+## 1. Bevezetés
 
 A SnapTray egy webalapú menza-rendelőrendszer, amelynek célja, hogy egyszerűsítse az étkezési rendelések lebonyolítását iskolai környezetben. Fő célja, hogy a diákok, szülők és az étkeztető személyzet közötti interakció gyorsabbá és átláthatóbbá váljon az online rendelés, a valós idejű rendeléskövetés és a biztonságos fizetési lehetőségek révén.
 
@@ -147,7 +147,7 @@ A SnapTray modern biztonsági megoldásokat alkalmaz (kétlépcsős azonosítás
 
 ---
 
-## 2. Rendszer �ttekint�se
+## 2. Rendszer áttekintése
 
 A rendszer egy webalapú rendelési és fizetési platform oktatási intézmények számára, kliens–szerver architektúrában. A backend Node.js alapú Express szerver, a frontend React komponensekből épül fel szerepkör-alapú dashboardokkal. Redis biztosítja a gyorsítótárazást, rate limitinget és az atomi műveleteket, MongoDB az adatok perzisztens tárolását.
 
@@ -171,7 +171,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 
 ---
 
-## 3. K�vetelm�nyek
+## 3. Követelmények
 
 ### Fő célok
 - Biztonságos és ellenőrzött rendelési folyamat
@@ -189,7 +189,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 
 ---
 
-## 4. Rendszerarchitekt�ra
+## 4. Rendszerarchitektúra
 
 A rendszer három fő rétegből áll:
 
@@ -226,14 +226,14 @@ A rendszer három fő rétegből áll:
 
 ![Order Processing Activity Diagram](order_placement.png)
 
-### 4.3 Technol�gi�k
+### 4.3 Technológiák
 
 | Technológia | Indok |
 |-------------|-------|
 | Node.js + Express.js | JavaScript full-stack konzisztencia, gyors fejlesztés |
 | MongoDB + Mongoose | Rugalmas dokumentum-séma, skálázható |
 | Redis + Lua | Gyors cache, atomi műveletek, rate limiting |
-| React.js + Tailwind CSS | Komponens-alapú UI, reszponzív Tervez�s |
+| React.js + Tailwind CSS | Komponens-alapú UI, reszponzív Tervezés |
 | JWT + bcrypt | Iparági standard hitelesítés és jelszóvédelem |
 | PayPal / Google Pay | Megbízható, PCI-kompatibilis fizetési integrációk |
 | Socket.IO | Kétirányú valós idejű kommunikáció |
@@ -243,23 +243,23 @@ A rendszer három fő rétegből áll:
 
 ---
 
-## 5. Tervez�s
+## 5. Tervezés
 
-### 5.1 Tervez�s Principles
+### 5.1 Tervezési elvek
 
 | Elv | Megvalósítás |
 |-----|-------------|
 | Modularitás | Réteges architektúra (routes / services / models), laza csatolás modulok között |
 | Security-First | Defense in depth, least privilege, minden végpont alapértelmezetten hitelesítést igényel |
 | Skálázhatóság | Állapotmentes JWT, Redis cache, MongoDB indexek és connection pooling |
-| Felhasználóközpontú Tervez�s | Reszponzív Tailwind UI, érthetetlen hibaüzenetek, visszajelzési rendszerek |
+| Felhasználóközpontú Tervezés | Reszponzív Tailwind UI, érthetetlen hibaüzenetek, visszajelzési rendszerek |
 | Megbízhatóság | Graceful degradation, tranzakció-kezelés, átfogó naplózás |
 | Karbantarthatóság | Clean code, git verziókövetés, RESTful API konvenciók, env-alapú konfiguráció |
 | Adatintegritás | Többszintű validáció, atomi műveletek, audit trail |
 | Platformfüggetlenség | Modern böngészők (Chrome, Firefox, Safari, Edge), mobilreszponzív |
 
 
-### 5.2 Database Tervez�s
+### 5.2 Database Tervezés
 
 #### 5.2.1 Cél, funkció és a tárolt információk összefoglalása
 
@@ -304,7 +304,7 @@ A rendszer fő entitásai és kapcsolataik:
 
 Az alábbiak részletezik az egyes entitások mezőit. A DailyMenu és MenuItems N:M kapcsolat esetén egy linktábla is ábrázolható.
 
-##### Example: DailyMenu and MenuItems Relationship (dbdiagram.io style)
+##### Példa: DailyMenu és MenuItems kapcsolat (dbdiagram.io stílus)
 
 ```dbml
 Table DailyMenu {
@@ -336,7 +336,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 
 #### 5.2.3 Detailed Entity Descriptions
 
-(A k�vetkezok r�szletezik az egyes entit�sok mezoit, t�pusait, jelent�s�t, megszor�t�sait, indexeit �s �zleti szab�lyait. L�sd az eredeti dokument�ci� folytat�s�t.)
+(A következők részletezik az egyes entitások mezőit, típusait, jelentését, megszorításait, indexeit és üzleti szabályait. Lásd az eredeti dokumentáció folytatását.)
 
 ##### User (Users)
 
@@ -451,7 +451,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 | menuItems | [ObjectId] (ref: MenuItems) | Item list | Required | _id, menuItems |
 | createdAt | Date | Creation time | Default: current time | _id, createdAt |
 
-�zleti szab�lyok: Daily menus are created per period.
+Üzleti szabályok: Daily menus are created per period.
 
 ##### ParentStudent (Parent-Student Relationship)
 
@@ -461,7 +461,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 | studentId | ObjectId (ref: User) | Student user | Required | _id, studentId |
 | createdAt | Date | Creation time | Default: current time | _id, createdAt |
 
-�zleti szab�lyok: Parents can be linked to multiple students.
+Üzleti szabályok: Parents can be linked to multiple students.
 
 ##### SecurityLogs (Security Logs)
 
@@ -481,7 +481,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 | isTor | Boolean | Tor usage | Optional | _id, isTor |
 | isProxy | Boolean | Proxy usage | Optional | _id, isProxy |
 
-�zleti szab�lyok: Logs record all important events.
+Üzleti szabályok: Logs record all important events.
 
 ##### DeviceSyncSession (Device Sync Session)
 
@@ -580,7 +580,7 @@ A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolato
 
 - Authentication via JWT, passwords hashed with bcrypt.
 - Role-based permissions (admin, student, etc.).
-- IP hashing for GDPR compliance.
+- IP hashing GDPR megfelelőséghez.
 - Encrypted blobs for sensitive data.
 - Rate limiting to prevent abuse.
 - Audit logs for all security events.
@@ -635,12 +635,12 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 
 ##### Security and Maintainability Notes
 
-- Passwords: `bcrypt` in `src/auth/passwordhash.js` summarizes (hash + compare).
-- Logging: All important operations (`SecurityLogs`) in `src/auth/login.js`, `src/auth/register.js`, `src/api.js` endpoints occur.
+- Jelszavak: A `src/auth/passwordhash.js` `bcrypt`-tel hasheli és ellenőrzi őket (hash + compare).
+- Naplózás: Minden fontos művelet (`SecurityLogs`) a `src/auth/login.js`, `src/auth/register.js` és `src/api.js` végpontoknál történik.
 
 ![Database Diagram](menuitemsanddailymenu.png)
 
-### 5.3 Algoritmusok �s adatstrukt�r�k
+### 5.3 Algoritmusok és adatszerkezetek
 
 #### 5.3.1 Data Structures
 
@@ -663,7 +663,7 @@ const token = jwt.sign(payload, secretKey, { expiresIn: '24h' });
 const decoded = jwt.verify(token, secretKey);
 ```
 
-**IP Hashing (SHA-256, GDPR compliance):**
+**IP hashing (SHA-256, GDPR megfelelőség):**
 ```javascript
 const hashedIP = crypto.createHash('sha256').update(ipAddress).digest('hex');
 ```
@@ -754,18 +754,18 @@ const verifyRecaptcha = async (token) => {
 - **Batch processing**: `bulkWrite` for multi-record updates.
 - **Cache middleware**: Redis cache-first, fallback to MongoDB, with pattern-based invalidation on writes.
 
-### 5.4 Security Tervez�s
+### 5.4 Security Tervezés
 
-#### 5.4.1 Security Funkci�k
+#### 5.4.1 Security Funkciók
 
-| Feature | Details |
+| Funkció | Részletek |
 |---------|---------|
-| Authentication | JWT (HS256), role-based access control (RBAC) |
-| Password storage | bcrypt, 10–12 salt rounds |
-| 2FA | Implemented; full integration in progress |
-| Rate limiting | `express-rate-limit` (general) + Redis Lua sliding window (admin/dashboard) |
-| Input validation | Client-side, server-side, database-level; `express-validator`, Mongoose schemas |
-| XSS / injection | `xss-clean`, `helmet`, `express-mongo-sanitize` |
+| Hitelesítés | JWT (HS256), szerepalapú hozzáférés-vezérlés (RBAC) |
+| Jelszó tárolás | bcrypt, 10–12 salt kör |
+| 2FA | Megvalósítva; teljes integráció folyamatban |
+| Rate limiting | `express-rate-limit` (általános) + Redis Lua csúszó ablak (admin/dashboard) |
+| Bemenet-ellenőrzés | Kliens oldali, szerver oldali, adatbázis szintű; `express-validator`, Mongoose sémák |
+| XSS / injekció | `xss-clean`, `helmet`, `express-mongo-sanitize` |
 | CSRF | Partial — tokens planned for all state-changing operations |
 | CORS | Strict policy; only official frontend domain allowed |
 | Security headers | Helmet.js (CSP, HSTS, etc.), no eval(), nonce-based inline scripts |
@@ -773,41 +773,41 @@ const verifyRecaptcha = async (token) => {
 | reCAPTCHA | Google reCAPTCHA v3 on registration and login |
 | Geolocation | iplocate.io for VPN/Proxy/Tor detection and risk scoring |
 | Payment security | PayPal/Google Pay PCI-compliant gateways |
-| Environment secrets | All credentials in `.env`, never in version control |
+| Környezeti titkok | Minden hitelesítő adat `.env`-ben, soha verziókezelésben |
 
 #### 5.4.2 Threat Modeling
 
-##### Identified Threats
-- **Authentication Bypass**: Brute force attacks, credential stuffing, JWT token theft.
-- **Data Injection**: SQL/NoSQL injection, XSS, CSRF attacks.
-- **Denial of Service**: Rate limiting bypass, resource exhaustion.
-- **Data Breach**: Unauthorized access to user data, payment information.
+##### Azonosított fenyegetések
+- **Hitelesítés megkerülése**: Brute force támadások, hitelesítő adatok kitöltése, JWT token lopás.
+- **Adat injektálás**: SQL/NoSQL injekció, XSS, CSRF támadások.
+- **Szolgáltatásmegtagadás (DoS)**: Rate limit megkerülése, erőforráskimerülés.
+- **Adatszivárgás**: Jogosulatlan hozzáférés felhasználói adatokhoz, fizetési információkhoz.
 - **E2EE kompromittálás**: gyenge kulcscsere, közbeékelt támadások a chaten.
-- **Insider Threats**: Admin privilege abuse, data exfiltration.
+- **Belső fenyegetések**: Admin jogosultságok visszaélése, adat kimentése.
 
-##### Mitigation Strategies
-- Multi-layered authentication with reCAPTCHA and geolocation risk scoring.
-- Comprehensive input sanitization and parameterized queries.
-- Distributed rate limiting with Redis to prevent DoS.
-- Encryption at rest and in transit (HTTPS, E2EE for chat).
-- Least privilege access and audit logging for all actions.
-- Regular security audits and dependency vulnerability scanning.
+##### Mitigációs stratégiák
+- Többrétegű hitelesítés reCAPTCHA-val és geolokációs kockázatpontozással.
+- Átfogó bemenet-szűrés és parametrizált lekérdezések.
+- Elosztott rate limiting Redis-szel a DoS elleni védelemhez.
+- Titkosítás nyugalmi helyzetben és átvitel közben (HTTPS, E2EE chathez).
+- Legkisebb jogosultság elve és audit naplózás minden műveletnél.
+- Rendszeres biztonsági auditok és függőség sebezhetőség vizsgálat.
 
-#### 5.4.3 Incident Response Plan
+#### 5.4.3 Incidensreagálási terv
 
-1. **Detection**: Automated monitoring via SecurityLogs, rate limit alerts, and anomaly detection.
-2. **Assessment**: Incident severity classification (low/medium/high) based on data exposure and system impact.
-3. **Containment**: Immediate isolation of affected systems, token revocation, account lockdowns.
-4. **Eradication**: Root cause analysis, patch deployment, key rotation for E2EE.
-5. **Recovery**: System restoration from backups, user notification, service resumption.
-6. **Lessons Learned**: Post-incident review, documentation updates, preventive measures.
+1. **Felderítés**: Automatikus monitorozás SecurityLogs, rate limit riasztások és anomália észlelés alapján.
+2. **Értékelés**: Incidens súlyosságának osztályozása (alacsony/közepes/magas) az adatkitettség és rendszerszintű hatás szerint.
+3. **Elzárás**: Érintett rendszerek azonnali izolálása, token visszavonás, fiók zárolás.
+4. **Eltávolítás**: Alapokozat elemzése, javítás telepítése, kulcs forgatása E2EE esetén.
+5. **Helyreállítás**: Rendszer visszaállítása biztonsági mentésekből, felhasználói értesítés, szolgáltatás újraindítása.
+6. **Tapasztalatok levonása**: Incidens utáni felülvizsgálat, dokumentáció frissítése, megelőző intézkedések.
 
 #### 5.4.4 Compliance and Privacy
 
-- **GDPR Compliance**: Data minimization, consent management, right to erasure, IP hashing for anonymization.
+- **GDPR megfelelőség**: Adatminimalizálás, hozzájárulás kezelése, törlés joga, IP hashing anonimizáláshoz.
 - **PCI DSS**: Payment data never stored locally; all transactions via certified gateways.
 - **Data Retention**: SecurityLogs retained for 2 years, user data until account deletion.
-- **Privacy by Tervez�s**: Default encryption, access controls, and audit trails.
+- **Privacy by Tervezés**: Default encryption, access controls, and audit trails.
 
 #### 5.4.5 Biztonsági tesztelés
 
@@ -822,9 +822,9 @@ const verifyRecaptcha = async (token) => {
 
 ---
 
-## 6. Megval�s�t�s
+## 6. Megvalósítás
 
-### 6.1 K�nyvt�rszerkezet
+### 6.1 Könyvtárszerkezet
 
 ```
 ├── config/
@@ -866,30 +866,30 @@ const verifyRecaptcha = async (token) => {
     └── performance_tests/
 ```
 
-### 6.2 Backend Megval�s�t�s
+### 6.2 Backend Megvalósítás
 
-#### 6.2.1 Technology Stack
+#### 6.2.1 Technológiai stack
 
-Node.js + Express.js, MongoDB + Mongoose, Redis + Lua scripting, JWT, bcrypt, PayPal & Google Pay APIs, Socket.IO.
+Node.js + Express.js, MongoDB + Mongoose, Redis + Lua szkriptek, JWT, bcrypt, PayPal és Google Pay API-k, Socket.IO.
 
-#### 6.2.2 Main Application Structure
+#### 6.2.2 Fő alkalmazási felépítés
 
-- **`src/main.js`**: Entry point — sets up Express, middleware (Helmet, CORS, session, rate limiting), and mounts all routers.
-- **Routers**: Modularized by domain (`auth`, `dashboard`, `orders`, `payments`, `chat`).
-- **Models**: Mongoose schemas in `src/models/`.
-- **Services**: Business logic isolated in service modules (`loyalty-service.js`, `paypal-service.js`, `cache-service.js`, etc.).
+- **`src/main.js`**: Belépési pont — Express beállítása, middleware-ek (Helmet, CORS, munkamenet, rate limit), és az útvonalak felcsatolása.
+- **Útvonalak**: Domain alapú moduláris szétválasztás (`auth`, `dashboard`, `orders`, `payments`, `chat`).
+- **Modellek**: Mongoose sémák a `src/models/` mappában.
+- **Szolgáltatások**: Üzleti logika külön modulokban (`loyalty-service.js`, `paypal-service.js`, `cache-service.js`, stb.).
 
-#### 6.2.3 Authentication & Security
+#### 6.2.3 Hitelesítés és biztonság
 
 A regisztráció érvényesíti a bemenetet, ellenőrzi a reCAPTCHA-t, bcrypttel hash-eli a jelszót, küld egy e-mailes ellenőrzőkódot, és naplózza az eseményt. A bejelentkezés ellenőrzi a hitelesítő adatokat, JWT-t ad ki, naplózza az IP/hely alapú kockázatot és IP-nként rate limitinget alkalmaz.
 
 ```javascript
-// Registration snippet — src/auth/register.js
+// Regisztrációs példa — src/auth/register.js
 const hashedPassword = await bcrypt.hash(password, 10);
 const user = new User({ username, password: hashedPassword, email });
 await user.save();
 await createSecurityLog('USER_REGISTER', { username, email }, clientIp);
-res.status(200).json({ message: 'Registration successful! Please check your email for verification.' });
+res.status(200).json({ message: 'Regisztráció sikeres! Ellenőrizze e-mailjét az érvényesítéshez.' });
 ```
 
 #### 6.2.4 Order & Payment Processing
@@ -897,11 +897,11 @@ res.status(200).json({ message: 'Registration successful! Please check your emai
 A rendelési folyamat érvényesíti a kosarat a valós készlet alapján, létrehoz egy függőben lévő rendelést MongoDB-ben, meghívja a PayPal vagy Google Pay API-t, majd foglaláskor megerősíti a fizetést, levonja a készletet, jóváírja a hűségpontokat és naplózza a tranzakciót.
 
 ```javascript
-// Order creation — src/api.js
+// Rendelés létrehozása — src/api.js
 router.post('/orders', async (req, res) => {
-  // validate user & stock...
+  // felhasználó és készlet ellenőrzése...
   const { jsonResponse, httpStatusCode } = await paypalService.createOrder(cart, currency, amount);
-  // save order to DB...
+  // rendelés mentése az adatbázisba...
   res.status(httpStatusCode).json(jsonResponse);
 });
 ```
@@ -976,27 +976,27 @@ Két stratégiát alkalmaz: `express-rate-limit` Redis tárolóval általános A
 
 A backend rétegezett, szolgáltatásorientált architektúrát használ (route-ok → szolgáltatások → modellek). A konfiguráció környezeti változókon keresztül történik `.env` fájl segítségével. A hibakezelés központilag történik Express hibakezelő middleware-eken keresztül, amelyek naplózzák a biztonsági eseményeket és biztonságos üzeneteket küldenek a kliensnek. Az állapotmentes JWT tervezés és a Redis munkamenet tárolás vízszintes skálázást tesz lehetővé. A függőségek `npm audit`-tal vannak kezelve és naprakészen tartva.
 
-### 6.3 Frontend Megval�s�t�s
+### 6.3 Frontend Megvalósítás
 
-#### 6.3.1 Technology Stack
+#### 6.3.1 Technológiai stack
 
 React.js JSX-szel, Tailwind CSS stílushoz, Socket.IO kliens valós idejű kommunikációhoz, egyéni E2EE kriptó könyvtár, mobil-first reszponzív tervezés.
 
-#### 6.3.2 Main Application Structure
+#### 6.3.2 Fő alkalmazás felépítés
 
-- **Static HTML Pages**: Entry points in `public/` (e.g., `index.html`, `login.html`, `chat/index.html`).
-- **React Components**: Modular JSX components loaded via `<script>` tags, using ReactDOM for rendering.
-- **State Management**: Local component state with `useState`, `useEffect`, and custom hooks (e.g., `useAdminData.js`).
-- **Routing**: Client-side routing via URL hash changes and conditional rendering.
-- **Styling**: Tailwind CSS classes for responsive, utility-first Tervez�s.
+- **Statikus HTML oldalak**: Belépési pontok a `public/` mappában (pl. `index.html`, `login.html`, `chat/index.html`).
+- **React komponensek**: Moduláris JSX komponensek, `<script>` címkékből betöltve, ReactDOM-mal renderelve.
+- **Állapotkezelés**: Lokális komponensállapot `useState`, `useEffect` és egyéni hook-ok (pl. `useAdminData.js`) használatával.
+- **Routing**: Kliens oldali útválasztás URL hash változások és feltételes renderelés alapján.
+- **Stílus**: Tailwind CSS osztályok reszponzív, utility-first tervezéshez.
 
-#### 6.3.3 Key Components and Funkci�k
+#### 6.3.3 Key Components and Funkciók
 
-##### Dashboard System
+##### Dashboard rendszer
 Az adminisztrációs irányítópult (`public/dashboard/admin/admin.jsx`) sidebar navigációt, felhasználók, statisztikák, menüpontok, jutalmak, egészségellenőrzések és beállítások szakaszait tartalmazza. Egy egyedi `useAdminData` hookot használ az adatok REST API-król történő lekérésére és kezelésére.
 
 ```jsx
-// Admin Dashboard Structure — public/dashboard/admin/admin.jsx
+// Admin irányítópult felépítés — public/dashboard/admin/admin.jsx
 const AdminDashboard = () => {
     const [activeSzakasz, setActiveSzakasz] = useState('users');
     const { stats, users, menuItems, rewards, loading } = useAdminData();
@@ -1033,7 +1033,7 @@ const useCart = () => {
 A chat rendszer (`public/chat/chat.jsx`) végpontok közötti titkosítási beállítást, kulcscserét és valós idejű üzenetküldést kezel Socket.IO-n keresztül. Tartalmaz eszközszinkronizációt és kulcs-helyreállítási funkciókat.
 
 ```jsx
-// Chat State Management — public/chat/chat.jsx
+// Chat állapotkezelés — public/chat/chat.jsx
 const E2EEChatApp = () => {
     const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
@@ -1042,17 +1042,17 @@ const E2EEChatApp = () => {
 };
 ```
 
-##### Mobile Responsiveness
-Mobile-specific components (e.g., `MobileAdminNav.jsx`, `MobileCart.jsx`) provide touch-friendly interfaces with collapsible navigation and toast notifications.
+##### Mobil reszponzivitás
+Mobil-specifikus komponensek (pl. `MobileAdminNav.jsx`, `MobileCart.jsx`) érintésbarát felületet biztosítanak összecsukható navigációval és toast értesítésekkel.
 
-#### 6.3.4 State Management and Data Fetching
+#### 6.3.4 Állapotkezelés és adatlekérés
 
-- **Local State**: React hooks for component-specific state (loading, errors, form data).
-- **API Integration**: Fetch API for REST calls, with error handling and loading states.
-- **Real-time Updates**: Socket.IO for chat messages and live notifications.
-- **Caching**: Browser localStorage for user pHivatkoz�sok and session data.
+- **Lokális állapot**: React hook-ok komponens-specifikus állapotkezeléséhez (betöltés, hibák, űrlapadatok).
+- **API integráció**: Fetch API REST hívásokhoz, hibakezeléssel és betöltési állapotokkal.
+- **Valós idejű frissítések**: Socket.IO chat üzenetekhez és élő értesítésekhez.
+- **Gyorsítótárazás**: Böngésző `localStorage` a felhasználói hivatkozások és munkamenet adatok számára.
 
-#### 6.3.5 UI/UX Tervez�s Principles
+#### 6.3.5 UI/UX tervezési elvek
 
 - **Accessibility**: ARIA labels, keyboard navigation, high contrast colors.
 - **Performance**: Lazy loading of components, optimized images, minimal re-renders.
@@ -1065,7 +1065,7 @@ Mobile-specific components (e.g., `MobileAdminNav.jsx`, `MobileCart.jsx`) provid
 - **Éles környezet**: Minimalizált csomagok statikusan kiszolgálva a `public/` mappából.
 - **Böngésző-kompatibilitás**: Tesztelve modern böngészőkben, visszafelé kompatibilis tartalékmegoldásokkal az régebbi verziókhoz.
 
-#### 6.3.7 Extensibility and Maintainability
+#### 6.3.7 Bővíthetőség és karbantarthatóság
 
 A frontend komponens-alapú architektúrát követ újrafelhasználható UI elemekkel. A Tailwind utility osztályai egységes stílust biztosítanak. Az egyedi hookok összefoglalják az összetett logikát, így a komponensek tesztelhetők és karbantarthatók. A mobil-first megközelítés eszközfüggetlen skálázhatóságot biztosít.
 
@@ -1103,21 +1103,21 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 | POST | `/password-reset/:token` | Nyilvános | Új jelszó küldése |
 | POST | `/forgot-password/` | Nyilvános | Elfelejtett jelszó kérése |
 
-**Example — POST /register:**
+**Példa — POST /register:**
 ```json
-// Request
+// Kérés
 { "username": "johndoe", "password": "SecurePass123!", "email": "john@example.com", "isParent": "false", "g-recaptcha-response": "token" }
-// Response 200
-{ "message": "Registration successful! Check your email for verification code." }
-// Errors: 400 (validation/CAPTCHA), 429 (rate limited), 500
+// Válasz 200
+{ "message": "Regisztráció sikeres! Ellenőrizze e-mailjét az ellenőrzőkódért." }
+// Hibák: 400 (validálás/CAPTCHA), 429 (túl sok kérés), 500
 ```
 
 **Példa — POST /login:**
 ```json
-// Request
+// Kérés
 { "username": "johndoe", "password": "SecurePass123!" }
-// Response 200: "Welcome, johndoe"
-// Errors: 400, 401 (invalid credentials), 429, 500
+// Válasz 200: "Üdvözlünk, johndoe"
+// Hibák: 400, 401 (hibás hitelesítő adatok), 429, 500
 ```
 
 ### Irányítópult útvonalak
@@ -1134,23 +1134,23 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 
 | Módszer | Végpont | Leírás |
 |--------|----------|--------|
-| GET | `/dashboard/admin/usercount` | Total user count |
-| GET | `/dashboard/admin/userlist` | List of all users |
-| GET | `/dashboard/admin/stats` | System statistics |
-| GET | `/dashboard/admin/signup-stats` | Signup statistics |
-| GET | `/dashboard/admin/orders` | All orders |
-| GET | `/dashboard/admin/soldout` | Sold-out items |
-| GET | `/dashboard/admin/itemcount` | Menu item count |
-| GET | `/dashboard/admin/menulist` | Menu item list |
-| GET | `/dashboard/admin/stockalerts` | Low-stock alerts |
-| GET | `/dashboard/admin/paymentstats` | Payment statistics |
-| GET | `/dashboard/admin/health` | System health check |
-| GET | `/dashboard/admin/menuitem_export` | Export menu items |
-| GET | `/dashboard/admin/delete_menuitem/:id` | Delete menu item |
-| POST | `/dashboard/admin/create_menuitem` | Create menu item |
-| PUT | `/dashboard/admin/menuitem/:id` | Update menu item |
+| GET | `/dashboard/admin/usercount` | Összes felhasználó száma |
+| GET | `/dashboard/admin/userlist` | Az összes felhasználó listája |
+| GET | `/dashboard/admin/stats` | Rendszerstatisztikák |
+| GET | `/dashboard/admin/signup-stats` | Regisztrációs statisztikák |
+| GET | `/dashboard/admin/orders` | Összes rendelés |
+| GET | `/dashboard/admin/soldout` | Elfogyott tételek |
+| GET | `/dashboard/admin/itemcount` | Menüelemek száma |
+| GET | `/dashboard/admin/menulist` | Menüelemek listája |
+| GET | `/dashboard/admin/stockalerts` | Alacsony készlet figyelmeztetések |
+| GET | `/dashboard/admin/paymentstats` | Fizetési statisztikák |
+| GET | `/dashboard/admin/health` | Rendszer állapot ellenőrzés |
+| GET | `/dashboard/admin/menuitem_export` | Menüelemek exportálása |
+| GET | `/dashboard/admin/delete_menuitem/:id` | Menüelem törlése |
+| POST | `/dashboard/admin/create_menuitem` | Menüelem létrehozása |
+| PUT | `/dashboard/admin/menuitem/:id` | Menüelem frissítése |
 
-**Example — GET /dashboard/admin/health response:**
+**Példa — GET /dashboard/admin/health válasz:**
 ```json
 { "overall": "ok", "services": { "database": "healthy", "redis": "healthy", "sessions": "healthy", "externalServices": { "paypal": "configured", "googlepay": "configured" } } }
 ```
@@ -1265,7 +1265,7 @@ const keyRegistry = {
 
 ---
 
-## 8. Adatmodell �s k�dalap lek�pez�se
+## 8. Adatmodell és kódlap leképezése
 
 ### 8.1 Összefoglaló
 
@@ -1273,38 +1273,38 @@ Ez a szakasz összevonja a `DatabaseDoc.md` adatbázis-séma részleteit és ös
 
 ### 8.2 Fő adatbázis entitások (MongoDB, Mongoose)
 
-- `User` (in `src/models/User.js`): core user account entity with authentication fields, roles, status flags, balance, ban details, E2EE identity, registered devices, recovery blob, and legacy encryption fields.
-- `Payment` (in `config/database_queries.js`): payment records with amount, currency, payment method, status, transaction reference, and created timestamp.
-- `MenuItems` (in `config/database_queries.js`): items menu with stock, pricing, category, availability, QR code, allergens, nutrition, and embedded reviews.
-- `Order` (in `config/database_queries.js`): user orders with items, totals, statuses, pickup time, payment Hivatkoz�sok, and public ID.
-- `OrderItems` (embedded in `Order` schema): link catalog items to order quantity.
-- `UserLoyalty` (in `config/database_queries.js`): loyalty points, tier, discounts, history, streaks, decay management.
-- `DailyMenu` (in `config/database_queries.js`): date-specific menu collection tied to MenuItems.
-- `ParentStudent` (in `config/database_queries.js`): connection records between parent and student users.
-- `SecurityLogs` (in `config/database_queries.js`): security event audit trails with action, type, IP and geolocation metadata.
-- `DeviceSyncSession` (in `src/models/DeviceSyncSession.js`): ephemeral session data for E2EE sync, TTL index on `expiresAt`.
-- `Message` (in `src/models/Message.js`): E2EE message container (Double Ratchet/X3DH metadata), status tracking, indexes for efficient retrieval.
-- `PreKey` (in `src/models/PreKey.js`): prekeys for X3DH bootstrapping, unique and index constraints.
-- `StorageBlob` (in `src/models/StorageBlob.js`): encrypted storage blobs for session/message state, unique per user/blobType/partition.
-- `Reward` and `Redemption` (in `config/database_queries.js`): expanded loyalty program with catalog and voucher entities.
+- `User` (a `src/models/User.js`-ben): alap felhasználói fiók entitás hitelesítési mezőkkel, szerepekkel, státuszjelzőkkel, egyenleggel, tiltási adatokkal, E2EE identitással, regisztrált eszközökkel, helyreállítási blobbal és régi titkosítási mezőkkel.
+- `Payment` (a `config/database_queries.js`-ben): fizetési rekordok összeggel, valutával, fizetési móddal, státusszal, tranzakció hivatkozással és létrehozás időbélyeggel.
+- `MenuItems` (a `config/database_queries.js`-ben): menüelemek készlettel, árazással, kategóriával, elérhetőséggel, QR kóddal, allergénekkel, táplálkozási adatokkal és beágyazott értékelésekkel.
+- `Order` (a `config/database_queries.js`-ben): felhasználói rendelések tételekkel, összegekkel, státuszokkal, átvételi idővel, fizetési hivatkozásokkal és nyilvános azonosítóval.
+- `OrderItems` (`Order` séma beágyazott eleme): katalógus tételek kapcsolat rendelések mennyiségével.
+- `UserLoyalty` (a `config/database_queries.js`-ben): hűségpontok, szintek, kedvezmények, történet, streakek, csökkenés kezelése.
+- `DailyMenu` (a `config/database_queries.js`-ben): időponthoz kötött menüsorozat a `MenuItems` elemekhez.
+- `ParentStudent` (a `config/database_queries.js`-ben): szülő és diák felhasználók közötti kapcsolódási rekordok.
+- `SecurityLogs` (a `config/database_queries.js`-ben): biztonsági esemény audit naplói akcióval, típussal, IP-vel és geolokációs metaadatokkal.
+- `DeviceSyncSession` (a `src/models/DeviceSyncSession.js`-ben): átmeneti munkamenet adatok E2EE szinkronizációhoz, TTL indexsel `expiresAt`-on.
+- `Message` (a `src/models/Message.js`-ben): E2EE üzenet tároló (Double Ratchet/X3DH metaadat), státusz nyomon követés, indexek hatékony lekéréshez.
+- `PreKey` (a `src/models/PreKey.js`-ben): prekey-k X3DH bootstrappinghez, egyedi és indexelési megszorításokkal.
+- `StorageBlob` (a `src/models/StorageBlob.js`-ben): titkosított tárolt blobok munkamenet/üzenet állapothoz, egyedi user/blobType/partition kombinációnként.
+- `Reward` és `Redemption` (a `config/database_queries.js`-ben): kibővített hűségprogram katalógus és utalvány entitásokkal.
 
-### 8.3 Entity mapping to code modules
+### 8.3 Entitás leképezés kódbeli modulokra
 
-- Authentication routes: `src/auth/register.js`, `src/auth/login.js`, `src/auth/2fa.js`, `src/auth/password_reset.js`, `src/auth/email_verification.js`.
-- API orchestration: `src/api.js` handles orders (`/orders`, `/orders/googlepay`, `/orders/:orderID/capture`, etc.), payments, and maps to `orderService`, `paypalService`, and `googlePayService`.
-- Dashboard & admin endpoints: mounted from `src/dashboard/*` via `src/main.js`.
-- Cache and high-throughput operations: `src/cache/ChangeStreamManager.js`, `src/cache/KeyRegistry.js`, `src/redis.js`.
-- E2EE logic: `src/models/Message.js`, `src/models/PreKey.js`, `src/models/StorageBlob.js`, `src/models/DeviceSyncSession.js`, and frontend chat components under `public/chat`.
+- Hitelesítési útvonalak: `src/auth/register.js`, `src/auth/login.js`, `src/auth/2fa.js`, `src/auth/password_reset.js`, `src/auth/email_verification.js`.
+- API koordináció: `src/api.js` kezeli a rendeléseket (`/orders`, `/orders/googlepay`, `/orders/:orderID/capture`, stb.), a fizetéseket, és kapcsolódik `orderService`, `paypalService` és `googlePayService` szolgáltatásokhoz.
+- Dashboard és admin végpontok: a `src/dashboard/*`-ből csatolva a `src/main.js`-en keresztül.
+- Cache és nagy áteresztőképességű műveletek: `src/cache/ChangeStreamManager.js`, `src/cache/KeyRegistry.js`, `src/redis.js`.
+- E2EE logika: `src/models/Message.js`, `src/models/PreKey.js`, `src/models/StorageBlob.js`, `src/models/DeviceSyncSession.js`, valamint frontend chat komponensek a `public/chat` alatt.
 
-### 8.4 Database logic and constraints
+### 8.4 Adatbázis logika és megszorítások
 
-- `MenuItems` has pre-save hook: `available` is false when `stock <= 0`.
-- `Order` has pre-save hook: `Pending` orders older than 15 minutes become `Cancelled`.
-- `UserLoyalty` includes `updatePointsAtomically` static method with transaction logic, decay rules, tier updates, and discount recalculation.
-- `DeviceSyncSession` has TTL index: `expiresAt` with `expireAfterSeconds: 0` for automatic pruning.
-- `Message` indexes: `senderId/recipientId/createdAt`, `recipientId/status`, `recipientDeviceId/status`, `createdAt`, and a `participants` virtual.
-- `PreKey` indexes: `userId/deviceId/used` and unique `userId/keyId`.
-- `StorageBlob` indexes: unique `(userId, blobType, partitionKey)`, and `userId/updatedAt`.
+- `MenuItems` pre-save hookkal: `available` false, ha `stock <= 0`.
+- `Order` pre-save hookkal: 15 percnél régebbi `Pending` rendelések `Cancelled`-re állnak.
+- `UserLoyalty` tartalmaz `updatePointsAtomically` statikus metódust tranzakciós logikával, csökkenési szabályokkal, szintfrissítéssel és kedvezmény újraszámolással.
+- `DeviceSyncSession` TTL indexszel: `expiresAt` `expireAfterSeconds: 0`-val automatikus tisztításhoz.
+- `Message` indexek: `senderId/recipientId/createdAt`, `recipientId/status`, `recipientDeviceId/status`, `createdAt`, és egy `participants` virtuális.
+- `PreKey` indexek: `userId/deviceId/used` és egyedi `userId/keyId`.
+- `StorageBlob` indexek: egyedi `(userId, blobType, partitionKey)` és `userId/updatedAt`.
 
 ### 8.5 Business process flow (cross-document)
 
@@ -1317,51 +1317,51 @@ Ez a szakasz összevonja a `DatabaseDoc.md` adatbázis-séma részleteit és ös
 7. Ha a rendelés befolyásolja a menü készletét, a `MenuItems` rendezett halmaz gyorsítótára a `KeyRegistry` alapján érvénytelenül, és szükség esetén a `ChangeStreamManager` is érvénytelenít.
 
 
-### 8.6 Environment and config essentials
+### 8.6 Környezet- és konfigurációs alapok
 
-- `.env` values: `MONGODB_URI`, `DB_NAME`, `JWT_LOGIN_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `GOOGLE_PAY_MERCHANT_ID`, `RECAPTCHA_SECRET`, and `REDIS_URL`.
-- `mongoose.connect` invoked in `src/models/User.js` and `config/database_queries.js`. Use connection pooling and monitoring.
-- `dotenv` usage imported in both files as `require('dotenv').config()`.
+- `.env` értékek: `MONGODB_URI`, `DB_NAME`, `JWT_LOGIN_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `GOOGLE_PAY_MERCHANT_ID`, `RECAPTCHA_SECRET` és `REDIS_URL`.
+- `mongoose.connect` a `src/models/User.js` és a `config/database_queries.js` fájlokban van meghívva. Használj kapcsolatpoolozást és monitorozást.
+- `dotenv` használat mindkét fájlban `require('dotenv').config()` formában történik.
 
-### 8.7 Testing Hivatkoz�sok
+### 8.7 Tesztelési hivatkozások
 
-- Unit/integration tests are in `tests/` and `tests/performance_tests/`.
-- Existing seed scripts: `tests/creating_test_users.js`, `tests/seed_rewards.js`.
-- Security and regression tests: `tests/query_security_logs.js`, `tests/register_testing.py`.
+- Egység- és integrációs tesztek a `tests/` és `tests/performance_tests/` könyvtárakban találhatók.
+- Létező seed szkriptek: `tests/creating_test_users.js`, `tests/seed_rewards.js`.
+- Biztonsági és regressziós tesztek: `tests/query_security_logs.js`, `tests/register_testing.py`.
 
 ---
 
-## 9. Tesztel�s �s �rv�nyes�t�s
+## 9. Tesztelés és érvényesítés
 
 *(Szakasz to be completed)*
 
 ---
 
-## 9. Felhaszn�l�i k�zik�nyv
+## 9. Felhasználói kézikönyv
 
 *(Szakasz to be completed)*
 
 ---
 
-## 10. Telep�t�s �s karbantart�s
+## 10. Telepítés és karbantartás
 
 *(Szakasz to be completed)*
 
 ---
 
-## 11. K�vetkeztet�s �s j�vobeni munka
+## 11. Következtetés és jövőbeni munka
 
 *(Szakasz to be completed)*
 
 ---
 
-## 12. Hivatkoz�sok
+## 12. Hivatkozások
 
 *(Szakasz to be completed)*
 
 ---
 
-## 13. Mell�kletek
+## 13. Mellékletek
 
 *(Szakasz to be completed)*
 
