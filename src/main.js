@@ -9,7 +9,7 @@ const rateLimit = require('express-rate-limit');
 const session = require('express-session'); 
 const database = require('./database');
 const path = require('path');
-const emailverification = require('./auth/email_verification');
+const emailverification = require('./auth/email_verification'); // object
 const api = require('./api');
 const { RedisStore } = require('rate-limit-redis');
 const favicon = require('serve-favicon');
@@ -25,9 +25,7 @@ const Order = require('./Orders/Order');
 const redisLuaService = require('./services/redis-lua-service');
 const cors = require('cors');
 
-
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
-
 
 let redisAvailable = false;
 const { redisClient, isRedisAvailable } = require('./redis');
@@ -48,7 +46,6 @@ redisClient.on('error', (err) => {
   redisAvailable = false;
 });
 
-
 // Add session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
@@ -59,9 +56,6 @@ app.use(session({
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public/home_page/home_page.html'));
-});
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(favicon(path.join(process.cwd(), "public", "favicon.ico")));
 app.use(cors());
@@ -73,51 +67,50 @@ const createStore = () => redisAvailable ? new RedisStore({
 const HOUR = 60 * 60 * 1000;
 const QUARTERHOUR = 15 * 60 * 1000;
 
-// Rate limiter for all non-sensitive routes
+// Rate limiters
 const limiter = rateLimit({
-  windowMs: HOUR, // 1 hour
-  max: 250, // Limit each IP to 250
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: HOUR,
+  max: 250,
+  standardHeaders: true,
+  legacyHeaders: false,
   store: createStore(),
-    handler: (req, res) => {
-    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
-})
-
-const registerLimiter = rateLimit({
-  windowMs: HOUR, // 1 hour window
-  max: 100, // start blocking after 100 requests
   handler: (req, res) => {
     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
-  store: createStore(),
 });
 
-
-const LoginLimiter = rateLimit({
-  windowMs: QUARTERHOUR, // 15 minutes window 
-  max: 35,
+const registerLimiter = rateLimit({
+  windowMs: HOUR,
+  max: 100,
+  store: createStore(),
   handler: (req, res) => {
     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
+});
+
+const LoginLimiter = rateLimit({
+  windowMs: QUARTERHOUR,
+  max: 35,
   store: createStore(),
+  handler: (req, res) => {
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+  },
 });
 
 const dashboardLimiter = rateLimit({
-  windowMs: QUARTERHOUR, // 15 minutes window
-  max: 1000, // start blocking after 1000 requests
+  windowMs: QUARTERHOUR,
+  max: 1000,
+  store: createStore(),
   handler: (req, res) => {
-     res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
+    res.status(429).statusMessage = 'Too many requests from this IP, please try again after 15 minutes';
     res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
   },
-  store: createStore(),
 });
 
-// Apply the rate limiting middleware to all requests
+// Apply rate limiting
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);
 app.use('/login', LoginLimiter);
@@ -135,9 +128,10 @@ app.use('/dashboard', (req, res, next) => {
   next();
 });
 
-
-// Serve HTML
-
+// Serve static HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public/home_page/home_page.html'));
+});
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/index.html'));
@@ -146,6 +140,7 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/register.html'));
 });
+
 app.get('/password-reset/:token', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/password_reset.html'));
 });
@@ -154,17 +149,30 @@ app.get('/pay', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/pay.html'));
 });
 
-
-/*
-app.get('/email-verification/verify/:token', (req, res) => {
-  res.sendFile(path.join(__dirname, 'verify.html'));
+// --- EMAIL VERIFICATION ROUTES ---
+app.post('/email-verification/send', async (req, res) => {
+  try {
+    await emailverification.sendVerificationEmail(req.body.email);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Email verification send error:', error);
+    res.status(500).json({ error: 'Failed to send verification email' });
+  }
 });
-*/
 
-// Use routers
+app.get('/email-verification/verify/:token', async (req, res) => {
+  try {
+    const result = await emailverification.verifyToken(req.params.token);
+    res.json({ success: result });
+  } catch (error) {
+    console.error('Email verification token error:', error);
+    res.status(500).json({ error: 'Failed to verify token' });
+  }
+});
+
+// Use other routers
 app.use('/password-reset', password_reset);
 app.use('/forgot-password', password_reset);
-app.use('/email-verification', emailverification);
 app.use('/', database);
 app.use('/api', api);
 app.use('/api/payments', googlepayRouter);
@@ -175,12 +183,9 @@ app.use('/', logoutRouter);
 app.use('/admin', admin);
 app.use('/order', Order);
 
-
 // 404 handler
 app.use((req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/404/404.html'));
-
-//  res.status(404).send('Page not found 😀');
 });
 
 app.listen(port, () => {

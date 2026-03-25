@@ -498,7 +498,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
             message: 'Order created successfully'
         });
 
-    } catch (error) {
+} catch (error) {
         console.error('Error creating order:', error);
         
         // Log security error
@@ -1071,6 +1071,4 @@ router.get('/DailyMenu', cacheResult('daily_menu:available', 600), async (req, r
 
 
 
-
 module.exports = router;
-
