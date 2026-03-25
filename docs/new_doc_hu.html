@@ -1,0 +1,2685 @@
+<!DOCTYPE html><html><head>
+      <title>new_doc_hu</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\bivorzk\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.22\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<style>
+@page {
+  size: A4 landscape;
+  margin: 1.5cm;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.fullpage {
+  page-break-before: always;
+  page-break-after: always;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+}
+
+img {
+  display: block;
+  max-width: 98%;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin: 1rem auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+tr:hover { background: #f8f9fa; }
+tr:last-child td { border-bottom: none; }
+
+pre {
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 1rem 0;
+  page-break-inside: auto;
+  orphans: 3;
+  widows: 3;
+}
+
+code {
+  background: #f1f3f4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #e83e8c;
+}
+
+pre code { background: none; padding: 0; color: inherit; }
+
+h1 { font-size: 2.5rem; color: #1a1a1a; border-bottom: 3px solid #007acc; padding-bottom: 0.5rem; page-break-before: always; page-break-after: avoid; }
+h2 { font-size: 2rem; color: #2d3748; border-bottom: 2px solid #e1e5e9; padding-bottom: 0.3rem; page-break-after: avoid; margin-top: 3rem; }
+h3 { font-size: 1.5rem; color: #4a5568; page-break-after: avoid; }
+h4 { font-size: 1.25rem; color: #718096; page-break-after: avoid; }
+
+ul, ol { margin: 1rem 0; padding-left: 2rem; }
+li { margin: 0.5rem 0; }
+
+.directory-tree {
+  page-break-inside: avoid;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+.schema-table { font-size: 0.85rem; }
+.schema-table th { background: #343a40; color: #fff; }
+.schema-table tr:nth-child(even) { background: #f8f9fa; }
+</style>
+<h1 id="snaptray-szoftver-dokumentcija">SnapTray szoftver dokument�ci�ja </h1>
+<h2 id="tartalomjegyzk">Tartalomjegyz�k </h2>
+<ul>
+<li><a href="#1-bevezetes">1. Bevezet�s</a></li>
+<li><a href="#2-rendszer-attekinte%EF%BF%BDse">2. Rendszer �ttekint�se</a></li>
+<li><a href="#3-requirements-specification">3. K�vetelm�nyek</a></li>
+<li><a href="#4-system-architecture">4. Rendszerarchitekt�ra</a>
+<ul>
+<li><a href="#41-komponensekmodulok">4.1 Komponensek/modulok</a></li>
+<li><a href="#42-adatfolyam">4.2 Adatfolyam</a></li>
+<li><a href="#43-technologiak">4.3 Technol�gi�k</a></li>
+</ul>
+</li>
+<li><a href="#5-Tervez%EF%BF%BDs">5. Tervez�s</a>
+<ul>
+<li><a href="#51-tervezesi-elvek">5.1 Tervez�si elvek</a></li>
+<li><a href="#52-adatbazis-tervezes">5.2 Adatb�zis tervez�s</a></li>
+<li><a href="#53-algoritmusok-es-adatszerkezetek">5.3 Algoritmusok �s adatszerkezetek</a></li>
+<li><a href="#54-biztonsagi-tervezes">5.4 Biztons�gi tervez�s</a></li>
+</ul>
+</li>
+<li><a href="#6-Megval%EF%BF%BDs%EF%BF%BDt%EF%BF%BDs">6. Megval�s�t�s</a>
+<ul>
+<li><a href="#61-directory-structure">6.1 Directory Structure</a></li>
+<li><a href="#62-backend-Megval%EF%BF%BDs%EF%BF%BDt%EF%BF%BDs">6.2 Backend Megval�s�t�s</a></li>
+<li><a href="#63-frontend-Megval%EF%BF%BDs%EF%BF%BDt%EF%BF%BDs">6.3 Frontend Megval�s�t�s</a></li>
+</ul>
+</li>
+<li><a href="#7-api-reference">7. API referencia</a></li>
+<li><a href="#8-testing-and-validation">8. Tesztel�s �s �rv�nyes�t�s</a></li>
+<li><a href="#9-user-manual">9. Felhaszn�l�i k�zik�nyv</a></li>
+<li><a href="#10-deployment-and-maintenance">10. Telep�t�s �s karbantart�s</a></li>
+<li><a href="#11-conclusion-and-future-work">11. K�vetkeztet�s �s j�vobeni munka</a></li>
+<li><a href="#12-Hivatkoz%EF%BF%BDsok">12. Hivatkoz�sok</a></li>
+<li><a href="#13-Mell%EF%BF%BDkletek">13. Mell�kletek</a></li>
+</ul>
+<hr>
+<h2 id="1-bevezets">1. Bevezet�s </h2>
+<p>A SnapTray egy webalapú menza-rendelőrendszer, amelynek célja, hogy egyszerűsítse az étkezési rendelések lebonyolítását iskolai környezetben. Fő célja, hogy a diákok, szülők és az étkeztető személyzet közötti interakció gyorsabbá és átláthatóbbá váljon az online rendelés, a valós idejű rendeléskövetés és a biztonságos fizetési lehetőségek révén.</p>
+<p>A rendszer három fő felhasználói szerepet szolgál ki: a <strong>diákok</strong> böngészhetnek az étlapok között, rendelhetnek és kezelhetik a virtuális pénztárcájukat; a <strong>szülők</strong> figyelemmel kísérhetik gyermekeik rendeléseit és kezelhetik a fizetéseket; az <strong>adminisztrátorok</strong> számára dashboard biztosít lehetőséget az étlapok kezelésére és statisztikák elemzésére.</p>
+<p>A SnapTray modern biztonsági megoldásokat alkalmaz (kétlépcsős azonosítás, email-ellenőrzés, gyakori webes támadások elleni védelem), valamint PayPal és Google Pay integrációt kínál.</p>
+<hr>
+<h2 id="2-rendszer-ttekintse">2. Rendszer �ttekint�se </h2>
+<p>A rendszer egy webalapú rendelési és fizetési platform oktatási intézmények számára, kliens–szerver architektúrában. A backend Node.js alapú Express szerver, a frontend React komponensekből épül fel szerepkör-alapú dashboardokkal. Redis biztosítja a gyorsítótárazást, rate limitinget és az atomi műveleteket, MongoDB az adatok perzisztens tárolását.</p>
+<h3 id="megvalósított-fő-funkciók">Megvalósított fő funkciók </h3>
+<p><strong>Felhasználókezelés és autentikáció:</strong></p>
+<ul>
+<li>Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor)</li>
+<li>Email alapú fiókellenőrzés és kétlépcsős azonosítás (2FA)</li>
+<li>JWT alapú munkamenet-kezelés Redis tárolással</li>
+<li>Jelszó biztonság bcrypt hasheléssel és erősség validációval</li>
+</ul>
+<p><strong>Rendelés és menü rendszer:</strong></p>
+<ul>
+<li>Dinamikus menükezelés kategóriákkal és táplálkozási információkkal</li>
+<li>Valós idejű készletkövetés riasztásokkal</li>
+<li>Napi menü funkcionalitás, QR kód integráció, allergén információk</li>
+</ul>
+<p><strong>Fizetés feldolgozás:</strong></p>
+<ul>
+<li>PayPal és Google Pay API integráció</li>
+<li>Pénztárca egyenleg rendszer atomi műveletekkel</li>
+<li>Biztonságos tranzakció naplózás és audit trail</li>
+</ul>
+<hr>
+<h2 id="3-kvetelmnyek">3. K�vetelm�nyek </h2>
+<h3 id="fő-célok">Fő célok </h3>
+<ul>
+<li>Biztonságos és ellenőrzött rendelési folyamat</li>
+<li>Digitális pénztárca és hűségpont rendszer</li>
+<li>Skálázható és nagy teljesítményű backend</li>
+<li>Külső fizetési szolgáltatók integrálása (PayPal, Google Pay)</li>
+</ul>
+<p><strong>Felhasználókezelés:</strong> Regisztráció, email alapú fiókellenőrzés, szerepkör-alapú hozzáférés (diák, szülő, admin).</p>
+<p><strong>Hitelesítés és biztonság:</strong> JWT alapú hitelesítés, kétlépcsős azonosítás (2FA), rate limiting brute-force védelem ellen.</p>
+<p><strong>Rendelések és fizetések:</strong> Rendelés leadás, végösszeg számítás, PayPal és Google Pay támogatás, tranzakció naplózás.</p>
+<p><strong>Adminisztráció:</strong> Felhasználókezelés, statisztikák és riportok.</p>
+<hr>
+<h2 id="4-rendszerarchitektra">4. Rendszerarchitekt�ra </h2>
+<p>A rendszer három fő rétegből áll:</p>
+<p><strong>Megjelenítési réteg (Frontend):</strong> React.js komponensek, szerepkör-alapú dashboardok, Tailwind CSS, REST API kommunikáció, valós idejű frissítések Socket.IO-val.</p>
+<p><strong>Alkalmazási réteg (Backend):</strong> Node.js/Express.js szerver, JWT hitelesítés, üzleti logika szolgáltatásokban, Redis Lua szkriptek atomi műveletekhez, rate limiting middleware.</p>
+<p><strong>Adatréteg:</strong> MongoDB perzisztens adatbázis Mongoose ODM-mel, Redis cache munkamenetekhez és rate limitinghez.</p>
+<div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram"></div>
+<h3 id="41-komponensekmodulok">4.1 Komponensek/modulok </h3>
+<table>
+<thead>
+<tr>
+<th>Modul</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend/UI</td>
+<td>React.js, szerepkör-alapú dashboardok, autentikáció, rendelés UI</td>
+</tr>
+<tr>
+<td>API Layer</td>
+<td>Express.js REST végpontok, üzleti logika</td>
+</tr>
+<tr>
+<td>Data Layer</td>
+<td>MongoDB (perzisztens), Redis (cache, session)</td>
+</tr>
+<tr>
+<td>Auth &amp; Security</td>
+<td>JWT, rate limiting, security logging</td>
+</tr>
+<tr>
+<td>Payment</td>
+<td>PayPal és Google Pay integráció</td>
+</tr>
+<tr>
+<td>Loyalty System</td>
+<td>Pontszámítás, tier kezelés, kedvezmények</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-adatfolyam">4.2 Adatfolyam </h3>
+<ol>
+<li>A felhasználó a React frontenddel interaktál, HTTP kéréseket küld.</li>
+<li>Az Express szerver middleware-eken (hitelesítés, rate limiting, sanitizáció) keresztül irányítja a kéréseket.</li>
+<li>Az üzleti logika MongoDB-ből vagy Redis cache-ből olvassa az adatokat.</li>
+<li>Írási műveletek frissítik az adatbázist és érvénytelenítik a cache bejegyzéseket.</li>
+<li>A válasz JSON formátumban kerül vissza a frontendhez.</li>
+<li>Valós idejű frissítések Redis pub/sub-on és Socket.IO-n keresztül érkeznek.</li>
+<li>Minden jelentős esemény naplózásra kerül a SecurityLogs kollekcióba.</li>
+</ol>
+<p><img src="user_registration.png" alt="User Registration Activity Diagram"></p>
+<p><img src="order_placement.png" alt="Order Processing Activity Diagram"></p>
+<h3 id="43-technolgik">4.3 Technol�gi�k </h3>
+<table>
+<thead>
+<tr>
+<th>Technológia</th>
+<th>Indok</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js + Express.js</td>
+<td>JavaScript full-stack konzisztencia, gyors fejlesztés</td>
+</tr>
+<tr>
+<td>MongoDB + Mongoose</td>
+<td>Rugalmas dokumentum-séma, skálázható</td>
+</tr>
+<tr>
+<td>Redis + Lua</td>
+<td>Gyors cache, atomi műveletek, rate limiting</td>
+</tr>
+<tr>
+<td>React.js + Tailwind CSS</td>
+<td>Komponens-alapú UI, reszponzív Tervez�s</td>
+</tr>
+<tr>
+<td>JWT + bcrypt</td>
+<td>Iparági standard hitelesítés és jelszóvédelem</td>
+</tr>
+<tr>
+<td>PayPal / Google Pay</td>
+<td>Megbízható, PCI-kompatibilis fizetési integrációk</td>
+</tr>
+<tr>
+<td><a href="http://Socket.IO">Socket.IO</a></td>
+<td>Kétirányú valós idejű kommunikáció</td>
+</tr>
+<tr>
+<td>Helmet, HPP, CORS</td>
+<td>HTTP biztonsági fejlécek és védelmi middleware</td>
+</tr>
+</tbody>
+</table>
+<p><img src="system_component_diagram_placeholder.png" alt="System Component Diagram"></p>
+<hr>
+<h2 id="5-tervezs">5. Tervez�s </h2>
+<h3 id="51-tervezs-principles">5.1 Tervez�s Principles </h3>
+<table>
+<thead>
+<tr>
+<th>Elv</th>
+<th>Megvalósítás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modularitás</td>
+<td>Réteges architektúra (routes / services / models), laza csatolás modulok között</td>
+</tr>
+<tr>
+<td>Security-First</td>
+<td>Defense in depth, least privilege, minden végpont alapértelmezetten hitelesítést igényel</td>
+</tr>
+<tr>
+<td>Skálázhatóság</td>
+<td>Állapotmentes JWT, Redis cache, MongoDB indexek és connection pooling</td>
+</tr>
+<tr>
+<td>Felhasználóközpontú Tervez�s</td>
+<td>Reszponzív Tailwind UI, érthetetlen hibaüzenetek, visszajelzési rendszerek</td>
+</tr>
+<tr>
+<td>Megbízhatóság</td>
+<td>Graceful degradation, tranzakció-kezelés, átfogó naplózás</td>
+</tr>
+<tr>
+<td>Karbantarthatóság</td>
+<td>Clean code, git verziókövetés, RESTful API konvenciók, env-alapú konfiguráció</td>
+</tr>
+<tr>
+<td>Adatintegritás</td>
+<td>Többszintű validáció, atomi műveletek, audit trail</td>
+</tr>
+<tr>
+<td>Platformfüggetlenség</td>
+<td>Modern böngészők (Chrome, Firefox, Safari, Edge), mobilreszponzív</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-database-tervezs">5.2 Database Tervez�s </h3>
+<h4 id="521-cél-funkció-és-a-tárolt-információk-összefoglalása">5.2.1 Cél, funkció és a tárolt információk összefoglalása </h4>
+<p>Ez az adatbázis egy iskolai menzarendszer része (MERN stack projekt), amely lehetővé teszi a felhasználók számára (diákok, szülők, tanárok), hogy ételeket rendeljenek, kifizessék azokat és értékeléseket adjanak. A rendszer támogatja a felhasználóhitelesítést, menükezelést, rendelések kezelését, fizetéseket, hűségprogramokat, E2EE chatet és biztonsági naplózást. A fő cél az iskolai étkezések hatékony és biztonságos kezelése, beleértve a készletgazdálkodást, értékeléseket és pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely NoSQL adatbázis, de sémákkal struktúrált. Redis gyorsítótárazásra és ideiglenes adatokra szolgál.</p>
+<p>Az adatbázis modell típusa: NoSQL (MongoDB), lekérdező nyelv: JavaScript (Mongoose query-k). Redis memóriában tárolt adatbázis gyorsítótárazásra, munkamenetekre és rövid életű adatokra.</p>
+<h4 id="522-adatbázis-terv-és-séma">5.2.2 Adatbázis terv és séma </h4>
+<h5 id="entitások-és-kapcsolatok-er-modell-összefoglaló">Entitások és kapcsolatok (ER modell összefoglaló) </h5>
+<p>A rendszer fő entitásai és kapcsolataik:</p>
+<ul>
+<li><strong>User</strong> (Felhasználó): Központi entitás, minden más ehhez kapcsolódik.</li>
+<li><strong>UserPersonalInfo</strong>: Személyes adatok a felhasználóról (beágyazott dokumentum).</li>
+<li><strong>MenuItems</strong> (Menüelemek): Ételválaszték elemei.</li>
+<li><strong>Order</strong> (Rendelés): Felhasználói rendelések.</li>
+<li><strong>OrderItems</strong> (Rendelési tételek): Menüelemek egy rendeléshez (beágyazott a Rendelésben).</li>
+<li><strong>Payment</strong> (Fizetés): Pénzügyi tranzakciók.</li>
+<li><strong>Review</strong> (Értékelés): Menüelemek értékelései (beágyazott a MenuItems-ben).</li>
+<li><strong>DailyMenu</strong> (Napi menü): Iskolai időszakokra bontott napi menük, több Menüelem halmazzal (N:N kapcsolat linktáblával).</li>
+<li><strong>ParentStudent</strong> (Szülő-diák kapcsolat): Szülők és diákok összekapcsolása.</li>
+<li><strong>SecurityLogs</strong> (Biztonsági naplók): Eseménynaplózás.</li>
+<li><strong>UserLoyalty</strong> (Hűségprogram): Felhasználói pontok, kedvezmények és hűségszint.</li>
+<li><strong>DeviceSyncSession</strong> (Eszköz szinkronizációs munkamenet): Eszközkulcs-szinkronizáció (önálló, nincs kapcsolva másokhoz).</li>
+<li><strong>Message</strong> (Üzenetek): E2EE chat üzenetek.</li>
+<li><strong>PreKey</strong> (Prekeyek): ECDH prekeyek.</li>
+<li><strong>StorageBlob</strong> (Tárhely blob): Titkosított üzenet/munkamenet előzmények.</li>
+</ul>
+<h5 id="relationships">Relationships: </h5>
+<ul>
+<li>User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent (as parent or student).</li>
+<li>MenuItems 1:N OrderItems (embedded in Order), Review (embedded).</li>
+<li>Order 1:N OrderItems (embedded).</li>
+<li>DailyMenu N:M MenuItems (linking table: DailyMenuMenuItems).</li>
+<li>Message 1:1 PreKey (optional, for X3DH).</li>
+<li>StorageBlob 1:1 User (per blobType and partitionKey).</li>
+<li>DeviceSyncSession: standalone, not connected to others.</li>
+</ul>
+<p><img src="er_diagram_placeholder.png" alt="Entity Relationship Diagram"></p>
+<h5 id="relational-schema-table-details">Relational Schema (Table Details) </h5>
+<p>Az alábbiak részletezik az egyes entitások mezőit. A DailyMenu és MenuItems N:M kapcsolat esetén egy linktábla is ábrázolható.</p>
+<h5 id="example-dailymenu-and-menuitems-relationship-dbdiagramio-style">Example: DailyMenu and MenuItems Relationship (<a href="http://dbdiagram.io">dbdiagram.io</a> style) </h5>
+<pre data-role="codeBlock" data-info="dbml" class="language-dbml dbml"><code>Table DailyMenu {
+  _id objectid [pk]
+  date date
+  schoolPeriod varchar
+  createdAt datetime
+}
+
+Table MenuItems {
+  _id objectid [pk]
+  name varchar
+  // ...additional fields
+}
+
+Table DailyMenuMenuItems {
+  dailyMenuId objectid [ref: &gt; DailyMenu._id]
+  menuItemId objectid [ref: &gt; MenuItems._id]
+  // Composite PK: [dailyMenuId, menuItemId]
+}
+</code></pre><p><img src="database_schema_diagram_placeholder.png" alt="Database Schema Diagram"></p>
+<h5 id="devicesyncsession">DeviceSyncSession </h5>
+<p>Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és csak eszközazonosítókat és titkosított adatokat tárol. Ez megfelel a céljának, mert rövid életű, munkamenet jellegű adatokat kezel.</p>
+<hr>
+<h4 id="523-detailed-entity-descriptions">5.2.3 Detailed Entity Descriptions </h4>
+<p>(A k�vetkezok r�szletezik az egyes entit�sok mezoit, t�pusait, jelent�s�t, megszor�t�sait, indexeit �s �zleti szab�lyait. L�sd az eredeti dokument�ci� folytat�s�t.)</p>
+<h5 id="user-users">User (Users) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td>String</td>
+<td>Username</td>
+<td>Required, unique</td>
+<td>_id, username</td>
+</tr>
+<tr>
+<td>password</td>
+<td>String</td>
+<td>Password (hashed)</td>
+<td>Required</td>
+<td>_id, password</td>
+</tr>
+<tr>
+<td>email</td>
+<td>String</td>
+<td>Email address</td>
+<td>Required, unique, email format, trim</td>
+<td>_id, email</td>
+</tr>
+<tr>
+<td>isVerified</td>
+<td>Boolean</td>
+<td>Email verification status</td>
+<td>Default: false</td>
+<td>_id, isVerified</td>
+</tr>
+<tr>
+<td>usertype</td>
+<td>String</td>
+<td>User type (admin, student, parent, teacher, frozen, editor)</td>
+<td>Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], default: 'student'</td>
+<td>_id, usertype</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Account creation date</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+<tr>
+<td>balance</td>
+<td>Number</td>
+<td>User balance for in-app purchases</td>
+<td>Default: 0</td>
+<td>_id, balance</td>
+</tr>
+<tr>
+<td>isBanned</td>
+<td>Boolean</td>
+<td>Banned user</td>
+<td>Default: false</td>
+<td>_id, isBanned</td>
+</tr>
+<tr>
+<td>banReason</td>
+<td>String</td>
+<td>Ban reason</td>
+<td>Optional</td>
+<td>_id, banReason</td>
+</tr>
+<tr>
+<td>userPersonalInfo</td>
+<td>[Subdocument]</td>
+<td>Personal info (name, birth date, class, school, address)</td>
+<td>Optional</td>
+<td>_id, userPersonalInfo</td>
+</tr>
+<tr>
+<td>identity.publicKey</td>
+<td>String</td>
+<td>E2EE identity public key (ECDH P-256 SPKI base64)</td>
+<td>Optional</td>
+<td>_id, identity.publicKey</td>
+</tr>
+<tr>
+<td>identity.signingPublicKey</td>
+<td>String</td>
+<td>E2EE signing public key (ECDSA P-256)</td>
+<td>Optional</td>
+<td>_id, identity.signingPublicKey</td>
+</tr>
+<tr>
+<td>identity.keyId</td>
+<td>String</td>
+<td>Key identifier (SHA-256 fingerprint)</td>
+<td>Optional</td>
+<td>_id, identity.keyId</td>
+</tr>
+<tr>
+<td>identity.registeredAt</td>
+<td>Date</td>
+<td>E2EE registration time</td>
+<td>Optional</td>
+<td>_id, identity.registeredAt</td>
+</tr>
+<tr>
+<td>identity.isE2EEEnabled</td>
+<td>Boolean</td>
+<td>E2EE enabled</td>
+<td>Default: false</td>
+<td>_id, identity.isE2EEEnabled</td>
+</tr>
+<tr>
+<td>devices</td>
+<td>[Array]</td>
+<td>Registered devices (deviceId, publicKey, label, etc.)</td>
+<td>Optional</td>
+<td>_id, devices</td>
+</tr>
+<tr>
+<td>recoveryBlob.encryptedData</td>
+<td>String</td>
+<td>Recovery blob (AES-GCM encrypted)</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.encryptedData</td>
+</tr>
+<tr>
+<td>recoveryBlob.iv</td>
+<td>String</td>
+<td>IV for recovery blob</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.iv</td>
+</tr>
+<tr>
+<td>recoveryBlob.salt</td>
+<td>String</td>
+<td>Salt for recovery blob</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.salt</td>
+</tr>
+<tr>
+<td>recoveryBlob.storedAt</td>
+<td>Date</td>
+<td>Recovery blob storage time</td>
+<td>Optional</td>
+<td>_id, recoveryBlob.storedAt</td>
+</tr>
+<tr>
+<td>encryption.*</td>
+<td>Mixed</td>
+<td>V1 legacy E2EE fields (for migration)</td>
+<td>Optional</td>
+<td>_id, encryption.*</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden felhasználó egyedi felhasználónévvel és e-mail címmel rendelkezik. A felhasználói típus befolyásolja a jogosultságokat (pl. admin mindent elér).</p>
+<h5 id="fizetés-payments">Fizetés (Payments) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Paying user</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Number</td>
+<td>Paid amount</td>
+<td>Required</td>
+<td>_id, amount</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Currency (e.g., USD, HUF)</td>
+<td>Required</td>
+<td>_id, currency</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Payment method</td>
+<td>Required</td>
+<td>_id, paymentMethod</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Status (Completed, Pending, Failed)</td>
+<td>Required, enum: ['Completed', 'Pending', 'Failed']</td>
+<td>_id, status</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>External transaction reference</td>
+<td>Optional</td>
+<td>_id, transactionId</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden fizetés egy felhasználóhoz tartozik, de lehet opcionális (például vendégfizetések).</p>
+<h5 id="menüelemek-menu-items">Menüelemek (Menu Items) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Menu item name</td>
+<td>Required</td>
+<td>_id, name</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Description</td>
+<td>Required</td>
+<td>_id, description</td>
+</tr>
+<tr>
+<td>stock</td>
+<td>Number</td>
+<td>Stock quantity</td>
+<td>Required, default: 0</td>
+<td>_id, stock</td>
+</tr>
+<tr>
+<td>price</td>
+<td>Number</td>
+<td>Price</td>
+<td>Required</td>
+<td>_id, price</td>
+</tr>
+<tr>
+<td>category</td>
+<td>String</td>
+<td>Category (Soup, Salad, etc.)</td>
+<td>Required, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], default: 'Other'</td>
+<td>_id, category</td>
+</tr>
+<tr>
+<td>available</td>
+<td>Boolean</td>
+<td>Availability</td>
+<td>Default: true</td>
+<td>_id, available</td>
+</tr>
+<tr>
+<td>QRCode</td>
+<td>String</td>
+<td>QR code for menu item</td>
+<td>Optional</td>
+<td>_id, QRCode</td>
+</tr>
+<tr>
+<td>allergens</td>
+<td>[String]</td>
+<td>Allergen list</td>
+<td>Default: []</td>
+<td>_id, allergens</td>
+</tr>
+<tr>
+<td>nutritionalInfo.calories</td>
+<td>Number</td>
+<td>Calories</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.calories</td>
+</tr>
+<tr>
+<td>nutritionalInfo.protein</td>
+<td>Number</td>
+<td>Protein</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.protein</td>
+</tr>
+<tr>
+<td>nutritionalInfo.carbs</td>
+<td>Number</td>
+<td>Carbohydrates</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.carbs</td>
+</tr>
+<tr>
+<td>nutritionalInfo.fat</td>
+<td>Number</td>
+<td>Fat</td>
+<td>Optional</td>
+<td>_id, nutritionalInfo.fat</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: A készlet nem lehet negatív; kategóriák szerint szűrhető. Elő mentési hook: ha stock &lt;= 0, available = false, egyébként true.</p>
+<h5 id="rendelés-orders">Rendelés (Orders) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Ordering user</td>
+<td>Required</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>items</td>
+<td>[OrderItemsScheme]</td>
+<td>Order items</td>
+<td>Required</td>
+<td>_id, items</td>
+</tr>
+<tr>
+<td>orderDate</td>
+<td>Date</td>
+<td>Order date</td>
+<td>Default: current time</td>
+<td>_id, orderDate</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Status (Pending, InProgress, Completed, Cancelled)</td>
+<td>Required, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending'</td>
+<td>_id, status</td>
+</tr>
+<tr>
+<td>totalAmount</td>
+<td>Number</td>
+<td>Total amount</td>
+<td>Required</td>
+<td>_id, totalAmount</td>
+</tr>
+<tr>
+<td>pickupTime</td>
+<td>Date</td>
+<td>Pickup time</td>
+<td>Optional</td>
+<td>_id, pickupTime</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>String</td>
+<td>Notes</td>
+<td>Optional, default: ''</td>
+<td>_id, notes</td>
+</tr>
+<tr>
+<td>paypalOrderId</td>
+<td>String</td>
+<td>PayPal order ID</td>
+<td>Optional</td>
+<td>_id, paypalOrderId</td>
+</tr>
+<tr>
+<td>paymentMethod</td>
+<td>String</td>
+<td>Payment method</td>
+<td>Optional</td>
+<td>_id, paymentMethod</td>
+</tr>
+<tr>
+<td>transactionId</td>
+<td>String</td>
+<td>Transaction ID</td>
+<td>Optional</td>
+<td>_id, transactionId</td>
+</tr>
+<tr>
+<td>publicID</td>
+<td>String</td>
+<td>Public ID</td>
+<td>Required, unique</td>
+<td>_id, publicID</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; az állapotváltozások az üzleti logikát követik. Elő mentési hook: ha a rendelés Pending és több mint 15 perc eltelt, automatikusan Cancelled lesz.</p>
+<h5 id="orderitems-order-items">OrderItems (Order Items) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>menuItemId</td>
+<td>ObjectId (ref: MenuItems)</td>
+<td>Menu item ID</td>
+<td>Required</td>
+<td>_id, menuItemId</td>
+</tr>
+<tr>
+<td>orderId</td>
+<td>ObjectId (ref: Order)</td>
+<td>Order ID</td>
+<td>Optional</td>
+<td>_id, orderId</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Number</td>
+<td>Quantity</td>
+<td>Required, default: 1</td>
+<td>_id, quantity</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Minden tételhez egy menüelem tartozik; a mennyiség pozitív egész szám. Ez a séma beágyazva van a Rendelés (Order) séma tételei mezőjébe.</p>
+<h5 id="review-reviews---embedded-in-menuitems">Review (Reviews) - Embedded in MenuItems </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>Reviewing user</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>rating</td>
+<td>Number</td>
+<td>Rating (1-5)</td>
+<td>Required, min: 1, max: 5</td>
+<td>_id, rating</td>
+</tr>
+<tr>
+<td>comment</td>
+<td>String</td>
+<td>Comment</td>
+<td>Required, maxlength: 500</td>
+<td>_id, comment</td>
+</tr>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, date</td>
+</tr>
+<tr>
+<td>ipAddress</td>
+<td>String</td>
+<td>IP address</td>
+<td>Optional</td>
+<td>_id, ipAddress</td>
+</tr>
+<tr>
+<td>reported</td>
+<td>Boolean</td>
+<td>Reported</td>
+<td>Default: false</td>
+<td>_id, reported</td>
+</tr>
+<tr>
+<td>moderated</td>
+<td>Boolean</td>
+<td>Moderated</td>
+<td>Default: false</td>
+<td>_id, moderated</td>
+</tr>
+<tr>
+<td>moderatorNotes</td>
+<td>String</td>
+<td>Moderator notes</td>
+<td>Optional</td>
+<td>_id, moderatorNotes</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Az értékelések a MenuItems gyűjteményben beágyazottan tárolódnak. A felhasználó különböző tételeket is többször értékelhet.</p>
+<h5 id="dailymenu-daily-menu">DailyMenu (Daily Menu) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td>Date</td>
+<td>Required</td>
+<td>_id, date</td>
+</tr>
+<tr>
+<td>schoolPeriod</td>
+<td>String</td>
+<td>School period (morning, afternoon)</td>
+<td>Required, enum: ['morning', 'afternoon']</td>
+<td>_id, schoolPeriod</td>
+</tr>
+<tr>
+<td>menuItems</td>
+<td>[ObjectId] (ref: MenuItems)</td>
+<td>Item list</td>
+<td>Required</td>
+<td>_id, menuItems</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>�zleti szab�lyok: Daily menus are created per period.</p>
+<h5 id="parentstudent-parent-student-relationship">ParentStudent (Parent-Student Relationship) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>parentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Parent user</td>
+<td>Required</td>
+<td>_id, parentId</td>
+</tr>
+<tr>
+<td>studentId</td>
+<td>ObjectId (ref: User)</td>
+<td>Student user</td>
+<td>Required</td>
+<td>_id, studentId</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id, createdAt</td>
+</tr>
+</tbody>
+</table>
+<p>�zleti szab�lyok: Parents can be linked to multiple students.</p>
+<h5 id="securitylogs-security-logs">SecurityLogs (Security Logs) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User</td>
+<td>Optional</td>
+<td>_id, userId</td>
+</tr>
+<tr>
+<td>action</td>
+<td>String</td>
+<td>Action (e.g., LOGIN_SUCCESS)</td>
+<td>Required</td>
+<td>_id, action</td>
+</tr>
+<tr>
+<td>type</td>
+<td>String</td>
+<td>Type (INFO, WARNING, ERROR)</td>
+<td>Required</td>
+<td>_id, type</td>
+</tr>
+<tr>
+<td>ipAddress</td>
+<td>String</td>
+<td>IP address (hashed)</td>
+<td>Optional</td>
+<td>_id, ipAddress</td>
+</tr>
+<tr>
+<td>Timestamp</td>
+<td>Date</td>
+<td>Timestamp</td>
+<td>Default: current time</td>
+<td>_id, Timestamp</td>
+</tr>
+<tr>
+<td>details</td>
+<td>String</td>
+<td>Additional info</td>
+<td>Optional</td>
+<td>_id, details</td>
+</tr>
+<tr>
+<td>country</td>
+<td>String</td>
+<td>Country</td>
+<td>Optional</td>
+<td>_id, country</td>
+</tr>
+<tr>
+<td>CountryCode</td>
+<td>String</td>
+<td>Country code</td>
+<td>Optional</td>
+<td>_id, CountryCode</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>String</td>
+<td>Currency</td>
+<td>Optional</td>
+<td>_id, currency</td>
+</tr>
+<tr>
+<td>Continent</td>
+<td>String</td>
+<td>Continent</td>
+<td>Optional</td>
+<td>_id, Continent</td>
+</tr>
+<tr>
+<td>IsVPN</td>
+<td>Boolean</td>
+<td>VPN usage</td>
+<td>Optional</td>
+<td>_id, isVPN</td>
+</tr>
+<tr>
+<td>isTor</td>
+<td>Boolean</td>
+<td>Tor usage</td>
+<td>Optional</td>
+<td>_id, isTor</td>
+</tr>
+<tr>
+<td>isProxy</td>
+<td>Boolean</td>
+<td>Proxy usage</td>
+<td>Optional</td>
+<td>_id, isProxy</td>
+</tr>
+</tbody>
+</table>
+<p>�zleti szab�lyok: Logs record all important events.</p>
+<h5 id="devicesyncsession-device-sync-session">DeviceSyncSession (Device Sync Session) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>responderDeviceId</td>
+<td>String</td>
+<td>Responder device ID</td>
+<td>Required</td>
+<td>responderDeviceId</td>
+</tr>
+<tr>
+<td>initiatorDeviceId</td>
+<td>String</td>
+<td>Initiator device ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptedPayload</td>
+<td>String</td>
+<td>Encrypted payload</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>Initialization vector</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>ephemeralKey</td>
+<td>String</td>
+<td>Ephemeral key</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>expiresAt</td>
+<td>Date</td>
+<td>Expiration time</td>
+<td>Default: current time + 10 minutes</td>
+<td>expiresAt (TTL)</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Rövid életű munkamenet az eszközök közötti titkosítási kulcsok szinkronizálására. TTL index segítségével 10 perc után automatikusan törlődik. Az E2EE kulcskezelésben biztonságos párosítást tesz lehetővé.</p>
+<h5 id="üzenet-messages">Üzenet (Messages) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>senderId</td>
+<td>ObjectId (ref: User)</td>
+<td>Sender user ID</td>
+<td>Required</td>
+<td>senderId, recipientId, createdAt</td>
+</tr>
+<tr>
+<td>recipientId</td>
+<td>ObjectId (ref: User)</td>
+<td>Recipient user ID</td>
+<td>Required</td>
+<td>recipientId, status</td>
+</tr>
+<tr>
+<td>senderDeviceId</td>
+<td>String</td>
+<td>Sender device ID</td>
+<td>Optional</td>
+<td>recipientDeviceId, status</td>
+</tr>
+<tr>
+<td>recipientDeviceId</td>
+<td>String</td>
+<td>Recipient device ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>schemaVersion</td>
+<td>Number</td>
+<td>Schema version</td>
+<td>Default: 2</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>header.dh</td>
+<td>String</td>
+<td>Sender ratchet public key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>header.n</td>
+<td>Number</td>
+<td>Message number in chain</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td><a href="http://header.pn">header.pn</a></td>
+<td>Number</td>
+<td>Previous chain message count</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.identityKey</td>
+<td>String</td>
+<td>Identity key for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.ephemeralKey</td>
+<td>String</td>
+<td>Ephemeral key for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.spkKeyId</td>
+<td>String</td>
+<td>Signed prekey ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.opkKeyId</td>
+<td>Mixed</td>
+<td>One-time prekey ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>x3dhHeader.recipientDeviceId</td>
+<td>String</td>
+<td>Recipient device for X3DH</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>ciphertext</td>
+<td>String</td>
+<td>Encrypted message content</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>GCM IV</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptedContent</td>
+<td>String</td>
+<td>Legacy encrypted content</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.senderEncryptedKey</td>
+<td>String</td>
+<td>Legacy sender key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.recipientEncryptedKey</td>
+<td>String</td>
+<td>Legacy recipient key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.iv</td>
+<td>String</td>
+<td>Legacy IV</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>encryptionMetadata.algorithm</td>
+<td>String</td>
+<td>Encryption algorithm</td>
+<td>Default: 'AES-GCM'</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>Message status</td>
+<td>Enum: ['sent', 'delivered', 'read', 'replaced'], default: 'sent'</td>
+<td>status</td>
+</tr>
+<tr>
+<td>messageType</td>
+<td>String</td>
+<td>Message type</td>
+<td>Enum: ['text', 'file', 'image'], default: 'text'</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>createdAt</td>
+</tr>
+<tr>
+<td>readAt</td>
+<td>Date</td>
+<td>Read time</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.needed</td>
+<td>Boolean</td>
+<td>Key recovery needed</td>
+<td>Default: false</td>
+<td>senderKeyRecovery.needed</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.failed</td>
+<td>Boolean</td>
+<td>Key recovery failed</td>
+<td>Default: false</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.senderPublicKey</td>
+<td>String</td>
+<td>Recovery public key</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>senderKeyRecovery.senderKeyId</td>
+<td>String</td>
+<td>Recovery key ID</td>
+<td>Optional</td>
+<td>_id</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: End-to-end titkosított üzeneteket tárol Double Ratchet protokollal. Tartalmazza az X3DH fejlécet kezdeti kulcscsere céljából. Az állapotkövetés figyeli a kézbesítést és olvasást. Támogatja a kapott kulcsok helyreállítását. A migráció érdekében régi mezők is megmaradnak. Az indexek optimalizáltak a beszélgetések lekérésére és állapotszűrésre.</p>
+<h5 id="prekey-prekeys">PreKey (Prekeys) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User ID</td>
+<td>Required</td>
+<td>userId, deviceId, used</td>
+</tr>
+<tr>
+<td>deviceId</td>
+<td>String</td>
+<td>Device ID</td>
+<td>Required</td>
+<td>userId, keyId (unique)</td>
+</tr>
+<tr>
+<td>keyId</td>
+<td>Number</td>
+<td>Key ID</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>publicKey</td>
+<td>String</td>
+<td>ECDH public key</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>used</td>
+<td>Boolean</td>
+<td>Whether key has been used</td>
+<td>Default: false</td>
+<td>used</td>
+</tr>
+<tr>
+<td>createdAt</td>
+<td>Date</td>
+<td>Creation time</td>
+<td>Default: current time</td>
+<td>_id</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Egyszer használatos prekey-ek (OPK-k) tárolása X3DH kulcscsere céljára E2EE üzenetküldésre. Minden kulcs egyszer használatos és megjelöltként kerül tárolásra. Egyedi keyId felhasználónként biztosítja a duplikációmentességet. Magas forgalmú gyűjtemény, a kulcsok használat után törlésre kerülnek a forward secrecy megtartása érdekében.</p>
+<h5 id="storageblob-storage-blobs">StorageBlob (Storage Blobs) </h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Type</th>
+<th>Meaning/Role</th>
+<th>Constraints</th>
+<th>Indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userId</td>
+<td>ObjectId (ref: User)</td>
+<td>User ID</td>
+<td>Required</td>
+<td>userId, blobType, partitionKey (unique)</td>
+</tr>
+<tr>
+<td>blobType</td>
+<td>String</td>
+<td>Blob type</td>
+<td>Required, enum: ['message_log', 'session_state', 'skipped_keys']</td>
+<td>blobType</td>
+</tr>
+<tr>
+<td>partitionKey</td>
+<td>String</td>
+<td>Partition key (e.g., conversation ID)</td>
+<td>Required</td>
+<td>partitionKey</td>
+</tr>
+<tr>
+<td>encryptedPayload</td>
+<td>String</td>
+<td>Encrypted data</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>iv</td>
+<td>String</td>
+<td>GCM IV</td>
+<td>Required</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>version</td>
+<td>Number</td>
+<td>Version number</td>
+<td>Default: 1</td>
+<td>_id</td>
+</tr>
+<tr>
+<td>updatedAt</td>
+<td>Date</td>
+<td>Last update time</td>
+<td>Default: current time</td>
+<td>updatedAt</td>
+</tr>
+</tbody>
+</table>
+<p>Üzleti szabályok: Titkosított tárolás E2EE kapcsolódó adatoknak, beleértve az üzenetnaplókat, munkamenet állapotokat és kihagyott üzenetkulcsokat. Felhasználó, típus és kulcs szerint particionált a hatékony hozzáférés érdekében. Egyedi korlátozások megakadályozzák az adatok felülírását. Állandó kriptográfiai állapot tárolására szolgál a munkamenetek között.</p>
+<hr>
+<h4 id="524-fizikai-és-logikai-szerkezet">5.2.4 Fizikai és logikai szerkezet </h4>
+<p>Az adatbázis MongoDB-t használ elsődleges NoSQL tárolóként Mongoose séma érvényesítéssel. A kollekciók dokumentumalapú tárolásra vannak tervezve, beágyazott al-dokumentumokkal a kapcsolódó adatokhoz (pl. OrderItems az Order-ben, Reviews a MenuItems-ben). A kapcsolatokhoz ObjectId hivatkozásokat használunk. A Redis rövid életű adatok, például munkamenetek, rate limiting és gyorsítótárazás kezelésére szolgál.</p>
+<p>A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolatok hivatkozások és beágyazás révén. A fizikai szerkezet teljesítményhez optimalizált indexeket, ideiglenes adatokhoz TTL-t és gyorsítótár-érvénytelenítéshez change stream-eket tartalmaz.</p>
+<h4 id="525-használati-esetek">5.2.5 Használati esetek </h4>
+<ul>
+<li>Felhasználói regisztráció és hitelesítés szerepkör-alapú hozzáféréssel.</li>
+<li>Menü böngészése, rendelésleadás és fizetés feldolgozása.</li>
+<li>Hűségpont felhalmozás és kedvezmény alkalmazása.</li>
+<li>E2EE üzenetküldés kulcskezeléssel.</li>
+<li>Biztonsági megfigyelés és auditnaplózás.</li>
+<li>Készletgazdálkodás és készletfrissítések.</li>
+<li>Szülő-diák fiók összekapcsolása felügyelet céljából.</li>
+</ul>
+<h4 id="526-security-and-access">5.2.6 Security and Access </h4>
+<ul>
+<li>Authentication via JWT, passwords hashed with bcrypt.</li>
+<li>Role-based permissions (admin, student, etc.).</li>
+<li>IP hashing for GDPR compliance.</li>
+<li>Encrypted blobs for sensitive data.</li>
+<li>Rate limiting to prevent abuse.</li>
+<li>Audit logs for all security events.</li>
+</ul>
+<h4 id="527-maintenance-and-operations">5.2.7 Maintenance and Operations </h4>
+<ul>
+<li>Regular index maintenance and monitoring.</li>
+<li>Backup strategies for MongoDB and Redis.</li>
+<li>Data migration for schema updates.</li>
+<li>Performance tuning based on query analysis.</li>
+<li>Cleanup of expired sessions and logs.</li>
+</ul>
+<h4 id="528-e2ee-chat-és-üzenetkezelés">5.2.8 E2EE chat és üzenetkezelés </h4>
+<p>A rendszer Double Ratchet protokollt és X3DH kulcscserét használ a végpontok közötti titkosított üzenetküldéshez. Az üzenetek titkosítva tárolódnak, a ratchet metaadat előretitkosságot biztosít. A prekey-ek és storage blob-ok kezelik a kulcselosztást és a munkamenet állapotát.</p>
+<h4 id="529-kódalap-leképezése-dokumentációs-kiterjesztés">5.2.9 Kódalap leképezése (dokumentációs kiterjesztés) </h4>
+<p>Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hivatkozásokkal a megvalósító kódokra és a rendszer működési helyeire.</p>
+<h5 id="fő-mongodb-modellek-és-helyek">Fő MongoDB modellek és helyek </h5>
+<ul>
+<li><code>src/models/User.js</code>: <code>User</code> and sub-schemas (<code>userPersonalInfo</code>, <code>identity</code>, <code>devices</code>, <code>recoveryBlob</code>, <code>encryption</code>).</li>
+<li><code>config/database_queries.js</code>: <code>Payment</code>, <code>MenuItems</code>, <code>Order</code>, <code>OrderItems</code>, <code>DailyMenu</code>, <code>ParentStudent</code>, <code>SecurityLogs</code>, <code>UserLoyalty</code>, <code>Reward</code>, <code>Redemption</code>, <code>MoneyRequest</code> and regular indexes + pre-save hooks.</li>
+<li><code>src/models/DeviceSyncSession.js</code>: <code>DeviceSyncSession</code>, TTL index <code>expiresAt</code>.</li>
+<li><code>src/models/Message.js</code>: <code>Message</code> (E2EE metadata, state-tracking, indexes, markAsRead helper).</li>
+<li><code>src/models/PreKey.js</code>: <code>PreKey</code> (X3DH keys, <code>userId</code>/<code>deviceId</code> indexes and <code>keyId</code> uniqueness).</li>
+<li><code>src/models/StorageBlob.js</code>: <code>StorageBlob</code> (saved encrypted session data, <code>userId/blobType/partitionKey</code> unique index).</li>
+</ul>
+<h5 id="adatműveletek-és-szolgáltatási-réteg">Adatműveletek és szolgáltatási réteg </h5>
+<ul>
+<li><code>src/api.js</code>: Központi REST végpontok, amelyekben a rendelés- és fizetésfolyamatok valamint az e-mailkezelés történik.
+<ul>
+<li><code>/api/orders</code> CRUD + PayPal/Google Pay + egyenleg alapú fizetés + <code>save-order</code> feladat.</li>
+<li><code>orderService</code>, <code>paypalService</code>, <code>googlePayService</code> importok, <code>validateOrderInput</code> és <code>validatePaymentInput</code> middleware.</li>
+</ul>
+</li>
+<li><code>src/Orders/Order.js</code> és <code>src/LoyaltySystem/*</code>: Eszközök rendelésfeldolgozáshoz, <code>UserLoyalty</code> pontfrissítéshez, lojalitáspont számításhoz.</li>
+<li><code>src/auth/*.js</code>: Felhasználói hitelesítési események (<code>register.js</code>, <code>login.js</code>, <code>2fa.js</code>, <code>password_reset.js</code>, <code>email_verification.js</code>), <code>SecurityLogs</code> használat.
+<ul>
+<li>Bejelentkezéskor <code>SecurityLogs</code> rögzítése és <code>User.lastActive</code> frissítése.</li>
+</ul>
+</li>
+<li><code>src/services/*</code>: Logika az adatbázis transzparens frissítéseihez, pontos számításokhoz (kedvezmények, kuponok, jutalmak).</li>
+</ul>
+<h5 id="adatbázis-integráció-és-indítási-lépések">Adatbázis integráció és indítási lépések </h5>
+<ol>
+<li><code>.env</code> változók betöltése (pl. <code>MONGODB_URI</code>, <code>DB_NAME</code>) különféle helyeken (<code>src/models/User.js</code>, <code>config/database_queries.js</code>).</li>
+<li>Kezdeti <code>mongoose.connect</code> kötés két fő komponensben (felhasználói hitelesítés és adatbázis lekérdezés csomagoló).</li>
+<li>A modellek <code>module.exports</code>-e más modulokba importálva (<code>src/api.js</code>, <code>src/auth/login.js</code>, <code>src/dashboard/...</code>).</li>
+<li>Redis kapcsolódás a <code>src/redis.js</code> és <code>src/cache/*</code> rétegben (rate limit, cache, Change Stream Manager, KeyRegistry).</li>
+</ol>
+<h5 id="főbb-funkciók-és-adatfolyamok-a-fő-modulokban">Főbb funkciók és adatfolyamok a fő modulokban </h5>
+<ul>
+<li><strong>Rendelés beküldése</strong>: <code>src/api.js</code> -&gt; <code>orderService.validateOrderStock</code> -&gt; <code>orderService.convertCartToDbFormat</code> -&gt; <code>Order.create/Order.save</code> =&gt; <code>UserLoyalty.updatePointsAtomically</code> (mentés) -&gt; <code>SecurityLogs</code> hívás.</li>
+<li><strong>Címzett és szülő-diák kapcsolatok</strong>: <code>ParentStudent</code> séma, adminisztráció és hozzáférés <code>src/dashboard/*</code> és <code>src/models/User.js</code> szerint <code>userPersonalInfo</code> kapcsolaton keresztül.</li>
+<li><strong>E2EE üzenetek</strong>: <code>src/models/Message.js</code> és <code>src/models/PreKey.js</code> + <code>src/models/StorageBlob.js</code> + <code>src/LoyaltySystem</code> (további konzisztencia, audit) + frontend <code>src/chat/**</code>.</li>
+</ul>
+<h5 id="security-and-maintainability-notes">Security and Maintainability Notes </h5>
+<ul>
+<li>Passwords: <code>bcrypt</code> in <code>src/auth/passwordhash.js</code> summarizes (hash + compare).</li>
+<li>Logging: All important operations (<code>SecurityLogs</code>) in <code>src/auth/login.js</code>, <code>src/auth/register.js</code>, <code>src/api.js</code> endpoints occur.</li>
+</ul>
+<p><img src="menuitemsanddailymenu.png" alt="Database Diagram"></p>
+<h3 id="53-algoritmusok-s-adatstruktrk">5.3 Algoritmusok �s adatstrukt�r�k </h3>
+<h4 id="531-data-structures">5.3.1 Data Structures </h4>
+<ul>
+<li><strong>MongoDB Collections</strong>: BSON dokumentumok, beágyazott dokumentumokkal (OrderItems az Order-ben), ObjectId referenciákkal és tömbökkel (allergének, napi menü tételek).</li>
+<li><strong>Redis Strings/Hashes</strong>: Session tárolás, cached user adatok, komplex dashboard objektumok.</li>
+<li><strong>Redis Sorted Sets</strong>: Sliding window rate limiting, timestamp alapú score-okkal.</li>
+<li><strong>JavaScript</strong>: Objektumok API válaszokhoz, tömbök cart és batch műveletekhez, Map/Set cache lookupokhoz.</li>
+</ul>
+<h4 id="532-core-algorithms">5.3.2 Core Algorithms </h4>
+<p><strong>Password Hashing (bcrypt):</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> hashedPassword <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> bcrypt<span class="token punctuation">.</span><span class="token method function property-access">hash</span><span class="token punctuation">(</span>password<span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword keyword-const">const</span> isValid <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> bcrypt<span class="token punctuation">.</span><span class="token method function property-access">compare</span><span class="token punctuation">(</span>password<span class="token punctuation">,</span> hashedPassword<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><p><strong>JWT Token Generation (HS256):</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> token <span class="token operator">=</span> jwt<span class="token punctuation">.</span><span class="token method function property-access">sign</span><span class="token punctuation">(</span>payload<span class="token punctuation">,</span> secretKey<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">expiresIn</span><span class="token operator">:</span> <span class="token string">'24h'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword keyword-const">const</span> decoded <span class="token operator">=</span> jwt<span class="token punctuation">.</span><span class="token method function property-access">verify</span><span class="token punctuation">(</span>token<span class="token punctuation">,</span> secretKey<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><p><strong>IP Hashing (SHA-256, GDPR compliance):</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> hashedIP <span class="token operator">=</span> crypto<span class="token punctuation">.</span><span class="token method function property-access">createHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">update</span><span class="token punctuation">(</span>ipAddress<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">digest</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><p><strong>Loyalty Point Calculation:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-function">function</span> <span class="token function"><span class="token maybe-class-name">ConvertPoints</span></span><span class="token punctuation">(</span><span class="token parameter">dollarAmount<span class="token punctuation">,</span> tier<span class="token punctuation">,</span> healthLevel<span class="token punctuation">,</span> date</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword keyword-let">let</span> total <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow keyword-for">for</span> <span class="token punctuation">(</span><span class="token keyword keyword-let">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">floor</span><span class="token punctuation">(</span>dollarAmount<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    total <span class="token operator">+=</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">floor</span><span class="token punctuation">(</span><span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">random</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">6</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">4</span><span class="token punctuation">;</span> <span class="token comment">// 4–9 points per dollar</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token function">isHoliday</span><span class="token punctuation">(</span>date<span class="token punctuation">)</span><span class="token punctuation">)</span> total <span class="token operator">*=</span> <span class="token number">1.5</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow keyword-else">else</span> <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token function">isHolidaySeason</span><span class="token punctuation">(</span>date<span class="token punctuation">)</span><span class="token punctuation">)</span> total <span class="token operator">*=</span> <span class="token number">1.2</span><span class="token punctuation">;</span>
+  total <span class="token operator">*=</span> <span class="token number">1</span> <span class="token operator">+</span> <span class="token punctuation">(</span>healthLevel <span class="token operator">*</span> <span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword keyword-const">const</span> tierBonus <span class="token operator">=</span> <span class="token constant">DISCOUNT_RATES</span><span class="token punctuation">[</span>tier<span class="token punctuation">]</span> <span class="token operator">||</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  total <span class="token operator">*=</span> <span class="token number">1</span> <span class="token operator">+</span> tierBonus<span class="token punctuation">;</span>
+  <span class="token keyword control-flow keyword-return">return</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">floor</span><span class="token punctuation">(</span>total<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><p><strong>Tier Determination:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">determineTier</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">totalPoints</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">20000</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'PLATINUM'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">8000</span><span class="token punctuation">)</span>  <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'GOLD'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">2500</span><span class="token punctuation">)</span>  <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'SILVER'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>totalPoints <span class="token operator">&gt;=</span> <span class="token number">1200</span><span class="token punctuation">)</span>  <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'BRONZE'</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token string">'NONE'</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><p><strong>Menu Item Filtering:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">filterMenuItems</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">items<span class="token punctuation">,</span> filters</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span>
+    items<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=&gt;</span>
+        <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">category</span>   <span class="token operator">||</span> item<span class="token punctuation">.</span><span class="token property-access">category</span> <span class="token operator">===</span> filters<span class="token punctuation">.</span><span class="token property-access">category</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+        <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">priceRange</span> <span class="token operator">||</span> <span class="token function">isInRange</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span><span class="token property-access">price</span><span class="token punctuation">,</span> filters<span class="token punctuation">.</span><span class="token property-access">priceRange</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+        <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">allergens</span>  <span class="token operator">||</span> <span class="token operator">!</span><span class="token function">hasAllergens</span><span class="token punctuation">(</span>item<span class="token punctuation">,</span> filters<span class="token punctuation">.</span><span class="token property-access">allergens</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+        <span class="token punctuation">(</span><span class="token operator">!</span>filters<span class="token punctuation">.</span><span class="token property-access">searchTerm</span> <span class="token operator">||</span> item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>filters<span class="token punctuation">.</span><span class="token property-access">searchTerm</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><p><strong>Csúszó ablakos rate limiting (Redis Lua):</strong></p>
+<pre data-role="codeBlock" data-info="lua" class="language-lua lua"><code><span class="token keyword keyword-local">local</span> key <span class="token operator">=</span> KEYS<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-local">local</span> window <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-local">local</span> max_requests <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-local">local</span> now <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZREMRANGEBYSCORE'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> now <span class="token operator">-</span> window<span class="token punctuation">)</span>
+<span class="token keyword keyword-local">local</span> current_count <span class="token operator">=</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZCARD'</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-if">if</span> current_count <span class="token operator">&gt;=</span> max_requests <span class="token keyword keyword-then">then</span>
+    <span class="token keyword keyword-return">return</span> <span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">,</span> current_count<span class="token punctuation">}</span>
+<span class="token keyword keyword-end">end</span>
+
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'ZADD'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> now<span class="token punctuation">,</span> now<span class="token punctuation">)</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'EXPIRE'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> window<span class="token punctuation">)</span>
+<span class="token keyword keyword-return">return</span> <span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> current_count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span>
+</code></pre><p><strong>Atomi pénztárca-frissítés (Redis Lua):</strong></p>
+<pre data-role="codeBlock" data-info="lua" class="language-lua lua"><code><span class="token keyword keyword-local">local</span> current_balance <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> KEYS<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token keyword keyword-or">or</span> <span class="token string">'0'</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-local">local</span> new_balance <span class="token operator">=</span> current_balance <span class="token operator">+</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-if">if</span> new_balance <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token keyword keyword-then">then</span>
+    <span class="token keyword keyword-return">return</span> redis<span class="token punctuation">.</span><span class="token function">error_reply</span><span class="token punctuation">(</span><span class="token string">'INSUFFICIENT_FUNDS'</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-end">end</span>
+redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'SET'</span><span class="token punctuation">,</span> KEYS<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> new_balance<span class="token punctuation">)</span>
+<span class="token keyword keyword-return">return</span> new_balance
+</code></pre><p><strong>reCAPTCHA ellenőrzés:</strong></p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> <span class="token function-variable function">verifyRecaptcha</span> <span class="token operator">=</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">token</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> result <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'https://www.google.com/recaptcha/api/siteverify'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">method</span><span class="token operator">:</span> <span class="token string">'POST'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">body</span><span class="token operator">:</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">URLSearchParams</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">secret</span><span class="token operator">:</span> process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">RECAPTCHA_SECRET</span><span class="token punctuation">,</span> <span class="token literal-property property">response</span><span class="token operator">:</span> token <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">r</span> <span class="token arrow operator">=&gt;</span> r<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> result<span class="token punctuation">.</span><span class="token property-access">score</span> <span class="token operator">&gt;=</span> <span class="token number">0.5</span><span class="token punctuation">;</span> <span class="token comment">// 0.0 = bot, 1.0 = ember</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h4 id="533-performance-optimization">5.3.3 Performance Optimization </h4>
+<ul>
+<li><strong>Database indexes</strong>: Compound indexes on frequently queried fields (e.g., <code>{ email: 1, isVerified: 1 }</code>, <code>{ userId: 1, orderDate: -1 }</code>).</li>
+<li><strong>Lapozás</strong>: Skip-limit stratégia teljes halmazszámmal nagy adatkészletekhez.</li>
+<li><strong>Batch processing</strong>: <code>bulkWrite</code> for multi-record updates.</li>
+<li><strong>Cache middleware</strong>: Redis cache-first, fallback to MongoDB, with pattern-based invalidation on writes.</li>
+</ul>
+<h3 id="54-security-tervezs">5.4 Security Tervez�s </h3>
+<h4 id="541-security-funkcik">5.4.1 Security Funkci�k </h4>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication</td>
+<td>JWT (HS256), role-based access control (RBAC)</td>
+</tr>
+<tr>
+<td>Password storage</td>
+<td>bcrypt, 10–12 salt rounds</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>Implemented; full integration in progress</td>
+</tr>
+<tr>
+<td>Rate limiting</td>
+<td><code>express-rate-limit</code> (general) + Redis Lua sliding window (admin/dashboard)</td>
+</tr>
+<tr>
+<td>Input validation</td>
+<td>Client-side, server-side, database-level; <code>express-validator</code>, Mongoose schemas</td>
+</tr>
+<tr>
+<td>XSS / injection</td>
+<td><code>xss-clean</code>, <code>helmet</code>, <code>express-mongo-sanitize</code></td>
+</tr>
+<tr>
+<td>CSRF</td>
+<td>Partial — tokens planned for all state-changing operations</td>
+</tr>
+<tr>
+<td>CORS</td>
+<td>Strict policy; only official frontend domain allowed</td>
+</tr>
+<tr>
+<td>Security headers</td>
+<td>Helmet.js (CSP, HSTS, etc.), no eval(), nonce-based inline scripts</td>
+</tr>
+<tr>
+<td>IP hashing</td>
+<td>SHA-256 before storage in SecurityLogs (GDPR Art. 32)</td>
+</tr>
+<tr>
+<td>reCAPTCHA</td>
+<td>Google reCAPTCHA v3 on registration and login</td>
+</tr>
+<tr>
+<td>Geolocation</td>
+<td><a href="http://iplocate.io">iplocate.io</a> for VPN/Proxy/Tor detection and risk scoring</td>
+</tr>
+<tr>
+<td>Payment security</td>
+<td>PayPal/Google Pay PCI-compliant gateways</td>
+</tr>
+<tr>
+<td>Environment secrets</td>
+<td>All credentials in <code>.env</code>, never in version control</td>
+</tr>
+</tbody>
+</table>
+<h4 id="542-threat-modeling">5.4.2 Threat Modeling </h4>
+<h5 id="identified-threats">Identified Threats </h5>
+<ul>
+<li><strong>Authentication Bypass</strong>: Brute force attacks, credential stuffing, JWT token theft.</li>
+<li><strong>Data Injection</strong>: SQL/NoSQL injection, XSS, CSRF attacks.</li>
+<li><strong>Denial of Service</strong>: Rate limiting bypass, resource exhaustion.</li>
+<li><strong>Data Breach</strong>: Unauthorized access to user data, payment information.</li>
+<li><strong>E2EE kompromittálás</strong>: gyenge kulcscsere, közbeékelt támadások a chaten.</li>
+<li><strong>Insider Threats</strong>: Admin privilege abuse, data exfiltration.</li>
+</ul>
+<h5 id="mitigation-strategies">Mitigation Strategies </h5>
+<ul>
+<li>Multi-layered authentication with reCAPTCHA and geolocation risk scoring.</li>
+<li>Comprehensive input sanitization and parameterized queries.</li>
+<li>Distributed rate limiting with Redis to prevent DoS.</li>
+<li>Encryption at rest and in transit (HTTPS, E2EE for chat).</li>
+<li>Least privilege access and audit logging for all actions.</li>
+<li>Regular security audits and dependency vulnerability scanning.</li>
+</ul>
+<h4 id="543-incident-response-plan">5.4.3 Incident Response Plan </h4>
+<ol>
+<li><strong>Detection</strong>: Automated monitoring via SecurityLogs, rate limit alerts, and anomaly detection.</li>
+<li><strong>Assessment</strong>: Incident severity classification (low/medium/high) based on data exposure and system impact.</li>
+<li><strong>Containment</strong>: Immediate isolation of affected systems, token revocation, account lockdowns.</li>
+<li><strong>Eradication</strong>: Root cause analysis, patch deployment, key rotation for E2EE.</li>
+<li><strong>Recovery</strong>: System restoration from backups, user notification, service resumption.</li>
+<li><strong>Lessons Learned</strong>: Post-incident review, documentation updates, preventive measures.</li>
+</ol>
+<h4 id="544-compliance-and-privacy">5.4.4 Compliance and Privacy </h4>
+<ul>
+<li><strong>GDPR Compliance</strong>: Data minimization, consent management, right to erasure, IP hashing for anonymization.</li>
+<li><strong>PCI DSS</strong>: Payment data never stored locally; all transactions via certified gateways.</li>
+<li><strong>Data Retention</strong>: SecurityLogs retained for 2 years, user data until account deletion.</li>
+<li><strong>Privacy by Tervez�s</strong>: Default encryption, access controls, and audit trails.</li>
+</ul>
+<h4 id="545-biztonsági-tesztelés">5.4.5 Biztonsági tesztelés </h4>
+<ul>
+<li>Automatizált tesztcsomagok hitelesítési folyamatokhoz, bemenet-szűréshez és rate limitinghez.</li>
+<li>Rendszeres manuális penetrációs tesztelés az automata eszközökkel nem észlelt sebezhetőségek feltárására.</li>
+<li>Függőségek vizsgálata <code>npm audit</code> és Snyk integráció segítségével.</li>
+<li>OWASP ZAP a dinamikus alkalmazásbiztonsági teszteléshez.</li>
+</ul>
+<p><img src="security_architecture_diagram_placeholder.png" alt="Security Architecture Diagram"></p>
+<p><img src="threat_model_diagram_placeholder.png" alt="Threat Model Diagram"></p>
+<hr>
+<h2 id="6-megvalsts">6. Megval�s�t�s </h2>
+<h3 id="61-knyvtrszerkezet">6.1 K�nyvt�rszerkezet </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>├── config/
+│   ├── DATABASE_CONSTANTS.JS
+│   ├── database_queries.js
+│   └── hu.json
+├── data/
+│   ├── disposable_email_list.json
+│   ├── Most_used_passwords.json
+│   └── database_test/
+├── docs/
+├── public/
+│   ├── chat/
+│   ├── dashboard/
+│   │   ├── admin/
+│   │   ├── editor/
+│   │   ├── parent/
+│   │   └── student/
+│   └── Order/
+├── src/
+│   ├── main.js
+│   ├── auth/
+│   │   ├── 2fa.js
+│   │   ├── login.js
+│   │   ├── register.js
+│   │   ├── password_reset.js
+│   │   └── validation.js
+│   ├── cache/
+│   │   ├── ChangeStreamManager.js
+│   │   └── KeyRegistry.js
+│   ├── dashboard/
+│   ├── LoyaltySystem/
+│   │   └── loyalty-service.js
+│   ├── models/
+│   ├── Orders/
+│   ├── payments/
+│   └── services/
+└── tests/
+    └── performance_tests/
+</code></pre><h3 id="62-backend-megvalsts">6.2 Backend Megval�s�t�s </h3>
+<h4 id="621-technology-stack">6.2.1 Technology Stack </h4>
+<p>Node.js + Express.js, MongoDB + Mongoose, Redis + Lua scripting, JWT, bcrypt, PayPal &amp; Google Pay APIs, <a href="http://Socket.IO">Socket.IO</a>.</p>
+<h4 id="622-main-application-structure">6.2.2 Main Application Structure </h4>
+<ul>
+<li><strong><code>src/main.js</code></strong>: Entry point — sets up Express, middleware (Helmet, CORS, session, rate limiting), and mounts all routers.</li>
+<li><strong>Routers</strong>: Modularized by domain (<code>auth</code>, <code>dashboard</code>, <code>orders</code>, <code>payments</code>, <code>chat</code>).</li>
+<li><strong>Models</strong>: Mongoose schemas in <code>src/models/</code>.</li>
+<li><strong>Services</strong>: Business logic isolated in service modules (<code>loyalty-service.js</code>, <code>paypal-service.js</code>, <code>cache-service.js</code>, etc.).</li>
+</ul>
+<h4 id="623-authentication--security">6.2.3 Authentication &amp; Security </h4>
+<p>A regisztráció érvényesíti a bemenetet, ellenőrzi a reCAPTCHA-t, bcrypttel hash-eli a jelszót, küld egy e-mailes ellenőrzőkódot, és naplózza az eseményt. A bejelentkezés ellenőrzi a hitelesítő adatokat, JWT-t ad ki, naplózza az IP/hely alapú kockázatot és IP-nként rate limitinget alkalmaz.</p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Registration snippet — src/auth/register.js</span>
+<span class="token keyword keyword-const">const</span> hashedPassword <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> bcrypt<span class="token punctuation">.</span><span class="token method function property-access">hash</span><span class="token punctuation">(</span>password<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword keyword-const">const</span> user <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">User</span><span class="token punctuation">(</span><span class="token punctuation">{</span> username<span class="token punctuation">,</span> <span class="token literal-property property">password</span><span class="token operator">:</span> hashedPassword<span class="token punctuation">,</span> email <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword control-flow keyword-await">await</span> user<span class="token punctuation">.</span><span class="token method function property-access">save</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword control-flow keyword-await">await</span> <span class="token function">createSecurityLog</span><span class="token punctuation">(</span><span class="token string">'USER_REGISTER'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> username<span class="token punctuation">,</span> email <span class="token punctuation">}</span><span class="token punctuation">,</span> clientIp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Registration successful! Please check your email for verification.'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><h4 id="624-order--payment-processing">6.2.4 Order &amp; Payment Processing </h4>
+<p>A rendelési folyamat érvényesíti a kosarat a valós készlet alapján, létrehoz egy függőben lévő rendelést MongoDB-ben, meghívja a PayPal vagy Google Pay API-t, majd foglaláskor megerősíti a fizetést, levonja a készletet, jóváírja a hűségpontokat és naplózza a tranzakciót.</p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Order creation — src/api.js</span>
+router<span class="token punctuation">.</span><span class="token method function property-access">post</span><span class="token punctuation">(</span><span class="token string">'/orders'</span><span class="token punctuation">,</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// validate user &amp; stock...</span>
+  <span class="token keyword keyword-const">const</span> <span class="token punctuation">{</span> jsonResponse<span class="token punctuation">,</span> httpStatusCode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> paypalService<span class="token punctuation">.</span><span class="token method function property-access">createOrder</span><span class="token punctuation">(</span>cart<span class="token punctuation">,</span> currency<span class="token punctuation">,</span> amount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// save order to DB...</span>
+  res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span>httpStatusCode<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span>jsonResponse<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre><h4 id="625-gyorsítótárazás-és-teljesítmény">6.2.5 Gyorsítótárazás és teljesítmény </h4>
+<p>A Redis az alkalmazás teljes területén az elsődleges gyorsítótárazási réteg, al-másodperces válaszidőt biztosítva gyakran lekérdezett adatok esetén, és lehetővé téve összetett atomi műveleteket Lua szkripteléssel. A rendszer többrétegű gyorsítótárazási stratégiát valósít meg, mely Redis-t és MongoDB változásfolyamokat (change stream) használ a gyorsítótár érvénytelenítésére.</p>
+<h5 id="redis-használata-az-oldalon">Redis használata az oldalon </h5>
+<ul>
+<li><strong>Munkamenet-kezelés</strong>: A felhasználói munkamenetek Redisben tárolódnak automatikus lejárattal (TTL), lehetővé téve a backend állapotmentes vízszintes skálázását. A munkamenetek tartalmazzák a felhasználó azonosítóját, szerepkört és ideiglenes tokeneket.</li>
+<li><strong>Irányítópult adatgyorsítótárazása</strong>: Admin és felhasználói irányítópult statisztikák (felhasználó-szám, rendelés összeg, menüpont elérhetősége) 5-10 percig vannak gyorsítótárazva, hogy csökkentsék az adatbázis terhelését csúcsidőben.</li>
+<li><strong>Menüpont gyorsítótár</strong>: A napi menü és elérhető tételek gyorsítótárazva vannak változásfolyam érvénytelenítéssel, amikor a készletszintek változnak vagy új tételek kerülnek hozzáadásra.</li>
+<li><strong>Rate limit tároló</strong>: Az általános API rate limitek és az admin-specifikus csúszó ablakos limitek Redis-t használnak háttértárolóként az elosztott érvényesítéshez.</li>
+<li><strong>Hűségpont gyorsítótár</strong>: A felhasználói hűségadatok (pontok, szint, kedvezmények) rövid ideig vannak gyorsítótárazva, hogy elkerüljük a többszöri számítást az irányítópult betöltésekor.</li>
+<li><strong>Biztonsági naplók összegzése</strong>: A legutóbbi biztonsági események gyorsítótárazva vannak az admin gyors hozzáférése érdekében, időnkénti frissítéssel MongoDB-ból.</li>
+<li><strong>Fizetési munkamenet gyorsítótár</strong>: Ideiglenes fizetési szándékok és PayPal/Google Pay munkamenet adatok Redisben tárolódnak a tranzakció feldolgozása során.</li>
+</ul>
+<h5 id="gyorsítótár-érvénytelenítési-stratégia">Gyorsítótár-érvénytelenítési stratégia </h5>
+<p>A rendszer MongoDB változásfolyamokat (<code>src/cache/ChangeStreamManager.js</code>) használ az adatbázis írási műveleteinek figyelésére, és automatikusan érvényteleníti a kapcsolódó Redis kulcsokat. Például:</p>
+<ul>
+<li>A menüelemek frissítései érvénytelenítik a menü gyorsítótár kulcsait.</li>
+<li>A felhasználói egyenleg változásai érvénytelenítik a hűség- és irányítópult gyorsítótárakat.</li>
+<li>Az új rendelések érvénytelenítik a statisztika gyorsítótárakat.</li>
+</ul>
+<h5 id="teljesítmény-optimalizálás">Teljesítmény optimalizálás </h5>
+<ul>
+<li><strong>Kapcsolat poolozás</strong>: Redis kapcsolatok poolozva és újrahasznosítva vannak a terhelés minimalizálása érdekében.</li>
+<li><strong>Kulcsnév konvenció</strong>: Strukturált kulcsok (pl. <code>menu:items:category:soup</code>) lehetővé teszik a mintaalapú érvénytelenítést.</li>
+<li><strong>TTL menedzsment</strong>: Az automatikus lejárat megakadályozza a memória szivárgását, hosszabb TTL-lel a stabil adatoknál (24 óra felhasználói profilok esetén), rövidebb TTL-lel a változékony adatoknál (5 perc statisztikáknál).</li>
+<li><strong>Tartalék kezelés</strong>: Ha a Redis nem elérhető, a rendszer zökkenőmentesen átvált közvetlen MongoDB lekérdezésekre naplózással.</li>
+</ul>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Expanded cacheResult middleware with invalidation hooks</span>
+<span class="token keyword keyword-function">function</span> <span class="token function">cacheResult</span><span class="token punctuation">(</span><span class="token parameter">cacheKey<span class="token punctuation">,</span> ttl <span class="token operator">=</span> <span class="token number">300</span><span class="token punctuation">,</span> invalidationPatterns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow keyword-return">return</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> next</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isRedisAvailable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> key <span class="token operator">=</span> <span class="token keyword keyword-typeof">typeof</span> cacheKey <span class="token operator">===</span> <span class="token string">'function'</span> <span class="token operator">?</span> <span class="token function">cacheKey</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span> <span class="token operator">:</span> cacheKey<span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> cached <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> redisClient<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>cached<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      res<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'X-Cache'</span><span class="token punctuation">,</span> <span class="token string">'HIT'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow keyword-return">return</span> res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>cached<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    res<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'X-Cache'</span><span class="token punctuation">,</span> <span class="token string">'MISS'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> originalJson <span class="token operator">=</span> res<span class="token punctuation">.</span><span class="token property-access">json</span><span class="token punctuation">;</span>
+    res<span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">json</span> <span class="token operator">=</span> <span class="token keyword keyword-function">function</span><span class="token punctuation">(</span><span class="token parameter">data</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      redisClient<span class="token punctuation">.</span><span class="token method function property-access">setEx</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> ttl<span class="token punctuation">,</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">stringify</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// Register invalidation patterns for change streams</span>
+      invalidationPatterns<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">pattern</span> <span class="token arrow operator">=&gt;</span> <span class="token function">registerInvalidation</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow keyword-return">return</span> originalJson<span class="token punctuation">.</span><span class="token method function property-access">call</span><span class="token punctuation">(</span><span class="token keyword keyword-this">this</span><span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre><h5 id="monitoring-and-metrics">Monitoring and Metrics </h5>
+<p>A Redis teljesítményét beépített INFO parancsokkal figyelik, nyomon követve a találati arányokat (&gt;90% cél), memóriahasználatot és kiszórási arányokat. A lassú lekérdezéseket optimalizáció céljából naplózzák.</p>
+<p><img src="redis_caching_architecture_placeholder.png" alt="Redis Caching Architecture Diagram"></p>
+<h4 id="626-loyalty-system">6.2.6 Loyalty System </h4>
+<p>A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 pont/dollár), szorzva ünnepi, egészségszint és tier bónuszokkal. Tier-ek: NONE → BRONZE (1200 pont) → SILVER (2500) → GOLD (8000) → PLATINUM (20000). Lásd <code>src/LoyaltySystem/loyalty-service.js</code> és <code>config/DATABASE_CONSTANTS.JS</code> a díjszabásokhoz.</p>
+<h4 id="627-rate-limiting">6.2.7 Rate Limiting </h4>
+<p>Két stratégiát alkalmaz: <code>express-rate-limit</code> Redis tárolóval általános API végpontokra, valamint egy egyedi Redis Lua csúszóablakos script admin/dashboard útvonalakhoz (30 kérés/perc). A Lua megvalósítás atomi — egyetlen megszakíthatatlan tranzakcióként fut, ezzel elkerülve a versenyhelyzeteket nagy párhuzamos terhelésnél. Lásd a Lua scriptet az 5.3.2 szakaszban.</p>
+<h4 id="628-extensibility--maintainability">6.2.8 Extensibility &amp; Maintainability </h4>
+<p>A backend rétegezett, szolgáltatásorientált architektúrát használ (route-ok → szolgáltatások → modellek). A konfiguráció környezeti változókon keresztül történik <code>.env</code> fájl segítségével. A hibakezelés központilag történik Express hibakezelő middleware-eken keresztül, amelyek naplózzák a biztonsági eseményeket és biztonságos üzeneteket küldenek a kliensnek. Az állapotmentes JWT tervezés és a Redis munkamenet tárolás vízszintes skálázást tesz lehetővé. A függőségek <code>npm audit</code>-tal vannak kezelve és naprakészen tartva.</p>
+<h3 id="63-frontend-megvalsts">6.3 Frontend Megval�s�t�s </h3>
+<h4 id="631-technology-stack">6.3.1 Technology Stack </h4>
+<p>React.js JSX-szel, Tailwind CSS stílushoz, <a href="http://Socket.IO">Socket.IO</a> kliens valós idejű kommunikációhoz, egyéni E2EE kriptó könyvtár, mobil-first reszponzív tervezés.</p>
+<h4 id="632-main-application-structure">6.3.2 Main Application Structure </h4>
+<ul>
+<li><strong>Static HTML Pages</strong>: Entry points in <code>public/</code> (e.g., <code>index.html</code>, <code>login.html</code>, <code>chat/index.html</code>).</li>
+<li><strong>React Components</strong>: Modular JSX components loaded via <code>&lt;script&gt;</code> tags, using ReactDOM for rendering.</li>
+<li><strong>State Management</strong>: Local component state with <code>useState</code>, <code>useEffect</code>, and custom hooks (e.g., <code>useAdminData.js</code>).</li>
+<li><strong>Routing</strong>: Client-side routing via URL hash changes and conditional rendering.</li>
+<li><strong>Styling</strong>: Tailwind CSS classes for responsive, utility-first Tervez�s.</li>
+</ul>
+<h4 id="633-key-components-and-funkcik">6.3.3 Key Components and Funkci�k </h4>
+<h5 id="dashboard-system">Dashboard System </h5>
+<p>Az adminisztrációs irányítópult (<code>public/dashboard/admin/admin.jsx</code>) sidebar navigációt, felhasználók, statisztikák, menüpontok, jutalmak, egészségellenőrzések és beállítások szakaszait tartalmazza. Egy egyedi <code>useAdminData</code> hookot használ az adatok REST API-król történő lekérésére és kezelésére.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Admin Dashboard Structure — public/dashboard/admin/admin.jsx</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function"><span class="token maybe-class-name">AdminDashboard</span></span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>activeSzakasz<span class="token punctuation">,</span> setActiveSzakasz<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'users'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">{</span> stats<span class="token punctuation">,</span> users<span class="token punctuation">,</span> menuItems<span class="token punctuation">,</span> rewards<span class="token punctuation">,</span> loading <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAdminData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">(</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>min-h-screen bg-gradient-to-br from-accent to-white<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">AdminHeader</span></span> <span class="token punctuation">/&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">AdminSidebar</span></span> <span class="token attr-name">activeSzakasz</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>activeSzakasz<span class="token punctuation">}</span></span> <span class="token attr-name">setActiveSzakasz</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>setActiveSzakasz<span class="token punctuation">}</span></span> <span class="token punctuation">/&gt;</span></span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>main</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex-1 p-4<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+                    </span><span class="token punctuation">{</span>activeSzakasz <span class="token operator">===</span> <span class="token string">'users'</span> <span class="token operator">&amp;&amp;</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">UsersSzakasz</span></span> <span class="token attr-name">users</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>users<span class="token punctuation">}</span></span> <span class="token punctuation">/&gt;</span></span><span class="token punctuation">}</span><span class="token plain-text">
+                    </span><span class="token punctuation">{</span><span class="token comment">/* Other Szakaszs */</span><span class="token punctuation">}</span><span class="token plain-text">
+                </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>main</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="order-and-cart-system">Order and Cart System </h5>
+<p>A rendelési oldal (<code>public/order/order.jsx</code>) bevásárlókosarat valósít meg <code>useCart</code> hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Cart Management — public/order/useCart.js</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function">useCart</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>cart<span class="token punctuation">,</span> setCart<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token function-variable function">addToCart</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">item</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token function">setCart</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token spread operator">...</span>cart<span class="token punctuation">,</span> item<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... validation, total calculation</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token punctuation">{</span> cart<span class="token punctuation">,</span> addToCart<span class="token punctuation">,</span> removeFromCart<span class="token punctuation">,</span> getTotal <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="e2ee-chat-interface">E2EE Chat Interface </h5>
+<p>A chat rendszer (<code>public/chat/chat.jsx</code>) végpontok közötti titkosítási beállítást, kulcscserét és valós idejű üzenetküldést kezel Socket.IO-n keresztül. Tartalmaz eszközszinkronizációt és kulcs-helyreállítási funkciókat.</p>
+<pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Chat State Management — public/chat/chat.jsx</span>
+<span class="token keyword keyword-const">const</span> <span class="token function-variable function"><span class="token maybe-class-name">E2EEChatApp</span></span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>conversations<span class="token punctuation">,</span> setConversations<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>activeConversation<span class="token punctuation">,</span> setActiveConversation<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>messages<span class="token punctuation">,</span> setMessages<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... E2EE setup, message sending/receiving</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><h5 id="mobile-responsiveness">Mobile Responsiveness </h5>
+<p>Mobile-specific components (e.g., <code>MobileAdminNav.jsx</code>, <code>MobileCart.jsx</code>) provide touch-friendly interfaces with collapsible navigation and toast notifications.</p>
+<h4 id="634-state-management-and-data-fetching">6.3.4 State Management and Data Fetching </h4>
+<ul>
+<li><strong>Local State</strong>: React hooks for component-specific state (loading, errors, form data).</li>
+<li><strong>API Integration</strong>: Fetch API for REST calls, with error handling and loading states.</li>
+<li><strong>Real-time Updates</strong>: <a href="http://Socket.IO">Socket.IO</a> for chat messages and live notifications.</li>
+<li><strong>Caching</strong>: Browser localStorage for user pHivatkoz�sok and session data.</li>
+</ul>
+<h4 id="635-uiux-tervezs-principles">6.3.5 UI/UX Tervez�s Principles </h4>
+<ul>
+<li><strong>Accessibility</strong>: ARIA labels, keyboard navigation, high contrast colors.</li>
+<li><strong>Performance</strong>: Lazy loading of components, optimized images, minimal re-renders.</li>
+<li><strong>User Experience</strong>: Progressive enhancement, error boundaries, loading indicators.</li>
+<li><strong>Security</strong>: Input sanitization, XSS protection via React's built-in escaping.</li>
+</ul>
+<h4 id="636-build-és-telepítés">6.3.6 Build és telepítés </h4>
+<ul>
+<li><strong>Fejlesztés</strong>: Hot reloading böngésző fejlesztőeszközökkel.</li>
+<li><strong>Éles környezet</strong>: Minimalizált csomagok statikusan kiszolgálva a <code>public/</code> mappából.</li>
+<li><strong>Böngésző-kompatibilitás</strong>: Tesztelve modern böngészőkben, visszafelé kompatibilis tartalékmegoldásokkal az régebbi verziókhoz.</li>
+</ul>
+<h4 id="637-extensibility-and-maintainability">6.3.7 Extensibility and Maintainability </h4>
+<p>A frontend komponens-alapú architektúrát követ újrafelhasználható UI elemekkel. A Tailwind utility osztályai egységes stílust biztosítanak. Az egyedi hookok összefoglalják az összetett logikát, így a komponensek tesztelhetők és karbantarthatók. A mobil-first megközelítés eszközfüggetlen skálázhatóságot biztosít.</p>
+<p><img src="frontend_architecture_placeholder.png" alt="Frontend Architecture Diagram"></p>
+<hr>
+<h2 id="7-api-referencia">7. API referencia </h2>
+<p>Minden végpont aktív munkamenetet igényel, kivéve, ha <strong>nyilvános</strong> megjelölést kap. A hitelesítési hiba <code>401 Unauthorized</code>-t ad vissza; a jogosultság hiánya <code>403 Forbidden</code>-t.</p>
+<h3 id="főalkalmazás-útvonalak">Főalkalmazás útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/login</code></td>
+<td>Nyilvános</td>
+<td>Bejelentkező oldal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/register</code></td>
+<td>Nyilvános</td>
+<td>Regisztrációs oldal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/password-reset/:token</code></td>
+<td>Nyilvános</td>
+<td>Jelszó-visszaállítás oldal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/pay</code></td>
+<td>Munkamenet</td>
+<td>Fizetési oldal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat</code></td>
+<td>Munkamenet</td>
+<td>E2EE chat felület</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hitelesítési-útvonalak">Hitelesítési útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/register</code></td>
+<td>Nyilvános</td>
+<td>Felhasználói regisztráció</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/login</code></td>
+<td>Nyilvános</td>
+<td>Felhasználói bejelentkezés</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/logout</code></td>
+<td>Munkamenet</td>
+<td>Felhasználói kijelentkezés</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/logout</code></td>
+<td>Munkamenet</td>
+<td>Kijelentkezés (átirányítás)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/2fa</code></td>
+<td>Nyilvános</td>
+<td>Kétfaktoros hitelesítés</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/email-verification/verify-code</code></td>
+<td>Nyilvános</td>
+<td>E-mail kód ellenőrzése</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/email-verification/verify/:token</code></td>
+<td>Nyilvános</td>
+<td>E-mail token ellenőrzése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/password-reset/</code></td>
+<td>Nyilvános</td>
+<td>Jelszó-visszaállítás kérése</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/password-reset/:token</code></td>
+<td>Nyilvános</td>
+<td>Jelszó-visszaállítás űrlap</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/password-reset/:token</code></td>
+<td>Nyilvános</td>
+<td>Új jelszó küldése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/forgot-password/</code></td>
+<td>Nyilvános</td>
+<td>Elfelejtett jelszó kérése</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example — POST /register:</strong></p>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token comment">// Request</span>
+<span class="token punctuation">{</span> <span class="token property">"username"</span><span class="token operator">:</span> <span class="token string">"johndoe"</span><span class="token punctuation">,</span> <span class="token property">"password"</span><span class="token operator">:</span> <span class="token string">"SecurePass123!"</span><span class="token punctuation">,</span> <span class="token property">"email"</span><span class="token operator">:</span> <span class="token string">"john@example.com"</span><span class="token punctuation">,</span> <span class="token property">"isParent"</span><span class="token operator">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span> <span class="token property">"g-recaptcha-response"</span><span class="token operator">:</span> <span class="token string">"token"</span> <span class="token punctuation">}</span>
+<span class="token comment">// Response 200</span>
+<span class="token punctuation">{</span> <span class="token property">"message"</span><span class="token operator">:</span> <span class="token string">"Registration successful! Check your email for verification code."</span> <span class="token punctuation">}</span>
+<span class="token comment">// Errors: 400 (validation/CAPTCHA), 429 (rate limited), 500</span>
+</code></pre><p><strong>Példa — POST /login:</strong></p>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token comment">// Request</span>
+<span class="token punctuation">{</span> <span class="token property">"username"</span><span class="token operator">:</span> <span class="token string">"johndoe"</span><span class="token punctuation">,</span> <span class="token property">"password"</span><span class="token operator">:</span> <span class="token string">"SecurePass123!"</span> <span class="token punctuation">}</span>
+<span class="token comment">// Response 200: "Welcome, johndoe"</span>
+<span class="token comment">// Errors: 400, 401 (invalid credentials), 429, 500</span>
+</code></pre><h3 id="irányítópult-útvonalak">Irányítópult útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/</code></td>
+<td>Munkamenet</td>
+<td>Fő irányítópult (szerepkör átirányítás)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin</code></td>
+<td>Admin</td>
+<td>Adminisztrátori irányítópult</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/student</code></td>
+<td>Diák/Szülő</td>
+<td>Diák irányítópult</td>
+</tr>
+</tbody>
+</table>
+<h3 id="adminisztrátori-irányítópult-api-útvonalak">Adminisztrátori irányítópult API útvonalak </h3>
+<p>Minden útvonal admin munkamenetet igényel. Hibák: <code>401</code>, <code>403</code>, <code>500</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/usercount</code></td>
+<td>Total user count</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/userlist</code></td>
+<td>List of all users</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/stats</code></td>
+<td>System statistics</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/signup-stats</code></td>
+<td>Signup statistics</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/orders</code></td>
+<td>All orders</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/soldout</code></td>
+<td>Sold-out items</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/itemcount</code></td>
+<td>Menu item count</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/menulist</code></td>
+<td>Menu item list</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/stockalerts</code></td>
+<td>Low-stock alerts</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/paymentstats</code></td>
+<td>Payment statistics</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/health</code></td>
+<td>System health check</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/menuitem_export</code></td>
+<td>Export menu items</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/admin/delete_menuitem/:id</code></td>
+<td>Delete menu item</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/dashboard/admin/create_menuitem</code></td>
+<td>Create menu item</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/dashboard/admin/menuitem/:id</code></td>
+<td>Update menu item</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example — GET /dashboard/admin/health response:</strong></p>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token punctuation">{</span> <span class="token property">"overall"</span><span class="token operator">:</span> <span class="token string">"ok"</span><span class="token punctuation">,</span> <span class="token property">"services"</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token property">"database"</span><span class="token operator">:</span> <span class="token string">"healthy"</span><span class="token punctuation">,</span> <span class="token property">"redis"</span><span class="token operator">:</span> <span class="token string">"healthy"</span><span class="token punctuation">,</span> <span class="token property">"sessions"</span><span class="token operator">:</span> <span class="token string">"healthy"</span><span class="token punctuation">,</span> <span class="token property">"externalServices"</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token property">"paypal"</span><span class="token operator">:</span> <span class="token string">"configured"</span><span class="token punctuation">,</span> <span class="token property">"googlepay"</span><span class="token operator">:</span> <span class="token string">"configured"</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span>
+</code></pre><h3 id="diák-irányítópult-útvonalak">Diák irányítópult útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/student/freeze_account</code></td>
+<td>Diák</td>
+<td>Fiók felfüggesztése oldal</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/dashboard/student/parent/link</code></td>
+<td>Diák</td>
+<td>Szülői fiók összekapcsolása</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rendeléskezelő-útvonalak">Rendeléskezelő útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/Order/</code></td>
+<td>Munkamenet</td>
+<td>Rendelés oldal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/Order/menu_items</code></td>
+<td>Munkamenet</td>
+<td>Elérhető menüelemek</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/Order/:orderID</code></td>
+<td>Munkamenet</td>
+<td>Rendelés részletek</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/Order/Order</code></td>
+<td>Munkamenet</td>
+<td>Új rendelés létrehozása</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/Order/:orderID/status</code></td>
+<td>Munkamenet</td>
+<td>Rendelés állapot frissítése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/Order/:orderID/capture</code></td>
+<td>Munkamenet</td>
+<td>Fizetés rögzítése</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Példa — POST /Order/Order:</strong></p>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token comment">// Request</span>
+<span class="token punctuation">{</span> <span class="token property">"cart"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"item_id"</span><span class="token punctuation">,</span> <span class="token property">"quantity"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token property">"price"</span><span class="token operator">:</span> <span class="token number">8.99</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span> <span class="token property">"amount"</span><span class="token operator">:</span> <span class="token number">17.98</span> <span class="token punctuation">}</span>
+<span class="token comment">// Response: PayPal order JSON</span>
+<span class="token comment">// Errors: 400 (invalid cart/stock), 401, 500</span>
+</code></pre><h3 id="általános-api-útvonalak">Általános API útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/test</code></td>
+<td>Nyilvános</td>
+<td>API állapot ellenőrzése</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/current_user</code></td>
+<td>Munkamenet</td>
+<td>Bejelentkezett felhasználó adatok</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/menu-items</code></td>
+<td>Munkamenet</td>
+<td>Elérhető menüelemek</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/orders</code></td>
+<td>Munkamenet</td>
+<td>PayPal rendelés létrehozása</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/orders/:orderID/capture</code></td>
+<td>Munkamenet</td>
+<td>PayPal fizetés rögzítése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/orders/googlepay</code></td>
+<td>Munkamenet</td>
+<td>Google Pay rendelés létrehozása</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/orders/googlepay/complete</code></td>
+<td>Munkamenet</td>
+<td>Google Pay tranzakció lezárása</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/payments/paypal</code></td>
+<td>Munkamenet</td>
+<td>PayPal fizetés feldolgozása</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/payments/googlepay</code></td>
+<td>Munkamenet</td>
+<td>Google Pay fizetés feldolgozása</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Példa — POST /api/orders/googlepay/complete:</strong></p>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token comment">// Request</span>
+<span class="token punctuation">{</span> <span class="token property">"orderId"</span><span class="token operator">:</span> <span class="token string">"order_123"</span><span class="token punctuation">,</span> <span class="token property">"paymentMethodData"</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token property">"transactionId"</span><span class="token operator">:</span> <span class="token string">"txn_456"</span> <span class="token punctuation">}</span>
+<span class="token comment">// Response</span>
+<span class="token punctuation">{</span> <span class="token property">"success"</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token property">"orderId"</span><span class="token operator">:</span> <span class="token string">"order_123"</span><span class="token punctuation">,</span> <span class="token property">"transactionId"</span><span class="token operator">:</span> <span class="token string">"txn_456"</span><span class="token punctuation">,</span> <span class="token property">"loyaltyPointsAwarded"</span><span class="token operator">:</span> <span class="token number">8</span> <span class="token punctuation">}</span>
+<span class="token comment">// Errors: 400, 401, 404, 500</span>
+</code></pre><h3 id="chat-api-és-websocket-útvonalak">Chat API és WebSocket útvonalak </h3>
+<table>
+<thead>
+<tr>
+<th>Módszer</th>
+<th>Végpont</th>
+<th>Hitelesítés</th>
+<th>Leírás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/chat</code></td>
+<td>Munkamenet</td>
+<td>Chat felület</td>
+</tr>
+<tr>
+<td>WS</td>
+<td><code>/chat</code></td>
+<td>Munkamenet</td>
+<td>WebSocket valós idejű chathez</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/setup-e2ee</code></td>
+<td>Munkamenet</td>
+<td>E2EE nyilvános kulcs beállítása</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/public-key/:userId</code></td>
+<td>Munkamenet</td>
+<td>Felhasználó nyilvános kulcsának lekérése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/send-message</code></td>
+<td>Munkamenet</td>
+<td>Titkosított üzenet küldése</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/messages/:otherUserId</code></td>
+<td>Munkamenet</td>
+<td>Beszélgetés üzeneteinek lekérése</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/message/:messageId</code></td>
+<td>Munkamenet</td>
+<td>Egy üzenet lekérése</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/message/:messageId/replace</code></td>
+<td>Munkamenet</td>
+<td>Üzenet helyettesítése</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/chat/messages/read/:otherUserId</code></td>
+<td>Session</td>
+<td>Mark messages as read</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/conversations</code></td>
+<td>Session</td>
+<td>Conversation list</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/search-users</code></td>
+<td>Session</td>
+<td>Search users</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/e2ee-status</code></td>
+<td>Session</td>
+<td>E2EE status for current user</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/reset-e2ee</code></td>
+<td>Session</td>
+<td>Reset E2EE keys</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/backup-keys</code></td>
+<td>Session</td>
+<td>Backup encrypted private key</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/has-key-backup</code></td>
+<td>Session</td>
+<td>Check for key backup</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/restore-keys</code></td>
+<td>Session</td>
+<td>Restore private key from backup</td>
+</tr>
+<tr>
+<td><span style="color:#d32f2f;font-weight:bold">POST</span></td>
+<td><span style="color:#d32f2f;font-weight:bold"><code>/chat/admin/clear-all-e2ee</code></span></td>
+<td><span style="color:#d32f2f;font-weight:bold">Admin</span></td>
+<td><span style="color:#d32f2f;font-weight:bold">Clear all E2EE data (admin only)</span></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/chat/request-sender-recovery</code></td>
+<td>Session</td>
+<td>Request sender-key recovery</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/chat/pending-recovery</code></td>
+<td>Session</td>
+<td>Get messages needing recovery</td>
+</tr>
+</tbody>
+</table>
+<p><strong>WebSocket events:</strong> <code>newMessage</code>, <code>messageReplaced</code>, <code>processPendingRecovery</code></p>
+<p>Minden chatüzenet kliensoldalon van titkosítva (E2EE). A szerver csak a titkosított szöveget és metaadatokat tárolja.</p>
+<h3 id="backend-models-mongodb">Backend Models (MongoDB) </h3>
+<h4 id="user-model">User Model </h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td>String</td>
+<td>Required, unique</td>
+</tr>
+<tr>
+<td>password</td>
+<td>String</td>
+<td>bcrypt hashed (10 rounds)</td>
+</tr>
+<tr>
+<td>email</td>
+<td>String</td>
+<td>Required, unique, validated</td>
+</tr>
+<tr>
+<td>isVerified</td>
+<td>Boolean</td>
+<td>Default false</td>
+</tr>
+<tr>
+<td>usertype</td>
+<td>Enum</td>
+<td>admin / student / parent / teacher / frozen / editor</td>
+</tr>
+<tr>
+<td>balance</td>
+<td>Number</td>
+<td>Wallet balance, default 0</td>
+</tr>
+<tr>
+<td>isBanned</td>
+<td>Boolean</td>
+<td>Default false</td>
+</tr>
+<tr>
+<td>identity</td>
+<td>Subdocument</td>
+<td>E2EE identity fields</td>
+</tr>
+<tr>
+<td>devices</td>
+<td>Array</td>
+<td>Registered device info</td>
+</tr>
+</tbody>
+</table>
+<h4 id="caching--redis-key-registry">Caching — Redis Key Registry </h4>
+<p>A projekt egy központi <code>src/cache/KeyRegistry.js</code>-t használ, hogy a MongoDB kollekciókat a vonatkozó Redis gyorsítótár kulcsokhoz társítsa, ezzel biztosítva az írások utáni konzisztens gyorsítótár érvénytelenítést:</p>
+<pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token keyword keyword-const">const</span> keyRegistry <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token function-variable function">users</span><span class="token operator">:</span>        <span class="token punctuation">(</span><span class="token parameter">userId</span><span class="token punctuation">)</span>   <span class="token arrow operator">=&gt;</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">user:username:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">'admin:usercount'</span><span class="token punctuation">,</span> <span class="token string">'admin:userlist'</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">menuitems</span><span class="token operator">:</span>    <span class="token punctuation">(</span><span class="token parameter">itemName</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">menu_item:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>itemName<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">'admin:menulist'</span><span class="token punctuation">,</span> <span class="token string">'editor:menulist'</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">orders</span><span class="token operator">:</span>       <span class="token punctuation">(</span><span class="token parameter">orderId</span><span class="token punctuation">)</span>  <span class="token arrow operator">=&gt;</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">order:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>orderId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">'admin:orders'</span><span class="token punctuation">,</span> <span class="token string">'admin:most_bought_items_alltime'</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">payments</span><span class="token operator">:</span>     <span class="token punctuation">(</span><span class="token parameter">userId</span><span class="token punctuation">)</span>   <span class="token arrow operator">=&gt;</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">student:transactions:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">'admin:paymentstats'</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">userloyalties</span><span class="token operator">:</span><span class="token punctuation">(</span><span class="token parameter">userId</span><span class="token punctuation">)</span>   <span class="token arrow operator">=&gt;</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">student:loyalty:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">wallet:user:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>userId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token comment">// ... (see KeyRegistry.js for full list)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre><hr>
+<h2 id="8-adatmodell-s-kdalap-lekpezse">8. Adatmodell �s k�dalap lek�pez�se </h2>
+<h3 id="81-összefoglaló">8.1 Összefoglaló </h3>
+<p>Ez a szakasz összevonja a <code>DatabaseDoc.md</code> adatbázis-séma részleteit és összekapcsolja őket a megvalósítási fájlokkal. Magyar nyelven készült, a fejlesztők és ellenőrök számára referenciaként.</p>
+<h3 id="82-fő-adatbázis-entitások-mongodb-mongoose">8.2 Fő adatbázis entitások (MongoDB, Mongoose) </h3>
+<ul>
+<li><code>User</code> (in <code>src/models/User.js</code>): core user account entity with authentication fields, roles, status flags, balance, ban details, E2EE identity, registered devices, recovery blob, and legacy encryption fields.</li>
+<li><code>Payment</code> (in <code>config/database_queries.js</code>): payment records with amount, currency, payment method, status, transaction reference, and created timestamp.</li>
+<li><code>MenuItems</code> (in <code>config/database_queries.js</code>): items menu with stock, pricing, category, availability, QR code, allergens, nutrition, and embedded reviews.</li>
+<li><code>Order</code> (in <code>config/database_queries.js</code>): user orders with items, totals, statuses, pickup time, payment Hivatkoz�sok, and public ID.</li>
+<li><code>OrderItems</code> (embedded in <code>Order</code> schema): link catalog items to order quantity.</li>
+<li><code>UserLoyalty</code> (in <code>config/database_queries.js</code>): loyalty points, tier, discounts, history, streaks, decay management.</li>
+<li><code>DailyMenu</code> (in <code>config/database_queries.js</code>): date-specific menu collection tied to MenuItems.</li>
+<li><code>ParentStudent</code> (in <code>config/database_queries.js</code>): connection records between parent and student users.</li>
+<li><code>SecurityLogs</code> (in <code>config/database_queries.js</code>): security event audit trails with action, type, IP and geolocation metadata.</li>
+<li><code>DeviceSyncSession</code> (in <code>src/models/DeviceSyncSession.js</code>): ephemeral session data for E2EE sync, TTL index on <code>expiresAt</code>.</li>
+<li><code>Message</code> (in <code>src/models/Message.js</code>): E2EE message container (Double Ratchet/X3DH metadata), status tracking, indexes for efficient retrieval.</li>
+<li><code>PreKey</code> (in <code>src/models/PreKey.js</code>): prekeys for X3DH bootstrapping, unique and index constraints.</li>
+<li><code>StorageBlob</code> (in <code>src/models/StorageBlob.js</code>): encrypted storage blobs for session/message state, unique per user/blobType/partition.</li>
+<li><code>Reward</code> and <code>Redemption</code> (in <code>config/database_queries.js</code>): expanded loyalty program with catalog and voucher entities.</li>
+</ul>
+<h3 id="83-entity-mapping-to-code-modules">8.3 Entity mapping to code modules </h3>
+<ul>
+<li>Authentication routes: <code>src/auth/register.js</code>, <code>src/auth/login.js</code>, <code>src/auth/2fa.js</code>, <code>src/auth/password_reset.js</code>, <code>src/auth/email_verification.js</code>.</li>
+<li>API orchestration: <code>src/api.js</code> handles orders (<code>/orders</code>, <code>/orders/googlepay</code>, <code>/orders/:orderID/capture</code>, etc.), payments, and maps to <code>orderService</code>, <code>paypalService</code>, and <code>googlePayService</code>.</li>
+<li>Dashboard &amp; admin endpoints: mounted from <code>src/dashboard/*</code> via <code>src/main.js</code>.</li>
+<li>Cache and high-throughput operations: <code>src/cache/ChangeStreamManager.js</code>, <code>src/cache/KeyRegistry.js</code>, <code>src/redis.js</code>.</li>
+<li>E2EE logic: <code>src/models/Message.js</code>, <code>src/models/PreKey.js</code>, <code>src/models/StorageBlob.js</code>, <code>src/models/DeviceSyncSession.js</code>, and frontend chat components under <code>public/chat</code>.</li>
+</ul>
+<h3 id="84-database-logic-and-constraints">8.4 Database logic and constraints </h3>
+<ul>
+<li><code>MenuItems</code> has pre-save hook: <code>available</code> is false when <code>stock &lt;= 0</code>.</li>
+<li><code>Order</code> has pre-save hook: <code>Pending</code> orders older than 15 minutes become <code>Cancelled</code>.</li>
+<li><code>UserLoyalty</code> includes <code>updatePointsAtomically</code> static method with transaction logic, decay rules, tier updates, and discount recalculation.</li>
+<li><code>DeviceSyncSession</code> has TTL index: <code>expiresAt</code> with <code>expireAfterSeconds: 0</code> for automatic pruning.</li>
+<li><code>Message</code> indexes: <code>senderId/recipientId/createdAt</code>, <code>recipientId/status</code>, <code>recipientDeviceId/status</code>, <code>createdAt</code>, and a <code>participants</code> virtual.</li>
+<li><code>PreKey</code> indexes: <code>userId/deviceId/used</code> and unique <code>userId/keyId</code>.</li>
+<li><code>StorageBlob</code> indexes: unique <code>(userId, blobType, partitionKey)</code>, and <code>userId/updatedAt</code>.</li>
+</ul>
+<h3 id="85-business-process-flow-cross-document">8.5 Business process flow (cross-document) </h3>
+<ol>
+<li>A felhasználó rendelést hoz létre a frontend <code>/api/orders</code> útvonalon.</li>
+<li>Az <code>api.js</code> érvényesíti a rendelés inputját és a készletet az <code>orderService.validateOrderStock</code> segítségével.</li>
+<li>Ha PayPal/Google Pay fizetés történik, a megfelelő külső API hívás megtörténik, majd az <code>orderService.saveCompletedOrder</code> vagy <code>orderService.completePaypalOrder</code> lezárja az adatbázis állapotát.</li>
+<li>A rendelést menti az <code>Order</code> gyűjteménybe és létrehozza a <code>Payment</code> rekordot.</li>
+<li>A <code>UserLoyalty.updatePointsAtomically</code> frissíti a pontokat és szinteket a <code>UserLoyalty</code> gyűjteményben.</li>
+<li>Biztonsági naplók íródnak a <code>SecurityLogs</code> gyűjteménybe.</li>
+<li>Ha a rendelés befolyásolja a menü készletét, a <code>MenuItems</code> rendezett halmaz gyorsítótára a <code>KeyRegistry</code> alapján érvénytelenül, és szükség esetén a <code>ChangeStreamManager</code> is érvénytelenít.</li>
+</ol>
+<h3 id="86-environment-and-config-essentials">8.6 Environment and config essentials </h3>
+<ul>
+<li><code>.env</code> values: <code>MONGODB_URI</code>, <code>DB_NAME</code>, <code>JWT_LOGIN_SECRET</code>, <code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_SECRET</code>, <code>GOOGLE_PAY_MERCHANT_ID</code>, <code>RECAPTCHA_SECRET</code>, and <code>REDIS_URL</code>.</li>
+<li><code>mongoose.connect</code> invoked in <code>src/models/User.js</code> and <code>config/database_queries.js</code>. Use connection pooling and monitoring.</li>
+<li><code>dotenv</code> usage imported in both files as <code>require('dotenv').config()</code>.</li>
+</ul>
+<h3 id="87-testing-hivatkozsok">8.7 Testing Hivatkoz�sok </h3>
+<ul>
+<li>Unit/integration tests are in <code>tests/</code> and <code>tests/performance_tests/</code>.</li>
+<li>Existing seed scripts: <code>tests/creating_test_users.js</code>, <code>tests/seed_rewards.js</code>.</li>
+<li>Security and regression tests: <code>tests/query_security_logs.js</code>, <code>tests/register_testing.py</code>.</li>
+</ul>
+<hr>
+<h2 id="9-tesztels-s-rvnyests">9. Tesztel�s �s �rv�nyes�t�s </h2>
+<p><em>(Szakasz to be completed)</em></p>
+<hr>
+<h2 id="9-felhasznli-kziknyv">9. Felhaszn�l�i k�zik�nyv </h2>
+<p><em>(Szakasz to be completed)</em></p>
+<hr>
+<h2 id="10-telepts-s-karbantarts">10. Telep�t�s �s karbantart�s </h2>
+<p><em>(Szakasz to be completed)</em></p>
+<hr>
+<h2 id="11-kvetkeztets-s-jvobeni-munka">11. K�vetkeztet�s �s j�vobeni munka </h2>
+<p><em>(Szakasz to be completed)</em></p>
+<hr>
+<h2 id="12-hivatkozsok">12. Hivatkoz�sok </h2>
+<p><em>(Szakasz to be completed)</em></p>
+<hr>
+<h2 id="13-mellkletek">13. Mell�kletek </h2>
+<p><em>(Szakasz to be completed)</em></p>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
