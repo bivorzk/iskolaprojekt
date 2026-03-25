@@ -502,19 +502,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 |------------|------|--------------|-------------|---------|
 | senderId | ObjectId (ref: User) | Sender user ID | Required | senderId, recipientId, createdAt |
 | recipientId | ObjectId (ref: User) | Recipient user ID | Required | recipientId, status |
-| senderDeviceId | String | Sender device ID | Optional | recipientDeviceId, status |
-| recipientDeviceId | String | Recipient device ID | Optional | _id |
 | schemaVersion | Number | Schema version | Default: 2 | _id |
-| header.dh | String | Sender ratchet public key | Optional | _id |
-| header.n | Number | Message number in chain | Optional | _id |
-| header.pn | Number | Previous chain message count | Optional | _id |
-| x3dhHeader.identityKey | String | Identity key for X3DH | Optional | _id |
-| x3dhHeader.ephemeralKey | String | Ephemeral key for X3DH | Optional | _id |
-| x3dhHeader.spkKeyId | String | Signed prekey ID | Optional | _id |
-| x3dhHeader.opkKeyId | Mixed | One-time prekey ID | Optional | _id |
-| x3dhHeader.recipientDeviceId | String | Recipient device for X3DH | Optional | _id |
-| ciphertext | String | Encrypted message content | Optional | _id |
-| iv | String | GCM IV | Optional | _id |
 | encryptedContent | String | Legacy encrypted content | Optional | _id |
 | encryptionMetadata.senderEncryptedKey | String | Legacy sender key | Optional | _id |
 | encryptionMetadata.recipientEncryptedKey | String | Legacy recipient key | Optional | _id |
@@ -529,7 +517,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 | senderKeyRecovery.senderPublicKey | String | Recovery public key | Optional | _id |
 | senderKeyRecovery.senderKeyId | String | Recovery key ID | Optional | _id |
 
-Üzleti szabályok: End-to-end titkosított üzeneteket tárol Double Ratchet protokollal. Tartalmazza az X3DH fejlécet kezdeti kulcscsere céljából. Az állapotkövetés figyeli a kézbesítést és olvasást. Támogatja a kapott kulcsok helyreállítását. A migráció érdekében régi mezők is megmaradnak. Az indexek optimalizáltak a beszélgetések lekérésére és állapotszűrésre.
+Üzleti szabályok: End-to-end titkosított üzeneteket tárol Double Ratchet protokollal. Az állapotkövetés figyeli a kézbesítést és olvasást. Támogatja a kapott kulcsok helyreállítását. A migráció érdekében régi mezők is megmaradnak. Az indexek optimalizáltak a beszélgetések lekérésére és állapotszűrésre.
 
 ##### PreKey (Prekeys)
 
