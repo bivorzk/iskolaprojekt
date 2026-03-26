@@ -112,9 +112,9 @@ li { margin: 0.5rem 0; }
 ## Tartalomjegyzék
 
 - [1. Bevezetés](#1-bevezetes)
-- [2. Rendszer áttekintése](#2-rendszer-attekinteese)
-- [3. Követelmények](#3-requirements-specification)
-- [4. Rendszerarchitektúra](#4-system-architecture)
+- [2. Rendszer áttekintése](#2-rendszer-attekintese)
+- [3. Követelmények](#3-kovetelmenyek)
+- [4. Rendszerarchitektúra](#4-rendszerarchitektura)
   - [4.1 Komponensek/modulok](#41-komponensekmodulok)
   - [4.2 Adatfolyam](#42-adatfolyam)
   - [4.3 Technológiák](#43-technologiak)
@@ -124,16 +124,16 @@ li { margin: 0.5rem 0; }
   - [5.3 Algoritmusok és adatszerkezetek](#53-algoritmusok-es-adatszerkezetek)
   - [5.4 Biztonsági tervezés](#54-biztonsagi-tervezes)
 - [6. Megvalósítás](#6-megvalositas)
-  - [6.1 Directory Structure](#61-directory-structure)
-  - [6.2 Backend Megvalósítás](#62-backend-megvalositás)
-  - [6.3 Frontend Megvalósítás](#63-frontend-megvalositas)
-- [7. API referencia](#7-api-reference)
-- [8. Tesztelés és érvényesítés](#8-testing-and-validation)
-- [9. Felhasználói kézikönyv](#9-user-manual)
-- [10. Telepítés és karbantartás](#10-deployment-and-maintenance)
-- [11. Következtetés és jövőbeni munka](#11-conclusion-and-future-work)
-- [12. Hivatkozások](#12-Hivatkozások)
-- [13. Mellékletek](#13-Mellékletek)
+  - [6.1 Könyvtárstruktúra](#61-konyvtarszerkezet)
+  - [6.2 Backend megvalósítás](#62-backend-megvalositas)
+  - [6.3 Frontend megvalósítás](#63-frontend-megvalositas)
+- [7. API referencia](#7-api-referencia)
+- [8. Adatmodell és kódlap leképezése](#8-adatmodell-es-kodlap-lekepezese)
+- [9. Tesztelés és érvényesítés](#9-teszteles-es-ervenyesites)
+- [10. Telepítés és karbantartás](#10-telepites-es-karbantartas)
+- [11. Következtetés és jövőbeni munka](#11-kovetkeztetes-es-jovobeni-munka)
+- [12. Hivatkozások](#12-hivatkozasok)
+- [13. Mellékletek](#13-mellekletek)
 
 ---
 
@@ -189,7 +189,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 
 ---
 
-## 4. Rendszerarchitektúra
+## 4. Rendszerarchitektúra {#4-rendszerarchitektura}
 
 A rendszer három fő rétegből áll:
 
@@ -201,18 +201,18 @@ A rendszer három fő rétegből áll:
 
 <div class="fullpage"><img src="snaptraySTACK.png" alt="Architecture Diagram"></div>
 
-### 4.1 Komponensek/modulok
+### 4.1 Komponensek/modulok {#41-komponensekmodulok}
 
 | Modul | Leírás |
 |-------|--------|
 | Frontend/UI | React.js, szerepkör-alapú dashboardok, autentikáció, rendelés UI |
 | API Layer | Express.js REST végpontok, üzleti logika |
 | Data Layer | MongoDB (perzisztens), Redis (cache, session) |
-| Auth & Security | JWT, rate limiting, security logging |
+| Hitelesítés és biztonság | JWT, rate limiting, biztonsági naplózás |
 | Payment | PayPal és Google Pay integráció |
-| Loyalty System | Pontszámítás, tier kezelés, kedvezmények |
+| Hűségprogram | Pontszámítás, tier kezelés, kedvezmények |
 
-### 4.2 Adatfolyam
+### 4.2 Adatfolyam {#42-adatfolyam}
 
 1. A felhasználó a React frontenddel interaktál, HTTP kéréseket küld.
 2. Az Express szerver middleware-eken (hitelesítés, rate limiting, sanitizáció) keresztül irányítja a kéréseket.
@@ -226,7 +226,7 @@ A rendszer három fő rétegből áll:
 
 ![Order Processing Activity Diagram](order_placement.png)
 
-### 4.3 Technológiák
+### 4.3 Technológiák {#43-technologiak}
 
 | Technológia | Indok |
 |-------------|-------|
@@ -239,13 +239,13 @@ A rendszer három fő rétegből áll:
 | Socket.IO | Kétirányú valós idejű kommunikáció |
 | Helmet, HPP, CORS | HTTP biztonsági fejlécek és védelmi middleware |
 
-![System Component Diagram](system_component_diagram_placeholder.png)
+![Rendszerkomponens diagram](system_component_diagram_placeholder.png)
 
 ---
 
-## 5. Tervezés
+## 5. Tervezés {#5-tervezes}
 
-### 5.1 Tervezési elvek
+### 5.1 Tervezési elvek {#51-tervezesi-elvek}
 
 | Elv | Megvalósítás |
 |-----|-------------|
@@ -259,15 +259,15 @@ A rendszer három fő rétegből áll:
 | Platformfüggetlenség | Modern böngészők (Chrome, Firefox, Safari, Edge), mobilreszponzív |
 
 
-### 5.2 Database Tervezés
+### 5.2 Adatbázis tervezés {#52-adatbazis-tervezes}
 
-#### 5.2.1 Cél, funkció és a tárolt információk összefoglalása
+#### 5.2.1 Cél, funkció és a tárolt információk összefoglalása {#521-cel-funkcio-tarolt-informaciok}
 
 Ez az adatbázis egy iskolai menzarendszer része (MERN stack projekt), amely lehetővé teszi a felhasználók számára (diákok, szülők, tanárok), hogy ételeket rendeljenek, kifizessék azokat és értékeléseket adjanak. A rendszer támogatja a felhasználóhitelesítést, menükezelést, rendelések kezelését, fizetéseket, hűségprogramokat, E2EE chatet és biztonsági naplózást. A fő cél az iskolai étkezések hatékony és biztonságos kezelése, beleértve a készletgazdálkodást, értékeléseket és pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely NoSQL adatbázis, de sémákkal struktúrált. Redis gyorsítótárazásra és ideiglenes adatokra szolgál.
 
 Az adatbázis modell típusa: NoSQL (MongoDB), lekérdező nyelv: JavaScript (Mongoose query-k). Redis memóriában tárolt adatbázis gyorsítótárazásra, munkamenetekre és rövid életű adatokra.
 
-#### 5.2.2 Adatbázis terv és séma
+#### 5.2.2 Adatbázis terv és séma {#522-adatbazis-terv-sema}
 
 ##### Entitások és kapcsolatok (ER modell összefoglaló)
 
@@ -289,78 +289,66 @@ A rendszer fő entitásai és kapcsolataik:
 - **PreKey** (Prekeyek): ECDH prekeyek.
 - **StorageBlob** (Tárhely blob): Titkosított üzenet/munkamenet előzmények.
 
-##### Relationships:
-- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent (as parent or student).
-- MenuItems 1:N OrderItems (embedded in Order), Review (embedded).
-- Order 1:N OrderItems (embedded).
-- DailyMenu N:M MenuItems (linking table: DailyMenuMenuItems).
-- Message 1:1 PreKey (optional, for X3DH).
-- StorageBlob 1:1 User (per blobType and partitionKey).
-- DeviceSyncSession: standalone, not connected to others.
+##### Relációk és logikai szerkezet
+- User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent.
+- MenuItems 1:N OrderItems (Rendelésben beágyazva), Review (MenuItems-ben beágyazva).
+- Order 1:N OrderItems (beágyazott tételsorokkal).
+- DailyMenu N:M MenuItems (normálizált kapcsolattábla: DailyMenuMenuItems).
+- Message 1:1 PreKey (opcionális, X3DH kulcscsere támogatására).
+- StorageBlob 1:1 User (kulcspáros: userId + blobType + partitionKey, egyedi indexelés).
+- DeviceSyncSession: önálló entitás rövid életű E2EE szinkronizációhoz.
 
-![Entity Relationship Diagram](er_diagram_placeholder.png)
+![Entity Relationship Diagram](Database.png)
 
-##### Relational Schema (Table Details)
+##### Relációs séma – részletes táblaelemzés
 
-Az alábbiak részletezik az egyes entitások mezőit. A DailyMenu és MenuItems N:M kapcsolat esetén egy linktábla is ábrázolható.
-
-##### Példa: DailyMenu és MenuItems kapcsolat (dbdiagram.io stílus)
-
-```dbml
-Table DailyMenu {
-  _id objectid [pk]
-  date date
-  schoolPeriod varchar
-  createdAt datetime
-}
-
-Table MenuItems {
-  _id objectid [pk]
-  name varchar
-  // ...additional fields
-}
-
-Table DailyMenuMenuItems {
-  dailyMenuId objectid [ref: > DailyMenu._id]
-  menuItemId objectid [ref: > MenuItems._id]
-  // Composite PK: [dailyMenuId, menuItemId]
-}
-```
+A következők részletesen ismertetik az egyes entitások mezőit, típusait, szerepét, megszorításait és indexelését. Minden tábla optimalizációs javaslatot kap, és felhívjuk a figyelmet a törölhető duplikációkra.
 
 ![Database Schema Diagram](database_schema_diagram_placeholder.png)
 
-##### DeviceSyncSession
-Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és csak eszközazonosítókat és titkosított adatokat tárol. Ez megfelel a céljának, mert rövid életű, munkamenet jellegű adatokat kezel.
+#### 5.2.3 Részletes entitásleírások
+
+Ez a szakasz kifejezetten az entitásokra koncentrál: mezők, szabályok, indexek, tranzakciós minták és teljesítményoptimalizáció.
+
+##### Általános indexelési irányelv
+- Minden gyakori lekérdezési mezőre, szűrési feltételre és rendezési kulcsra helyi egyszeres index (simple index), szükség esetén compound index.
+- Magas trillásoknál TTL index (pl. `DeviceSyncSession.expiresAt`), és egyediségellenőrzés `(userId, blobType, partitionKey)` típusokat használunk.
+- Vegyes OLTP-OLAP terhelésnél az olvasott mezők bevált `covered index` mintára optimalizált struktúrát kapnak.
+- Integrált `stats` gyűjtés; `planCache` és `db.stats()` monitorozás.
 
 ---
 
-#### 5.2.3 Detailed Entity Descriptions
+##### User (Felhasználók)
 
-(A következők részletezik az egyes entitások mezőit, típusait, jelentését, megszorításait, indexeit és üzleti szabályait. Lásd az eredeti dokumentáció folytatását.)
+A `User` kollekció a rendszert használók identitását és jogosultságait kezeli; a CRUD, bejelentkezés, 2FA és hűségpont rendszer fő kulcsa.
+- Az egyedi `username` és `email` biztosítja a duplikáció megelőzését.
+- A beágyazott `userPersonalInfo` csomag rendezi a profil-adatokat (osztály, iskola, kapcsolattartás).
+- Az `identity` és `devices` terület a E2EE és multi-device hitelesítést szolgálja biztonságos kulcskezeléssel.
+- `balance` és `isBanned` mezőkkel a valósidejű pénzügyi és tiltása állapot is követhető.
 
-##### User (Users)
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|----------|
+| username | String | Felhasználónév | Required, unique | {_id: 1}, {username: 1} (unique) | Egyetlen lefedett index a loginhoz |
+| password | String | Hash-olt jelszó | Required | {_id: 1} | Nem indexelünk közvetlenül jelszót, csak hash admin | 
+| email | String | Email cím | Required, unique, email format, trim | {email: 1} (unique) | Geometry query kétlépcsős e-mail ellenőrzéshez |
+| isVerified | Boolean | Email ellenőrzöttség | Default false | {isVerified: 1} | Jól használható újregisztrációs szűrőhöz |
+| usertype | String | Szerepkör | Enum, default teen | {usertype: 1} | Role-based query gyorsításhoz |
+| createdAt | Date | Regisztráció dátum | Default Date.now | {createdAt: -1} | Archiválás és pagination támogatás |
+| balance | Number | Pénztárca egyenleg | Default 0 | {balance: 1} | Pénzügyi aggregációs pipeline-hoz |
+| isBanned | Boolean | Tiltott felhasználó | Default false | {isBanned: 1} | Gyors ideiglenes tiltás szűrés |
+| banReason | String | Tiltás oka | Optional | _id | Felesleges indexelni ritkán használt lekérdezésnél |
+| userPersonalInfo | Subdocument | Profiladatok | Optional | - | Subdocumentben változó lekérdezett mezők miatt nincs index |
+| identity.publicKey | String | E2EE kulcs | Optional | {identity.keyId: 1} | Keresés eszközazonosításra |
+| identity.keyId | String | Kulcspéldány | Optional, unique | {identity.keyId: 1} (sugallt) | Kizárólagos kulcspárosított ellenőrzés |
+| devices | Array | Regisztrált eszközök | Optional | {devices.deviceId: 1} | Multi-key index a device lookuphoz |
+| recoveryBlob.encryptedData | String | Titkosított blob | Optional | _id | Nincs szükség extra indexre |
+| recoveryBlob.iv | String | Inicializáló vektor | Optional | _id | - |
+| recoveryBlob.salt | String | Salt | Optional | _id | - |
+| recoveryBlob.storedAt | Date | Mentési időpont | Optional | {recoveryBlob.storedAt: 1} TTL sok stressz | TTL indexsel automatikus érvénytelenítés |
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| username | String | Username | Required, unique | _id, username |
-| password | String | Password (hashed) | Required | _id, password |
-| email | String | Email address | Required, unique, email format, trim | _id, email |
-| isVerified | Boolean | Email verification status | Default: false | _id, isVerified |
-| usertype | String | User type (admin, student, parent, teacher, frozen, editor) | Enum: ['admin', 'student', 'parent', 'teacher', 'frozen', 'editor'], default: 'student' | _id, usertype |
-| createdAt | Date | Account creation date | Default: current time | _id, createdAt |
-| balance | Number | User balance for in-app purchases | Default: 0 | _id, balance |
-| isBanned | Boolean | Banned user | Default: false | _id, isBanned |
-| banReason | String | Ban reason | Optional | _id, banReason |
-| userPersonalInfo | [Subdocument] | Personal info (name, birth date, class, school, address) | Optional | _id, userPersonalInfo |
-| identity.publicKey | String | E2EE identity public key (ECDH P-256 SPKI base64) | Optional | _id, identity.publicKey |
-| identity.signingPublicKey | String | E2EE signing public key (ECDSA P-256) | Optional | _id, identity.signingPublicKey |
-| identity.keyId | String | Key identifier (SHA-256 fingerprint) | Optional | _id, identity.keyId |
-| identity.registeredAt | Date | E2EE registration time | Optional | _id, identity.registeredAt |
-| identity.isE2EEEnabled | Boolean | E2EE enabled | Default: false | _id, identity.isE2EEEnabled |
-| devices | [Array] | Registered devices (deviceId, publicKey, label, etc.) | Optional | _id, devices |
-| recoveryBlob.encryptedData | String | Recovery blob (AES-GCM encrypted) | Optional | _id, recoveryBlob.encryptedData |
-| recoveryBlob.iv | String | IV for recovery blob | Optional | _id, recoveryBlob.iv |
-| recoveryBlob.salt | String | Salt for recovery blob | Optional | _id, recoveryBlob.salt |
+Üzleti szabályok: Aktív/tiltott státusz ellenőrzése minden bejelentkezésnél; `usertype` határozza meg az API-engedélyt. A `balance`-t transzaktív Redis-lakkkal cache-ljük, rollback esetén rollback a fő adatbázisban.
+
+---
 | recoveryBlob.storedAt | Date | Recovery blob storage time | Optional | _id, recoveryBlob.storedAt |
 | encryption.* | Mixed | V1 legacy E2EE fields (for migration) | Optional | _id, encryption.* |
 
@@ -368,88 +356,147 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 
 ##### Fizetés (Payments)
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| userId | ObjectId (ref: User) | Paying user | Optional | _id, userId |
-| amount | Number | Paid amount | Required | _id, amount |
-| currency | String | Currency (e.g., USD, HUF) | Required | _id, currency |
-| paymentMethod | String | Payment method | Required | _id, paymentMethod |
-| status | String | Status (Completed, Pending, Failed) | Required, enum: ['Completed', 'Pending', 'Failed'] | _id, status |
-| transactionId | String | External transaction reference | Optional | _id, transactionId |
-| createdAt | Date | Creation time | Default: current time | _id, createdAt |
+A `Payment` gyűjtemény a pénzügyi tranzakciók auditját, státuszát és külső azonosítóit tárolja.
+- Fontos, hogy a `transactionId` azonosító a PayPal/Google Pay és belső logika számára is egyedi legyen.
+- `status` mezőnél szigorú enum és text szűrés biztosítja a befejezett/feldolgozás alatt/hibás tételek elkülönítését.
 
-Üzleti szabályok: Minden fizetés egy felhasználóhoz tartozik, de lehet opcionális (például vendégfizetések).
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| userId | ObjectId (ref: User) | Fizető felhasználó | Optional | {userId: 1} | Felhasználói összegzések gyorsítása |
+| amount | Number | Fizetett összeg | Required | {amount: 1} | Range query-khez, aggregációhoz |
+| currency | String | Devizanem | Required | {currency: 1} | Többdevizás pénzügyi lekérdezéshez |
+| paymentMethod | String | Fizetési mód | Required | {paymentMethod: 1} | Módszer alapú számlázási riporthoz |
+| status | String | Állapot | Required, enum ['Completed','Pending','Failed'] | {status:1} | Népszerű statusz szűréshez |
+| transactionId | String | Külső tranzakciós ID | Optional | {transactionId:1} (unique) | Idempotencia azonosításra |
+| createdAt | Date | Létrehozás idő | Default now | {createdAt:-1} | Legfrissebb tranzakciók lekérése |
+
+Index-optimalizációk:
+- compound index `{userId:1, status:1, createdAt:-1}` a felhasználói tranzakciók lekérdezéséhez.
+- `transactionId` egyedi index az idempotens kérések megakadályozásához.
+- archival pipeline heti feladat, 2 évesnél idősebb rekordok `history.payments` archív kollekcióba mozgatása.
+
+---
 
 ##### Menüelemek (Menu Items)
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| name | String | Menu item name | Required | _id, name |
-| description | String | Description | Required | _id, description |
-| stock | Number | Stock quantity | Required, default: 0 | _id, stock |
-| price | Number | Price | Required | _id, price |
-| category | String | Category (Soup, Salad, etc.) | Required, enum: ['Soup', 'Salad', 'MainDish', 'SideDish', 'Snack', 'Dessert', 'Drink', 'Healthy', 'SpecialDiet', 'DailySpecial', 'Other'], default: 'Other' | _id, category |
-| available | Boolean | Availability | Default: true | _id, available |
-| QRCode | String | QR code for menu item | Optional | _id, QRCode |
-| allergens | [String] | Allergen list | Default: [] | _id, allergens |
-| nutritionalInfo.calories | Number | Calories | Optional | _id, nutritionalInfo.calories |
-| nutritionalInfo.protein | Number | Protein | Optional | _id, nutritionalInfo.protein |
-| nutritionalInfo.carbs | Number | Carbohydrates | Optional | _id, nutritionalInfo.carbs |
-| nutritionalInfo.fat | Number | Fat | Optional | _id, nutritionalInfo.fat |
+A `MenuItems` gyűjtemény a jelenleg elérhető menü tételeket kínálja, beleértve ár, készlet, allergének és napi ajánlat státuszokat.
+- `stock` és `available` mezők konszisztens validációt kapnak pre-save hookon keresztül.
+- A `category` kulcsból származtatott aggregált riportok (kedvencek, kategória népszerűség) készülnek napi batch folyamatban.
 
-Üzleti szabályok: A készlet nem lehet negatív; kategóriák szerint szűrhető. Elő mentési hook: ha stock <= 0, available = false, egyébként true.
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| name | String | Tétel neve | Required, text index | {name: 'text'} | Teljes szöveges keresés és súlyozott találat |
+| description | String | Leírás | Required, text index | {description: 'text'} | Keresés AND/OR támogatás |
+| stock | Number | Készlet | Required, min 0, default 0 | {stock:1} | készletfigyelő triggerhez gyors lookup |
+| price | Number | Ár | Required | {price:1} | ár alapú szűréshez |
+| category | String | Kategória | Required, enum | {category:1} | napi menücsoportosítás gyorsítása |
+| available | Boolean | Elérhető-e | Default true | {available:1} | listázás pull-up optimalizálása |
+| QRCode | String | QR kód | Optional | {QRCode:1} | QR beolvasásnál pod cache-re hivatkozás |
+| allergens | [String] | Allergének | Default [] | {'allergens':1} multi-key | Allergen filter pipeline gyorsítás |
+| nutritionalInfo.calories | Number | Kalóriaérték | Optional | {'nutritionalInfo.calories':1} | statisztikai kimutatásokhoz |
+| nutritionalInfo.protein | Number | Fehérje | Optional | {'nutritionalInfo.protein':1} | RT kalkulációhoz |
+| nutritionalInfo.carbs | Number | Szénhidrát | Optional | {'nutritionalInfo.carbs':1} | low-carb query-hez |
+| nutritionalInfo.fat | Number | Zsír | Optional | {'nutritionalInfo.fat':1} | diet-specific listázáshoz |
+
+Index-optimalizációk:
+- compound index `{available:1, category:1, price:1}` a gyors menülistázáshoz.
+- TTL cache megoldásban `daily-menu-cache` nincs perzisztens lag.
+- Schema validation diszkrét consumer-side caching (Mongoose virtuals + readOnly view) biztosítja a tolls forrását.
+
+Üzleti szabályok: Stock <= 0 esetén `available=false`, `price` pozitív (számlázás hitelesítés), `allergens` kötelezően normalizált string tömörítéssel (small lexicographically sorted list).
 
 ##### Rendelés (Orders)
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| userId | ObjectId (ref: User) | Ordering user | Required | _id, userId |
-| items | [OrderItemsScheme] | Order items | Required | _id, items |
-| orderDate | Date | Order date | Default: current time | _id, orderDate |
-| status | String | Status (Pending, InProgress, Completed, Cancelled) | Required, enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'], default: 'Pending' | _id, status |
-| totalAmount | Number | Total amount | Required | _id, totalAmount |
-| pickupTime | Date | Pickup time | Optional | _id, pickupTime |
-| notes | String | Notes | Optional, default: '' | _id, notes |
-| paypalOrderId | String | PayPal order ID | Optional | _id, paypalOrderId |
-| paymentMethod | String | Payment method | Optional | _id, paymentMethod |
-| transactionId | String | Transaction ID | Optional | _id, transactionId |
-| publicID | String | Public ID | Required, unique | _id, publicID |
+A `Order` kollekció az ügyfélrendeléseket, tételsorokat, státuszokat és fizetési metaadatokat tartalmazza.
+- `items` többnyire beágyazott dokumentumként használt, de a 10+ tétel esetén szétválasztott normalizációs stratégia aktív a mérhetőség miatt.
+- Státusz és időbélyeg `compound index`-el támogatja a visszajátszás alapú késéskezelést és timeout kényszerítést.
 
-Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; az állapotváltozások az üzleti logikát követik. Elő mentési hook: ha a rendelés Pending és több mint 15 perc eltelt, automatikusan Cancelled lesz.
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| userId | ObjectId (ref: User) | Rendelést leadó felhasználó | Required | {userId:1} | felhasználó alapú rendezés |
+| items | [OrderItemsScheme] | Rendeléssorok | Required | - | beágyazottan gyors OLTP, 20+ tétel esetén külső OrderItems | 
+| orderDate | Date | Rendelés időpontja | Default Date.now | {orderDate:-1} | friss lista/pagination |
+| status | String | Rendelés állapot | Enum + default Pending | {status:1, createdAt:-1} | állapot-szűrés, backlog clean-up |
+| totalAmount | Number | Végösszeg | Required | {totalAmount:1} | pénzügyi jelentésekhez |
+| pickupTime | Date | Átvétel ideje | Optional | {pickupTime:1} | időpont alapú optimalizált lekérdezés |
+| notes | String | Megjegyzés | Optional | - | max 500 char, egységes szűrés minimalizált index nélkül |
+| paypalOrderId | String | PayPal azonosító | Optional | {paypalOrderId:1} (unique) | idempotencia és visszaellenőrzés |
+| paymentMethod | String | Fizetési mód | Optional | {paymentMethod:1} | lekérdezési szegmentálás |
+| transactionId | String | Tranzakció ID | Optional | {transactionId:1} | cross-system követés |
+| publicID | String | Publikus azonosító | Required, unique | {publicID:1} | URL-alapú megosztás, kérésekhez |
 
-##### OrderItems (Order Items)
+Index-optimalizáció:
+- Compound index `{userId:1, status:1, orderDate:-1}` a felhasználói rendeléslistázáshoz.
+- Kubebase audit feldolgozási workflow: `status` változás trigger csillapítással.
+- Archíválás: 90 nap után lezárt rendeléseket `order_archive` gyűjteménybe mozgatjuk.
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| menuItemId | ObjectId (ref: MenuItems) | Menu item ID | Required | _id, menuItemId |
-| orderId | ObjectId (ref: Order) | Order ID | Optional | _id, orderId |
-| quantity | Number | Quantity | Required, default: 1 | _id, quantity |
+---
 
-Üzleti szabályok: Minden tételhez egy menüelem tartozik; a mennyiség pozitív egész szám. Ez a séma beágyazva van a Rendelés (Order) séma tételei mezőjébe.
+##### Order tétel (Order Items)
 
-##### Review (Reviews) - Embedded in MenuItems
+A `OrderItems` szabványosított tételtáblázata a rendelések vonatkozású elemcsomagokat tartja nyilván.
+- Beágyazott vagy linkelhető: `items` részben beágyazva gyors OLTP-hez; nagy volumen esetén külső `OrderItems` kollekció használata a skálázhatóság javításához.
+- `menuItemId` hivatkozás garantálja a tétel referenciális integritását.
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| userId | ObjectId (ref: User) | Reviewing user | Optional | _id, userId |
-| rating | Number | Rating (1-5) | Required, min: 1, max: 5 | _id, rating |
-| comment | String | Comment | Required, maxlength: 500 | _id, comment |
-| date | Date | Creation time | Default: current time | _id, date |
-| ipAddress | String | IP address | Optional | _id, ipAddress |
-| reported | Boolean | Reported | Default: false | _id, reported |
-| moderated | Boolean | Moderated | Default: false | _id, moderated |
-| moderatorNotes | String | Moderator notes | Optional | _id, moderatorNotes |
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| menuItemId | ObjectId (ref: MenuItems) | Menüelem referenciája | Required | {menuItemId:1} | hozzáférés a tétel részletekhez |
+| orderId | ObjectId (ref: Order) | Rendelés referenciája | Required | {orderId:1} | rendelés alapú agregáció |
+| quantity | Number | Mennyiség | Required, min 1 | {quantity:1} | mennyiség alapú riport |
+| unitPrice | Number | Egységár | Required | - | árváltozás követés, pénzügyi rekonstrukció |
+| totalPrice | Number | Tétel végösszeg | Required | {orderId:1, totalPrice:-1} | tételes lezárásokhoz |
 
-Üzleti szabályok: Az értékelések a MenuItems gyűjteményben beágyazottan tárolódnak. A felhasználó különböző tételeket is többször értékelhet.
+Indexelés:
+- Compound index `{orderId:1, menuItemId:1}` a rendelés tétel lekérdezésekhez.
+- Tétel-aggregációkhoz `menuItemId` + `quantity` szűrés.
 
-##### DailyMenu (Daily Menu)
+Üzleti szabályok: Számított mező `totalPrice = unitPrice * quantity`; változáskor audit log generálódik.
+---
 
-| Field Name | Type | Meaning/Role | Constraints | Indexes |
-|------------|------|--------------|-------------|---------|
-| date | Date | Date | Required | _id, date |
-| schoolPeriod | String | School period (morning, afternoon) | Required, enum: ['morning', 'afternoon'] | _id, schoolPeriod |
-| menuItems | [ObjectId] (ref: MenuItems) | Item list | Required | _id, menuItems |
-| createdAt | Date | Creation time | Default: current time | _id, createdAt |
+##### Értékelés (Reviews) - MenuItems beágyazva
+
+A `Review` model a felhasználói feedback-eket rögzíti, a moderálás és jelentés kezdeményezés szűrése szempontjából is.
+- Beágyazott struktúra `MenuItems.reviews` listában, mivel egy adott tétel összes tartalmát gyakori egyszerre kérjük le.
+- Lehetséges alternatíva: külön `Reviews` kollekció, ha a visszajelzések száma milliós, és átlagpontszám kalkuláció WordPress-szerű 
+
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| userId | ObjectId (ref: User) | Értékelő felhasználó | Required | {userId:1} | Előző értékelések lekérése |
+| rating | Number | Pontszám +1-5 | Required, min 1, max 5 | {rating:1} | átlagszámítás gyorsítása |
+| comment | String | Szöveges vélemény | Optional, maxlength 500 | text index | `{$text: ...}` | felhasználói visszakeresés |
+| date | Date | Létrehozás időpont | Default now | {date:-1} | legfrissebbekhez |
+| ipAddress | String | IP cím | Optional | {ipAddress:1} | bot-szűrés, fraud elemzés |
+| reported | Boolean | Jelentett | Default false | {reported:1} | moderálási front-end 
+| moderated | Boolean | Moderált | Default false | {moderated:1} | automatikus clean-up
+| moderatorNotes | String | Moderátor megjegyzés | Optional | - | Nincs index, ritkán használt |
+
+Biztonsági szabályok:
+- spam kontroll: egy felhasználó 5 percnél gyakrabban nem tehet közzé értékelést.
+- `reported=true` esetén dedikált `reportedReviews` nézetet 24h alatt feldolgozza a moderációs pipeline.
+---
+
+##### DailyMenu (Napi menü)
+
+A `DailyMenu` kollekció a napi menüválasztékot és menüpontokat kezeli, így a heti menü tervezés és változtatás egyszerű.
+- `date` + `schoolPeriod` egyedi kombinációval biztosítjuk, hogy mindennaphoz csak egy rekord tartozzon.
+- `menuItems` referenciákat használ vagy beágyazott listát (N:M gondos indexeléssel).
+
+| Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
+|------------|------|--------------|-------------|---------|-----------|
+| date | Date | Nap | Required | {date:1, schoolPeriod:1} (unique) | dátum-alapú gyors keresés |
+| schoolPeriod | String | Időszak | Required, enum ['morning','afternoon'] | {schoolPeriod:1} | periodikus szűrés |
+| menuItems | [ObjectId] (ref: MenuItems) | Menüelemek | Required | {menuItems:1} multi-key | gyors N:M join-hez |
+| createdAt | Date | Létrehozás | Default now | {createdAt:-1} | audit és rollback adat |
+
+Index-optimalizációk:
+- Unique compound index `{date:1, schoolPeriod:1}` a hozzárendelés konzisztenciájához.
+- `menuItems` multi-key index az események prompt lekérdezéséhez (napi újradefiniálás, audit).
+- Konstant menü esetén tárhely-kímélő `compress` and read-only snapshot mechanizmus a MongoDB modernebb tárolási engine-jeivel (WiredTiger, zlib).
+
+Üzleti logika:
+- naponta egyszeri generálás a rendelési ablak nyitásakor;
+- menü-elkülönítést biztosítjuk `dailyMenu`-val a feketelistázás és változtatás nyomon követéséhez.
+---
 
 Üzleti szabályok: Daily menus are created per period.
 
@@ -463,7 +510,7 @@ Ez a táblázat önállóan működik, más táblákhoz nem kapcsolódik, és cs
 
 Üzleti szabályok: Parents can be linked to multiple students.
 
-##### SecurityLogs (Security Logs)
+##### SecurityLogs (Biztonsági naplók)
 
 | Field Name | Type | Meaning/Role | Constraints | Indexes |
 |------------|------|--------------|-------------|---------|
@@ -564,7 +611,7 @@ A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolato
 - Készletgazdálkodás és készletfrissítések.
 - Szülő-diák fiók összekapcsolása felügyelet céljából.
 
-#### 5.2.6 Security and Access
+#### 5.2.6 Biztonság és hozzáférés
 
 - Authentication via JWT, passwords hashed with bcrypt.
 - Role-based permissions (admin, student, etc.).
@@ -578,7 +625,7 @@ A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolato
 - Regular index maintenance and monitoring.
 - Backup strategies for MongoDB and Redis.
 - Data migration for schema updates.
-- Performance tuning based on query analysis.
+- Teljesítményhangolás lekérdezéselemzés alapján.
 - Cleanup of expired sessions and logs.
 
 #### 5.2.8 E2EE chat és üzenetkezelés
@@ -621,14 +668,14 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 - **Címzett és szülő-diák kapcsolatok**: `ParentStudent` séma, adminisztráció és hozzáférés `src/dashboard/*` és `src/models/User.js` szerint `userPersonalInfo` kapcsolaton keresztül.
 - **E2EE üzenetek**: `src/models/Message.js` és `src/models/PreKey.js` + `src/models/StorageBlob.js` + `src/LoyaltySystem` (további konzisztencia, audit) + frontend `src/chat/**`.
 
-##### Security and Maintainability Notes
+##### Biztonság és karbantarthatóság jegyzetek
 
 - Jelszavak: A `src/auth/passwordhash.js` `bcrypt`-tel hasheli és ellenőrzi őket (hash + compare).
 - Naplózás: Minden fontos művelet (`SecurityLogs`) a `src/auth/login.js`, `src/auth/register.js` és `src/api.js` végpontoknál történik.
 
 ![Database Diagram](menuitemsanddailymenu.png)
 
-### 5.3 Algoritmusok és adatszerkezetek
+### 5.3 Algoritmusok és adatszerkezetek {#53-algoritmusok-es-adatszerkezetek}
 
 #### 5.3.1 Data Structures
 
@@ -735,16 +782,16 @@ const verifyRecaptcha = async (token) => {
 };
 ```
 
-#### 5.3.3 Performance Optimization
+#### 5.3.3 Teljesítményoptimalizálás
 
 - **Database indexes**: Compound indexes on frequently queried fields (e.g., `{ email: 1, isVerified: 1 }`, `{ userId: 1, orderDate: -1 }`).
 - **Lapozás**: Skip-limit stratégia teljes halmazszámmal nagy adatkészletekhez.
 - **Batch processing**: `bulkWrite` for multi-record updates.
 - **Cache middleware**: Redis cache-first, fallback to MongoDB, with pattern-based invalidation on writes.
 
-### 5.4 Security Tervezés
+### 5.4 Biztonsági tervezés {#54-biztonsagi-tervezes}
 
-#### 5.4.1 Security Funkciók
+#### 5.4.1 Biztonsági funkciók
 
 | Funkció | Részletek |
 |---------|---------|
@@ -790,12 +837,12 @@ const verifyRecaptcha = async (token) => {
 5. **Helyreállítás**: Rendszer visszaállítása biztonsági mentésekből, felhasználói értesítés, szolgáltatás újraindítása.
 6. **Tapasztalatok levonása**: Incidens utáni felülvizsgálat, dokumentáció frissítése, megelőző intézkedések.
 
-#### 5.4.4 Compliance and Privacy
+#### 5.4.4 Megfelelés és adatvédelem
 
 - **GDPR megfelelőség**: Adatminimalizálás, hozzájárulás kezelése, törlés joga, IP hashing anonimizáláshoz.
 - **PCI DSS**: Payment data never stored locally; all transactions via certified gateways.
 - **Data Retention**: SecurityLogs retained for 2 years, user data until account deletion.
-- **Privacy by Tervezés**: Default encryption, access controls, and audit trails.
+- **Privacy by Design**: Alapértelmezett titkosítás, hozzáférésszabályozás és audit naplók.
 
 #### 5.4.5 Biztonsági tesztelés
 
@@ -810,9 +857,9 @@ const verifyRecaptcha = async (token) => {
 
 ---
 
-## 6. Megvalósítás
+## 6. Megvalósítás {#6-megvalositas}
 
-### 6.1 Könyvtárszerkezet
+### 6.1 Könyvtárstruktúra {#61-konyvtarszerkezet}
 
 ```
 ├── config/
@@ -854,7 +901,7 @@ const verifyRecaptcha = async (token) => {
     └── performance_tests/
 ```
 
-### 6.2 Backend Megvalósítás
+### 6.2 Backend megvalósítás {#62-backend-megvalositas}
 
 #### 6.2.1 Technológiai stack
 
@@ -880,7 +927,7 @@ await createSecurityLog('USER_REGISTER', { username, email }, clientIp);
 res.status(200).json({ message: 'Regisztráció sikeres! Ellenőrizze e-mailjét az érvényesítéshez.' });
 ```
 
-#### 6.2.4 Order & Payment Processing
+#### 6.2.4 Rendelés- és fizetésfeldolgozás
 
 A rendelési folyamat érvényesíti a kosarat a valós készlet alapján, létrehoz egy függőben lévő rendelést MongoDB-ben, meghívja a PayPal vagy Google Pay API-t, majd foglaláskor megerősíti a fizetést, levonja a készletet, jóváírja a hűségpontokat és naplózza a tranzakciót.
 
@@ -952,7 +999,7 @@ A Redis teljesítményét beépített INFO parancsokkal figyelik, nyomon követv
 
 ![Redis Caching Architecture Diagram](redis_caching_architecture_placeholder.png)
 
-#### 6.2.6 Loyalty System
+#### 6.2.6 Hűségprogram
 
 A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 pont/dollár), szorzva ünnepi, egészségszint és tier bónuszokkal. Tier-ek: NONE → BRONZE (1200 pont) → SILVER (2500) → GOLD (8000) → PLATINUM (20000). Lásd `src/LoyaltySystem/loyalty-service.js` és `config/DATABASE_CONSTANTS.JS` a díjszabásokhoz.
 
@@ -960,11 +1007,11 @@ A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 
 
 Két stratégiát alkalmaz: `express-rate-limit` Redis tárolóval általános API végpontokra, valamint egy egyedi Redis Lua csúszóablakos script admin/dashboard útvonalakhoz (30 kérés/perc). A Lua megvalósítás atomi — egyetlen megszakíthatatlan tranzakcióként fut, ezzel elkerülve a versenyhelyzeteket nagy párhuzamos terhelésnél. Lásd a Lua scriptet az 5.3.2 szakaszban.
 
-#### 6.2.8 Extensibility & Maintainability
+#### 6.2.8 Bővíthetőség és karbantarthatóság
 
 A backend rétegezett, szolgáltatásorientált architektúrát használ (route-ok → szolgáltatások → modellek). A konfiguráció környezeti változókon keresztül történik `.env` fájl segítségével. A hibakezelés központilag történik Express hibakezelő middleware-eken keresztül, amelyek naplózzák a biztonsági eseményeket és biztonságos üzeneteket küldenek a kliensnek. Az állapotmentes JWT tervezés és a Redis munkamenet tárolás vízszintes skálázást tesz lehetővé. A függőségek `npm audit`-tal vannak kezelve és naprakészen tartva.
 
-### 6.3 Frontend Megvalósítás
+### 6.3 Frontend megvalósítás {#63-frontend-megvalositas}
 
 #### 6.3.1 Technológiai stack
 
@@ -978,7 +1025,7 @@ React.js JSX-szel, Tailwind CSS stílushoz, Socket.IO kliens valós idejű kommu
 - **Routing**: Kliens oldali útválasztás URL hash változások és feltételes renderelés alapján.
 - **Stílus**: Tailwind CSS osztályok reszponzív, utility-first tervezéshez.
 
-#### 6.3.3 Key Components and Funkciók
+#### 6.3.3 Kulcsfontosságú komponensek és funkciók
 
 ##### Dashboard rendszer
 Az adminisztrációs irányítópult (`public/dashboard/admin/admin.jsx`) sidebar navigációt, felhasználók, statisztikák, menüpontok, jutalmak, egészségellenőrzések és beállítások szakaszait tartalmazza. Egy egyedi `useAdminData` hookot használ az adatok REST API-król történő lekérésére és kezelésére.
@@ -1004,7 +1051,7 @@ const AdminDashboard = () => {
 };
 ```
 
-##### Order and Cart System
+##### Rendelési és kosár rendszer
 A rendelési oldal (`public/order/order.jsx`) bevásárlókosarat valósít meg `useCart` hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval.
 
 ```jsx
@@ -1042,10 +1089,10 @@ Mobil-specifikus komponensek (pl. `MobileAdminNav.jsx`, `MobileCart.jsx`) érint
 
 #### 6.3.5 UI/UX tervezési elvek
 
-- **Accessibility**: ARIA labels, keyboard navigation, high contrast colors.
-- **Performance**: Lazy loading of components, optimized images, minimal re-renders.
-- **User Experience**: Progressive enhancement, error boundaries, loading indicators.
-- **Security**: Input sanitization, XSS protection via React's built-in escaping.
+- **Akadálymentesség**: ARIA címkék, billentyűzet-navigáció, nagy kontrasztú színek.
+- **Teljesítmény**: komponensek késleltetett betöltése, optimalizált képek, minimális újrarenderelés.
+- **Felhasználói élmény**: fokozatos funkcióbővítés, hibahatárok, betöltési jelzők.
+- **Biztonság**: bemenet-szűrés, XSS védelem a React beépített escape mechanizmusával.
 
 #### 6.3.6 Build és telepítés
 
@@ -1061,7 +1108,7 @@ A frontend komponens-alapú architektúrát követ újrafelhasználható UI elem
 
 ---
 
-## 7. API referencia
+## 7. API referencia {#7-api-referencia}
 
 Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjelölést kap. A hitelesítési hiba `401 Unauthorized`-t ad vissza; a jogosultság hiánya `403 Forbidden`-t.
 
@@ -1253,13 +1300,10 @@ const keyRegistry = {
 
 ---
 
-## 8. Adatmodell és kódlap leképezése
+## 8. Adatmodell és kódlap leképezése {#8-adatmodell-es-kodlap-lekepezese}
 
-### 8.1 Összefoglaló
 
-Ez a szakasz összevonja a `DatabaseDoc.md` adatbázis-séma részleteit és összekapcsolja őket a megvalósítási fájlokkal. Magyar nyelven készült, a fejlesztők és ellenőrök számára referenciaként.
-
-### 8.2 Fő adatbázis entitások (MongoDB, Mongoose)
+### 8.1 Fő adatbázis entitások (MongoDB, Mongoose)
 
 - `User` (a `src/models/User.js`-ben): alap felhasználói fiók entitás hitelesítési mezőkkel, szerepekkel, státuszjelzőkkel, egyenleggel, tiltási adatokkal, E2EE identitással, regisztrált eszközökkel, helyreállítási blobbal és régi titkosítási mezőkkel.
 - `Payment` (a `config/database_queries.js`-ben): fizetési rekordok összeggel, valutával, fizetési móddal, státusszal, tranzakció hivatkozással és létrehozás időbélyeggel.
@@ -1271,6 +1315,7 @@ Ez a szakasz összevonja a `DatabaseDoc.md` adatbázis-séma részleteit és ös
 - `ParentStudent` (a `config/database_queries.js`-ben): szülő és diák felhasználók közötti kapcsolódási rekordok.
 - `SecurityLogs` (a `config/database_queries.js`-ben): biztonsági esemény audit naplói akcióval, típussal, IP-vel és geolokációs metaadatokkal.
 - `DeviceSyncSession` (a `src/models/DeviceSyncSession.js`-ben): átmeneti munkamenet adatok E2EE szinkronizációhoz, TTL indexsel `expiresAt`-on.
+
 - `Message` (a `src/models/Message.js`-ben): E2EE üzenet tároló (Double Ratchet/X3DH metaadat), státusz nyomon követés, indexek hatékony lekéréshez.
 - `PreKey` (a `src/models/PreKey.js`-ben): prekey-k X3DH bootstrappinghez, egyedi és indexelési megszorításokkal.
 - `StorageBlob` (a `src/models/StorageBlob.js`-ben): titkosított tárolt blobok munkamenet/üzenet állapothoz, egyedi user/blobType/partition kombinációnként.
@@ -1319,37 +1364,37 @@ Ez a szakasz összevonja a `DatabaseDoc.md` adatbázis-séma részleteit és ös
 
 ---
 
-## 9. Tesztelés és érvényesítés
+## 9. Tesztelés és érvényesítés {#9-teszteles-es-ervenyesites}
 
 *(Szakasz to be completed)*
 
 ---
 
-## 9. Felhasználói kézikönyv
+## 9. Felhasználói kézikönyv {#9-felhasznaloi-kezikonyv}
 
 *(Szakasz to be completed)*
 
 ---
 
-## 10. Telepítés és karbantartás
+## 10. Telepítés és karbantartás {#10-telepites-es-karbantartas}
 
 *(Szakasz to be completed)*
 
 ---
 
-## 11. Következtetés és jövőbeni munka
+## 11. Következtetés és jövőbeni munka {#11-kovetkeztetes-es-jovobeni-munka}
 
 *(Szakasz to be completed)*
 
 ---
 
-## 12. Hivatkozások
+## 12. Hivatkozások {#12-hivatkozasok}
 
 *(Szakasz to be completed)*
 
 ---
 
-## 13. Mellékletek
+## 13. Mellékletek {#13-mellekletek}
 
 *(Szakasz to be completed)*
 

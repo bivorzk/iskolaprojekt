@@ -137,8 +137,8 @@ li { margin: 0.5rem 0; }
 <ul>
 <li><a href="#1-bevezetes">1. Bevezetés</a></li>
 <li><a href="#2-rendszer-attekinteese">2. Rendszer áttekintése</a></li>
-<li><a href="#3-requirements-specification">3. Követelmények</a></li>
-<li><a href="#4-system-architecture">4. Rendszerarchitektúra</a>
+<li><a href="#3-kovetelmenyek">3. Követelmények</a></li>
+<li><a href="#4-rendszerarchitektura">4. Rendszerarchitektúra</a>
 <ul>
 <li><a href="#41-komponensekmodulok">4.1 Komponensek/modulok</a></li>
 <li><a href="#42-adatfolyam">4.2 Adatfolyam</a></li>
@@ -155,18 +155,18 @@ li { margin: 0.5rem 0; }
 </li>
 <li><a href="#6-megvalositas">6. Megvalósítás</a>
 <ul>
-<li><a href="#61-directory-structure">6.1 Directory Structure</a></li>
-<li><a href="#62-backend-megvalosit%C3%A1s">6.2 Backend Megvalósítás</a></li>
-<li><a href="#63-frontend-megvalositas">6.3 Frontend Megvalósítás</a></li>
+<li><a href="#61-konyvtarszerkezet">6.1 Könyvtárstruktúra</a></li>
+<li><a href="#62-backend-megvalositas">6.2 Backend megvalósítás</a></li>
+<li><a href="#63-frontend-megvalositas">6.3 Frontend megvalósítás</a></li>
 </ul>
 </li>
-<li><a href="#7-api-reference">7. API referencia</a></li>
-<li><a href="#8-testing-and-validation">8. Tesztelés és érvényesítés</a></li>
-<li><a href="#9-user-manual">9. Felhasználói kézikönyv</a></li>
-<li><a href="#10-deployment-and-maintenance">10. Telepítés és karbantartás</a></li>
-<li><a href="#11-conclusion-and-future-work">11. Következtetés és jövőbeni munka</a></li>
-<li><a href="#12-Hivatkoz%C3%A1sok">12. Hivatkozások</a></li>
-<li><a href="#13-Mell%C3%A9kletek">13. Mellékletek</a></li>
+<li><a href="#7-api-referencia">7. API referencia</a></li>
+<li><a href="#8-teszteles-es-ervenyesites">8. Tesztelés és érvényesítés</a></li>
+<li><a href="#9-felhasznaloi-kezikonyv">9. Felhasználói kézikönyv</a></li>
+<li><a href="#10-telepites-es-karbantartas">10. Telepítés és karbantartás</a></li>
+<li><a href="#11-kovetkeztetes-es-jovobeni-munka">11. Következtetés és jövőbeni munka</a></li>
+<li><a href="#12-hivatkozasok">12. Hivatkozások</a></li>
+<li><a href="#13-mellekletek">13. Mellékletek</a></li>
 </ul>
 <hr>
 <h2 id="1-bevezetés">1. Bevezetés </h2>
@@ -238,15 +238,15 @@ li { margin: 0.5rem 0; }
 <td>MongoDB (perzisztens), Redis (cache, session)</td>
 </tr>
 <tr>
-<td>Auth &amp; Security</td>
-<td>JWT, rate limiting, security logging</td>
+<td>Hitelesítés és biztonság</td>
+<td>JWT, rate limiting, biztonsági naplózás</td>
 </tr>
 <tr>
 <td>Payment</td>
 <td>PayPal és Google Pay integráció</td>
 </tr>
 <tr>
-<td>Loyalty System</td>
+<td>Hűségprogram</td>
 <td>Pontszámítás, tier kezelés, kedvezmények</td>
 </tr>
 </tbody>
@@ -306,7 +306,7 @@ li { margin: 0.5rem 0; }
 </tr>
 </tbody>
 </table>
-<p><img src="system_component_diagram_placeholder.png" alt="System Component Diagram"></p>
+<p><img src="system_component_diagram_placeholder.png" alt="Rendszerkomponens diagram"></p>
 <hr>
 <h2 id="5-tervezés">5. Tervezés </h2>
 <h3 id="51-tervezési-elvek">5.1 Tervezési elvek </h3>
@@ -739,7 +739,7 @@ Table DailyMenuMenuItems {
 </tbody>
 </table>
 <p>Üzleti szabályok: A készlet nem lehet negatív; kategóriák szerint szűrhető. Elő mentési hook: ha stock &lt;= 0, available = false, egyébként true.</p>
-<h5 id="rendelés-orders">Rendelés (Orders) </h5>
+<h5 id="rendelés-rendelések">Rendelés (Rendelések) </h5>
 <table>
 <thead>
 <tr>
@@ -831,7 +831,7 @@ Table DailyMenuMenuItems {
 </tbody>
 </table>
 <p>Üzleti szabályok: Minden rendelés egy felhasználóhoz tartozik; az állapotváltozások az üzleti logikát követik. Elő mentési hook: ha a rendelés Pending és több mint 15 perc eltelt, automatikusan Cancelled lesz.</p>
-<h5 id="orderitems-order-items">OrderItems (Order Items) </h5>
+<h5 id="order-tételek-order-items">Order tételek (Order Items) </h5>
 <table>
 <thead>
 <tr>
@@ -1017,7 +1017,7 @@ Table DailyMenuMenuItems {
 </tbody>
 </table>
 <p>Üzleti szabályok: Parents can be linked to multiple students.</p>
-<h5 id="securitylogs-security-logs">SecurityLogs (Security Logs) </h5>
+<h5 id="securitylogs-biztonsági-naplók">SecurityLogs (Biztonsági naplók) </h5>
 <table>
 <thead>
 <tr>
@@ -1442,7 +1442,7 @@ Table DailyMenuMenuItems {
 <li>Készletgazdálkodás és készletfrissítések.</li>
 <li>Szülő-diák fiók összekapcsolása felügyelet céljából.</li>
 </ul>
-<h4 id="526-security-and-access">5.2.6 Security and Access </h4>
+<h4 id="526-biztonság-és-hozzáférés">5.2.6 Biztonság és hozzáférés </h4>
 <ul>
 <li>Authentication via JWT, passwords hashed with bcrypt.</li>
 <li>Role-based permissions (admin, student, etc.).</li>
@@ -1456,7 +1456,7 @@ Table DailyMenuMenuItems {
 <li>Regular index maintenance and monitoring.</li>
 <li>Backup strategies for MongoDB and Redis.</li>
 <li>Data migration for schema updates.</li>
-<li>Performance tuning based on query analysis.</li>
+<li>Teljesítményhangolás lekérdezéselemzés alapján.</li>
 <li>Cleanup of expired sessions and logs.</li>
 </ul>
 <h4 id="528-e2ee-chat-és-üzenetkezelés">5.2.8 E2EE chat és üzenetkezelés </h4>
@@ -1501,7 +1501,7 @@ Table DailyMenuMenuItems {
 <li><strong>Címzett és szülő-diák kapcsolatok</strong>: <code>ParentStudent</code> séma, adminisztráció és hozzáférés <code>src/dashboard/*</code> és <code>src/models/User.js</code> szerint <code>userPersonalInfo</code> kapcsolaton keresztül.</li>
 <li><strong>E2EE üzenetek</strong>: <code>src/models/Message.js</code> és <code>src/models/PreKey.js</code> + <code>src/models/StorageBlob.js</code> + <code>src/LoyaltySystem</code> (további konzisztencia, audit) + frontend <code>src/chat/**</code>.</li>
 </ul>
-<h5 id="security-and-maintainability-notes">Security and Maintainability Notes </h5>
+<h5 id="biztonság-és-karbantarthatóság-jegyzetek">Biztonság és karbantarthatóság jegyzetek </h5>
 <ul>
 <li>Jelszavak: A <code>src/auth/passwordhash.js</code> <code>bcrypt</code>-tel hasheli és ellenőrzi őket (hash + compare).</li>
 <li>Naplózás: Minden fontos művelet (<code>SecurityLogs</code>) a <code>src/auth/login.js</code>, <code>src/auth/register.js</code> és <code>src/api.js</code> végpontoknál történik.</li>
@@ -1585,15 +1585,15 @@ redis<span class="token punctuation">.</span><span class="token function">call</
     <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">r</span> <span class="token arrow operator">=&gt;</span> r<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword control-flow keyword-return">return</span> result<span class="token punctuation">.</span><span class="token property-access">score</span> <span class="token operator">&gt;=</span> <span class="token number">0.5</span><span class="token punctuation">;</span> <span class="token comment">// 0.0 = bot, 1.0 = ember</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span>
-</code></pre><h4 id="533-performance-optimization">5.3.3 Performance Optimization </h4>
+</code></pre><h4 id="533-teljesítményoptimalizálás">5.3.3 Teljesítményoptimalizálás </h4>
 <ul>
 <li><strong>Database indexes</strong>: Compound indexes on frequently queried fields (e.g., <code>{ email: 1, isVerified: 1 }</code>, <code>{ userId: 1, orderDate: -1 }</code>).</li>
 <li><strong>Lapozás</strong>: Skip-limit stratégia teljes halmazszámmal nagy adatkészletekhez.</li>
 <li><strong>Batch processing</strong>: <code>bulkWrite</code> for multi-record updates.</li>
 <li><strong>Cache middleware</strong>: Redis cache-first, fallback to MongoDB, with pattern-based invalidation on writes.</li>
 </ul>
-<h3 id="54-security-tervezés">5.4 Security Tervezés </h3>
-<h4 id="541-security-funkciók">5.4.1 Security Funkciók </h4>
+<h3 id="54-biztonsági-tervezés">5.4 Biztonsági tervezés </h3>
+<h4 id="541-biztonsági-funkciók">5.4.1 Biztonsági funkciók </h4>
 <table>
 <thead>
 <tr>
@@ -1688,12 +1688,12 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 <li><strong>Helyreállítás</strong>: Rendszer visszaállítása biztonsági mentésekből, felhasználói értesítés, szolgáltatás újraindítása.</li>
 <li><strong>Tapasztalatok levonása</strong>: Incidens utáni felülvizsgálat, dokumentáció frissítése, megelőző intézkedések.</li>
 </ol>
-<h4 id="544-compliance-and-privacy">5.4.4 Compliance and Privacy </h4>
+<h4 id="544-megfelelés-és-adatvédelem">5.4.4 Megfelelés és adatvédelem </h4>
 <ul>
 <li><strong>GDPR megfelelőség</strong>: Adatminimalizálás, hozzájárulás kezelése, törlés joga, IP hashing anonimizáláshoz.</li>
 <li><strong>PCI DSS</strong>: Payment data never stored locally; all transactions via certified gateways.</li>
 <li><strong>Data Retention</strong>: SecurityLogs retained for 2 years, user data until account deletion.</li>
-<li><strong>Privacy by Tervezés</strong>: Default encryption, access controls, and audit trails.</li>
+<li><strong>Privacy by Design</strong>: Alapértelmezett titkosítás, hozzáférésszabályozás és audit naplók.</li>
 </ul>
 <h4 id="545-biztonsági-tesztelés">5.4.5 Biztonsági tesztelés </h4>
 <ul>
@@ -1706,7 +1706,7 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 <p><img src="threat_model_diagram_placeholder.png" alt="Threat Model Diagram"></p>
 <hr>
 <h2 id="6-megvalósítás">6. Megvalósítás </h2>
-<h3 id="61-könyvtárszerkezet">6.1 Könyvtárszerkezet </h3>
+<h3 id="61-könyvtárstruktúra">6.1 Könyvtárstruktúra </h3>
 <pre data-role="codeBlock" data-info="" class="language-text"><code>├── config/
 │   ├── DATABASE_CONSTANTS.JS
 │   ├── database_queries.js
@@ -1744,7 +1744,7 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 │   └── services/
 └── tests/
     └── performance_tests/
-</code></pre><h3 id="62-backend-megvalósítás">6.2 Backend Megvalósítás </h3>
+</code></pre><h3 id="62-backend-megvalósítás">6.2 Backend megvalósítás </h3>
 <h4 id="621-technológiai-stack">6.2.1 Technológiai stack </h4>
 <p>Node.js + Express.js, MongoDB + Mongoose, Redis + Lua szkriptek, JWT, bcrypt, PayPal és Google Pay API-k, <a href="http://Socket.IO">Socket.IO</a>.</p>
 <h4 id="622-fő-alkalmazási-felépítés">6.2.2 Fő alkalmazási felépítés </h4>
@@ -1762,7 +1762,7 @@ redis<span class="token punctuation">.</span><span class="token function">call</
 <span class="token keyword control-flow keyword-await">await</span> user<span class="token punctuation">.</span><span class="token method function property-access">save</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token keyword control-flow keyword-await">await</span> <span class="token function">createSecurityLog</span><span class="token punctuation">(</span><span class="token string">'USER_REGISTER'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> username<span class="token punctuation">,</span> email <span class="token punctuation">}</span><span class="token punctuation">,</span> clientIp<span class="token punctuation">)</span><span class="token punctuation">;</span>
 res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Regisztráció sikeres! Ellenőrizze e-mailjét az érvényesítéshez.'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-</code></pre><h4 id="624-order--payment-processing">6.2.4 Order &amp; Payment Processing </h4>
+</code></pre><h4 id="624-rendelés--és-fizetésfeldolgozás">6.2.4 Rendelés- és fizetésfeldolgozás </h4>
 <p>A rendelési folyamat érvényesíti a kosarat a valós készlet alapján, létrehoz egy függőben lévő rendelést MongoDB-ben, meghívja a PayPal vagy Google Pay API-t, majd foglaláskor megerősíti a fizetést, levonja a készletet, jóváírja a hűségpontokat és naplózza a tranzakciót.</p>
 <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Rendelés létrehozása — src/api.js</span>
 router<span class="token punctuation">.</span><span class="token method function property-access">post</span><span class="token punctuation">(</span><span class="token string">'/orders'</span><span class="token punctuation">,</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
@@ -1821,13 +1821,13 @@ router<span class="token punctuation">.</span><span class="token method function
 </code></pre><h5 id="monitoring-and-metrics">Monitoring and Metrics </h5>
 <p>A Redis teljesítményét beépített INFO parancsokkal figyelik, nyomon követve a találati arányokat (&gt;90% cél), memóriahasználatot és kiszórási arányokat. A lassú lekérdezéseket optimalizáció céljából naplózzák.</p>
 <p><img src="redis_caching_architecture_placeholder.png" alt="Redis Caching Architecture Diagram"></p>
-<h4 id="626-loyalty-system">6.2.6 Loyalty System </h4>
+<h4 id="626-hűségprogram">6.2.6 Hűségprogram </h4>
 <p>A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 pont/dollár), szorzva ünnepi, egészségszint és tier bónuszokkal. Tier-ek: NONE → BRONZE (1200 pont) → SILVER (2500) → GOLD (8000) → PLATINUM (20000). Lásd <code>src/LoyaltySystem/loyalty-service.js</code> és <code>config/DATABASE_CONSTANTS.JS</code> a díjszabásokhoz.</p>
 <h4 id="627-rate-limiting">6.2.7 Rate Limiting </h4>
 <p>Két stratégiát alkalmaz: <code>express-rate-limit</code> Redis tárolóval általános API végpontokra, valamint egy egyedi Redis Lua csúszóablakos script admin/dashboard útvonalakhoz (30 kérés/perc). A Lua megvalósítás atomi — egyetlen megszakíthatatlan tranzakcióként fut, ezzel elkerülve a versenyhelyzeteket nagy párhuzamos terhelésnél. Lásd a Lua scriptet az 5.3.2 szakaszban.</p>
-<h4 id="628-extensibility--maintainability">6.2.8 Extensibility &amp; Maintainability </h4>
+<h4 id="628-bővíthetőség-és-karbantarthatóság">6.2.8 Bővíthetőség és karbantarthatóság </h4>
 <p>A backend rétegezett, szolgáltatásorientált architektúrát használ (route-ok → szolgáltatások → modellek). A konfiguráció környezeti változókon keresztül történik <code>.env</code> fájl segítségével. A hibakezelés központilag történik Express hibakezelő middleware-eken keresztül, amelyek naplózzák a biztonsági eseményeket és biztonságos üzeneteket küldenek a kliensnek. Az állapotmentes JWT tervezés és a Redis munkamenet tárolás vízszintes skálázást tesz lehetővé. A függőségek <code>npm audit</code>-tal vannak kezelve és naprakészen tartva.</p>
-<h3 id="63-frontend-megvalósítás">6.3 Frontend Megvalósítás </h3>
+<h3 id="63-frontend-megvalósítás">6.3 Frontend megvalósítás </h3>
 <h4 id="631-technológiai-stack">6.3.1 Technológiai stack </h4>
 <p>React.js JSX-szel, Tailwind CSS stílushoz, <a href="http://Socket.IO">Socket.IO</a> kliens valós idejű kommunikációhoz, egyéni E2EE kriptó könyvtár, mobil-first reszponzív tervezés.</p>
 <h4 id="632-fő-alkalmazás-felépítés">6.3.2 Fő alkalmazás felépítés </h4>
@@ -1838,7 +1838,7 @@ router<span class="token punctuation">.</span><span class="token method function
 <li><strong>Routing</strong>: Kliens oldali útválasztás URL hash változások és feltételes renderelés alapján.</li>
 <li><strong>Stílus</strong>: Tailwind CSS osztályok reszponzív, utility-first tervezéshez.</li>
 </ul>
-<h4 id="633-key-components-and-funkciók">6.3.3 Key Components and Funkciók </h4>
+<h4 id="633-kulcsfontosságú-komponensek-és-funkciók">6.3.3 Kulcsfontosságú komponensek és funkciók </h4>
 <h5 id="dashboard-rendszer">Dashboard rendszer </h5>
 <p>Az adminisztrációs irányítópult (<code>public/dashboard/admin/admin.jsx</code>) sidebar navigációt, felhasználók, statisztikák, menüpontok, jutalmak, egészségellenőrzések és beállítások szakaszait tartalmazza. Egy egyedi <code>useAdminData</code> hookot használ az adatok REST API-król történő lekérésére és kezelésére.</p>
 <pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Admin irányítópult felépítés — public/dashboard/admin/admin.jsx</span>
@@ -1859,7 +1859,7 @@ router<span class="token punctuation">.</span><span class="token method function
         </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span>
-</code></pre><h5 id="order-and-cart-system">Order and Cart System </h5>
+</code></pre><h5 id="rendelési-és-kosár-rendszer">Rendelési és kosár rendszer </h5>
 <p>A rendelési oldal (<code>public/order/order.jsx</code>) bevásárlókosarat valósít meg <code>useCart</code> hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval.</p>
 <pre data-role="codeBlock" data-info="jsx" class="language-jsx jsx"><code><span class="token comment">// Cart Management — public/order/useCart.js</span>
 <span class="token keyword keyword-const">const</span> <span class="token function-variable function">useCart</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
@@ -1888,10 +1888,10 @@ router<span class="token punctuation">.</span><span class="token method function
 </ul>
 <h4 id="635-uiux-tervezési-elvek">6.3.5 UI/UX tervezési elvek </h4>
 <ul>
-<li><strong>Accessibility</strong>: ARIA labels, keyboard navigation, high contrast colors.</li>
-<li><strong>Performance</strong>: Lazy loading of components, optimized images, minimal re-renders.</li>
-<li><strong>User Experience</strong>: Progressive enhancement, error boundaries, loading indicators.</li>
-<li><strong>Security</strong>: Input sanitization, XSS protection via React's built-in escaping.</li>
+<li><strong>Akadálymentesség</strong>: ARIA címkék, billentyűzet-navigáció, nagy kontrasztú színek.</li>
+<li><strong>Teljesítmény</strong>: komponensek késleltetett betöltése, optimalizált képek, minimális újrarenderelés.</li>
+<li><strong>Felhasználói élmény</strong>: fokozatos funkcióbővítés, hibahatárok, betöltési jelzők.</li>
+<li><strong>Biztonság</strong>: bemenet-szűrés, XSS védelem a React beépített escape mechanizmusával.</li>
 </ul>
 <h4 id="636-build-és-telepítés">6.3.6 Build és telepítés </h4>
 <ul>
