@@ -3,26 +3,30 @@
 -- ARGV: [1] window_size_seconds, [2] max_requests, [3] current_timestamp
 ---@diagnostic disable: undefined-global -- Disable undefined global warnings
 
-local key = KEYS[1]
+local function fnv1a(str)
+    local hash = 2166136261
+    for i = 1, #str do
+        hash = bit.bxor(hash, string.byte(str, i))
+        hash = bit.band(hash * 16777619, 0xFFFFFFFF)
+    end
+    return tostring(hash)
+end
+
+-- Hash the input key to keep Redis keys short and uniform
+local key = "rl:" .. fnv1a(KEYS[1])
 local window = tonumber(ARGV[1])
 local max_requests = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 
--- Remove old entries outside the window
 redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
-
--- Count current requests in window
 local current_count = redis.call('ZCARD', key)
 
--- Check if limit exceeded
 if current_count >= max_requests then
-    return {0, current_count} -- 0 = blocked, current count
+    return {0, current_count}
 end
 
--- Add current request
+-- Using 'now' as both score and member to save space
 redis.call('ZADD', key, now, now)
-
--- Set expiration on the key (cleanup)
 redis.call('EXPIRE', key, window)
 
-return {1, current_count + 1} -- 1 = allowed, new count
+return {1, current_count + 1}
