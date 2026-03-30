@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const path = require('path');
+const { act } = require('react');
 
 // Environment configuration
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
@@ -122,6 +123,12 @@ const userSchema = new mongoose.Schema({
     keySalt:            { type: String },
     keyIv:              { type: String },
     hasKeyBackup:       { type: Boolean, default: false }
+  },
+  is2Active: {
+    type: Boolean,
+    default: false,
+    activatedAt: { type: Date, default: Date.now },
+    deactivatedAt: { type: Date }
   }
 });
 

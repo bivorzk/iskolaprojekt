@@ -1,5 +1,5 @@
 config:
-  target: 'http://localhost:3000'  # Replace with your server URL
+  target: 'https://snaptray.onrender.com/'  # Replace with your server URL
   phases:
     - duration: 60
       arrivalRate: 500
