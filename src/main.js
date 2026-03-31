@@ -130,18 +130,27 @@ const dashboardLimiter = rateLimit({
   store: createStore(),
 });
 
+const twoFALimiter = rateLimit({
+  windowMs: QUARTERHOUR,
+  max: 900,
+  handler: (req, res) => {
+    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+  },
+  store: createStore(),
+});
+
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);
 app.use('/login', LoginLimiter);
 app.use('/register', registerLimiter);
 app.use('/api', limiter);
 app.use('/dashboard', dashboardLimiter);
-app.use('/2fa', limiter);
+app.use('/2fa', twoFALimiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public/index.html'));
+  res.sendFile(path.join(process.cwd(), 'public/login/index.html'));
 });
 app.get('/register', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/register.html'));
@@ -154,6 +163,9 @@ app.get('/pay', (req, res) => {
 });
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/chat/index.html'));
+});
+app.get('/2fa', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public/2fa/index.html'));
 });
 
 app.use('/password-reset', password_reset);

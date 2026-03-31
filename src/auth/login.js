@@ -139,6 +139,12 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    // If 2FA is enabled, defer session creation until the number-match is confirmed
+    if (user.is2Active) {
+      console.log("2FA required for:", username);
+      return res.status(200).json({ requires2FA: true, email: user.email });
+    }
+
     // Update last active timestamp
     await User.findByIdAndUpdate(user._id, { lastActive: Date.now() });
 
