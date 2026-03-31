@@ -70,6 +70,23 @@ const ParentSidebar = ({ activeSection, setActiveSection }) => {
                         Settings
                     </button>
                 </div>
+
+                <div className="px-4 mt-8">
+                    <div className="border-t border-gray-200 pt-4 space-y-2">
+                        <a
+                            href="/Order"
+                            className="w-full block text-center bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-secondary transition-colors"
+                        >
+                            🍽️ Order Food
+                        </a>
+                        <a
+                            href="/chat"
+                            className="w-full block text-center bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                        >
+                            💬 Open Chat
+                        </a>
+                    </div>
+                </div>
             </nav>
         </aside>
     );

@@ -5,7 +5,7 @@ require('dotenv').config();
 const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
-mongoose.connect(dbUrl + dbName)
+mongoose.connect(dbUrl + dbName, { maxPoolSize: 50, minPoolSize: 5 })
     .then(() => console.log('Connected to MongoDB for database queries'))
     .catch(err => console.error('Could not connect to MongoDB for database queries', err));
 

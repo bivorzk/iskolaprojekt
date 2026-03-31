@@ -1,4 +1,41 @@
-const StudentHeader = ({ welcomeMessage, walletAmount }) => {
+const DashboardSwitcher = () => {
+    const [open, setOpen] = React.useState(false);
+    const dashboards = [
+        { label: '🎓 Student Panel', href: '/dashboard/student' },
+        { label: '👨\u200d👩\u200d👧\u200d👦 Parent Panel', href: '/dashboard/parent' },
+        { label: '\u270f\ufe0f Editor Panel', href: '/dashboard/editor' },
+    ];
+    return (
+        <div className="flex items-center gap-2">
+            <a
+                href="/dashboard/admin"
+                className="flex items-center gap-1 bg-primary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <span className="hidden sm:inline">Admin</span>
+            </a>
+            <div className="relative">
+                <button
+                    onClick={() => setOpen(!open)}
+                    className="flex items-center gap-1.5 bg-accent text-primary px-3 py-2 rounded-md text-sm font-medium hover:bg-orange-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                    <span className="hidden sm:inline">Switch</span>
+                    <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {open && (
+                    <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                        {dashboards.map(d => (
+                            <a key={d.href} href={d.href} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-accent hover:text-primary transition-colors">{d.label}</a>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const StudentHeader = ({ welcomeMessage, walletAmount, userData }) => {
     return (
         <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex justify-between items-center py-4 w-full">
@@ -17,6 +54,7 @@ const StudentHeader = ({ welcomeMessage, walletAmount }) => {
                     </a>
                 </div>
                 <div className="flex items-center space-x-4 pr-4 sm:pr-6 lg:pr-8">
+                    {userData?.usertype === 'admin' && <DashboardSwitcher />}
                     <div className="text-right">
                         <div className="text-sm text-gray-600">Wallet Balance</div>
                         <div className="text-lg font-semibold text-primary">${walletAmount.toFixed(2)}</div>

@@ -10,7 +10,7 @@ const dbUrl = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 
 // Database connection
-mongoose.connect(dbUrl + dbName)
+mongoose.connect(dbUrl + dbName, { maxPoolSize: 50, minPoolSize: 5 })
   .then(() => console.log('Connected to MongoDB for user auth'))
   .catch(err => console.error('Could not connect to MongoDB for user auth', err));
 

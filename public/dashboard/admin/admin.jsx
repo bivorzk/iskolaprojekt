@@ -6,7 +6,7 @@ const { useState } = React;
 const AdminDashboard = () => {
     const [activeSection, setActiveSection] = useState('users');
 
-    const { stats, users, menuItems, rewards, signupData, welcomeMessage, loading, loadDashboardData } = useAdminData();
+    const { stats, users, menuItems, rewards, signupData, welcomeMessage, userData, loading, loadDashboardData } = useAdminData();
 
     if (loading) {
         return (
@@ -21,7 +21,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
-            <AdminHeader welcomeMessage={welcomeMessage} />
+            <AdminHeader welcomeMessage={welcomeMessage} userData={userData} />
 
             <div className="flex">
                 <AdminSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
@@ -33,7 +33,7 @@ const AdminDashboard = () => {
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'rewards' && <RewardsSection rewards={rewards} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'health' && <HealthCheckSection />}
-                    {activeSection === 'settings' && <SettingsSection />}
+                    {activeSection === 'settings' && <SettingsSection userData={userData} />}
                 </main>
             </div>
             

@@ -18,6 +18,7 @@ const useAdminData = () => {
     const [rewards, setRewards] = useState([]);
     const [signupData, setSignupData] = useState([]);
     const [welcomeMessage, setWelcomeMessage] = useState('Welcome, Admin');
+    const [userData, setUserData] = useState({});
     const [loading, setLoading] = useState(true);
 
     const loadDashboardData = async () => {
@@ -91,6 +92,15 @@ const useAdminData = () => {
             setMenuItems(menuData.menuItems || []);
             setRewards(rewardsData.rewards || []);
             setWelcomeMessage(welcome.message || 'Welcome, Admin');
+
+            // Fetch admin userinfo for dashboard switcher
+            try {
+                const userInfoRes = await fetch('/dashboard/admin/userinfo');
+                if (userInfoRes.ok) {
+                    const userInfo = await userInfoRes.json();
+                    setUserData(userInfo);
+                }
+            } catch (e) { console.warn('Could not fetch admin userinfo:', e.message); }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
             // Set fallback values
@@ -123,6 +133,7 @@ const useAdminData = () => {
         rewards,
         signupData,
         welcomeMessage,
+        userData,
         loading,
         loadDashboardData
     };

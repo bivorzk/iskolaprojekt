@@ -58,7 +58,7 @@ const ParentDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <ParentHeader welcomeMessage={welcomeMessage} walletAmount={walletAmount} />
+            <ParentHeader welcomeMessage={welcomeMessage} walletAmount={walletAmount} userData={userData} />
             <div className="flex">
                 <ParentSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
                 <main className="flex-1 p-4 sm:p-8 pb-20 lg:pb-8">

@@ -13,6 +13,7 @@ const useEditorData = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [rewards, setRewards] = useState([]);
     const [welcomeMessage, setWelcomeMessage] = useState('Welcome, Editor');
+    const [userData, setUserData] = useState({});
     const [loading, setLoading] = useState(true);
 
     const loadDashboardData = async () => {
@@ -63,6 +64,15 @@ const useEditorData = () => {
             setMenuItems(menuData.menuItems || []);
             setRewards(rewardsData.rewards || []);
             setWelcomeMessage(welcome.message || 'Welcome, Editor');
+
+            // Fetch userinfo for dashboard switcher
+            try {
+                const userInfoRes = await fetch('/dashboard/editor/userinfo');
+                if (userInfoRes.ok) {
+                    const userInfo = await userInfoRes.json();
+                    setUserData(userInfo);
+                }
+            } catch (e) { console.warn('Could not fetch editor userinfo:', e.message); }
         } catch (error) {
             console.error('Error loading editor dashboard data:', error);
             // Set fallback values
@@ -89,6 +99,7 @@ const useEditorData = () => {
         menuItems,
         rewards,
         welcomeMessage,
+        userData,
         loading,
         loadDashboardData
     };

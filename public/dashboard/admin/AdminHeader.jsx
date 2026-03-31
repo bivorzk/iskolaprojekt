@@ -1,3 +1,32 @@
+const DashboardSwitcher = () => {
+    const [open, setOpen] = React.useState(false);
+    const dashboards = [
+        { label: '🛡️ Admin Panel', href: '/dashboard/admin' },
+        { label: '🎓 Student Panel', href: '/dashboard/student' },
+        { label: '👨‍👩‍👧‍👦 Parent Panel', href: '/dashboard/parent' },
+        { label: '✏️ Editor Panel', href: '/dashboard/editor' },
+    ];
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-1.5 bg-accent text-primary px-3 py-2 rounded-md text-sm font-medium hover:bg-orange-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                <span className="hidden sm:inline">Switch Dashboard</span>
+                <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {open && (
+                <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                    {dashboards.map(d => (
+                        <a key={d.href} href={d.href} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-accent hover:text-primary transition-colors">{d.label}</a>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AdminHeader = ({ welcomeMessage }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -28,6 +57,7 @@ const AdminHeader = ({ welcomeMessage }) => {
                     </a>
                 </div>
                 <div className="flex items-center space-x-2 sm:space-x-4">
+                    <DashboardSwitcher />
                     <span className="hidden sm:inline text-sm sm:text-base text-gray-700 truncate max-w-32 sm:max-w-none font-medium">{welcomeMessage}</span>
                     <a 
                         href="/logout" 

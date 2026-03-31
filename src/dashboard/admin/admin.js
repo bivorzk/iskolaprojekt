@@ -690,4 +690,79 @@ router.get('/health', cacheResult('system:health', 30), async (req, res) => {
   res.status(httpStatus).json(healthResults);
 });
 
+// ── Admin: userinfo (for dashboard switcher) ──────────────────────────────────
+router.get('/userinfo', async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ username: user.username, email: user.email, usertype: user.usertype, createdAt: user.createdAt, isVerified: user.isVerified });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Settings: 2FA status ──────────────────────────────────────────────────────
+router.get('/settings/2fa/status', async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('is2Active');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ is2Active: user.is2Active === true });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Settings: toggle 2FA ──────────────────────────────────────────────────────
+router.post('/settings/2fa/toggle', async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('is2Active');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.is2Active = !user.is2Active;
+    await user.save();
+    res.json({ is2Active: user.is2Active });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Settings: get personal info ───────────────────────────────────────────────
+router.get('/settings/personal-info', async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('userPersonalInfo');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const info = user.userPersonalInfo && user.userPersonalInfo[0] ? user.userPersonalInfo[0].toObject() : {};
+    res.json(info);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Settings: save personal info ─────────────────────────────────────────────
+router.post('/settings/personal-info', [
+  body('firstName').trim().isLength({ min: 1, max: 50 }),
+  body('lastName').trim().isLength({ min: 1, max: 50 }),
+  body('dateOfBirth').optional({ nullable: true, checkFalsy: true }).isISO8601(),
+  body('school').optional({ nullable: true }).trim().isLength({ max: 100 }),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid input', details: errors.array() });
+  try {
+    const userId = req.session.user.id;
+    const { firstName, lastName, dateOfBirth, school, address } = req.body;
+    const update = { firstName, lastName };
+    if (dateOfBirth) update.dateOfBirth = new Date(dateOfBirth);
+    if (school) update.school = school;
+    if (address) update.address = address;
+
+    await User.updateOne(
+      { _id: userId },
+      { $set: { 'userPersonalInfo': [{ userId, ...update }] } }
+    );
+    invalidateCache(['admin:userinfo']);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

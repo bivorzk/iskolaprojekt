@@ -5,7 +5,8 @@ const MobileAdminNav = ({ activeSection, setActiveSection }) => {
         { id: 'menu-items', label: 'Menu', icon: '🍽️' },
         { id: 'rewards', label: 'Rewards', icon: '🎁' },
         { id: 'health', label: 'Health', icon: '🏥' },
-        { id: 'settings', label: 'Settings', icon: '⚙️' }
+        { id: 'settings', label: 'Settings', icon: '⚙️' },
+        { id: 'chat', label: 'Chat', icon: '💬', href: '/chat' }
     ];
 
     return (
@@ -14,7 +15,7 @@ const MobileAdminNav = ({ activeSection, setActiveSection }) => {
                 {navItems.map((item) => (
                     <button
                         key={item.id}
-                        onClick={() => setActiveSection(item.id)}
+                        onClick={() => item.href ? (window.location.href = item.href) : setActiveSection(item.id)}
                         className={`flex flex-col items-center justify-center p-3 min-w-0 flex-1 transition-all duration-200 ${
                             activeSection === item.id
                                 ? 'text-primary bg-accent'

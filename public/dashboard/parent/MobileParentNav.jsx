@@ -4,7 +4,8 @@ const MobileParentNav = ({ activeSection, setActiveSection }) => {
         { id: 'orders', label: 'Orders', icon: '📋' },
         { id: 'wallet', label: 'Wallet', icon: '💰' },
         { id: 'transactions', label: 'History', icon: '📊' },
-        { id: 'settings', label: 'Settings', icon: '⚙️' }
+        { id: 'settings', label: 'Settings', icon: '⚙️' },
+        { id: 'chat', label: 'Chat', icon: '💬', href: '/chat' }
     ];
 
     return (
@@ -13,7 +14,7 @@ const MobileParentNav = ({ activeSection, setActiveSection }) => {
                 {navItems.map((item) => (
                     <button
                         key={item.id}
-                        onClick={() => setActiveSection(item.id)}
+                        onClick={() => item.href ? (window.location.href = item.href) : setActiveSection(item.id)}
                         className={`flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-colors ${
                             activeSection === item.id
                                 ? 'text-primary'

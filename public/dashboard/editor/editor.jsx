@@ -6,7 +6,7 @@ const { useState } = React;
 const EditorDashboard = () => {
     const [activeSection, setActiveSection] = useState('stats');
 
-    const { stats, menuItems, rewards, welcomeMessage, loading, loadDashboardData } = useEditorData();
+    const { stats, menuItems, rewards, welcomeMessage, userData, loading, loadDashboardData } = useEditorData();
 
     if (loading) {
         return (
@@ -21,7 +21,7 @@ const EditorDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
-            <EditorHeader welcomeMessage={welcomeMessage} />
+            <EditorHeader welcomeMessage={welcomeMessage} userData={userData} />
 
             <div className="flex">
                 <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />

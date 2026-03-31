@@ -395,4 +395,15 @@ router.get('/welcome-message', (req, res) => {
   }
 });
 
+// ── Editor: userinfo (for dashboard switcher) ─────────────────────────────────
+router.get('/userinfo', async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ username: user.username, email: user.email, usertype: user.usertype, createdAt: user.createdAt, isVerified: user.isVerified });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

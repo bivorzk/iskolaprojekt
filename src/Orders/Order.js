@@ -46,9 +46,7 @@ const client = new Client({
     timeout: 0,
     environment: Environment.Sandbox,
     logging: {
-        logLevel: LogLevel.Info,
-        logRequest: { logBody: true },
-        logResponse: { logHeaders: true },
+        logLevel: LogLevel.None,
     },
 });
 
@@ -138,10 +136,6 @@ function validateOrderInput(req, res, next) {
   next();
 }
 
-// Apply middleware to all order routes
-router.use('/', rateLimit); // Apply rate limiting to all order routes
-
-
 router.get('/', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public/order/index.html'));
 });
@@ -150,6 +144,8 @@ router.get('/item_information/:itemName', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public/information/index.html'));
 });
 
+// Apply rate limiting to all API endpoints (not static HTML serves)
+router.use(['/username', '/menu_items', '/order', '/order/wallet', '/item_information'], rateLimit);
 
 // API endpoints for ORDER MANAGEMENT
 
@@ -215,25 +211,16 @@ router.post('/item_information/:itemName/Review', [
 
     
     try {
-        // Check Redis cache for menu item first
         const cacheKey = `menu_item:${itemName}`;
         let menuItem;
-        
-        console.log('Looking for menu item with name:', itemName);
-        
+
         try {
-            // Skip cache for now and go directly to database
             menuItem = await MenuItems.findOne({ name: itemName });
-            console.log('Found menu item:', menuItem ? menuItem.name : 'NOT FOUND');
-            console.log('Menu item ID:', menuItem ? menuItem._id : 'N/A');
-            console.log('Current reviews count:', menuItem && menuItem.reviews ? menuItem.reviews.length : 'No reviews array');
         } catch (cacheError) {
-            console.log('Database query error:', cacheError.message);
             menuItem = null;
         }
         
         if (!menuItem) {
-            console.log('Menu item not found for name:', itemName);
             await createSecurityLog({
                 userId: req.session.user ? req.session.user.id : null,
                 ipAddress,
@@ -244,7 +231,6 @@ router.post('/item_information/:itemName/Review', [
             return res.status(404).json({ error: 'Menu item not found' });
         }
         
-        // Check for existing review if user is logged in
         if (req.session.user) {
             const existingReview = menuItem.reviews?.find(
                 review => review.userId && review.userId.toString() === req.session.user.id
@@ -261,47 +247,27 @@ router.post('/item_information/:itemName/Review', [
             }
         }
         
-        // Initialize reviews array if it doesn't exist
         if (!menuItem.reviews) {
-            console.log('Initializing reviews array for item:', itemName);
             menuItem.reviews = [];
         }
         
-        // Create new review
         const newReview = {
             userId: req.session.user ? req.session.user.id : null,
             rating,
             comment: comment.trim(),
             date: new Date(),
-            ipAddress: req.ip // Store hashed IP for security purposes
+            ipAddress: req.ip
         };
-        
-        console.log('Created new review object:', newReview);
-        
-        // Add review to menu item
+
         menuItem.reviews.push(newReview);
-        console.log('Adding review to item:', itemName, 'Total reviews after add:', menuItem.reviews.length);
-        
-        try {
-            const savedItem = await menuItem.save();
-            console.log('Menu item saved successfully. New reviews count:', savedItem.reviews.length);
-        } catch (saveError) {
-            console.error('Error saving menu item:', saveError);
-            throw saveError;
-        }
-        
-        // Update menu item's average rating
+
+        // Compute new average before saving
         const totalRatings = menuItem.reviews.length;
-        const sumRatings = menuItem.reviews.reduce((sum, review) => sum + review.rating, 0);
-        menuItem.averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : 0;
-        
-        try {
-            const updatedItem = await menuItem.save();
-            console.log('Updated average rating to:', updatedItem.averageRating, 'Total reviews:', updatedItem.reviews.length);
-        } catch (avgSaveError) {
-            console.error('Error saving updated average rating:', avgSaveError);
-            // Don't throw here since review was already saved
-        }
+        menuItem.averageRating = totalRatings > 0
+            ? parseFloat((menuItem.reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings).toFixed(1))
+            : 0;
+
+        await menuItem.save();
         
         // Invalidate relevant caches
         if (invalidateCache) {
@@ -330,20 +296,6 @@ router.post('/item_information/:itemName/Review', [
         });
     } catch (error) {
         console.error('Error adding review:', error);
-        
-        // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'REVIEW_SUBMISSION_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during review submission: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
-        
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }); 
@@ -389,16 +341,20 @@ router.get('/username', async (req, res) => {
 
 router.get('/menu_items', async (req, res) => {
     try {
+        const cacheKey = 'menu_items:available';
+
+        if (getCached) {
+            const cached = await getCached(cacheKey);
+            if (cached) return res.json(cached);
+        }
+
         const menuItems = await MenuItems.find({ available: true })
             .select('name price description category healthScore averageRating stock available reviews')
             .populate('reviews.userId', 'username')
-            .lean(); 
-        
-        console.log('Fetched menu items with reviews:');
-        menuItems.forEach(item => {
-            console.log(`- "${item.name}" (reviews: ${item.reviews ? item.reviews.length : 0})`);
-        });
-        
+            .lean();
+
+        if (setCached) await setCached(cacheKey, menuItems, 30); // 30-second TTL
+
         res.json(menuItems);
     }
     catch (error) {

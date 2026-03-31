@@ -333,6 +333,20 @@ const QuickRoleButton = ({ user, onUpdated }) => {
 const UsersSection = ({ users, loadDashboardData }) => {
     const { useState } = React;
     const [selectedUser, setSelectedUser] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredUsers = searchQuery.trim()
+        ? users.filter(u =>
+            u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : users;
+
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const pageUsers = filteredUsers.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     const handleRowClick = (user) => setSelectedUser(user);
     const handleClose = () => setSelectedUser(null);
@@ -341,9 +355,30 @@ const UsersSection = ({ users, loadDashboardData }) => {
         setSelectedUser(null);
     };
 
+    // Reset to page 1 when search changes
+    React.useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+
     return (
         <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4 sm:mb-6">User Management</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-primary">User Management</h2>
+                <div className="flex items-center gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search users..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-48"
+                    />
+                    <select
+                        value={pageSize}
+                        onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                        className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                        {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+                    </select>
+                </div>
+            </div>
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -357,7 +392,7 @@ const UsersSection = ({ users, loadDashboardData }) => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {users.map((user, index) => (
+                            {pageUsers.map((user, index) => (
                                 <tr
                                     key={user._id || index}
                                     className={`hover:bg-accent cursor-pointer transition-colors ${user.isBanned ? 'opacity-60' : ''}`}
@@ -399,6 +434,48 @@ const UsersSection = ({ users, loadDashboardData }) => {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination controls */}
+            {filteredUsers.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-1">
+                    <p className="text-sm text-gray-500">
+                        Showing {Math.min((safePage - 1) * pageSize + 1, filteredUsers.length)}–{Math.min(safePage * pageSize, filteredUsers.length)} of {filteredUsers.length} users
+                    </p>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setCurrentPage(1)}
+                            disabled={safePage === 1}
+                            className="px-2 py-1 rounded-md text-sm border border-gray-300 text-gray-600 hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >«</button>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={safePage === 1}
+                            className="px-2 py-1 rounded-md text-sm border border-gray-300 text-gray-600 hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >‹</button>
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            const start = Math.max(1, Math.min(safePage - 2, totalPages - 4));
+                            const page = start + i;
+                            return (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3 py-1 rounded-md text-sm border transition-colors ${page === safePage ? 'bg-primary text-white border-primary' : 'border-gray-300 text-gray-600 hover:bg-accent'}`}
+                                >{page}</button>
+                            );
+                        })}
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={safePage === totalPages}
+                            className="px-2 py-1 rounded-md text-sm border border-gray-300 text-gray-600 hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >›</button>
+                        <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={safePage === totalPages}
+                            className="px-2 py-1 rounded-md text-sm border border-gray-300 text-gray-600 hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >»</button>
+                    </div>
+                </div>
+            )}
 
             {selectedUser && (
                 <UserInfoPopup
