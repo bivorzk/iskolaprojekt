@@ -1,7 +1,7 @@
 const express = require('express');
 // Import User model and other database models
 const { User } = require('./database');
-const { Payment, UserLoyalty, MenuItems, Order, OrderItems } = require('../config/database_queries');
+const { Payment, UserLoyalty, MenuItems, Order, OrderItems, DailyMenu } = require('../config/database_queries');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 
@@ -64,6 +64,59 @@ router.get('/menu-items', async (req, res) => {
         res.json(menuItems);
     } catch (error) {
         console.error('Error fetching menu items:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Route to get daily menu recommendations (morning/afternoon)
+router.get('/daily-menu', async (req, res) => {
+    try {
+        const now = new Date();
+        const hour = now.getHours();
+        let timeOfDay;
+
+        if (hour >= 6 && hour < 12) {
+            timeOfDay = 'morning';
+        } else if (hour >= 12 && hour < 18) {
+            timeOfDay = 'afternoon';
+        } else {
+            timeOfDay = 'afternoon';
+        }
+
+        // Use the DailyMenu table for explicit daily routes
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(now);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const dailyMenuRecord = await DailyMenu.findOne({
+            schoolPeriod: timeOfDay,
+            date: { $gte: startOfDay, $lte: endOfDay }
+        })
+        .populate('menuItems')
+        .exec();
+
+        let dailyMenuItems = [];
+
+        if (dailyMenuRecord && Array.isArray(dailyMenuRecord.menuItems) && dailyMenuRecord.menuItems.length > 0) {
+            dailyMenuItems = dailyMenuRecord.menuItems.filter(item => item && item.available).slice(0, 3);
+        } else {
+            // fallback to random available items
+            const menuItems = await MenuItems.find({ available: true });
+            const shuffled = menuItems
+                .map(item => ({ item, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(i => i.item);
+            dailyMenuItems = shuffled.slice(0, 3);
+        }
+
+        res.json({
+            timeOfDay,
+            label: timeOfDay === 'morning' ? 'Morning Menu' : 'Afternoon Menu',
+            items: dailyMenuItems
+        });
+    } catch (error) {
+        console.error('Error fetching daily menu items:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

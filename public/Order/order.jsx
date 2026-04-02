@@ -2,6 +2,8 @@ const { useState, useEffect } = React;
 
         const OrderPage = () => {
             const [menuItems, setMenuItems] = useState([]);
+            const [dailyMenu, setDailyMenu] = useState([]);
+            const [dailyMenuTitle, setDailyMenuTitle] = useState('Daily Menu');
             const [currency, setCurrency] = useState('HUF');
             const [loading, setLoading] = useState(true);
             const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +33,13 @@ const { useState, useEffect } = React;
                     const response = await fetch('/api/menu-items');
                     const data = await response.json();
                     setMenuItems(data.filter(item => item.available));
+
+                    const dailyResp = await fetch('/api/daily-menu');
+                    if (dailyResp.ok) {
+                        const dailyData = await dailyResp.json();
+                        setDailyMenuTitle(dailyData.label || 'Daily Menu');
+                        setDailyMenu(Array.isArray(dailyData.items) ? dailyData.items : []);
+                    }
                 } catch (error) {
                     console.error('Error loading menu items:', error);
                 } finally {
@@ -77,7 +86,31 @@ const { useState, useEffect } = React;
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {/* Loyalty Status Banner */}
                         <LoyaltyStatus />
-                        
+
+                        {/* Daily Menu Highlight */}
+                        {dailyMenu.length > 0 && (
+                            <div className="bg-white border-2 border-primary shadow-sm rounded-xl p-5 mb-6">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-xl font-bold text-primary">{dailyMenuTitle}</h2>
+                                    <span className="text-sm font-medium text-secondary uppercase">Recommended</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {dailyMenu.map((item) => (
+                                        <div key={item._id} className="border border-gray-200 rounded-lg p-3 bg-gradient-to-br from-[#f8fafc] to-white">
+                                            <h3 className="text-base font-semibold text-gray-800 mb-1">{item.name}</h3>
+                                            <p className="text-xs text-gray-500 h-10 overflow-hidden">{item.description || 'Delicious choice!'}</p>
+                                            <div className="flex items-center justify-between mt-2">
+                                                <span className="text-sm font-bold text-primary">{(Number(item.price) || 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</span>
+                                                <button onClick={() => handleAddToCart(item)} className="text-xs px-2 py-1 rounded-md bg-primary text-white hover:bg-secondary transition-colors">
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Menu Section */}
                             <div className="flex-1">

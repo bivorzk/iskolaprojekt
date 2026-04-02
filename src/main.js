@@ -59,7 +59,11 @@ app.use(compression());
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(cors());
 app.use(favicon(path.join(process.cwd(), 'public', 'favicon.ico')));
-app.use(express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', etag: true }));
+
+
+
+// Serve static content but keep root route explicit to avoid index redirect optics
+app.use(express.static(path.join(process.cwd(), 'public'), { index: false, maxAge: '1d', etag: true }));
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -70,10 +74,6 @@ app.use(session({
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public/home_page/home_page.html'));
-});
 
 const server = require('http').createServer(app);
 server.keepAliveTimeout = 65000;
@@ -148,6 +148,15 @@ app.use('/dashboard', dashboardLimiter);
 app.use('/2fa', twoFALimiter);
 app.use('/email-verification', limiter);
 app.use('/pay', limiter);
+
+app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(path.join(process.cwd(), 'public/home_page/home_page.html'));
+});
+
+
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/login/index.html'));
