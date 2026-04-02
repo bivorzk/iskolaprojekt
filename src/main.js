@@ -63,7 +63,12 @@ app.use(favicon(path.join(process.cwd(), 'public', 'favicon.ico')));
 
 
 // Serve static content but keep root route explicit to avoid index redirect optics
-app.use(express.static(path.join(process.cwd(), 'public'), { index: false, maxAge: '1d', etag: true }));
+app.use(express.static(path.join(process.cwd(), 'public'), {
+  index: false,
+  etag: true,
+  maxAge: 0,          
+  redirect: false,     
+}));
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
