@@ -137,7 +137,8 @@ function validateOrderInput(req, res, next) {
 }
 
 router.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public/order/index.html'));
+    // Use the correct case-sensitive path for Linux/production environments
+    res.sendFile(path.join(process.cwd(), 'public', 'Order', 'index.html'));
 });
 
 router.get('/item_information/:itemName', (req, res) => {
