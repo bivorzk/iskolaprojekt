@@ -37,6 +37,17 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
                         Menu Management
                     </button>
                     <button
+                        onClick={() => setActiveSection('reports')}
+                        className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                            activeSection === 'reports'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-gray-700 hover:bg-accent hover:text-primary'
+                        }`}
+                    >
+                        <span className="mr-3 text-lg">🛡️</span>
+                        Reports & Moderation
+                    </button>
+                    <button
                         onClick={() => setActiveSection('rewards')}
                         className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                             activeSection === 'rewards'

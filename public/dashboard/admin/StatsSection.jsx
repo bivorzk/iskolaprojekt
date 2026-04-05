@@ -85,7 +85,9 @@ const StatsSection = ({ stats, signupData }) => {
                     <div className="text-sm sm:text-base text-gray-600">Total Menu Items</div>
                 </div>
                 <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-                    <div className="text-xl sm:text-2xl font-bold text-primary">{(stats.paymentStats).toFixed(2)}</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary">
+                        {typeof stats.paymentStats === 'number' ? stats.paymentStats.toFixed(2) : stats.paymentStats}
+                    </div>
                     <div className="text-sm sm:text-base text-gray-600">Payment Stats</div>
                 </div>
                 

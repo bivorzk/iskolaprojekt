@@ -9,13 +9,49 @@ const ItemInformation = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [reportMessage, setReportMessage] = useState('');
     const [cartMessage, setCartMessage] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
 
     const { addToCart } = useCart();
 
     useEffect(() => {
         loadItemInformation();
+        loadAuthStatus();
     }, []);
+
+    const getDashboardRoute = (usertype) => {
+        switch (usertype) {
+            case 'admin': return '/dashboard/admin';
+            case 'editor': return '/dashboard/editor';
+            case 'parent': return '/dashboard/parent';
+            case 'teacher': return '/dashboard/teacher';
+            default: return '/dashboard/student';
+        }
+    };
+
+    const getMenuRoute = (usertype) => {
+        return usertype === 'student' ? '/Order/' : getDashboardRoute(usertype);
+    };
+
+    const loadAuthStatus = async () => {
+        try {
+            const response = await fetch('/api/current_user');
+            if (response.ok) {
+                const data = await response.json();
+                setIsLoggedIn(data.loggedIn === true);
+                setCurrentUser(data.user || null);
+            } else {
+                setIsLoggedIn(false);
+                setCurrentUser(null);
+            }
+        } catch (err) {
+            console.error('Auth status check failed:', err);
+            setIsLoggedIn(false);
+            setCurrentUser(null);
+        }
+    };
 
     const loadItemInformation = async () => {
         try {
@@ -105,6 +141,43 @@ const ItemInformation = () => {
         }
     };
 
+    const handleReportReview = async (reviewId) => {
+        if (!isLoggedIn) {
+            alert('You must be logged in to report reviews.');
+            return;
+        }
+
+        try {
+            const pathParts = window.location.pathname.split('/');
+            const itemName = decodeURIComponent(pathParts[pathParts.length - 1]);
+
+            const response = await fetch(`/order/item_information/${encodeURIComponent(itemName)}/Review/${reviewId}/Report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                setReportMessage('Review reported. Thank you for helping us keep the community safe.');
+                setReviews(prev => prev.map(review => review._id === reviewId ? {
+                    ...review,
+                    reported: true,
+                    reportCount: (review.reportCount || 0) + 1
+                } : review));
+                setTimeout(() => setReportMessage(''), 5000);
+            } else {
+                setReportMessage(data.error || 'Failed to report review.');
+                setTimeout(() => setReportMessage(''), 5000);
+            }
+        } catch (err) {
+            console.error('Error reporting review:', err);
+            setReportMessage('Failed to report review. Please try again later.');
+            setTimeout(() => setReportMessage(''), 5000);
+        }
+    };
+
     const renderStars = (rating, size = 'w-5 h-5') => {
         return [...Array(5)].map((_, index) => (
             <svg
@@ -183,7 +256,13 @@ const ItemInformation = () => {
                         </div>
                         <div className="flex items-center space-x-4">
                             <button
-                                onClick={() => window.location.href = '/Order/'}
+                                onClick={() => window.location.href = currentUser ? getDashboardRoute(currentUser.usertype) : '/dashboard/student'}
+                                className="text-primary hover:text-secondary font-medium"
+                            >
+                                Dashboard
+                            </button>
+                            <button
+                                onClick={() => window.location.href = currentUser ? getMenuRoute(currentUser.usertype) : '/Order/'}
                                 className="text-primary hover:text-secondary font-medium"
                             >
                                 Back to Menu
@@ -313,6 +392,11 @@ const ItemInformation = () => {
                             <p className="font-medium">{successMessage}</p>
                         </div>
                     )}
+                    {reportMessage && (
+                        <div className="mb-6 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg">
+                            <p className="font-medium">{reportMessage}</p>
+                        </div>
+                    )}
 
                     {/* Review Form */}
                     {showReviewForm && (
@@ -405,11 +489,26 @@ const ItemInformation = () => {
                                         </span>
                                     </div>
                                     <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                                    {review.userId && review.userId.username && (
-                                        <div className="mt-2 text-sm text-gray-500">
-                                            By: {review.userId.username}
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                        {review.userId && review.userId.username && (
+                                            <div className="text-sm text-gray-500">By: {review.userId.username}</div>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            {review.reported && (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                                    Reported
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleReportReview(review._id)}
+                                                disabled={!isLoggedIn || review.reported}
+                                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${review.reported ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : isLoggedIn ? 'bg-primary text-white hover:bg-secondary' : 'bg-primary/30 text-white cursor-not-allowed'}`}
+                                            >
+                                                {review.reported ? 'Reported' : 'Report Review'}
+                                            </button>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

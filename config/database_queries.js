@@ -55,6 +55,7 @@ const MenuItemsScheme = new mongoose.Schema({
         date: { type: Date, default: Date.now },
         ipAddress: { type: String, required: false },
         reported: { type: Boolean, default: false },
+        reportedCount: { type: Number, default: 0 },
         moderated: { type: Boolean, default: false },
         moderatorNotes: { type: String, required: false }
     }],

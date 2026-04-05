@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
 
 // Import models and database queries
@@ -301,7 +302,59 @@ router.post('/item_information/:itemName/Review', [
     }
 }); 
 
+router.post('/item_information/:itemName/Review/:reviewId/Report', async (req, res) => {
+    if (!req.session.user || !req.session.user.id) {
+        return res.status(401).json({ error: 'Login required to report review' });
+    }
 
+    const { itemName, reviewId } = req.params;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+        return res.status(400).json({ error: 'Invalid review identifier' });
+    }
+
+    try {
+        const menuItem = await MenuItems.findOne({ name: itemName });
+        if (!menuItem) {
+            await createSecurityLog({
+                userId: req.session.user.id,
+                ipAddress,
+                action: 'REVIEW_REPORT_FAILED',
+                type: 'NOT_FOUND',
+                details: `Menu item not found for report: ${itemName}`
+            });
+            return res.status(404).json({ error: 'Menu item not found' });
+        }
+
+        const review = menuItem.reviews.id(reviewId);
+        if (!review) {
+            return res.status(404).json({ error: 'Review not found' });
+        }
+
+        review.reported = true;
+        review.reportedCount = (review.reportedCount || 0) + 1;
+
+        await menuItem.save();
+
+        await createSecurityLog({
+            userId: req.session.user.id,
+            ipAddress,
+            action: 'REVIEW_REPORTED',
+            type: 'USER_ACTION',
+            details: `Reported review ${reviewId} for item: ${itemName}`
+        });
+
+        if (invalidateCache) {
+            invalidateCache([`menu_item:${itemName}`, `menu_items:available`, `reviews:${itemName}`]);
+        }
+
+        return res.json({ success: true, message: 'Review reported successfully' });
+    } catch (error) {
+        console.error('Error reporting review:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 router.get('/username', async (req, res) => {
     if (!req.session.user || !req.session.user.id) {

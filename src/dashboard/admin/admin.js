@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const { User } = require('../../../src/database');
-const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption } = require('../../../config/database_queries');
+const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption, SecurityLogs } = require('../../../config/database_queries');
 const { requireAdmin } = require('../middleware/auth-middleware');
 
 // Import shared services
@@ -151,6 +151,86 @@ router.patch('/user/:id/role',
     }
   }
 );
+
+router.get('/security-logs', cacheResult((req) => `admin:securitylogs:${req.query.userId || 'all'}`, 120), async (req, res) => {
+  try {
+    const filter = {};
+    const userId = req.query.userId;
+    if (userId) {
+      if (!userId.match(/^[a-f\d]{24}$/i)) {
+        return res.status(400).json({ error: 'Invalid user ID filter' });
+      }
+      filter.userId = userId;
+    }
+
+    const logs = await SecurityLogs.find(filter)
+      .populate('userId', 'username email usertype isBanned')
+      .sort({ Timestamp: -1 })
+      .limit(200)
+      .lean();
+
+    res.status(200).json({ logs });
+  } catch (error) {
+    console.error('Error fetching security logs:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), async (req, res) => {
+  try {
+    const menuItems = await MenuItems.find({ 'reviews.reported': true })
+      .select('name category price available reviews')
+      .populate('reviews.userId', 'username')
+      .lean();
+
+    const reportedItems = menuItems.map((item) => ({
+      _id: item._id,
+      name: item.name,
+      category: item.category,
+      price: item.price,
+      available: item.available,
+      reportedReviews: (item.reviews || [])
+        .filter((review) => review.reported)
+        .map((review) => ({
+          _id: review._id,
+          rating: review.rating,
+          comment: review.comment,
+          reportCount: review.reportCount,
+          reportedCount: review.reportedCount,
+          user: review.userId ? { username: review.userId.username } : null
+        }))
+    }));
+
+    res.status(200).json({ reportedItems });
+  } catch (error) {
+    console.error('Error fetching reported menu items:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/security-logs/:id', async (req, res) => {
+  try {
+    const logId = req.params.id;
+    if (!logId.match(/^[a-f\d]{24}$/i)) {
+      return res.status(400).json({ error: 'Invalid log ID' });
+    }
+
+    const deletedLog = await SecurityLogs.findByIdAndDelete(logId);
+    if (!deletedLog) {
+      return res.status(404).json({ error: 'Security log not found' });
+    }
+
+    invalidateCache(['admin:securitylogs:all']);
+    if (deletedLog.userId) {
+      invalidateCache([`admin:securitylogs:${deletedLog.userId.toString()}`]);
+    }
+
+    res.status(200).json({ message: 'Security log removed successfully' });
+  } catch (error) {
+    console.error('Error removing security log:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 router.get('/orders', cacheResult('admin:orders', 300), async (req, res) => {
   try {

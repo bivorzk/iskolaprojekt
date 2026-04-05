@@ -1,5 +1,37 @@
 const Header = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [currentUser, setCurrentUser] = React.useState(null);
+
+    const getDashboardRoute = (usertype) => {
+        switch (usertype) {
+            case 'admin': return '/dashboard/admin';
+            case 'editor': return '/dashboard/editor';
+            case 'parent': return '/dashboard/parent';
+            case 'teacher': return '/dashboard/teacher';
+            default: return '/dashboard/student';
+        }
+    };
+
+    const dashboardRoute = currentUser ? getDashboardRoute(currentUser.usertype) : '/dashboard/student';
+
+    React.useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const res = await fetch('/api/current_user');
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.loggedIn) {
+                        setCurrentUser(json.user || null);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load current user:', err);
+            }
+            setCurrentUser(null);
+        };
+        loadUser();
+    }, []);
 
     return (
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
@@ -22,7 +54,7 @@ const Header = () => {
                     
                     {/* Desktop Menu */}
                     <div className="hidden sm:flex items-center space-x-6">
-                        <a href="/dashboard/student/" className="text-primary hover:text-secondary font-medium transition-colors px-3 py-2 rounded-md">
+                        <a href={dashboardRoute} className="text-primary hover:text-secondary font-medium transition-colors px-3 py-2 rounded-md">
                             Dashboard
                         </a>
                         <a href="/logout" className="text-gray-700 hover:text-primary font-medium transition-colors px-3 py-2 rounded-md">
@@ -50,7 +82,7 @@ const Header = () => {
                     <div className="sm:hidden border-t border-gray-200 py-3">
                         <div className="flex flex-col space-y-3">
                             <a 
-                                href="/dashboard/student/" 
+                                href={dashboardRoute} 
                                 className="text-primary font-medium px-3 py-2 rounded-md hover:bg-primary hover:text-white transition-colors"
                             >
                                 Dashboard

@@ -6,7 +6,7 @@ const { useState } = React;
 const AdminDashboard = () => {
     const [activeSection, setActiveSection] = useState('users');
 
-    const { stats, users, menuItems, rewards, signupData, welcomeMessage, userData, loading, loadDashboardData } = useAdminData();
+    const { stats, users, menuItems, rewards, signupData, securityLogs, reportedMenuItems, welcomeMessage, userData, loading, loadDashboardData } = useAdminData();
 
     if (loading) {
         return (
@@ -31,6 +31,7 @@ const AdminDashboard = () => {
                     {activeSection === 'users' && <UsersSection users={users} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'stats' && <StatsSection stats={stats} signupData={signupData} />}
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
+                    {activeSection === 'reports' && <ReportsSection securityLogs={securityLogs} reportedMenuItems={reportedMenuItems} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'rewards' && <RewardsSection rewards={rewards} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'health' && <HealthCheckSection />}
                     {activeSection === 'settings' && <SettingsSection userData={userData} />}

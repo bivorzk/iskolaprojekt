@@ -17,13 +17,15 @@ const useAdminData = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [rewards, setRewards] = useState([]);
     const [signupData, setSignupData] = useState([]);
+    const [securityLogs, setSecurityLogs] = useState([]);
+    const [reportedMenuItems, setReportedMenuItems] = useState([]);
     const [welcomeMessage, setWelcomeMessage] = useState('Welcome, Admin');
     const [userData, setUserData] = useState({});
     const [loading, setLoading] = useState(true);
 
     const loadDashboardData = async () => {
         try {
-            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, rewardsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes, activeUsersRes] = await Promise.all([
+            const [userCountRes, ordersRes, userListRes, signupStatsRes, menuItemsRes, rewardsRes, welcomeRes, mostBoughtItemsRes, mostBoughtItemsLastWeekRes, revenueLastMonthRes, averageOrderValueRes, totalRevenueRes, paymentStatsRes, activeUsersRes, securityLogsRes, reportedMenuItemsRes] = await Promise.all([
                 fetch('/dashboard/admin/usercount'),
                 fetch('/dashboard/admin/orders'),
                 fetch('/dashboard/admin/userlist'),
@@ -37,7 +39,9 @@ const useAdminData = () => {
                 fetch('/dashboard/admin/stats/average-order-value'),
                 fetch('/dashboard/admin/stats/total-revenue'),
                 fetch('/dashboard/admin/paymentstats'),
-                fetch('/dashboard/admin/activeusers')
+                fetch('/dashboard/admin/activeusers'),
+                fetch('/dashboard/admin/security-logs'),
+                fetch('/dashboard/admin/reported-menuitems')
             ]);
 
             // Check if all responses are ok
@@ -55,8 +59,10 @@ const useAdminData = () => {
             if (!totalRevenueRes.ok) console.error('total_revenue failed:', totalRevenueRes.status);
             if (!paymentStatsRes.ok) console.error('paymentstats failed:', paymentStatsRes.status);
             if (!activeUsersRes.ok) console.error('activeusers failed:', activeUsersRes.status);
+            if (!securityLogsRes.ok) console.error('security-logs failed:', securityLogsRes.status);
+            if (!reportedMenuItemsRes.ok) console.error('reported-menuitems failed:', reportedMenuItemsRes.status);
             
-            const [userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers] = await Promise.all([
+            const [userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers, securityLogsData, reportedMenuItemsData] = await Promise.all([
                 userCountRes.json(),
                 ordersRes.json(),
                 userListRes.json(),
@@ -70,7 +76,9 @@ const useAdminData = () => {
                 averageOrderValueRes.json(),
                 totalRevenueRes.json(),
                 paymentStatsRes.json(),
-                activeUsersRes.json()
+                activeUsersRes.json(),
+                securityLogsRes.json(),
+                reportedMenuItemsRes.json()
             ]);
 
             console.log('API responses:', { userCount, orders, userList, signupStats, menuData, rewardsData, welcome, mostBoughtItems, mostBoughtItemsLastWeek, revenueLastMonth, averageOrderValue, totalRevenue, paymentStatsData, activeUsers });
@@ -79,7 +87,7 @@ const useAdminData = () => {
                 activeSessions: activeUsers.activeUsers || '--', 
                 ordersMade: orders.total || '--',
                 totalMenuItems: menuData.menuItems ? menuData.menuItems.length : '--',
-                paymentStats: paymentStatsData.totalAmount || '--',
+                paymentStats: typeof paymentStatsData.totalAmount === 'number' ? paymentStatsData.totalAmount : parseFloat(paymentStatsData.totalAmount) || 0,
                 mostBoughtItems: mostBoughtItems || [],
                 mostBoughtItemsLastWeek: mostBoughtItemsLastWeek || [],
                 revenueLastMonth: revenueLastMonth || '--',
@@ -91,6 +99,8 @@ const useAdminData = () => {
             setSignupData(signupStats || []);
             setMenuItems(menuData.menuItems || []);
             setRewards(rewardsData.rewards || []);
+            setSecurityLogs(securityLogsData.logs || []);
+            setReportedMenuItems(reportedMenuItemsData.reportedItems || []);
             setWelcomeMessage(welcome.message || 'Welcome, Admin');
 
             // Fetch admin userinfo for dashboard switcher
@@ -132,6 +142,8 @@ const useAdminData = () => {
         menuItems,
         rewards,
         signupData,
+        securityLogs,
+        reportedMenuItems,
         welcomeMessage,
         userData,
         loading,
