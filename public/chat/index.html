@@ -7,8 +7,8 @@
   
   <!-- Styles -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="config/tailwind-config.js"></script>
-  <link rel="stylesheet" href="chat-styles.css">
+  <script src="/chat/config/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/chat/chat-styles.css">
 </head>
 <body class="bg-gray-50">
   <div id="chat-app" class="min-h-screen"></div>
@@ -18,24 +18,24 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
-  <script src="../js/e2ee-crypto.js"></script>
+  <script src="/js/e2ee-crypto.js"></script>
   
   <!-- Utilities (no JSX) -->
-  <script src="utils/messageUtils.js"></script>
+  <script src="/chat/utils/messageUtils.js"></script>
 
   <!-- API layer (no JSX) -->
-  <script src="api/e2eeApi.js"></script>
-  <script src="api/chatApi.js"></script>
+  <script src="/chat/api/e2eeApi.js"></script>
+  <script src="/chat/api/chatApi.js"></script>
 
   <!-- UI components -->
-  <script type="text/babel" src="components/LoadingScreen.jsx"></script>
-  <script type="text/babel" src="components/SetupScreens.jsx"></script>
-  <script type="text/babel" src="components/KeyMismatchBanner.jsx"></script>
-  <script type="text/babel" src="components/Sidebar.jsx"></script>
-  <script type="text/babel" src="components/ChatArea.jsx"></script>
+  <script type="text/babel" src="/chat/components/LoadingScreen.jsx"></script>
+  <script type="text/babel" src="/chat/components/SetupScreens.jsx"></script>
+  <script type="text/babel" src="/chat/components/KeyMismatchBanner.jsx"></script>
+  <script type="text/babel" src="/chat/components/Sidebar.jsx"></script>
+  <script type="text/babel" src="/chat/components/ChatArea.jsx"></script>
 
   <!-- Main Chat Component -->
-  <script type="text/babel" src="chat.jsx"></script>
+  <script type="text/babel" src="/chat/chat.jsx"></script>
   
   <!-- Initialize App -->
   <script type="text/babel">
