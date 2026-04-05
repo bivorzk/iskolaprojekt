@@ -1,0 +1,13 @@
+{
+  "startOnLoad": false,
+  "theme": "default",
+  "flowchart": {
+    "htmlLabels": false
+  },
+  "sequence": {
+    "showSequenceNumbers": false
+  },
+  "gantt": {
+    "axisFormat": "%Y-%m-%d"
+  }
+}
