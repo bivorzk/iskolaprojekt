@@ -6,6 +6,7 @@ const path = require('path');
 const { User } = require('../../../src/database');
 const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption, SecurityLogs } = require('../../../config/database_queries');
 const { requireAdmin } = require('../middleware/auth-middleware');
+const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
