@@ -97,52 +97,24 @@ const createStore = () => redisAvailable ? new RedisStore({
 const HOUR        = 60 * 60 * 1000;
 const QUARTERHOUR = 15 * 60 * 1000;
 
-const limiter = rateLimit({
-  windowMs: HOUR,
-  max: 250,
+const rateLimitHandler = (req, res) => {
+  res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
+};
+
+const createLimiter = ({ windowMs, max }) => rateLimit({
+  windowMs,
+  max,
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  handler: (req, res) => {
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
+  handler: rateLimitHandler,
 });
 
-const registerLimiter = rateLimit({
-  windowMs: HOUR,
-  max: 100,
-  handler: (req, res) => {
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
-  store: createStore(),
-});
-
-const LoginLimiter = rateLimit({
-  windowMs: QUARTERHOUR,
-  max: 35,
-  handler: (req, res) => {
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
-  store: createStore(),
-});
-
-const dashboardLimiter = rateLimit({
-  windowMs: QUARTERHOUR,
-  max: 1000,
-  handler: (req, res) => {
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
-  store: createStore(),
-});
-
-const twoFALimiter = rateLimit({
-  windowMs: QUARTERHOUR,
-  max: 900,
-  handler: (req, res) => {
-    res.status(429).sendFile(path.join(process.cwd(), 'public/429/429.html'));
-  },
-  store: createStore(),
-});
+const limiter = createLimiter({ windowMs: HOUR, max: 250 });
+const registerLimiter = createLimiter({ windowMs: HOUR, max: 100 });
+const LoginLimiter = createLimiter({ windowMs: QUARTERHOUR, max: 35 });
+const dashboardLimiter = createLimiter({ windowMs: QUARTERHOUR, max: 1000 });
+const twoFALimiter = createLimiter({ windowMs: QUARTERHOUR, max: 900 });
 
 app.use('/passwordhash', limiter);
 app.use('/database', limiter);

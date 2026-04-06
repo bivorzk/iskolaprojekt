@@ -13,6 +13,7 @@ const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-s
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
+const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
 
 // Import Redis Lua service for atomic operations
 const redisLuaService = require('../../services/redis-lua-service');
@@ -29,34 +30,9 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
-// Rate limiting middleware using Redis Lua service
-async function rateLimit(req, res, next) {
-  try {
-    const key = `ratelimit:student:${req.session.user?.id || req.ip}`;
-    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 60); // 60 requests per minute for students
-
-    if (!rateLimitResult.allowed) {
-      return res.status(429).sendFile(path.join(__dirname, '../../../public/429/429.html'));
-    }
-
-    // Add rate limit headers
-    res.set({
-      'X-RateLimit-Limit': '60',
-      'X-RateLimit-Remaining': Math.max(0, 59 - rateLimitResult.currentCount),
-      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
-    });
-
-    next();
-  } catch (error) {
-    console.log('Rate limiting failed, allowing request:', error.message);
-    next(); // Allow request if rate limiting fails
-  }
-}
-
-
 // Apply middleware to all student routes
 router.use('/', requireStudent);
-router.use('/', rateLimit); // Apply rate limiting to all student routes
+router.use('/', createDashboardRateLimiter({ prefix: 'student', windowSeconds: 60, maxRequests: 60 })); // Apply rate limiting to all student routes
 
 // Serve student dashboard
 router.get('/', (req, res) => {

@@ -8,12 +8,10 @@ const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption } = require('
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
+const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
 
 // Import auth middleware
 const { requireEditor } = require('../middleware/auth-middleware');
-
-// Import Redis Lua service for atomic operations and rate limiting
-const redisLuaService = require('../../services/redis-lua-service');
 
 let redisClient = null;
 try {
@@ -27,33 +25,9 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
-// Rate limiting middleware using Redis Lua service
-async function rateLimit(req, res, next) {
-  try {
-    const key = `ratelimit:editor:${req.session.user?.id || req.ip}`;
-    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 20); // 20 requests per minute for editors
-
-    if (!rateLimitResult.allowed) {
-      return res.status(429).sendFile(path.join(__dirname, '../../../public/429/429.html'));
-    }
-
-    // Add rate limit headers
-    res.set({
-      'X-RateLimit-Limit': '20',
-      'X-RateLimit-Remaining': Math.max(0, 19 - rateLimitResult.currentCount),
-      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
-    });
-
-    next();
-  } catch (error) {
-    console.log('Rate limiting failed, allowing request:', error.message);
-    next(); // Allow request if rate limiting fails
-  }
-}
-
 // Apply middleware to all editor routes
 router.use('/', requireEditor);
-router.use('/', rateLimit);
+router.use('/', createDashboardRateLimiter({ prefix: 'editor', windowSeconds: 60, maxRequests: 20 }));
 
 // Serve editor dashboard
 router.get('/', (req, res) => {

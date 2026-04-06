@@ -6,12 +6,14 @@ const { body, validationResult } = require('express-validator');
 const { User } = require('../../../src/database');
 const { Payment, Order, ParentStudent } = require('../../../config/database_queries');
 const {requireParentAuth} = require('../middleware/auth-middleware');
+const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
 
 // Apply auth middleware to all routes
-router.use('/',requireParentAuth);
+router.use('/', requireParentAuth);
+router.use('/', createDashboardRateLimiter({ prefix: 'parent', windowSeconds: 60, maxRequests: 45 }));
 
 router.get('/', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/dashboard/parent/parent.html'));

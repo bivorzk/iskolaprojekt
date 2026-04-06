@@ -691,8 +691,18 @@ const filterMenuItems = (items, filters) =>
 ```
 
 **Csúszó ablakos rate limiting (Redis Lua):**
+A kulcs rövidítése és egységesítése a `fnv1a` hash függvénnyel történik, hogy a Redis kulcsok rövidek és stabilak legyenek, miközben a bemeneti azonosítók (pl. IP cím, felhasználói token) variálhatók.
 ```lua
-local key = KEYS[1]
+local function fnv1a(str)
+    local hash = 2166136261
+    for i = 1, #str do
+        hash = bit.bxor(hash, string.byte(str, i))
+        hash = bit.band(hash * 16777619, 0xFFFFFFFF)
+    end
+    return tostring(hash)
+end
+
+local key = "rl:" .. fnv1a(KEYS[1])
 local window = tonumber(ARGV[1])
 local max_requests = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])

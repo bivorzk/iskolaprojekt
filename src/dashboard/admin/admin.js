@@ -25,33 +25,9 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
-// Rate limiting middleware using Redis Lua service
-async function rateLimit(req, res, next) {
-  try {
-    const key = `ratelimit:admin:${req.session.user?.id || req.ip}`;
-    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 30); // 30 requests per minute
-
-    if (!rateLimitResult.allowed) {
-      return res.status(429).sendFile(path.join(__dirname, '../../../public/429/429.html'));
-    }
-
-    // Add rate limit headers
-    res.set({
-      'X-RateLimit-Limit': '30',
-      'X-RateLimit-Remaining': Math.max(0, 29 - rateLimitResult.currentCount),
-      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
-    });
-
-    next();
-  } catch (error) {
-    console.log('Rate limiting failed, allowing request:', error.message);
-    next(); // Allow request if rate limiting fails
-  }
-}
-
 // Apply middleware to all admin routes
 router.use('/', requireAdmin);
-router.use('/', rateLimit); // Apply rate limiting to all admin routes
+router.use('/', createDashboardRateLimiter({ prefix: 'admin', windowSeconds: 60, maxRequests: 30 }));
 
 // Serve admin dashboard
 router.get('/', (req, res) => {
