@@ -1005,6 +1005,13 @@ flowchart TD
     invalidate --> next[Következő lekérés friss adatokkal]
 ```
 
+##### Redis adatstruktúra térkép
+
+A következő ábra bemutatja a fő Redis kulcsneveket, adattípusokat és a tipikus TTL viselkedést az alkalmazásban:
+
+<img src="./diagrams/snaptray_redis_key_map.svg" alt="SnapTray Redis kulcstérkép" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
+
+
 ##### Redis használata az oldalon
 
 - **Munkamenet-kezelés**: A felhasználói munkamenetek Redisben tárolódnak automatikus lejárattal (TTL), lehetővé téve a backend állapotmentes vízszintes skálázását. A munkamenetek tartalmazzák a felhasználó azonosítóját, szerepkört és ideiglenes tokeneket.
@@ -1102,6 +1109,25 @@ flowchart TD
     api --> error(Hiba esetén fallback üzenet)
 ```
 
+A felhasználói munkamenet állapotai a frontendben:
+
+```mermaid
+stateDiagram-v2
+    [*] --> LoggedOut
+    LoggedOut --> Authenticating : bejelentkezés elküldése
+    Authenticating --> TwoFARequired : 2FA szükséges
+    Authenticating --> LoggedIn : sikeres hitelesítés
+    TwoFARequired --> LoggedIn : 2FA megerősítve
+    TwoFARequired --> LoggedOut : 2FA elutasítva
+    LoggedIn --> ViewingDashboard : dashboard betöltése
+    ViewingDashboard --> ActiveSection : szakasz kiválasztása
+    ActiveSection --> ViewingSection : tartalom megjelenítése
+    ViewingSection --> LoggingOut : kijelentkezés
+    LoggingOut --> LoggedOut : munkamenet vége
+    LoggedIn --> ErrorState : hiba
+    ErrorState --> LoggedOut : újrapróbálkozás
+```
+
 #### 6.3.3 Kulcsfontosságú komponensek és funkciók
 
 ##### Dashboard rendszer
@@ -1130,6 +1156,41 @@ const AdminDashboard = () => {
 };
 ```
 
+###### Admin dashboard
+Az adminisztrátori felület célja a rendszer felügyelete és tartalomkezelése. Az admin dashboard a következőket kínálja:
+- Felhasználók, rendelési statisztikák és regisztrációs adatok megtekintése.
+- Menüelemek létrehozása, frissítése és törlése.
+- Készletfigyelés és alacsony készlet riasztások.
+- Fizetési statisztikák és rendszerállapot ellenőrzés (adatbázis, Redis, PayPal, Google Pay).
+- Adminisztrációs riportok exportálása és egészségellenőrzések indítása.
+- A `useAdminData` hook REST lekérdezéseivel a dashboard valós idejű összefoglalókat és elemzéseket jelenít meg.
+
+###### Diák dashboard
+A diákok számára készült dashboard a rendelési folyamat egyszerű kezelésére fókuszál. A diák dashboard lehetővé teszi:
+- Napi menü és elérhető ételválaszték böngészését.
+- Kosárhoz adást, rendelés összeállítását és fizetés indítását.
+- Rendelés állapotának és előzményeknek a megtekintését.
+- Saját virtuális pénztárca egyenlegének ellenőrzését és a hűségpontok nyomon követését.
+- Fiókbeállítások, jelszóváltoztatás és fiók felfüggesztése (pl. `/dashboard/student/freeze_account`).
+- Szülői fiók összekapcsolását (`/dashboard/student/parent/link`) a felügyelet és támogatás érdekében.
+
+###### Szülő dashboard
+A szülők a diák dashboardot használják, de kiegészített jogosultságokkal a kapcsolt diákok rendeléseinek és fizetéseinek felügyeletére. A szülői dashboard jellemzői:
+- Kapcsolt diákok és rendeléseik áttekintése egy helyen.
+- Szülői fizetési felelősség kezelése, beleértve a tranzakciók jóváhagyását és a fizetési munkamenetek nyomon követését.
+- Hozzáférés a diákok hűségpontjaihoz és költési előzményeihez.
+- A ParentStudent kapcsolat használata a jogosultságok és adathozzáférés szabályozásához.
+- Mobilbarát nézet és egyszerű áttekintés a gyermeki megrendelés státuszáról.
+
+###### Editor dashboard
+A szerkesztői dashboard a tartalmi és menükezelési folyamatokra fókuszál, de nem tartalmazza az adminisztrációs felhasználókezelést. Az editor dashboard lehetővé teszi:
+- Menüelemek és napi menük szerkesztését, csoportosítását és kategorizálását.
+- Menüelemek leírásának, árában és allergén információinak frissítését.
+- Készletszintek és elérhetőség nyomon követését a menüoldalakon.
+- Ételek és kategóriák státuszának beállítását "elérhető" / "elfogyott" mód között.
+- Gyors hozzáférést a menü exportálásához és a menü adatainak előnézetéhez.
+- A `public/dashboard/editor/` vagy hasonló komponensek használatát a tartalomkezelő felület megjelenítéséhez.
+
 ##### Rendelési és kosár rendszer
 A rendelési oldal (`public/order/order.jsx`) bevásárlókosarat valósít meg `useCart` hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval.
 
@@ -1155,6 +1216,59 @@ const E2EEChatApp = () => {
     // ... E2EE setup, message sending/receiving
 };
 ```
+
+##### E2EE kriptográfia és kulcstárolás
+A frontendben az E2EE logika a `public/js/e2ee-crypto.js` fájlban van megvalósítva. A `E2EECrypto` osztály felelős a kulcsgenerálásért, azok helyi tárolásáért, az üzenetek titkosításáért és visszafejtéséért.
+
+- `IndexedDB`-t használ a privát és nyilvános kulcsok biztonságos tárolására, és egy egyszeri migrációt biztosít a korábbi `localStorage`-ból.
+- RSA-OAEP 2048 bites kulcspárosokat generál az aszimmetrikus kulcsokhoz.
+- AES-GCM 256 bites szimmetrikus kulcsot hoz létre a tényleges üzenet-titkosításhoz.
+- A szimmetrikus kulcsot a címzett és a feladó nyilvános RSA kulcsával külön kódolja, így mindkét fél el tudja olvasni az üzenetet.
+- A titkosított üzenethez mentett metaadatok tartalmazzák az `iv`, `senderEncryptedKey`, `recipientEncryptedKey` és az algoritmus információit.
+- A kulcsok rotálása és újrahasználata támogatott: a régebbi privát kulcsok is automatikusan kipróbálásra kerülnek dekódzáskor.
+- Passphrase alapú biztonsági mentés is rendelkezésre áll, amely AES-GCM-mel titkosítja a kulcscsomagot jelszó alapján.
+- Hibakereséshez `window.debugE2EE` globális segédfüggvények állnak rendelkezésre, például kulcsellenőrzéshez, hibaszámláló nullázásához és E2EE állapot lekérdezéséhez.
+
+A következő példák az E2EE frontend logikájának tipikus használati mintáit szemléltetik.
+
+```js
+// 1. Kulcspár létrehozása és tárolása
+const keyInfo = await window.e2eeCrypto.generateKeyPair();
+console.log('Kulcs páros létrehozva:', keyInfo.keyId);
+
+// 2. Üzenet titkosítása egy címzett nyilvános kulcsával
+const encrypted = await window.e2eeCrypto.encryptMessage(
+  'Szia, titkosított üzenet!',
+  recipientPublicKeyBase64,
+  recipientKeyId
+);
+
+// 3. Üzenet visszafejtése a címzett privát kulcsával
+const plaintext = await window.e2eeCrypto.decryptMessage(encrypted, true);
+console.log('Visszafejtett szöveg:', plaintext);
+```
+
+```js
+// 4. Kulcsok titkosított biztonsági mentése jelszóval
+const backupBundle = await window.e2eeCrypto.encryptPrivateKeyWithPassphrase('erős-jelszó123');
+
+// 5. Mentett kulcs visszaállítása ugyanazzal a jelszóval
+const restored = await window.e2eeCrypto.decryptPrivateKeyWithPassphrase(
+  backupBundle.encryptedPrivateKey,
+  backupBundle.salt,
+  backupBundle.iv,
+  'erős-jelszó123'
+);
+console.log('Visszaállított kulcs azonosítója:', restored.keyId);
+```
+
+```js
+// 6. E2EE állapot és hibakeresés
+await window.debugE2EE.enableDebug();
+await window.debugE2EE.status();
+```
+
+Ez a megközelítés biztosítja, hogy a felhasználói üzenetek titkosítva maradjanak a böngészőben és csak a jogosult kulcsokkal rendelkező eszközök tudják visszafejteni azokat.
 
 ##### Mobil reszponzivitás
 Mobil-specifikus komponensek (pl. `MobileAdminNav.jsx`, `MobileCart.jsx`) érintésbarát felületet biztosítanak összecsukható navigációval és toast értesítésekkel.
