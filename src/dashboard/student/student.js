@@ -62,7 +62,7 @@ router.post('/parent/link', [
   try {
     const studentId = req.session.user.id;
     const { parentEmail } = req.body;
-    const parentUser = await User.findOne({ email: parentEmail, usertype: 'parent' });
+    const parentUser = await User.findOne({ email: parentEmail, usertype: 'parent' }).lean();
     if (!parentUser) {
       return res.status(404).json({ error: 'Parent user not found' });
     }
@@ -70,7 +70,7 @@ router.post('/parent/link', [
       parentId: parentUser._id,
       studentId,
       $or: [{ status: 'pending' }, { status: 'approved' }]
-    });
+    }).lean();
     if (existingLink) {
       if (existingLink.status === 'pending') {
         return res.status(400).json({ error: 'Link request already sent, waiting for approval' });
@@ -94,7 +94,7 @@ router.post('/parent/link', [
 router.post('/parent', async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    const parentStudentLink = await ParentStudent.findOne({ studentId }).populate('parentId', 'username email');
+    const parentStudentLink = await ParentStudent.findOne({ studentId }).populate('parentId', 'username email').lean();
 
     if (!parentStudentLink) {
       return res.status(404).json({ error: 'Parent not found' });
@@ -120,8 +120,22 @@ router.get('/parent/unlink', async (req, res) => {
 router.get('/transactions', cacheResult((req) => `student:transactions:${req.session.user.id}`, 300), async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const transactions = await Payment.find({ userId }).sort({ date: -1 });
-    res.status(202).json({ transactions });
+    const transactions = await Payment.find({ userId })
+      .select('amount paymentMethod createdAt status currency transactionId')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const normalizedTransactions = transactions.map((transaction) => ({
+      _id: transaction._id,
+      amount: transaction.amount,
+      paymentMethod: transaction.paymentMethod,
+      date: transaction.createdAt,
+      status: transaction.status,
+      currency: transaction.currency,
+      transactionId: transaction.transactionId
+    }));
+
+    res.status(202).json({ transactions: normalizedTransactions });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -141,8 +155,10 @@ router.get('/order_history', cacheResult((req) => `student:order_history:${req.s
       const userId = req.session.user.id;
 
       const orders = await Order.find({ userId })
-        .populate('items.menuItemId')
-        .select('OrderDate totalAmount status items publicID orderDate');
+        .populate('items.menuItemId', 'name')
+        .select('totalAmount status items publicID orderDate')
+        .sort({ orderDate: -1 })
+        .lean();
 
       // Transform orders into a clean structure with correct fields
       const orderData = orders.map(order => ({
@@ -175,7 +191,7 @@ router.get('/debug', async (req, res) => {
 
     let userFromDb = null;
     if (session && session.id) {
-      userFromDb = await User.findById(session.id);
+      userFromDb = await User.findById(session.id).lean();
     }
 
     res.status(200).json({
@@ -208,7 +224,7 @@ router.get('/wallet/balance', cacheResult((req) => `student:wallet_balance:${req
 
     // If Redis balance is null or Redis failed, get from database and sync to Redis
     if (balance === null || balance === undefined) {
-      const user = await User.findById(userId).select('balance');
+      const user = await User.findById(userId).select('balance').lean();
 
       if (!user) {
         console.log('User not found for balance request');
@@ -219,9 +235,7 @@ router.get('/wallet/balance', cacheResult((req) => `student:wallet_balance:${req
 
       // Sync to Redis for future requests
       try {
-        if (balance > 0) {
-          await redisLuaService.updateWalletBalance(walletKey, balance - balance); // Set to exact amount
-        }
+        await redisLuaService.setWalletBalance(walletKey, balance);
       } catch (syncError) {
         console.log('Failed to sync balance to Redis:', syncError.message);
       }
@@ -244,7 +258,7 @@ router.get('/loyalty', cacheResult((req) => `student:loyalty:${req.session.user.
   try {
     const userId = req.session.user.id;
     
-    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
+    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username').lean();
     
     if (!userLoyalty) {
       // Create new loyalty record for user
@@ -303,7 +317,7 @@ router.post('/loyalty/refresh', async (req, res) => {
       invalidateCache([`student:loyalty:${userId}`]);
     }
     
-    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username');
+    let userLoyalty = await UserLoyalty.findOne({ userId }).populate('userId', 'username').lean();
     
     if (!userLoyalty) {
       // Create new loyalty record for user
@@ -381,7 +395,7 @@ router.post('/wallet/add',
     console.log('Converted amount:', { original: amount, currency, usd: usdAmount });
 
     // Check if user exists first
-    const existingUser = await User.findById(userId);
+    const existingUser = await User.findById(userId).select('balance').lean();
     if (!existingUser) {
       console.log('User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
@@ -409,12 +423,12 @@ router.post('/wallet/add',
         userId,
         { $inc: { balance: usdAmount } },
         { new: true, upsert: false }
-      );
+      ).lean();
       newBalance = user.balance;
 
       // Try to sync to Redis
       try {
-        await redisLuaService.updateWalletBalance(walletKey, newBalance - newBalance); // Set exact amount
+        await redisLuaService.setWalletBalance(walletKey, newBalance);
       } catch (syncError) {
         console.log('Failed to sync to Redis after fallback:', syncError.message);
       }
@@ -450,7 +464,7 @@ router.post('/wallet/add',
 
     // Award loyalty points for wallet top-up
     try {
-      const userLoyalty = await UserLoyalty.findOne({ userId });
+      const userLoyalty = await UserLoyalty.findOne({ userId }).lean();
       let currentTier = 'NONE';
       if (userLoyalty) {
         currentTier = userLoyalty.userTier;
@@ -496,7 +510,7 @@ router.post('/wallet/add',
 router.get('/userinfo', cacheResult((req) => `student:userinfo:${req.session.user.id}`, 300), async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId).select('username email usertype createdAt isVerified is2Active');
+    const user = await User.findById(userId).select('username email usertype createdAt isVerified is2Active').lean();
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -563,8 +577,8 @@ router.post('/loyalty/redeem',
       let voucherCode, expiresAt;
       await session.withTransaction(async () => {
         const [reward, userLoyalty] = await Promise.all([
-          Reward.findById(rewardId).session(session),
-          UserLoyalty.findOne({ userId }).session(session)
+          Reward.findById(rewardId).session(session).lean(),
+          UserLoyalty.findOne({ userId }).session(session).lean()
         ]);
 
         if (!reward || !reward.isActive)
@@ -614,6 +628,7 @@ router.get('/loyalty/vouchers', async (req, res) => {
   try {
     const userId = req.session.user.id;
     const vouchers = await Redemption.find({ userId })
+      .select('rewardId voucherCode voucherExpiresAt status createdAt')
       .populate('rewardId', 'name category')
       .sort({ createdAt: -1 })
       .limit(50)
@@ -651,7 +666,8 @@ router.post('/loyalty/voucher/validate',
 
     try {
       const redemption = await Redemption.findOne({ voucherCode, userId, status: 'pending' })
-        .populate('rewardId', 'name marketValue category');
+        .populate('rewardId', 'name marketValue category')
+        .lean();
 
       if (!redemption) {
         return res.status(404).json({ error: 'Voucher not found or already used' });
@@ -711,7 +727,7 @@ router.post('/loyalty/voucher/fulfill',
 // ── Settings: 2FA status ──────────────────────────────────────────────────────
 router.get('/settings/2fa/status', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('is2Active');
+    const user = await User.findById(req.session.user.id).select('is2Active').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ is2Active: user.is2Active === true });
   } catch (e) {

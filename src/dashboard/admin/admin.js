@@ -48,7 +48,8 @@ router.get('/usercount', cacheResult('admin:usercount', 300), async (req, res) =
 
 router.get('/userlist', cacheResult('admin:userlist', 300), async (req, res) => {
   try {
-    const users = await User.find({}, 'username email usertype createdAt isBanned isVerified balance lastActive');
+    const users = await User.find({}, 'username email usertype createdAt isBanned isVerified balance lastActive')
+    .lean();
     res.status(202).json({ users });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -60,7 +61,7 @@ router.get('/user/:id', async (req, res) => {
     if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
-    const user = await User.findById(req.params.id, 'username email usertype createdAt isBanned isVerified balance lastActive');
+    const user = await User.findById(req.params.id, 'username email usertype createdAt isBanned isVerified balance lastActive').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.status(200).json({ user });
   } catch (error) {
@@ -81,7 +82,7 @@ router.patch('/user/:id/ban',
       if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
         return res.status(400).json({ error: 'Invalid user ID' });
       }
-      const target = await User.findById(req.params.id, 'usertype');
+      const target = await User.findById(req.params.id, 'usertype').lean();
       if (!target) return res.status(404).json({ error: 'User not found' });
       if (target.usertype === 'admin') {
         return res.status(403).json({ error: 'Cannot ban another admin' });
@@ -90,7 +91,7 @@ router.patch('/user/:id/ban',
         req.params.id,
         { isBanned: req.body.isBanned },
         { new: true, select: 'username email usertype isBanned' }
-      );
+      ).lean();
       invalidateCache(['admin:userlist']);
       res.status(200).json({ message: `User ${req.body.isBanned ? 'banned' : 'unbanned'} successfully`, user: updated });
     } catch (error) {
@@ -111,7 +112,7 @@ router.patch('/user/:id/role',
       if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
         return res.status(400).json({ error: 'Invalid user ID' });
       }
-      const target = await User.findById(req.params.id, 'usertype');
+      const target = await User.findById(req.params.id, 'usertype').lean();
       if (!target) return res.status(404).json({ error: 'User not found' });
       if (target.usertype === 'admin') {
         return res.status(403).json({ error: 'Cannot change role of another admin' });
@@ -120,7 +121,7 @@ router.patch('/user/:id/role',
         req.params.id,
         { usertype: req.body.usertype },
         { new: true, select: 'username email usertype isBanned' }
-      );
+      ).lean();
       invalidateCache(['admin:userlist']);
       res.status(200).json({ message: 'Role updated successfully', user: updated });
     } catch (error) {
@@ -156,7 +157,7 @@ router.get('/security-logs', cacheResult((req) => `admin:securitylogs:${req.quer
 router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), async (req, res) => {
   try {
     const menuItems = await MenuItems.find({ 'reviews.reported': true })
-      .select('name category price available reviews')
+      .select('name category price available reviews.reported reviews.rating reviews.comment reviews.reportedCount reviews.userId')
       .populate('reviews.userId', 'username')
       .lean();
 
@@ -220,7 +221,7 @@ router.get('/orders', cacheResult('admin:orders', 300), async (req, res) => {
 
 router.get('/soldout', cacheResult('admin:soldout', 300), async (req, res) => {
   try {
-    const soldOutItems = await MenuItems.find({ available: false }, 'name available');
+    const soldOutItems = await MenuItems.find({ available: false }, 'name available').lean();
     res.status(202).json({ soldOutItems });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -318,7 +319,7 @@ router.post(
 
 router.get('/menulist', cacheResult('admin:menulist', 300), async (req, res) => {
   try {
-    const menuItems = await MenuItems.find({});
+    const menuItems = await MenuItems.find({}).lean();
     res.status(202).json({ menuItems });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -327,7 +328,7 @@ router.get('/menulist', cacheResult('admin:menulist', 300), async (req, res) => 
 
 router.get('/stockalerts', cacheResult('admin:stockalerts', 300), async (req, res) => {
   try {
-    const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock');
+    const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock').lean();
     res.json(lowStockItems);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -362,7 +363,7 @@ router.put('/menuitem/:id', async (req, res) => {
         available
       },
       { new: true }
-    );
+    ).lean();
     if (!updatedItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
@@ -390,7 +391,7 @@ router.get('/delete_menuitem/:id', async (req, res) => {
 
 router.get('/menuitem_export', cacheResult('admin:menuitem_export', 300), async (req, res) => {
   try {
-    const menuItems = await MenuItems.find({});
+    const menuItems = await MenuItems.find({}).lean();
     res.json(menuItems);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -456,7 +457,7 @@ router.post(
 
 router.get('/rewards_list', cacheResult('admin:rewards_list', 300), async (req, res) => {
   try {
-    const rewards = await Reward.find({});
+    const rewards = await Reward.find({}).lean();
     res.status(200).json({ rewards });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -495,7 +496,7 @@ router.put('/reward/:id', async (req, res) => {
         availableUntil: availableUntil ? new Date(availableUntil) : undefined
       },
       { new: true }
-    );
+    ).lean();
 
     if (!updatedReward) {
       return res.status(404).json({ error: 'Reward not found' });
@@ -750,7 +751,7 @@ router.get('/health', cacheResult('system:health', 30), async (req, res) => {
 // ── Admin: userinfo (for dashboard switcher) ──────────────────────────────────
 router.get('/userinfo', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified');
+    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ username: user.username, email: user.email, usertype: user.usertype, createdAt: user.createdAt, isVerified: user.isVerified });
   } catch (e) {
@@ -761,7 +762,7 @@ router.get('/userinfo', async (req, res) => {
 // ── Settings: 2FA status ──────────────────────────────────────────────────────
 router.get('/settings/2fa/status', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('is2Active');
+    const user = await User.findById(req.session.user.id).select('is2Active').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ is2Active: user.is2Active === true });
   } catch (e) {

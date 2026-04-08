@@ -17,6 +17,7 @@
   - [5.2 Adatbázis tervezés](#52-adatbazis-tervezes)
   - [5.3 Algoritmusok és adatszerkezetek](#53-algoritmusok-es-adatszerkezetek)
   - [5.4 Biztonsági tervezés](#54-biztonsagi-tervezes)
+  - [5.5 Teljesítményoptimalizálás](#55-teljesitmenyoptimalizalas)
 - [6. Megvalósítás](#6-megvalositas)
   - [6.1 Könyvtárstruktúra](#61-konyvtarszerkezet)
   - [6.2 Backend megvalósítás](#62-backend-megvalositas)
@@ -474,7 +475,29 @@ Index-optimalizációk:
 | isTor | Boolean | Tor usage | Optional | _id, isTor |
 | isProxy | Boolean | Proxy usage | Optional | _id, isProxy |
 
-Üzleti szabályok: Logs record all important events.
+Üzleti szabályok: Minden fontos esemény naplózásra kerül (bejelentkezés, regisztráció, jelszócsere, 2FA, rendelések stb.). Az IP-cím SHA-256 hash-elve tárolódik (GDPR megfelelőség).
+
+**Automatikus adatkezelés:**
+- **TTL index**: A `Timestamp` mező 90 napos TTL indexet kap (`expireAfterSeconds: 7 776 000`); a MongoDB automatikusan törli a 90 napnál régebbi bejegyzéseket, megakadályozva a korlátlan növekedést.
+- **Felhasználónkénti cap**: Maximum 500 napló tárolható felhasználónként. Egy `post('save')` hook figyeli a mentés után a darabszámot, és amennyiben meghaladja a limitet, automatikusan törli a legrégebbi bejegyzéseket (`Timestamp` szerint rendezve).
+
+```js
+// config/database_queries.js
+const MAX_SECURITY_LOGS_PER_USER = 500;
+SecurityLogsScheme.post('save', function(doc) {
+    if (!doc.userId) return;
+    const Model = doc.constructor;
+    Model.countDocuments({ userId: doc.userId })
+        .then(count => {
+            if (count <= MAX_SECURITY_LOGS_PER_USER) return;
+            const excess = count - MAX_SECURITY_LOGS_PER_USER;
+            return Model.find({ userId: doc.userId }, '_id')
+                .sort({ Timestamp: 1 }).limit(excess).lean()
+                .then(oldest => Model.deleteMany({ _id: { $in: oldest.map(d => d._id) } }));
+        })
+        .catch(err => console.error('SecurityLogs cap enforcement error:', err));
+});
+```
 
 ##### DeviceSyncSession (Device Sync Session)
 
@@ -622,6 +645,66 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 - Naplózás: Minden fontos művelet (`SecurityLogs`) a `src/auth/login.js`, `src/auth/register.js` és `src/api.js` végpontoknál történik.
 
 <img src="./diagrams/output-8.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
+
+<span id="55-teljesitmenyoptimalizalas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 5.5 Teljesítményoptimalizálás {#55-teljesitmenyoptimalizalas}
+
+#### 5.5.1 Mongoose `.lean()` lekérdezés-optimalizálás
+
+Az összes csak olvasásra szánt Mongoose lekérdezés `.lean()` módban fut. A `.lean()` hidratált Mongoose dokumentumok helyett egyszerű JavaScript objektumokat ad vissza, így elkerülhető a dokumentumok felépítésével, virtuális tulajdonságaival és prototípusláncával járó többletköltség. Ez a megközelítés különösen a nagy adatmennyiségű, kizárólag olvasási műveletek esetében csökkenti a memóriahasználatot és javítja a válaszidőt.
+
+**Ahol a `.lean()` alkalmazásra kerül:**
+
+| Fájl | Érintett lekérdezések |
+|------|-----------------------|
+| `src/dashboard/admin/admin.js` | Minden csak olvasásra szánt `find`, `findById`, `findOne` |
+| `src/dashboard/editor/editor.js` | `MenuItems.find`, `findByIdAndUpdate` (a művelet visszatérési értéke), `Reward.find` |
+| `src/dashboard/parent/parent.js` | Minden csak olvasásra szánt felhasználó-, rendelés- és hűségpont-lekérdezés |
+| `src/dashboard/student/student.js` | Minden csak olvasásra szánt lekérdezés (profil, rendelések, hűségpontok) |
+| `src/dashboard/statistics/statistics.js` | `User.find({}, 'createdAt')` |
+| `src/Orders/Order.js` | `MenuItems.findById`, `User.findById`, `UserLoyalty.findOne`, `Order.findByIdAndUpdate` |
+| `src/auth/register.js` | `User.findOne` (username és email duplikáció-ellenőrzés) |
+| `src/auth/login.js` | `SecurityLogs.findOne` (legutóbbi esemény lekérése) |
+| `src/auth/password_reset.js` | `User.findById` (token ellenőrzés), `User.findOne` (email keresés) |
+| `src/services/order-service.js` | `MenuItems.findOne`, `UserLoyalty.findOne`, `MenuItems.findById` minden blokkban |
+| `src/services/googlepay-service.js` | `MenuItems.findOne` (kosár érvényesítés) |
+| `src/LoyaltySystem/loyalty-service.js` | `MenuItems.find` |
+| `src/services/chat-service.js` | Minden `User.findById`, `Message.findById`, `Message.find`, `User.find` csak olvasási hívás |
+| `config/database_queries.js` | `updatePointsAtomically` – `findOneAndUpdate` `{ lean: true }` opcióval |
+
+**Ahol a `.lean()` szándékosan NEM kerül alkalmazásra:**
+
+| Fájl | Ok |
+|------|----|
+| `src/auth/login.js` — `User.findOne` | `user.id` Mongoose virtuális getter használata JWT és munkamenet létrehozáshoz |
+| `src/auth/2fa.js` — `User.findOne` | `user.id` virtuális getter használata (`storePendingSession` függvény) |
+| Bármely `.save()` előtt futó lekérdezés | A lean objektum nem használható `.save()`-vel, ezért tranzakciókezeléshez nem megfelelő |
+| `.toObject()` hívások előtt (pl. `userPersonalInfo` aldokumentumban) | A részdokumentum metódusai nem lennének elérhetők |
+| `session(session)` paraméterrel futó lekérdezések | A tranzakción belüli mentésekhez hidratált dokumentum szükséges |
+
+#### 5.5.2 SecurityLogs automatikus adatkezelés
+
+A biztonsági naplók kezelése két szinten történik az adatbázis korlátlan növekedésének megelőzése érdekében:
+
+1. **TTL index** — A `Timestamp` mezőre 90 napos TTL-index (`expireAfterSeconds: 7 776 000`) került, amely automatikusan törli a 90 napnál régebbi rekordokat. Így nincs szükség külön ütemezett karbantartó feladatra.
+
+2. **Felhasználónkénti korlát** — Felhasználónként legfeljebb 500 napló tárolható. A `SecurityLogsScheme.post('save')` hook minden mentés után ellenőrzi a darabszámot, és a limit túllépése esetén a legrégebbi bejegyzéseket törli.
+
+Ez a kétszintű megközelítés biztosítja:
+- Globális adatmennyiség-korlátot (TTL)
+- Felhasználói méltányosságot (egy célzott támadás sem töltheti meg korlátlan naplórekordokkal a rendszert)
+- Nulla adminisztrációs terhet (minden automatikus)
+
+A frekventált lekérdezési útvonalakhoz további adatbázis-optimalizációk is bekerültek:
+- A `Payment` kollekció összetett indexet kapott a `userId + status + createdAt` mintára.
+- Az `Order` kollekció `userId + orderDate` indexet kapott a rendeléstörténeti és irányítópult-lekérdezések gyorsítására.
+- A `ParentStudent` kollekció `parentId + status` és `studentId + status` indexeket kapott a kapcsolat-alapú listázások támogatására.
+- A `MenuItems` kollekcióhoz `reviews.reported` index került a moderációs nézetek gyorsítására.
+- A `UserLoyalty.pointHistory` tömb 200 bejegyzésre korlátozott, hogy az adatdokumentum mérete ellenőrzötten maradjon.
+- A napi menü tartalékolt lekérdezése MongoDB `$sample` művelettel történik, így nem szükséges a teljes menükészlet memóriába töltése és véletlen sorrendbe rendezése.
+- A szülői pénzügyi összesítés aggregációval számítódik, nem teljes `Payment` dokumentumok beolvasásával és JavaScript oldali összegezéssel.
+- A rendeléstartalom és a voucherlista mezőszinten szűkített projekciót használ, hogy csak a megjelenítéshez szükséges adat kerüljön a válaszba.
+- A 2FA és jelszó-visszaállítás modulok már nem hoznak létre külön MongoDB kapcsolatot; a megosztott alkalmazáskapcsolatra támaszkodnak, ami csökkenti a Render környezetben az indulási és memóriaigényt.
 
 <span id="53-algoritmusok-es-adatszerkezetek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ### 5.3 Algoritmusok és adatszerkezetek {#53-algoritmusok-es-adatszerkezetek}

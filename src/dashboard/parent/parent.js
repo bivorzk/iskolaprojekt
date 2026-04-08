@@ -7,6 +7,7 @@ const { User } = require('../../../src/database');
 const { Payment, Order, ParentStudent } = require('../../../config/database_queries');
 const {requireParentAuth} = require('../middleware/auth-middleware');
 const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
+const redisLuaService = require('../../services/redis-lua-service');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
@@ -24,7 +25,7 @@ router.get('/studentlist', cacheResult((req) => `parent:studentlist:${req.sessio
   try {
     console.log('Fetching student list for parent:', req.session.user.id);
     const parentId = req.session.user.id;
-    const links = await ParentStudent.find({ parentId, status: 'approved' }).populate('studentId', 'username email createdAt balance');
+    const links = await ParentStudent.find({ parentId, status: 'approved' }).populate('studentId', 'username email createdAt balance').lean();
     console.log('Found links:', links.length);
     const students = links.map(link => ({
       id: link.studentId._id,
@@ -49,7 +50,8 @@ router.get('/link-requests', async (req, res) => {
 
     const requests = await ParentStudent.find({ parentId, status: 'pending' })
       .populate('studentId', 'username email createdAt')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const pendingRequests = requests.map(request => ({
       id: request._id,
@@ -112,13 +114,14 @@ router.post('/link-request/:requestId', [
 router.get('/orders', cacheResult((req) => `parent:orders:${req.session.user.id}`, 60), async (req, res) => {
   try {
     const parentId = req.session.user.id;
-    const links = await ParentStudent.find({ parentId });
+    const links = await ParentStudent.find({ parentId }).lean();
     const studentIds = links.map(link => link.studentId);
 
     const orders = await Order.find({ userId: { $in: studentIds } })
       .populate('userId', 'username')
       .sort({ orderDate: -1 })
-      .limit(50); // Limit to last 50 orders
+      .limit(50) // Limit to last 50 orders
+      .lean();
 
     const ordersData = orders.map(order => ({
       _id: order._id,
@@ -140,7 +143,7 @@ router.get('/stats', cacheResult((req) => `parent:stats:${req.session.user.id}`,
   try {
     console.log('Fetching stats for parent:', req.session.user.id);
     const parentId = req.session.user.id;
-    const links = await ParentStudent.find({ parentId });
+    const links = await ParentStudent.find({ parentId }).lean();
     console.log('Found parent-student links:', links.length);
     const studentIds = links.map(link => link.studentId);
 
@@ -149,24 +152,34 @@ router.get('/stats', cacheResult((req) => `parent:stats:${req.session.user.id}`,
 
     // Active children (students who have made orders in the last 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const activeOrders = await Order.find({
+    const activeOrders = await Order.distinct('userId', {
       userId: { $in: studentIds },
       orderDate: { $gte: thirtyDaysAgo }
-    }).distinct('userId');
+    });
     const activeChildren = activeOrders.length;
 
     // Orders made
     const ordersMade = await Order.countDocuments({ userId: { $in: studentIds } });
 
     // Total payments
-    const payments = await Payment.find({
-      userId: { $in: studentIds },
-      status: 'Completed'
-    });
-    const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const paymentTotals = await Payment.aggregate([
+      {
+        $match: {
+          userId: { $in: studentIds },
+          status: 'Completed'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalPayments: { $sum: '$amount' }
+        }
+      }
+    ]);
+    const totalPayments = paymentTotals[0]?.totalPayments || 0;
 
     // Parent's balance
-    const parent = await User.findById(parentId);
+    const parent = await User.findById(parentId).lean();
     const balance = parent ? parent.balance : 0;
 
     // Signup data (creation dates of students)
@@ -227,7 +240,7 @@ router.post('/transfer', async (req, res) => {
       return res.status(400).json({ error: 'Invalid student ID or amount' });
     }
 
-    const link = await ParentStudent.findOne({ parentId, studentId });
+    const link = await ParentStudent.findOne({ parentId, studentId }).lean();
     if (!link) {
       return res.status(403).json({ error: 'Student not linked to your account' });
     }
@@ -265,7 +278,7 @@ router.post('/transfer', async (req, res) => {
 router.get('/wallet/balance', async (req, res) => {
   try {
     const parentId = req.session.user.id;
-    const parent = await User.findById(parentId);
+    const parent = await User.findById(parentId).lean();
 
     if (!parent) {
       return res.status(404).json({ error: 'User not found' });
@@ -281,7 +294,7 @@ router.get('/wallet/balance', async (req, res) => {
 router.get('/userinfo', async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId).select('username email usertype IsVerified isVerified createdAt is2Active');
+    const user = await User.findById(userId).select('username email usertype IsVerified isVerified createdAt is2Active').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -348,7 +361,7 @@ router.post('/wallet/add',
     }
 
     // Check if user exists first
-    const existingUser = await User.findById(userId);
+    const existingUser = await User.exists({ _id: userId });
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -358,10 +371,16 @@ router.post('/wallet/add',
       userId,
       { $inc: { balance: usdAmount } },
       { new: true, upsert: false }
-    );
+    ).lean();
     const newBalance = user.balance;
 
     console.log('Parent wallet updated successfully:', newBalance);
+
+    try {
+      await redisLuaService.setWalletBalance(`wallet:user:${userId}`, newBalance);
+    } catch (syncError) {
+      console.log('Failed to sync parent wallet balance to Redis:', syncError.message);
+    }
 
     // Invalidate balance cache
     invalidateCache([`parent:stats:${userId}`]);
@@ -402,7 +421,7 @@ router.post('/wallet/add',
 // ── Settings: 2FA status ──────────────────────────────────────────────────────
 router.get('/settings/2fa/status', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('is2Active');
+    const user = await User.findById(req.session.user.id).select('is2Active').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ is2Active: user.is2Active === true });
   } catch (e) {

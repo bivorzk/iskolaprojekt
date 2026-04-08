@@ -29,6 +29,7 @@ PaymentScheme.index({ userId: 1 });
 PaymentScheme.index({ status: 1 });
 PaymentScheme.index({ paymentMethod: 1, currency: 1 });
 PaymentScheme.index({ userId: 1, createdAt: -1 });
+PaymentScheme.index({ userId: 1, status: 1, createdAt: -1 });
 
 // Menu Items Schema
 
@@ -81,6 +82,7 @@ MenuItemsScheme.index({ stock: 1 });
 MenuItemsScheme.index({ category: 1 });
 MenuItemsScheme.index({ category: 1, available: 1 }); // compound: covers {category, available} queries
 MenuItemsScheme.index({ name: 1, available: 1 });
+MenuItemsScheme.index({ 'reviews.reported': 1 });
 
 // Order Item Schema
 
@@ -124,6 +126,7 @@ OrderScheme.index({ userId: 1 });
 OrderScheme.index({ status: 1 });
 OrderScheme.index({ orderDate: 1 });
 OrderScheme.index({ paypalOrderId: 1 });
+OrderScheme.index({ userId: 1, orderDate: -1 });
 
 const UserLoyaltyScheme = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
@@ -148,6 +151,8 @@ const UserLoyaltyScheme = new mongoose.Schema({
 
 
 UserLoyaltyScheme.index({ userTier: 1 });
+
+const MAX_POINT_HISTORY_ENTRIES = 200;
 
 // Add a static method for atomic point updates
 UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, pointsToAdd, reason) {
@@ -232,7 +237,7 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
                     lastUpdated: now
                 },
                 $push: {
-                    pointHistory: { $each: historyEntries }
+                    pointHistory: { $each: historyEntries, $slice: -MAX_POINT_HISTORY_ENTRIES }
                 }
             };
 
@@ -279,7 +284,7 @@ UserLoyaltyScheme.statics.updatePointsAtomically = async function(userId, points
             result = await this.findOneAndUpdate(
                 { userId }, 
                 updateOps, 
-                { new: true, session }
+                { new: true, session, lean: true }
             );
         });
 
@@ -353,6 +358,8 @@ const ParentStudentScheme = new mongoose.Schema({
 ParentStudentScheme.index({ parentId: 1 });
 ParentStudentScheme.index({ studentId: 1 });
 ParentStudentScheme.index({ parentId: 1, studentId: 1 }); 
+ParentStudentScheme.index({ parentId: 1, status: 1 });
+ParentStudentScheme.index({ studentId: 1, status: 1 });
 
 
 // might expand 
@@ -377,7 +384,26 @@ const SecurityLogsScheme = new mongoose.Schema({
 SecurityLogsScheme.index({ userId: 1 });
 SecurityLogsScheme.index({ action: 1 });
 SecurityLogsScheme.index({ Timestamp: -1 });
-SecurityLogsScheme.index({ userId: 1, Timestamp: -1 }); 
+SecurityLogsScheme.index({ userId: 1, Timestamp: -1 });
+SecurityLogsScheme.index({ Timestamp: 1 }, { expireAfterSeconds: 7776000 }); // TTL: auto-expire logs after 90 days
+
+const MAX_SECURITY_LOGS_PER_USER = 500;
+
+SecurityLogsScheme.post('save', function(doc) {
+    if (!doc.userId) return;
+    const Model = doc.constructor;
+    Model.countDocuments({ userId: doc.userId })
+        .then(count => {
+            if (count <= MAX_SECURITY_LOGS_PER_USER) return;
+            const excess = count - MAX_SECURITY_LOGS_PER_USER;
+            return Model.find({ userId: doc.userId }, '_id')
+                .sort({ Timestamp: 1 })
+                .limit(excess)
+                .lean()
+                .then(oldest => Model.deleteMany({ _id: { $in: oldest.map(d => d._id) } }));
+        })
+        .catch(err => console.error('SecurityLogs cap enforcement error:', err));
+});
 
 
 // Reward catalog schema

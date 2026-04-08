@@ -25,7 +25,7 @@ router.use('/', requireAdmin);
 // User statistics endpoints
 router.get('/stats', cacheResult('admin:stats', 300), async (req, res) => {
   try {
-    const users = await User.find({}, 'createdAt');
+    const users = await User.find({}, 'createdAt').lean();
     const creationDates = users.map(user => user.createdAt.getTime());
     const statsData = {
       mean: stats.mean(creationDates),

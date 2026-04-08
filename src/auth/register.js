@@ -81,8 +81,8 @@ router.post('/register', async (req, res) => {
     }
 
     // Check for existing users (but don't reveal existence to prevent enumeration)
-    const existingUser = await User.findOne({ username });
-    const existingEmail = await User.findOne({ email });
+    const existingUser = await User.findOne({ username }).lean();
+    const existingEmail = await User.findOne({ email }).lean();
     
     let shouldCreateUser = !existingUser && !existingEmail;
     let shouldSendEmail = shouldCreateUser || (existingEmail && !existingEmail.isVerified);

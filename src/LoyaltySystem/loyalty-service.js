@@ -107,7 +107,7 @@ function getRandomDateIn2026() {
 
 
 async function runLoyaltyTest() {
-    const menuItems = await MenuItems.find({}).limit(35); 
+    const menuItems = await MenuItems.find({}).limit(35).lean(); 
 
     for (let tier of Object.values(TIER)) {
         const tierDisplay = Object.keys(TIER).find(key => TIER[key] === tier);

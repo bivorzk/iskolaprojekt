@@ -132,7 +132,7 @@ router.get('/public-key/:userId', requireAuth, async (req, res) => {
       }
     }
 
-    const user = await User.findById(userId, 'encryption username');
+    const user = await User.findById(userId, 'encryption username').lean();
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -181,8 +181,8 @@ router.post('/send-message',
       const senderId = req.session.user.id;
 
       const [sender, recipient] = await Promise.all([
-        User.findById(senderId, 'encryption'),
-        User.findById(recipientId, 'encryption')
+        User.findById(senderId, 'encryption').lean(),
+        User.findById(recipientId, 'encryption').lean()
       ]);
 
       if (!sender?.encryption.isE2EEEnabled || !recipient?.encryption.isE2EEEnabled) {
@@ -245,7 +245,8 @@ router.get('/messages/:otherUserId', requireAuth, async (req, res) => {
     .limit(limit)
     .skip(skip)
     .populate('senderId', 'username')
-    .populate('recipientId', 'username');
+    .populate('recipientId', 'username')
+    .lean();
 
     // Mark messages as delivered if user is recipient
     await Message.updateMany(
@@ -268,7 +269,7 @@ router.get('/message/:messageId', requireAuth, async (req, res) => {
   try {
     const { messageId } = req.params;
     const userId = req.session.user.id;
-    const message = await Message.findById(messageId);
+    const message = await Message.findById(messageId).lean();
     if (!message) return res.status(404).json({ error: 'Message not found' });
     if (String(message.senderId) !== userId && String(message.recipientId) !== userId) {
       return res.status(403).json({ error: 'Not authorized' });
@@ -286,7 +287,7 @@ router.post('/message/:messageId/replace', requireAuth, async (req, res) => {
     const { messageId } = req.params;
     const { recipientId } = req.body;
     const userId = req.session.user.id;
-    const message = await Message.findById(messageId);
+    const message = await Message.findById(messageId).lean();
     if (!message) return res.status(404).json({ error: 'Message not found' });
     if (String(message.senderId) !== userId) {
       return res.status(403).json({ error: 'Only the sender can mark a message as replaced' });
@@ -416,7 +417,7 @@ async function searchUsers(query, userId, excludeAdmins = false) {
   if (excludeAdmins) {
     filter.usertype = { $ne: 'admin' };
   }
-  return User.find(filter, 'username encryption.isE2EEEnabled').limit(20);
+  return User.find(filter, 'username encryption.isE2EEEnabled').limit(20).lean();
 }
 
 router.get('/search-users', requireAuth, async (req, res) => {
@@ -427,7 +428,7 @@ router.get('/search-users', requireAuth, async (req, res) => {
     if (!query || query.length < 2) {
       return res.json({ users: [] });
     }
-    const currentUser = await User.findById(userId);
+    const currentUser = await User.findById(userId).lean();
     const excludeAdmins = ['student', 'teacher', 'parent'].includes(currentUser.usertype);
 
     const users = await searchUsers(query, userId, excludeAdmins);
@@ -441,7 +442,7 @@ router.get('/search-users', requireAuth, async (req, res) => {
 router.get('/e2ee-status', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId, 'encryption');
+    const user = await User.findById(userId, 'encryption').lean();
     
     res.json({
       isEnabled: user?.encryption?.isE2EEEnabled || false,
@@ -507,7 +508,7 @@ router.post('/backup-keys', requireAuth, async (req, res) => {
 router.get('/has-key-backup', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId, 'encryption');
+    const user = await User.findById(userId, 'encryption').lean();
 
     res.json({
       hasBackup: user?.encryption?.hasKeyBackup || false,
@@ -524,7 +525,7 @@ router.get('/has-key-backup', requireAuth, async (req, res) => {
 router.get('/restore-keys', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId, 'encryption');
+    const user = await User.findById(userId, 'encryption').lean();
 
     if (!user?.encryption?.hasKeyBackup || !user?.encryption?.encryptedPrivateKey) {
       return res.status(404).json({ error: 'No key backup found' });
@@ -545,7 +546,7 @@ router.get('/restore-keys', requireAuth, async (req, res) => {
 router.post('/admin/clear-all-e2ee', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     
     if (!user || user.usertype !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
@@ -597,7 +598,7 @@ router.post('/request-sender-recovery', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'messageIds and recipientId required' });
     }
 
-    const sender = await User.findById(senderId, 'encryption');
+    const sender = await User.findById(senderId, 'encryption').lean();
     if (!sender?.encryption?.publicKey) {
       return res.status(400).json({ error: 'Sender public key not found on server — re-setup E2EE first' });
     }
@@ -675,7 +676,7 @@ router.post('/message/:messageId/update-sender-key', requireAuth, async (req, re
     if (!newSenderEncryptedKey) {
       return res.status(400).json({ error: 'Missing newSenderEncryptedKey' });
     }
-    const message = await Message.findById(messageId);
+    const message = await Message.findById(messageId).lean();
     if (!message) return res.status(404).json({ error: 'Message not found' });
     // Only the recipient of a message may update its sender key
     if (String(message.recipientId) !== userId) {
@@ -692,7 +693,7 @@ router.post('/message/:messageId/update-sender-key', requireAuth, async (req, re
 
     // Notify sender so their client re-decrypts the message immediately
     if (io) {
-      const updated = await Message.findById(messageId);
+      const updated = await Message.findById(messageId).lean();
       io.to(`user_${message.senderId}`).emit('senderKeyUpdated', {
         messageId:          String(message._id),
         encryptedContent:   updated.encryptedContent,
@@ -712,7 +713,7 @@ router.post('/message/:messageId/recovery-failed', requireAuth, async (req, res)
   try {
     const { messageId } = req.params;
     const userId = req.session.user.id;
-    const message = await Message.findById(messageId);
+    const message = await Message.findById(messageId).lean();
     if (!message) return res.status(404).json({ error: 'Message not found' });
     if (String(message.recipientId) !== userId) {
       return res.status(403).json({ error: 'Only the recipient can mark recovery as failed' });
@@ -775,7 +776,7 @@ const initializeChatSocket = (socketIOInstance) => {
     socket.on('requestResend', async ({ messageId, requesterId }) => {
       if (!socket.userId || socket.userId !== String(requesterId)) return;
       try {
-        const message = await Message.findById(messageId);
+        const message = await Message.findById(messageId).lean();
         if (!message || String(message.recipientId) !== String(requesterId)) return;
         if (message.status === 'replaced') return;
         const senderSockets = userSockets.get(String(message.senderId));
@@ -806,14 +807,14 @@ const initializeChatSocket = (socketIOInstance) => {
     socket.on('requestSenderRecovery', async ({ messageId, senderId, recipientId }) => {
       if (!socket.userId || socket.userId !== String(senderId)) return;
       try {
-        const message = await Message.findById(messageId);
+        const message = await Message.findById(messageId).lean();
         if (!message) return;
         if (String(message.senderId)    !== String(senderId))    return;
         if (String(message.recipientId) !== String(recipientId)) return;
         if (message.status === 'replaced') return;
 
         // Sender's current public key so the recipient can re-encrypt for it
-        const sender = await User.findById(senderId, 'encryption identity');
+        const sender = await User.findById(senderId, 'encryption identity').lean();
         const senderPubKey = sender?.encryption?.publicKey || sender?.identity?.publicKey;
         if (!senderPubKey) return;
 

@@ -153,7 +153,7 @@ router.post(
 
 router.get('/menulist', cacheResult('editor:menulist', 300), async (req, res) => {
   try {
-    const menuItems = await MenuItems.find({});
+    const menuItems = await MenuItems.find({}).lean();
     res.status(202).json({ menuItems });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -187,7 +187,7 @@ router.put('/menuitem/:id', async (req, res) => {
         available
       },
       { new: true }
-    );
+    ).lean();
     if (!updatedItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
@@ -276,7 +276,7 @@ router.post(
 
 router.get('/rewards_list', cacheResult('editor:rewards_list', 300), async (req, res) => {
   try {
-    const rewards = await Reward.find({});
+    const rewards = await Reward.find({}).lean();
     res.status(200).json({ rewards });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -315,7 +315,7 @@ router.put('/reward/:id', async (req, res) => {
         availableUntil: availableUntil ? new Date(availableUntil) : undefined
       },
       { new: true }
-    );
+    ).lean();
 
     if (!updatedReward) {
       return res.status(404).json({ error: 'Reward not found' });
@@ -372,7 +372,7 @@ router.get('/welcome-message', (req, res) => {
 // ── Editor: userinfo (for dashboard switcher) ─────────────────────────────────
 router.get('/userinfo', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified');
+    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ username: user.username, email: user.email, usertype: user.usertype, createdAt: user.createdAt, isVerified: user.isVerified });
   } catch (e) {

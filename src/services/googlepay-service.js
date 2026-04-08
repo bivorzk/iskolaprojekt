@@ -7,7 +7,7 @@ const createGooglePayOrder = async (userId, cart) => {
     
     if (Array.isArray(cart) && cart.length > 0) {
         for (const cartItem of cart) {
-            const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true });
+            const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true }).lean();
             if (menuItem) {
                 const quantity = cartItem.quantity || 1;
                 

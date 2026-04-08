@@ -1,11 +1,13 @@
 const { User } = require('../database');
 const { MenuItems, Order, Payment, UserLoyalty } = require('../../config/database_queries');
 const { ConvertPoints, getHealthLevel } = require('../LoyaltySystem/loyalty-service');
+const redisLuaService = require('./redis-lua-service');
+const { redisClient } = require('../redis');
 const nanoID = require('nanoid');
 
 const validateOrderStock = async (cart) => {
     for (const cartItem of cart) {
-        const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true });
+        const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true }).lean();
         if (menuItem) {
             const quantity = cartItem.quantity || 1;
             if (menuItem.stock < quantity) {
@@ -21,7 +23,7 @@ const convertCartToDbFormat = async (cart) => {
     
     if (Array.isArray(cart) && cart.length > 0) {
         for (const cartItem of cart) {
-            const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true });
+            const menuItem = await MenuItems.findOne({ name: cartItem.name, available: true }).lean();
             if (menuItem) {
                 const quantity = cartItem.quantity || 1;
                 
@@ -98,23 +100,56 @@ const saveCompletedOrder = async (userId, items, subtotal, discount, total, curr
         subtotal,
         discount,
         total,
+        null,
         'Completed',
         paymentMethod,
         transactionId
     );
-    
+
+    // Deduct wallet balance for external payment methods
+    if (userId && ['GooglePay', 'PayPal'].includes(paymentMethod)) {
+        try {
+            const totalInUSD = currency === 'HUF' ? total * 0.0027
+                             : currency === 'EUR' ? total * 1.1
+                             : total;
+            const totalInUSDRounded = Math.round(totalInUSD * 100) / 100;
+
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                { $inc: { balance: -totalInUSDRounded } },
+                { new: true }
+            ).lean();
+
+            if (updatedUser) {
+                const walletKey = `wallet:user:${userId}`;
+                try {
+                    await redisLuaService.setWalletBalance(walletKey, updatedUser.balance || 0);
+                } catch (syncErr) {
+                    console.log('Failed to sync wallet to Redis after order:', syncErr.message);
+                }
+                if (redisClient?.isOpen) {
+                    await redisClient.del(`student:wallet_balance:${userId}`);
+                    await redisClient.del(`student:transactions:${userId}`);
+                }
+            }
+        } catch (balanceError) {
+            // Payment already captured externally — log but don't fail the order
+            console.error(`Failed to deduct wallet balance for ${paymentMethod} order:`, balanceError.message);
+        }
+    }
+
     // Calculate and award loyalty points
     let totalPoints = 0;
     try {
         if (userId) {
-            const userLoyalty = await UserLoyalty.findOne({ userId });
+            const userLoyalty = await UserLoyalty.findOne({ userId }).lean();
             let currentTier = 'NONE';
             if (userLoyalty) {
                 currentTier = userLoyalty.userTier;
             }
             
             for (const item of dbOrderItems) {
-                const menuItem = await MenuItems.findById(item.menuItemId);
+                const menuItem = await MenuItems.findById(item.menuItemId).lean();
                 if (menuItem) {
                     const healthLevel = getHealthLevel(menuItem.healthScore);
                     const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
@@ -169,6 +204,7 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
         // Deduct balance
         user.balance = currentBalance - totalInUSD;
         await user.save({ session });
+        const updatedBalance = user.balance;
 
         // Process items and create order within transaction
         const { dbOrderItems, totalAmount } = await convertItemsToDbFormat(items, session);
@@ -199,18 +235,24 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
         // Commit the transaction
         await session.commitTransaction();
 
+        try {
+            await redisLuaService.setWalletBalance(`wallet:user:${userId}`, updatedBalance);
+        } catch (syncError) {
+            console.log('Failed to sync wallet balance to Redis after balance payment:', syncError.message);
+        }
+
         // Calculate and award loyalty points (outside transaction since it's not critical)
         let totalPoints = 0;
         try {
             if (userId) {
-                const userLoyalty = await UserLoyalty.findOne({ userId });
+                const userLoyalty = await UserLoyalty.findOne({ userId }).lean();
                 let currentTier = 'NONE';
                 if (userLoyalty) {
                     currentTier = userLoyalty.userTier;
                 }
                 
                 for (const item of dbOrderItems) {
-                    const menuItem = await MenuItems.findById(item.menuItemId);
+                    const menuItem = await MenuItems.findById(item.menuItemId).lean();
                     if (menuItem) {
                         const healthLevel = getHealthLevel(menuItem.healthScore);
                         const itemTotal = menuItem.price * item.quantity;

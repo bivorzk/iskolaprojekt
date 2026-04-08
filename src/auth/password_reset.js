@@ -11,17 +11,8 @@
     const banned_words = require('badwords-list').array;
     const password_characters = require('../../data/password_characters.json');
     const banned_passwords = require('../../data/Most_used_passwords.json');
-    const mongoose = require('mongoose');
 
     salt = 10;
-
-
-    const dbUrl = process.env.MONGODB_URI;
-    const dbName = process.env.DB_NAME;
-
-    mongoose.connect(dbUrl + dbName)
-    .then(() => console.log('Connected to MongoDB for password reset'))
-    .catch(err => console.error('Could not connect to MongoDB', err));
 
 
     const User = require('../database').User;
@@ -93,7 +84,7 @@
             console.log('Decoded token:', decoded);
             
             // Verify user still exists in database
-            const user = await User.findById(decoded.userId);
+            const user = await User.findById(decoded.userId).lean();
             if (!user) {
                 return res.status(400).send('User not found');
             }
@@ -202,7 +193,7 @@
         
         try {
             // Find user by email
-            const user = await User.findOne({ email: email });
+            const user = await User.findOne({ email: email }).lean();
             if (!user) {
                 // Don't reveal whether user exists or not for security
                 return res.status(200).send('If an account with that email exists, a password reset link has been sent');

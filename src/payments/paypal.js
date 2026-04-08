@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { Payment } = require('../../config/database_queries');
-const { Users } = require('../database');
+const { User } = require('../database');
+const { redisClient } = require('../redis');
+const redisLuaService = require('../services/redis-lua-service');
 // POST /api/payments/paypal
 router.post('/paypal', async (req, res) => {
     try {
@@ -12,6 +14,7 @@ router.post('/paypal', async (req, res) => {
         console.log('Incoming PayPal payment body:', JSON.stringify(req.body, null, 2));
         
         const { orderID, payerID, amount, currency, paypalAmountUSD } = req.body;
+        const amountNum = parseFloat(amount) || 0;
         
         // Validate required fields
         if (!orderID || !amount) {
@@ -19,13 +22,12 @@ router.post('/paypal', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing required fields: orderID or amount' });
         }
         
-        // You may want to get userId from session/auth middleware
-        const userId = req.user ? req.user._id : null;
+        // Get userId from session (the app uses express-session, not passport)
+        const userId = req.session?.user?.id || null;
         const referer = req.headers.referer || req.headers.referrer || null;
         console.log('User ID from session:', userId);
 
         // Save amount as number, fallback to 0 if invalid
-        const amountNum = parseFloat(amount) || 0;
         const paypalAmountNum = paypalAmountUSD ? parseFloat(paypalAmountUSD) : undefined;
         
         console.log('Parsed amounts - Original:', amountNum, 'PayPal USD:', paypalAmountNum);
@@ -56,13 +58,29 @@ router.post('/paypal', async (req, res) => {
         const payment = new Payment(paymentData);
         
         if (referer && referer.includes('/dashboard/student/') && userId) {
-            console.log('Payment from student dashboard - adding credits to wallet');
+            console.log('Payment from student dashboard - adding balance to wallet');
+
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                { $inc: { balance: amountNum } },
+                { new: true }
+            ).lean();
             
-            await Users.updateOne(
-                { _id: userId },
-                { $inc: { credits: parseFloat(amountNum) || 0 } }
-            );
-            console.log(`Added ${amountNum} credits to user ${userId}`);
+            if (updatedUser) {
+                const walletKey = `wallet:user:${userId}`;
+                try {
+                    await redisLuaService.setWalletBalance(walletKey, updatedUser.balance || 0);
+                } catch (syncError) {
+                    console.log('Failed to sync PayPal balance to Redis:', syncError.message);
+                }
+
+                if (redisClient?.isOpen) {
+                    await redisClient.del(`student:wallet_balance:${userId}`);
+                    await redisClient.del(`student:transactions:${userId}`);
+                }
+            }
+
+            console.log(`Added ${amountNum} balance to user ${userId}`);
             
         } else if (referer && referer.includes('/order/')) {
             console.log('Payment from order page');

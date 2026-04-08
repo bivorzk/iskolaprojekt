@@ -96,7 +96,7 @@ router.post("/login", async (req, res) => {
     const hashedIP = crypto.createHash("sha256").update(clientIp).digest("hex");
     const lastLog = await SecurityLogs.findOne({ userId: user._id }).sort({
       Timestamp: -1,
-    });
+    }).lean();
 
     const ipMatches = lastLog && lastLog.ipAddress === hashedIP;
 

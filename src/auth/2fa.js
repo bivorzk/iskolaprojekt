@@ -2,19 +2,12 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { redisClient, isRedisAvailable } = require('../redis');
 
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const dbUrl = process.env.MONGODB_URI;
-const dbName = process.env.DB_NAME;
-
 router.use(express.urlencoded({ extended: true }));
-mongoose.connect(dbUrl + dbName, { maxPoolSize: 50, minPoolSize: 5 })
-    .then(() => console.log('Connected to MongoDB for 2FA'))
-    .catch(err => console.error('Could not connect to MongoDB for 2FA', err));
 
 const User = require('../models/User');
 

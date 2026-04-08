@@ -55,6 +55,25 @@ class RedisLuaService {
   }
 
   /**
+   * Set wallet balance to an exact value in Redis
+   * @param {string} walletKey - Redis key for the wallet
+   * @param {number} balance - Exact balance to store
+   * @returns {Promise<number>} - Stored balance
+   */
+  async setWalletBalance(walletKey, balance) {
+    if (this.redisUnavailable) {
+      throw new Error('Redis Lua scripting is not available - Redis server not running');
+    }
+
+    if (!this.client || !this.client.isOpen) {
+      throw new Error('Redis is not available');
+    }
+
+    await this.client.set(walletKey, String(balance));
+    return balance;
+  }
+
+  /**
    * Process an order with inventory and wallet checks
    * @param {string} inventoryKey - Redis key for inventory
    * @param {string} walletKey - Redis key for wallet
@@ -132,7 +151,7 @@ class RedisLuaService {
   async getWalletBalance(walletKey) {
     if (this.redisUnavailable) {
       console.warn('Wallet balance retrieval from Redis unavailable - Redis not running');
-      return 0; // Return 0 when Redis is not available
+      return null;
     }
 
     // This could be implemented with a simple Lua script or direct Redis call
@@ -140,10 +159,10 @@ class RedisLuaService {
     const redisLua = require('./redis-lua');
     try {
       const balance = await redisLua.client.get(walletKey);
-      return balance ? parseFloat(balance) : 0;
+      return balance !== null ? parseFloat(balance) : null;
     } catch (error) {
       console.error('Failed to get wallet balance:', error);
-      return 0;
+      return null;
     }
   }
 

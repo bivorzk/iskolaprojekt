@@ -60,7 +60,7 @@ router.get('/current-user', (req, res) => {
 // Route to get available menu items for ordering
 router.get('/menu-items', async (req, res) => {
     try {
-        const menuItems = await MenuItems.find({ available: true });
+        const menuItems = await MenuItems.find({ available: true }).lean().exec();
         res.json(menuItems);
     } catch (error) {
         console.error('Error fetching menu items:', error);
@@ -93,7 +93,8 @@ router.get('/daily-menu', async (req, res) => {
             schoolPeriod: timeOfDay,
             date: { $gte: startOfDay, $lte: endOfDay }
         })
-        .populate('menuItems')
+        .lean()
+        .populate('menuItems', 'name description price available')
         .exec();
 
         let dailyMenuItems = [];
@@ -101,13 +102,12 @@ router.get('/daily-menu', async (req, res) => {
         if (dailyMenuRecord && Array.isArray(dailyMenuRecord.menuItems) && dailyMenuRecord.menuItems.length > 0) {
             dailyMenuItems = dailyMenuRecord.menuItems.filter(item => item && item.available).slice(0, 3);
         } else {
-            // fallback to random available items
-            const menuItems = await MenuItems.find({ available: true });
-            const shuffled = menuItems
-                .map(item => ({ item, sort: Math.random() }))
-                .sort((a, b) => a.sort - b.sort)
-                .map(i => i.item);
-            dailyMenuItems = shuffled.slice(0, 3);
+            // fallback to random available items, sampled in MongoDB instead of shuffling the full collection in memory
+            dailyMenuItems = await MenuItems.aggregate([
+                { $match: { available: true } },
+                { $sample: { size: 3 } },
+                { $project: { name: 1, description: 1, price: 1, available: 1 } }
+            ]);
         }
 
         res.json({
@@ -148,6 +148,8 @@ router.post('/orders', validateOrderInput, async (req, res) => {
                 const newOrder = await orderService.createOrderRecord(
                     userId,
                     dbOrderItems,
+                    totalAmount,
+                    null,
                     totalAmount,
                     jsonResponse.id
                 );

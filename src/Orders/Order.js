@@ -217,7 +217,7 @@ router.post('/item_information/:itemName/Review', [
         let menuItem;
 
         try {
-            menuItem = await MenuItems.findOne({ name: itemName });
+            menuItem = await MenuItems.findOne({ name: itemName }).lean();
         } catch (cacheError) {
             menuItem = null;
         }
@@ -374,7 +374,7 @@ router.get('/username', async (req, res) => {
         }
 
         // Fetch from database
-        const user = await User.findById(userId).select('username');
+        const user = await User.findById(userId).select('username').lean();
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -448,7 +448,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
             const menuItem = await MenuItems.findOneAndUpdate(
                 { _id: item.menuItemId, available: true, stock: { $gte: item.quantity } },
                 {}, // No update, just check condition
-                { new: true }
+                { new: true, lean: true }
             );
             if (!menuItem) {
                 return res.status(400).json({ error: `Menu item ${item.menuItemId} is not available or insufficient stock` });
@@ -556,7 +556,7 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
         const inventoryChecks = [];
 
         for (const item of cart) {
-            const menuItem = await MenuItems.findById(item.menuItemId);
+            const menuItem = await MenuItems.findById(item.menuItemId).lean();
             if (!menuItem) {
                 return res.status(400).json({ error: `Menu item ${item.menuItemId} not found` });
             }
@@ -586,9 +586,13 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
 
         try {
             currentBalance = await redisLuaService.getWalletBalance(walletKey);
+            if (currentBalance === null || currentBalance === undefined) {
+                const user = await User.findById(userId).select('balance').lean();
+                currentBalance = user ? user.balance || 0 : 0;
+            }
         } catch (redisError) {
             // Fallback to database
-            const user = await User.findById(userId).select('balance');
+            const user = await User.findById(userId).select('balance').lean();
             currentBalance = user ? user.balance || 0 : 0;
         }
 
@@ -630,6 +634,8 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
                 userId
             );
 
+            await User.findByIdAndUpdate(userId, { balance: result.newBalance });
+
             // Update order status to completed
             savedOrder.status = 'Completed';
             savedOrder.pickupTime = new Date();
@@ -648,7 +654,7 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
 
             // Award loyalty points
             try {
-                const userLoyalty = await UserLoyalty.findOne({ userId });
+                const userLoyalty = await UserLoyalty.findOne({ userId }).lean();
                 let currentTier = 'NONE';
                 if (userLoyalty) {
                     currentTier = userLoyalty.userTier;
@@ -656,7 +662,7 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
 
                 let totalPoints = 0;
                 for (const item of order.items) {
-                    const menuItem = await MenuItems.findById(item.menuItemId);
+                    const menuItem = await MenuItems.findById(item.menuItemId).lean();
                     const healthLevel = getHealthLevel(menuItem.healthScore);
                     const itemTotal = menuItem.price * item.quantity; // Calculate dollar amount for this item
                     const points = ConvertPoints(itemTotal, currentTier, healthLevel, new Date());
@@ -748,7 +754,7 @@ router.put('/:orderID/status',
                 status: status,
                 ...(status === 'Completed' && { pickupTime: new Date() })
             },
-            { new: true }
+            { new: true, lean: true }
         );
 
         if (!updatedOrder) {
@@ -892,7 +898,7 @@ router.post('/:orderID/capture',
 
                 // Try to sync to Redis
                 try {
-                  const updatedItem = await MenuItems.findById(item.menuItemId._id);
+                  const updatedItem = await MenuItems.findById(item.menuItemId._id).lean();
                   // Note: This is a simplified sync - in production you'd want to set the exact value
                 } catch (syncError) {
                   console.log('Failed to sync inventory to Redis:', syncError.message);
@@ -915,7 +921,7 @@ router.post('/:orderID/capture',
 
             // Award loyalty points if user is logged in
             if (order.userId) {
-                const userLoyalty = await UserLoyalty.findOne({ userId: order.userId });
+                const userLoyalty = await UserLoyalty.findOne({ userId: order.userId }).lean();
                 let currentTier = 'NONE';
                 if (userLoyalty) {
                     currentTier = userLoyalty.userTier;
