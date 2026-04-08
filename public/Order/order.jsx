@@ -99,16 +99,16 @@ const { useState, useEffect } = React;
                 <div className="min-h-screen bg-gradient-to-br from-accent to-white">
                     <Header />
 
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
                         {/* Loyalty Status Banner */}
                         <LoyaltyStatus isLoggedIn={isLoggedIn} />
 
                         {/* Daily Menu Highlight */}
                         {dailyMenu.length > 0 && (
-                            <div className="bg-white border-2 border-primary shadow-sm rounded-xl p-5 mb-6">
-                                <div className="flex items-center justify-between mb-3">
+                            <div className="bg-white border-2 border-primary shadow-sm rounded-2xl p-4 sm:p-5 mb-6">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
                                     <h2 className="text-xl font-bold text-primary">{dailyMenuTitle}</h2>
-                                    <span className="text-sm font-medium text-secondary uppercase">Recommended</span>
+                                    <span className="self-start text-sm font-medium text-secondary uppercase">Recommended</span>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {dailyMenu.map((item) => (
@@ -127,14 +127,22 @@ const { useState, useEffect } = React;
                             </div>
                         )}
 
-                        <div className="flex flex-col lg:flex-row gap-8">
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                             {/* Menu Section */}
                             <div className="flex-1">
-                                <div className="mb-6">
-                                    <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-4">Cafeteria Menu</h1>
+                                <div className="mb-6 rounded-2xl bg-white/90 border border-white/80 p-4 sm:p-6 shadow-sm">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4">
+                                        <div>
+                                            <h1 className="text-2xl sm:text-3xl font-bold text-primary">Cafeteria Menu</h1>
+                                            <p className="mt-2 text-sm sm:text-base text-gray-600">Browse today&apos;s dishes, filter the list quickly, and add items without losing your place.</p>
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-500">
+                                            {filteredMenuItems.length} items available
+                                        </div>
+                                    </div>
 
                                     {/* Search and Filter */}
-                                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                                    <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
                                         <div className="flex-1">
                                             <input
                                                 type="text"
@@ -161,7 +169,7 @@ const { useState, useEffect } = React;
                                 </div>
 
                                 {/* Menu Items Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-24 lg:pb-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-32 lg:pb-8">
                                     {filteredMenuItems.map((item) => (
                                         <MenuItem
                                             key={item._id}

@@ -37,9 +37,9 @@ const Header = () => {
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-3 sm:py-4">
-                    <div className="flex items-center">
-                        <a href="/">
-                        <svg viewBox="0 0 500 140" className="h-12 sm:h-16 lg:h-20 w-auto">
+                    <div className="flex items-center shrink-0">
+                        <a href="/" className="shrink-0">
+                        <svg viewBox="0 0 500 140" className="h-16 sm:h-20 lg:h-20 w-auto shrink-0">
                             <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
                             <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
                             <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>

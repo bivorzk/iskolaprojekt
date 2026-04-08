@@ -27,6 +27,8 @@ const E2EEChatApp = () => {
   const [searchResults, setSearchResults]   = useState([]);
   const [isSearching, setIsSearching]       = useState(false);
   const [showUserSearch, setShowUserSearch] = useState(false);
+  const [isMobileView, setIsMobileView]     = useState(() => window.innerWidth < 768);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   const [currentUser, setCurrentUser] = useState(null);
   const [socket, setSocket]           = useState(null);
@@ -39,6 +41,28 @@ const E2EEChatApp = () => {
     window.addEventListener('error', handleGlobalCryptoError);
     return () => window.removeEventListener('error', handleGlobalCryptoError);
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileView(mobile);
+      if (!mobile) {
+        setIsSidebarVisible(true);
+      } else if (!activeConversationRef.current) {
+        setIsSidebarVisible(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobileView && !activeConversation) {
+      setIsSidebarVisible(true);
+    }
+  }, [activeConversation, isMobileView]);
 
   const handleGlobalCryptoError = (event) => {
     if (event.error?.message?.includes('crypto')) {
@@ -381,6 +405,9 @@ const E2EEChatApp = () => {
 
   const startConversation = async (user) => {
     setActiveConversation(user);
+    if (isMobileView) {
+      setIsSidebarVisible(false);
+    }
     setShowUserSearch(false);
     setSearchQuery('');
     setSearchResults([]);
@@ -391,6 +418,9 @@ const E2EEChatApp = () => {
 
   const selectConversation = (conv) => {
     setActiveConversation(conv);
+    if (isMobileView) {
+      setIsSidebarVisible(false);
+    }
     socket && socket.emit('joinConversation', conv._id);
     loadMessages(conv._id);
   };
@@ -520,9 +550,11 @@ const E2EEChatApp = () => {
   }
   
   const topOffset = keyMismatchError ? '80px' : '0';
+  const showSidebar = !isMobileView || !activeConversation || isSidebarVisible;
+  const showChatArea = !isMobileView || (activeConversation && !isSidebarVisible);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen bg-slate-100">
       {keyMismatchError && (
         <KeyMismatchBanner
           activeConversation={activeConversation}
@@ -532,34 +564,40 @@ const E2EEChatApp = () => {
         />
       )}
 
-      <div style={{ marginTop: topOffset }} className="w-1/3 flex">
-        <Sidebar
-          conversations={conversations}
-          activeConversation={activeConversation}
-          showUserSearch={showUserSearch}
-          setShowUserSearch={setShowUserSearch}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          searchResults={searchResults}
-          isSearching={isSearching}
-          onSearchChange={searchUsers}
-          onStartConversation={startConversation}
-          onSelectConversation={selectConversation}
-          socket={socket}
-        />
-      </div>
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col md:flex-row">
+        {showSidebar && (
+          <div style={{ marginTop: topOffset }} className="flex w-full md:w-[360px] md:max-w-[360px] md:flex-shrink-0">
+            <Sidebar
+              conversations={conversations}
+              activeConversation={activeConversation}
+              showUserSearch={showUserSearch}
+              setShowUserSearch={setShowUserSearch}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchResults={searchResults}
+              isSearching={isSearching}
+              onSearchChange={searchUsers}
+              onStartConversation={startConversation}
+              onSelectConversation={selectConversation}
+              socket={socket}
+            />
+          </div>
+        )}
 
-      <div className="flex-1 flex flex-col" style={{ marginTop: topOffset }}>
-        <ChatArea
-          activeConversation={activeConversation}
-          messages={messages}
-          currentUser={currentUser}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          onSend={sendMessage}
-          onRecover={handleKeyMismatchRecover}
-          onReset={handleKeyMismatchReset}
-        />
+        <div className={`${showChatArea ? 'flex' : 'hidden'} flex-1 flex-col md:flex`} style={{ marginTop: topOffset }}>
+          <ChatArea
+            activeConversation={activeConversation}
+            messages={messages}
+            currentUser={currentUser}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            onSend={sendMessage}
+            onRecover={handleKeyMismatchRecover}
+            onReset={handleKeyMismatchReset}
+            showBackButton={isMobileView}
+            onBack={() => setIsSidebarVisible(true)}
+          />
+        </div>
       </div>
     </div>
   );

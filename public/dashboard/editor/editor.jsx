@@ -23,11 +23,11 @@ const EditorDashboard = () => {
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
             <EditorHeader welcomeMessage={welcomeMessage} userData={userData} />
 
-            <div className="flex">
+            <div className="flex flex-col lg:flex-row">
                 <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
+                <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 mobile-main-offset lg:pb-8">
                     {activeSection === 'stats' && <StatsSection stats={stats} />}
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'rewards' && <RewardsSection rewards={rewards} loadDashboardData={loadDashboardData} />}

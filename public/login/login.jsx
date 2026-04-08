@@ -3,7 +3,7 @@ const { useState } = React;
 // ── Logo ─────────────────────────────────────────────────────────────────────
 const Logo = () => (
     <a href="/">
-        <svg viewBox="0 0 500 140" className="mx-auto h-20 w-auto">
+        <svg viewBox="0 0 500 140" className="mx-auto h-16 sm:h-20 w-auto">
             <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
             <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
             <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
@@ -138,16 +138,19 @@ const Login = () => {
     const switchToLogin          = () => { setIsLogin(true);  setResetData({ email: '' }); setMessage({ text: '', type: '' }); };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-accent to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
+        <div className="min-h-screen bg-gradient-to-br from-accent via-[#fff8f4] to-white flex items-start sm:items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-6 sm:space-y-8">
 
                 <div className="text-center"><Logo /></div>
 
-                <div className="bg-white shadow-2xl rounded-lg p-8">
+                <div className="bg-white shadow-2xl rounded-2xl p-6 sm:p-8 border border-white/80">
 
                     {isLogin ? (
                         <>
-                            <h2 className="text-3xl font-bold text-center text-primary mb-8">Login</h2>
+                            <div className="mb-8 text-center">
+                                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">Welcome Back</p>
+                                <h2 className="mt-3 text-3xl font-bold text-primary">Login</h2>
+                            </div>
 
                             <form onSubmit={handleLoginSubmit} className="space-y-6">
                                 <div>
@@ -155,7 +158,7 @@ const Login = () => {
                                     <input
                                         type="text" id="username" name="username"
                                         value={loginData.username} onChange={handleLoginChange} required
-                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                        className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
                                     />
                                 </div>
                                 <div>
@@ -163,12 +166,12 @@ const Login = () => {
                                     <input
                                         type="password" id="password" name="password"
                                         value={loginData.password} onChange={handleLoginChange} required
-                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                        className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
                                     />
                                 </div>
                                 <button
                                     type="submit" disabled={loading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                 >
                                     {loading ? 'Logging in…' : 'Login'}
                                 </button>
@@ -186,7 +189,10 @@ const Login = () => {
                         </>
                     ) : (
                         <>
-                            <h2 className="text-3xl font-bold text-center text-primary mb-8">Reset Password</h2>
+                            <div className="mb-8 text-center">
+                                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">Account Recovery</p>
+                                <h2 className="mt-3 text-3xl font-bold text-primary">Reset Password</h2>
+                            </div>
                             <p className="text-sm text-gray-600 text-center mb-6">
                                 Enter your email address and we'll send you a link to reset your password.
                             </p>
@@ -197,19 +203,19 @@ const Login = () => {
                                     <input
                                         type="email" id="resetEmail" name="email"
                                         value={resetData.email} onChange={handleResetChange} required
-                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
+                                        className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary"
                                     />
                                 </div>
                                 <div className="space-y-3">
                                     <button
                                         type="submit" disabled={loading}
-                                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     >
                                         {loading ? 'Sending…' : 'Send Reset Link'}
                                     </button>
                                     <button
                                         type="button" onClick={switchToLogin}
-                                        className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                                        className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                                     >
                                         Back to Login
                                     </button>
@@ -219,7 +225,7 @@ const Login = () => {
                     )}
 
                     {message.text && (
-                        <div className={`mt-6 p-4 rounded-md ${
+                        <div className={`mt-6 p-4 rounded-xl ${
                             message.type === 'success'
                                 ? 'bg-green-50 border border-green-200 text-green-700'
                                 : 'bg-red-50 border border-red-200 text-red-700'

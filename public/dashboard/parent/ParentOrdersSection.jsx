@@ -15,7 +15,7 @@ const ParentOrdersSection = ({ orders }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Student Orders</h2>
 
             {orders.length === 0 ? (
@@ -27,38 +27,65 @@ const ParentOrdersSection = ({ orders }) => {
                     <p className="text-gray-600">Your students haven't placed any orders yet.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {orders.map((order, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {order.studentName || 'Unknown Student'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                                        ${order.total?.toFixed(2) || '0.00'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                                            {order.status || 'Pending'}
-                                        </span>
-                                    </td>
+                <>
+                    <div className="space-y-3 md:hidden">
+                        {orders.map((order, index) => (
+                            <div key={order._id || index} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div className="text-xs font-semibold uppercase tracking-[0.24em] text-gray-400">Student</div>
+                                        <div className="mt-1 text-base font-semibold text-gray-900">{order.studentName || 'Unknown Student'}</div>
+                                    </div>
+                                    <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                        {order.status || 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <div className="text-gray-400 uppercase tracking-wide text-[11px]">Date</div>
+                                        <div className="mt-1 font-medium text-gray-700">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-gray-400 uppercase tracking-wide text-[11px]">Amount</div>
+                                        <div className="mt-1 text-base font-semibold text-primary">${order.total?.toFixed(2) || '0.00'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {orders.map((order, index) => (
+                                    <tr key={order._id || index} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {order.studentName || 'Unknown Student'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                            ${order.total?.toFixed(2) || '0.00'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                                {order.status || 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             )}
         </div>
     );

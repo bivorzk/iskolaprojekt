@@ -32,8 +32,8 @@ const AdminHeader = ({ welcomeMessage }) => {
 
     return (
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-            <div className="flex justify-between items-center py-3 w-full px-3 sm:px-6 lg:px-8">
-                <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex flex-wrap justify-between items-center gap-3 py-3 w-full px-3 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0 shrink-0">
                     {/* Mobile menu button - optional for secondary menu */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -43,8 +43,8 @@ const AdminHeader = ({ welcomeMessage }) => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <a href="/">
-                    <svg viewBox="0 0 500 140" className="h-12 sm:h-16 lg:h-20 w-auto">
+                    <a href="/" className="shrink-0">
+                    <svg viewBox="0 0 500 140" className="h-16 sm:h-20 lg:h-20 w-auto shrink-0">
                         <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
                         <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
                         <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
@@ -56,7 +56,7 @@ const AdminHeader = ({ welcomeMessage }) => {
                     </svg>
                     </a>
                 </div>
-                <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
                     <DashboardSwitcher />
                     <span className="hidden sm:inline text-sm sm:text-base text-gray-700 truncate max-w-32 sm:max-w-none font-medium">{welcomeMessage}</span>
                     <a 

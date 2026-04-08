@@ -56,9 +56,9 @@ const StudentDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <StudentHeader welcomeMessage={welcomeMessage} walletAmount={walletAmount} userData={userData} />
-            <div className="flex">
+            <div className="flex flex-col lg:flex-row">
                 <StudentSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-                <main className="flex-1 p-4 sm:p-8 pb-20 lg:pb-8">
+                <main className="flex-1 min-w-0 p-4 sm:p-8 mobile-main-offset lg:pb-8">
                     {renderActiveSection()}
                 </main>
             </div>

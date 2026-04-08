@@ -36,7 +36,7 @@ const MessageBubble = ({ message, currentUserId }) => {
 
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} message-bubble`}>
-      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${bubbleClass}`}>
+      <div className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${bubbleClass}`}>
         {isPrev ? (
           <div className="flex items-center">
             <InlineLockIcon extraClass="text-gray-400" />
@@ -70,7 +70,7 @@ const ErrorGroupBubble = ({ message, currentUserId, onRecover, onReset }) => {
   const isMine = message.senderId._id === currentUserId;
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} message-bubble`}>
-      <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200">
+      <div className="max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200">
         <div className="flex items-center">
           <WarningIcon extraClass="text-red-500" />
           <div>
@@ -121,7 +121,7 @@ const EmptyState = () => (
   </div>
 );
 
-window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setNewMessage, onSend, onRecover, onReset }) => {
+window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setNewMessage, onSend, onRecover, onReset, showBackButton, onBack }) => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -137,10 +137,21 @@ window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setN
   );
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-screen md:min-h-0 bg-white">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center">
+      <div className="sticky top-0 z-10 p-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-3">
+          {showBackButton && (
+            <button
+              onClick={onBack}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition-colors hover:bg-gray-100"
+              aria-label="Back to conversations"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white mr-3">
             {activeConversation.username[0].toUpperCase()}
           </div>
@@ -154,7 +165,7 @@ window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setN
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
         {groupedMessages.map(message =>
           message.isErrorGroup ? (
             <ErrorGroupBubble
@@ -171,8 +182,8 @@ window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setN
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex space-x-4">
+      <div className="p-4 border-t border-gray-200 bg-white" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className="flex items-end gap-3">
           <input
             type="text"
             placeholder="Type a secure message..."
@@ -184,7 +195,7 @@ window.ChatArea = ({ activeConversation, messages, currentUser, newMessage, setN
           <button
             onClick={onSend}
             disabled={!newMessage.trim()}
-            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"

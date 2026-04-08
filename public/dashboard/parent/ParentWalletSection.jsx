@@ -658,8 +658,8 @@ const ParentWalletSection = ({ walletAmount, refreshWalletBalance, setWalletAmou
 
             {/* Payment Method Selection Modal */}
             {showPaymentModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end justify-center px-3 pb-3 pt-6 sm:items-center sm:p-4" onClick={() => setShowPaymentModal(false)}>
+                    <div className="bg-white p-5 sm:p-6 rounded-3xl sm:rounded-lg shadow-xl max-w-md w-full mx-0 sm:mx-4 overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 24px)', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }} onClick={(event) => event.stopPropagation()}>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Payment Method</h3>
                         <p className="text-sm text-gray-600 mb-6">
                             Add {uploadForm.amount} {uploadForm.currency} to your wallet using:
@@ -684,10 +684,10 @@ const ParentWalletSection = ({ walletAmount, refreshWalletBalance, setWalletAmou
                                 <span>PayPal {!paypalReady && '(Loading...)'}</span>
                             </button>
                         </div>
-                        <div className="mt-6 flex justify-end">
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             <button
                                 onClick={() => setShowPaymentModal(false)}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                                className="w-full sm:w-auto px-4 py-3 text-gray-600 border border-gray-200 rounded-xl hover:text-gray-800 hover:bg-gray-50 focus:outline-none"
                             >
                                 Cancel
                             </button>

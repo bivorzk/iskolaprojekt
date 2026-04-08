@@ -1,5 +1,22 @@
 const { useState, useEffect } = React;
 
+const MobileBrandLockup = () => (
+    <div className="flex items-center gap-3">
+        <svg viewBox="0 0 140 140" className="h-12 w-12 shrink-0" aria-hidden="true">
+            <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
+            <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
+            <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+            <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+            <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
+            <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
+        </svg>
+        <div className="min-w-0">
+            <div className="text-2xl font-bold leading-none text-primary">SnapTray</div>
+            <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-gray-500">Cafeteria Ordering</div>
+        </div>
+    </div>
+);
+
 const ItemInformation = () => {
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -13,12 +30,55 @@ const ItemInformation = () => {
     const [cartMessage, setCartMessage] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [isHeaderHidden, setIsHeaderHidden] = useState(false);
 
     const { addToCart } = useCart();
 
     useEffect(() => {
         loadItemInformation();
         loadAuthStatus();
+    }, []);
+
+    useEffect(() => {
+        let lastScrollY = window.scrollY;
+        let ticking = false;
+
+        const updateHeaderVisibility = () => {
+            const currentScrollY = window.scrollY;
+            const isCompactViewport = window.innerWidth < 640;
+
+            if (!isCompactViewport || currentScrollY <= 24) {
+                setIsHeaderHidden(false);
+            } else if (currentScrollY > lastScrollY + 8) {
+                setIsHeaderHidden(true);
+            } else if (currentScrollY < lastScrollY - 8) {
+                setIsHeaderHidden(false);
+            }
+
+            lastScrollY = currentScrollY;
+            ticking = false;
+        };
+
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(updateHeaderVisibility);
+                ticking = true;
+            }
+        };
+
+        const handleResize = () => {
+            if (window.innerWidth >= 640) {
+                setIsHeaderHidden(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     const getDashboardRoute = (usertype) => {
@@ -207,6 +267,8 @@ const ItemInformation = () => {
     const averageRating = reviews.length > 0 
         ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
         : item?.averageRating || 0;
+    const dashboardRoute = currentUser ? getDashboardRoute(currentUser.usertype) : '/dashboard/student';
+    const menuRoute = currentUser ? getMenuRoute(currentUser.usertype) : '/Order/';
 
     if (loading) {
         return (
@@ -229,7 +291,7 @@ const ItemInformation = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
                     <p className="text-gray-600">{error}</p>
                     <button
-                        onClick={() => window.location.href = '/Order/'}
+                        onClick={() => window.location.href = menuRoute}
                         className="mt-4 bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary"
                     >
                         Back to Menu
@@ -242,105 +304,123 @@ const ItemInformation = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
             {/* Header */}
-            <header className="bg-white shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center space-x-4">
-                            <a href="/">
-                            <svg viewBox="0 0 500 140" className="h-20 w-auto">
-                                <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
-                                <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
-                                <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
-                                <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
-                                <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
-                                <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
-                                <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
-                                <text x="150" y="105" fontFamily="system-ui, -apple-system, sans-serif" fontSize="20" fill="#6C757D" letterSpacing="2">CAFETERIA ORDERING</text>
-                            </svg>
+            <header className={`fixed inset-x-0 top-0 z-30 bg-white/95 shadow-sm border-b border-gray-200 backdrop-blur transition-transform duration-300 ${isHeaderHidden ? '-translate-y-full' : 'translate-y-0'}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex justify-center sm:justify-start">
+                            <a href="/" className="block sm:hidden">
+                                <MobileBrandLockup />
+                            </a>
+                            <a href="/" className="hidden sm:block shrink-0">
+                                <svg viewBox="0 0 500 140" className="h-16 sm:h-20 w-auto shrink-0">
+                                    <rect x="25" y="55" width="90" height="50" rx="6" fill="#FF6B35"/>
+                                    <rect x="30" y="60" width="35" height="40" rx="3" fill="#FFE5DC"/>
+                                    <rect x="70" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                    <rect x="95" y="60" width="20" height="18" rx="3" fill="#FFE5DC"/>
+                                    <rect x="70" y="82" width="45" height="18" rx="3" fill="#FFE5DC"/>
+                                    <path d="M80 25 L65 52 L75 52 L60 80 L85 50 L75 50 L90 25 Z" fill="#FFC857" stroke="#FF6B35" strokeWidth="2" strokeLinejoin="round"/>
+                                    <text x="150" y="85" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="bold" fill="#FF6B35" letterSpacing="-1">SnapTray</text>
+                                    <text x="150" y="105" fontFamily="system-ui, -apple-system, sans-serif" fontSize="20" fill="#6C757D" letterSpacing="2">CAFETERIA ORDERING</text>
+                                </svg>
                             </a>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
                             <button
-                                onClick={() => window.location.href = currentUser ? getDashboardRoute(currentUser.usertype) : '/dashboard/student'}
-                                className="text-primary hover:text-secondary font-medium"
+                                onClick={() => window.location.href = dashboardRoute}
+                                className="rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-primary hover:bg-accent"
                             >
                                 Dashboard
                             </button>
                             <button
-                                onClick={() => window.location.href = currentUser ? getMenuRoute(currentUser.usertype) : '/Order/'}
-                                className="text-primary hover:text-secondary font-medium"
+                                onClick={() => window.location.href = menuRoute}
+                                className="rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-primary hover:bg-accent"
                             >
                                 Back to Menu
                             </button>
-                            <a href="/logout" className="text-gray-700 hover:text-primary font-medium">Logout</a>
+                            {isLoggedIn ? (
+                                <a href="/logout" className="col-span-2 sm:col-span-1 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary">
+                                    Logout
+                                </a>
+                            ) : (
+                                <a href="/login" className="col-span-2 sm:col-span-1 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary">
+                                    Login
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div className="lg:flex">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-44 pb-5 sm:pt-32 sm:pb-8">
+                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-white/70">
+                    <div className="grid lg:grid-cols-2">
                         {/* Image Section */}
-                        <div className="lg:w-1/2">
+                        <div>
                             <img
                                 src={item.image || 'https://loremflickr.com/400/300/food'}
                                 alt={item.name}
-                                className="w-full h-80 lg:h-full object-cover"
+                                className="w-full h-64 sm:h-80 lg:h-full object-cover"
                             />
                         </div>
 
                         {/* Information Section */}
-                        <div className="lg:w-1/2 p-8">
-                            <div className="flex justify-between items-start mb-4">
-                                <h1 className="text-4xl font-bold text-primary">{item.name}</h1>
-                                <span className="text-3xl font-bold text-primary">${item.price.toFixed(2)}</span>
+                        <div className="p-5 sm:p-8">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gray-400">Menu Item</p>
+                                    <h1 className="mt-2 text-3xl sm:text-4xl font-bold text-primary leading-tight">{item.name}</h1>
+                                </div>
+                                <span className="text-2xl sm:text-3xl font-bold text-primary shrink-0">${item.price.toFixed(2)}</span>
                             </div>
 
                             {/* Rating Display */}
                             {(averageRating > 0 || reviews.length > 0) && (
-                                <div className="flex items-center mb-4">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
                                     <div className="flex items-center">
                                         {renderStars(Math.round(averageRating))}
                                     </div>
-                                    <span className="ml-2 text-lg font-medium text-gray-700">
+                                    <span className="text-base sm:text-lg font-medium text-gray-700">
                                         {averageRating} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
                                     </span>
                                 </div>
                             )}
 
-                            <p className="text-gray-700 text-xl mb-6 leading-relaxed">{item.description}</p>
+                            <p className="text-gray-700 text-base sm:text-lg mb-6 leading-relaxed">{item.description}</p>
 
-                            <div className="space-y-4 mb-8">
-                                <div className="flex items-center">
-                                    <span className="font-semibold text-gray-800 w-32">Category:</span>
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-accent text-primary">
+                            <div className="grid gap-3 sm:grid-cols-2 mb-8">
+                                <div className="rounded-2xl bg-[#fffaf7] p-4 shadow-sm">
+                                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">Category</div>
+                                    <span className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent text-primary">
                                         {item.category}
                                     </span>
                                 </div>
 
                                 {item.calories && (
-                                    <div className="flex items-center">
-                                        <span className="font-semibold text-gray-800 w-32">Calories:</span>
-                                        <span className="text-gray-700 text-lg">{item.calories} kcal</span>
-                                        {item.protein && <span className="ml-6 text-gray-700">Protein: {item.protein}g</span>}
+                                    <div className="rounded-2xl bg-gray-50 p-4 shadow-sm">
+                                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">Nutrition Snapshot</div>
+                                        <div className="mt-2 text-gray-800 font-semibold">{item.calories} kcal</div>
+                                        {item.protein && <div className="mt-1 text-sm text-gray-600">Protein: {item.protein}g</div>}
                                     </div>
                                 )}
 
                                 {item.allergens && item.allergens.length > 0 && (
-                                    <div className="flex items-start">
-                                        <span className="font-semibold text-gray-800 w-32">Allergens:</span>
-                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-yellow-100 text-yellow-800">
-                                            {item.allergens.join(', ')}
-                                        </span>
+                                    <div className="sm:col-span-2 rounded-2xl bg-yellow-50 p-4 shadow-sm">
+                                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-yellow-700/70">Allergens</div>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {item.allergens.map((allergen) => (
+                                                <span key={allergen} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                                    {allergen}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
                                 {item.healthScore && (
-                                    <div>
-                                        <div className="flex items-center mb-2">
-                                            <span className="font-semibold text-gray-800 w-32">Health Score:</span>
-                                            <span className="text-gray-700 text-lg">{item.healthScore}/100</span>
+                                    <div className="sm:col-span-2 rounded-2xl bg-gray-50 p-4 shadow-sm">
+                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                            <span className="text-sm font-semibold text-gray-800">Health Score</span>
+                                            <span className="text-sm font-semibold text-primary">{item.healthScore}/100</span>
                                         </div>
                                         <div className="bg-gray-200 rounded-full h-3">
                                             <div
@@ -352,10 +432,10 @@ const ItemInformation = () => {
                                 )}
                             </div>
 
-                            <div className="flex space-x-4">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
-                                    onClick={() => window.location.href = '/Order/'}
-                                    className="flex-1 bg-primary text-white py-3 px-6 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium text-lg"
+                                    onClick={() => window.location.href = menuRoute}
+                                    className="w-full bg-primary text-white py-3 px-6 rounded-xl hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium text-base sm:text-lg"
                                 >
                                     Back to Menu
                                 </button>
@@ -365,7 +445,7 @@ const ItemInformation = () => {
                                         setCartMessage('Added to cart!');
                                         setTimeout(() => setCartMessage(''), 3000);
                                     }}
-                                    className="flex-1 bg-secondary text-white py-3 px-6 rounded-lg hover:bg-primary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors font-medium text-lg"
+                                    className="w-full bg-secondary text-white py-3 px-6 rounded-xl hover:bg-primary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors font-medium text-base sm:text-lg"
                                 >
                                     Add to Cart
                                 </button>
@@ -380,8 +460,8 @@ const ItemInformation = () => {
                 </div>
 
                 {/* Reviews Section */}
-                <div className="mt-8 bg-white rounded-lg shadow-lg p-8">
-                    <div className="flex justify-between items-center mb-6">
+                <div className="mt-8 bg-white rounded-3xl shadow-lg p-5 sm:p-8">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
                         <h2 className="text-2xl font-bold text-primary">Customer Reviews</h2>
                         <button
                             onClick={() => {
@@ -392,7 +472,7 @@ const ItemInformation = () => {
                                 }
                                 setShowReviewForm(!showReviewForm);
                             }}
-                            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors font-medium"
+                            className="w-full sm:w-auto bg-primary text-white px-4 py-3 rounded-xl hover:bg-secondary transition-colors font-medium"
                         >
                             {isLoggedIn ? 'Write a Review' : 'Login to Review'}
                         </button>
@@ -412,14 +492,14 @@ const ItemInformation = () => {
 
                     {/* Review Form */}
                     {showReviewForm && (
-                        <div className="mb-8 p-6 bg-accent rounded-lg">
+                        <div className="mb-8 p-5 sm:p-6 bg-accent rounded-2xl">
                             <h3 className="text-xl font-semibold text-primary mb-4">Write Your Review</h3>
                             <form onSubmit={handleReviewSubmit}>
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Rating
                                     </label>
-                                    <div className="flex space-x-1">
+                                    <div className="flex flex-wrap items-center gap-1.5">
                                         {[1, 2, 3, 4, 5].map((rating) => (
                                             <button
                                                 key={rating}
@@ -465,7 +545,7 @@ const ItemInformation = () => {
                                     <button
                                         type="submit"
                                         disabled={submitLoading}
-                                        className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium disabled:opacity-50"
+                                        className="bg-primary text-white px-6 py-3 rounded-xl hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium disabled:opacity-50"
                                     >
                                         {submitLoading ? 'Submitting...' : 'Submit Review'}
                                     </button>
@@ -475,7 +555,7 @@ const ItemInformation = () => {
                                             setShowReviewForm(false);
                                             setNewReview({ rating: 5, comment: '' });
                                         }}
-                                        className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-colors font-medium"
+                                        className="bg-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-colors font-medium"
                                     >
                                         Cancel
                                     </button>
@@ -488,15 +568,15 @@ const ItemInformation = () => {
                     {reviews.length > 0 ? (
                         <div className="space-y-6">
                             {reviews.map((review, index) => (
-                                <div key={index} className="border-b border-gray-200 pb-6 last:border-b-0">
-                                    <div className="flex justify-between items-start mb-2">
+                                <div key={index} className="rounded-2xl border border-gray-200 p-4 sm:p-5 bg-gray-50">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-2">
                                         <div className="flex items-center">
                                             {renderStars(review.rating, 'w-4 h-4')}
                                             <span className="ml-2 font-medium text-gray-900">
                                                 {review.rating} star{review.rating !== 1 ? 's' : ''}
                                             </span>
                                         </div>
-                                        <span className="text-sm text-gray-500">
+                                        <span className="text-sm text-gray-500 shrink-0">
                                             {formatDate(review.date)}
                                         </span>
                                     </div>
@@ -540,7 +620,7 @@ const ItemInformation = () => {
                                     }
                                     setShowReviewForm(true);
                                 }}
-                                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors font-medium"
+                                className="bg-primary text-white px-6 py-3 rounded-xl hover:bg-secondary transition-colors font-medium"
                             >
                                 {isLoggedIn ? 'Write the First Review' : 'Login to Review'}
                             </button>
@@ -549,7 +629,7 @@ const ItemInformation = () => {
                 </div>
 
                 {/* Additional Information Sections */}
-                <div className="mt-8 bg-white rounded-lg shadow-lg p-8">
+                <div className="mt-8 bg-white rounded-3xl shadow-lg p-5 sm:p-8">
                     <div className="border-t border-gray-200 pt-4 mt-6">
                         <h3 className="text-xl font-semibold text-gray-800 mb-4">Additional Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -577,7 +657,7 @@ const ItemInformation = () => {
                         <div className="border-t border-gray-200 pt-4 mt-6">
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Nutritional Facts</h3>
                             <div className="bg-gray-50 rounded-lg p-4">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                     <div><span className="font-medium">Fat:</span> {item.nutrition.fat || 'N/A'}g</div>
                                     <div><span className="font-medium">Carbs:</span> {item.nutrition.carbs || 'N/A'}g</div>
                                     <div><span className="font-medium">Fiber:</span> {item.nutrition.fiber || 'N/A'}g</div>

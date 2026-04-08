@@ -12,7 +12,7 @@ window.Sidebar = ({
   onSelectConversation,
   socket
 }) => (
-  <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+  <div className="w-full md:w-[360px] md:max-w-[360px] bg-white border-r border-gray-200 flex flex-col min-h-screen md:min-h-0">
     {/* Header */}
     <div className="p-4 border-b border-gray-200">
       <div className="flex items-center justify-between mb-4">
@@ -83,7 +83,7 @@ window.Sidebar = ({
       </div>
     )}
 
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto pb-6">
       {conversations.map(conv => (
         <div
           key={conv._id}

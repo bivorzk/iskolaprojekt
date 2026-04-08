@@ -9,6 +9,17 @@ html {
 body {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+svg,
+img {
+  max-width: 100%;
 }
 
 /* Mobile-friendly touch targets */
@@ -42,6 +53,48 @@ body {
   .max-w-7xl {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .mobile-main-offset {
+    padding-bottom: calc(108px + env(safe-area-inset-bottom));
+  }
+
+  .dashboard-mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid #e5e7eb;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+    z-index: 40;
+  }
+
+  .dashboard-mobile-nav__scroller {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    scroll-snap-type: x proximity;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .dashboard-mobile-nav__scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dashboard-mobile-nav__item {
+    position: relative;
+    flex: 0 0 78px;
+    scroll-snap-align: center;
+  }
+
+  .mobile-sheet {
+    max-height: calc(100dvh - 12px);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   /* Improved card spacing */

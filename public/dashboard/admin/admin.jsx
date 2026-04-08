@@ -23,11 +23,11 @@ const AdminDashboard = () => {
         <div className="min-h-screen bg-gradient-to-br from-accent to-white">
             <AdminHeader welcomeMessage={welcomeMessage} userData={userData} />
 
-            <div className="flex">
+            <div className="flex flex-col lg:flex-row">
                 <AdminSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
+                <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 mobile-main-offset lg:pb-8">
                     {activeSection === 'users' && <UsersSection users={users} loadDashboardData={loadDashboardData} />}
                     {activeSection === 'stats' && <StatsSection stats={stats} signupData={signupData} />}
                     {activeSection === 'menu-items' && <MenuItemsSection menuItems={menuItems} loadDashboardData={loadDashboardData} />}
