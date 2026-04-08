@@ -92,6 +92,11 @@ const ItemInformation = () => {
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
         
+        if (!isLoggedIn) {
+            alert('You must be logged in to submit a review.');
+            return;
+        }
+
         if (!newReview.comment.trim()) {
             alert('Please enter a comment for your review');
             return;
@@ -379,10 +384,17 @@ const ItemInformation = () => {
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-primary">Customer Reviews</h2>
                         <button
-                            onClick={() => setShowReviewForm(!showReviewForm)}
+                            onClick={() => {
+                                if (!isLoggedIn) {
+                                    alert('Please log in to submit a review.');
+                                    window.location.href = '/login';
+                                    return;
+                                }
+                                setShowReviewForm(!showReviewForm);
+                            }}
                             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors font-medium"
                         >
-                            Write a Review
+                            {isLoggedIn ? 'Write a Review' : 'Login to Review'}
                         </button>
                     </div>
 
@@ -520,10 +532,17 @@ const ItemInformation = () => {
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviews Yet</h3>
                             <p className="text-gray-600 mb-4">Be the first to share your thoughts about this item!</p>
                             <button
-                                onClick={() => setShowReviewForm(true)}
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        alert('Please log in to submit a review.');
+                                        window.location.href = '/login';
+                                        return;
+                                    }
+                                    setShowReviewForm(true);
+                                }}
                                 className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors font-medium"
                             >
-                                Write the First Review
+                                {isLoggedIn ? 'Write the First Review' : 'Login to Review'}
                             </button>
                         </div>
                     )}

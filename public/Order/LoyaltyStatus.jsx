@@ -1,25 +1,37 @@
 const { useState, useEffect } = React;
 
-const LoyaltyStatus = () => {
+const LoyaltyStatus = ({ isLoggedIn }) => {
     const [loyaltyData, setLoyaltyData] = useState({
         totalPoints: 0,
         userTier: 'NONE',
         lastUpdated: null
     });
     const [loading, setLoading] = useState(true);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
 
     useEffect(() => {
+        if (!isLoggedIn) {
+            setNotLoggedIn(true);
+            setLoading(false);
+            return;
+        }
+        setNotLoggedIn(false);
         fetchLoyaltyData();
-    }, []);
+    }, [isLoggedIn]);
 
     const fetchLoyaltyData = async () => {
         try {
+            setLoading(true);
             const response = await fetch('/dashboard/student/loyalty');
+            if (response.status === 401) {
+                setNotLoggedIn(true);
+                return;
+            }
             if (response.ok) {
                 const data = await response.json();
                 setLoyaltyData(data);
             } else {
-                console.log('Failed to fetch loyalty data, user might not be logged in');
+                console.log('Failed to fetch loyalty data');
             }
         } catch (error) {
             console.log('Could not fetch loyalty data:', error);
@@ -74,6 +86,16 @@ const LoyaltyStatus = () => {
                         <div className="h-2 sm:h-3 bg-gray-300 rounded w-1/2"></div>
                     </div>
                 </div>
+            </div>
+        );
+    }
+
+    if (notLoggedIn) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Loyalty Points</h3>
+                <p className="text-gray-600 mb-4">Login to view your points</p>
+                <a href="/login" className="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors">Login</a>
             </div>
         );
     }

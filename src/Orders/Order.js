@@ -156,6 +156,18 @@ router.post('/item_information/:itemName/Review', [
     body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be an integer between 1 and 5'),
     body('comment').isLength({ min: 1, max: 500 }).trim().withMessage('Comment must be between 1 and 500 characters')
 ], async (req, res) => {
+    if (!req.session.user || !req.session.user.id) {
+        const ipAddress = req.ip || req.connection.remoteAddress;
+        await createSecurityLog({
+            userId: null,
+            ipAddress,
+            action: 'REVIEW_NOT_AUTHENTICATED',
+            type: 'AUTHENTICATION_ERROR',
+            details: 'Anonymous user attempted to submit a review'
+        });
+        return res.status(401).json({ error: 'Login required to submit reviews' });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const ipAddress = req.ip || req.connection.remoteAddress;

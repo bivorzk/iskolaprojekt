@@ -1,10 +1,19 @@
-﻿const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange }) => {
+﻿const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange, isLoggedIn }) => {
     const [activeTab, setActiveTab] = React.useState('cart');
     const [loyaltyData, setLoyaltyData] = React.useState(null);
+    const [notLoggedIn, setNotLoggedIn] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
     const [voucherCode, setVoucherCode] = React.useState('');
     const [voucherLoading, setVoucherLoading] = React.useState(false);
     const [voucherError, setVoucherError] = React.useState(null);
+
+    const handlePaymentClick = (action) => {
+        if (!isLoggedIn) {
+            window.location.href = '/login';
+            return;
+        }
+        action();
+    };
 
     React.useEffect(() => {
         if (activeTab === 'discounts') {
@@ -16,6 +25,10 @@
         setLoading(true);
         try {
             const response = await fetch('/dashboard/student/loyalty');
+            if (response.status === 401) {
+                setNotLoggedIn(true);
+                return;
+            }
             if (response.ok) {
                 const data = await response.json();
                 setLoyaltyData(data);
@@ -182,24 +195,27 @@
 
                                     <div className="space-y-3">
                                         <button
-                                            onClick={onGooglePay}
-                                            className="w-full bg-primary text-white py-3 px-4 rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium"
+                                            onClick={() => handlePaymentClick(onGooglePay)}
+                                            className="w-full bg-orange-500 text-white py-3 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 transition-colors font-semibold"
                                         >
-                                            Pay with Google Pay
+                                            {isLoggedIn ? 'Pay with Google Pay' : 'Login to Pay'}
                                         </button>
                                         <button
-                                            onClick={onPayPal}
-                                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-colors font-medium"
+                                            onClick={() => handlePaymentClick(onPayPal)}
+                                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-colors font-semibold"
                                         >
-                                            Pay with PayPal
+                                            {isLoggedIn ? 'Pay with PayPal' : 'Login to Pay'}
                                         </button>
 
                                         <button
-                                            onClick={onBalance}
-                                            className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 transition-colors font-medium"
+                                            onClick={() => handlePaymentClick(onBalance)}
+                                            className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 transition-colors font-semibold"
                                         >
-                                            Pay with Account Balance
+                                            {isLoggedIn ? 'Pay with Account Balance' : 'Login to Pay'}
                                         </button>
+                                        {!isLoggedIn && (
+                                            <p className="text-sm text-gray-600 mt-2">Please login to use payment methods and complete your order.</p>
+                                        )}
                                     </div>
                                 </div>
                             </>
@@ -318,7 +334,11 @@
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Discounts</h3>
                                 <p className="text-gray-600">Earn more points to unlock discounts!</p>
                                 <p className="text-sm text-gray-500 mt-2">
-                                    Current tier: {loyaltyData?.userTier || 'None'} ({loyaltyData?.totalPoints || 0} points)
+                                    {notLoggedIn ? (
+                                        <span className="text-sm text-gray-600">Login to view your points</span>
+                                    ) : (
+                                        <>Current tier: {loyaltyData?.userTier || 'None'} ({loyaltyData?.totalPoints || 0} points)</>
+                                    )}
                                 </p>
                             </div>
                         )}

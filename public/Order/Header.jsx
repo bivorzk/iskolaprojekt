@@ -57,9 +57,15 @@ const Header = () => {
                         <a href={dashboardRoute} className="text-primary hover:text-secondary font-medium transition-colors px-3 py-2 rounded-md">
                             Dashboard
                         </a>
-                        <a href="/logout" className="text-gray-700 hover:text-primary font-medium transition-colors px-3 py-2 rounded-md">
-                            Logout
-                        </a>
+                        {currentUser ? (
+                            <a href="/logout" className="text-gray-700 hover:text-primary font-medium transition-colors px-3 py-2 rounded-md">
+                                Logout
+                            </a>
+                        ) : (
+                            <a href="/login" className="text-primary hover:text-secondary font-medium transition-colors px-3 py-2 rounded-md">
+                                Login
+                            </a>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -87,12 +93,21 @@ const Header = () => {
                             >
                                 Dashboard
                             </a>
-                            <a 
-                                href="/logout" 
-                                className="text-gray-700 font-medium px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Logout
-                            </a>
+                            {currentUser ? (
+                                <a 
+                                    href="/logout" 
+                                    className="text-gray-700 font-medium px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                                >
+                                    Logout
+                                </a>
+                            ) : (
+                                <a 
+                                    href="/login" 
+                                    className="text-primary font-medium px-3 py-2 rounded-md hover:bg-primary/10 transition-colors"
+                                >
+                                    Login
+                                </a>
+                            )}
                         </div>
                     </div>
                 )}

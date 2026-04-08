@@ -8,6 +8,7 @@ const { useState, useEffect } = React;
             const [loading, setLoading] = useState(true);
             const [searchTerm, setSearchTerm] = useState('');
             const [selectedCategory, setSelectedCategory] = useState('all');
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
 
             const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart();
             const { isMobileCartVisible, toggleMobileCart, hideMobileCart } = useMobileCart();
@@ -26,7 +27,22 @@ const { useState, useEffect } = React;
                 loadMenuItems();
                 loadGooglePayScript();
                 loadPayPalScript();
+                loadAuthStatus();
             }, []);
+
+            const loadAuthStatus = async () => {
+                try {
+                    const res = await fetch('/api/current_user');
+                    if (res.ok) {
+                        const json = await res.json();
+                        setIsLoggedIn(json.loggedIn === true);
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Failed to load auth status:', err);
+                }
+                setIsLoggedIn(false);
+            };
 
             const loadMenuItems = async () => {
                 try {
@@ -85,7 +101,7 @@ const { useState, useEffect } = React;
 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {/* Loyalty Status Banner */}
-                        <LoyaltyStatus />
+                        <LoyaltyStatus isLoggedIn={isLoggedIn} />
 
                         {/* Daily Menu Highlight */}
                         {dailyMenu.length > 0 && (
@@ -175,6 +191,7 @@ const { useState, useEffect } = React;
                                     onRemoveFromCart={removeFromCart}
                                     currency={currency}
                                     onCurrencyChange={setCurrency}
+                                    isLoggedIn={isLoggedIn}
                                     onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
                                     onPayPal={() => handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
                                     onBalance={() => handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
@@ -194,6 +211,7 @@ const { useState, useEffect } = React;
                         onRemoveFromCart={removeFromCart}
                         currency={currency}
                         onCurrencyChange={setCurrency}
+                        isLoggedIn={isLoggedIn}
                         onGooglePay={() => {
                             hideMobileCart();
                             handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);

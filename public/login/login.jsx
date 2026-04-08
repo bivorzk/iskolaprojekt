@@ -39,6 +39,16 @@ const Login = () => {
         setResetData({ ...resetData, [name]: value });
     };
 
+    const getDashboardRoute = (usertype) => {
+        switch (usertype) {
+            case 'admin': return '/dashboard/admin';
+            case 'editor': return '/dashboard/editor';
+            case 'parent': return '/dashboard/parent';
+            case 'teacher': return '/dashboard/teacher';
+            default: return '/dashboard/student';
+        }
+    };
+
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -76,8 +86,18 @@ const Login = () => {
                         return;
                     }
                 }
-                setMessage({ text: 'Login successful! Welcome back!', type: 'success' });
-                setTimeout(() => { window.location.href = '/dashboard/student'; }, 1500);
+
+                // Redirect based on role after successful login
+                const userRes = await fetch('/api/current_user');
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    const redirectUrl = userData?.user?.usertype ? getDashboardRoute(userData.user.usertype) : '/dashboard/student';
+                    setMessage({ text: 'Login successful! Redirecting…', type: 'success' });
+                    setTimeout(() => { window.location.href = redirectUrl; }, 800);
+                } else {
+                    setMessage({ text: 'Login successful! Redirecting to student dashboard…', type: 'success' });
+                    setTimeout(() => { window.location.href = '/dashboard/student'; }, 800);
+                }
             } else {
                 const text = await response.text();
                 setMessage({ text, type: 'error' });
