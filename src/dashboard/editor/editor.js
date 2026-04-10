@@ -10,6 +10,13 @@ const { Payment, MenuItems, Order, UserLoyalty, Reward, Redemption } = require('
 const { cacheResult, invalidateCache } = require('../services/cache-service');
 const { createDashboardRateLimiter } = require('../middleware/rate-limit-middleware');
 
+// Import shared welcome message handler
+const { getWelcomeMessage } = require('../shared/welcome');
+
+// Import shared utilities
+const { sendSuccess, sendError, handleValidationErrors } = require('../shared/responses');
+const { serveDashboard } = require('../shared/dashboard-utils');
+
 // Import auth middleware
 const { requireEditor } = require('../middleware/auth-middleware');
 
@@ -30,9 +37,7 @@ router.use('/', requireEditor);
 router.use('/', createDashboardRateLimiter({ prefix: 'editor', windowSeconds: 60, maxRequests: 20 }));
 
 // Serve editor dashboard
-router.get('/', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../../public/dashboard/editor/editor.html'));
-});
+router.get('/', serveDashboard('editor'));
 
 // API endpoints for EDITOR DASHBOARD
 
@@ -360,14 +365,7 @@ router.get('/reward_stats', cacheResult('editor:reward_stats', 300), async (req,
   }
 });
 
-router.get('/welcome-message', (req, res) => {
-  try {
-    const username = req.session.user.username;
-      res.status(202).json({ message: `Welcome, ${username}` });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+router.get('/welcome-message', getWelcomeMessage);
 
 // ── Editor: userinfo (for dashboard switcher) ─────────────────────────────────
 router.get('/userinfo', async (req, res) => {

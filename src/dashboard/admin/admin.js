@@ -14,6 +14,13 @@ const { cacheResult, invalidateCache } = require('../services/cache-service');
 // Import Redis Lua service for atomic operations and rate limiting
 const redisLuaService = require('../../services/redis-lua-service');
 
+// Import shared utilities
+const { sendSuccess, sendError, handleValidationErrors } = require('../shared/responses');
+const { serveDashboard } = require('../shared/dashboard-utils');
+
+// Import shared welcome message handler
+const { getWelcomeMessage } = require('../shared/welcome');
+
 let redisClient = null;
 try {
   const { redisClient: client } = require('../../redis');
@@ -31,18 +38,16 @@ router.use('/', requireAdmin);
 router.use('/', createDashboardRateLimiter({ prefix: 'admin', windowSeconds: 60, maxRequests: 30 }));
 
 // Serve admin dashboard
-router.get('/', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../../public/dashboard/admin/admin.html'));
-});
+router.get('/', serveDashboard('admin'));
 
 // API endpoints for ADMIN DASHBOARD
 
 router.get('/usercount', cacheResult('admin:usercount', 300), async (req, res) => {
   try {
     const count = await User.countDocuments({});
-    res.status(202).json({ total: count });
+    sendSuccess(res, { total: count });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    sendError(res);
   }
 });
 
@@ -50,22 +55,22 @@ router.get('/userlist', cacheResult('admin:userlist', 300), async (req, res) => 
   try {
     const users = await User.find({}, 'username email usertype createdAt isBanned isVerified balance lastActive')
     .lean();
-    res.status(202).json({ users });
+    sendSuccess(res, { users });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    sendError(res);
   }
 });
 
 router.get('/user/:id', async (req, res) => {
   try {
     if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
-      return res.status(400).json({ error: 'Invalid user ID' });
+      return sendError(res, 'Invalid user ID', 400);
     }
     const user = await User.findById(req.params.id, 'username email usertype createdAt isBanned isVerified balance lastActive').lean();
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.status(200).json({ user });
+    if (!user) return sendError(res, 'User not found', 404);
+    sendSuccess(res, { user }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    sendError(res);
   }
 });
 
@@ -75,8 +80,7 @@ router.patch('/user/:id/ban',
     body('banReason').optional().trim().escape().isLength({ max: 300 })
   ],
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (handleValidationErrors(req, res)) return;
 
     try {
       if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
@@ -93,9 +97,9 @@ router.patch('/user/:id/ban',
         { new: true, select: 'username email usertype isBanned' }
       ).lean();
       invalidateCache(['admin:userlist']);
-      res.status(200).json({ message: `User ${req.body.isBanned ? 'banned' : 'unbanned'} successfully`, user: updated });
+      sendSuccess(res, { message: `User ${req.body.isBanned ? 'banned' : 'unbanned'} successfully`, user: updated }, 200);
     } catch (error) {
-      res.status(500).json({ error: 'Server error' });
+      sendError(res);
     }
   }
 );
@@ -157,7 +161,7 @@ router.get('/security-logs', cacheResult((req) => `admin:securitylogs:${req.quer
 router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), async (req, res) => {
   try {
     const menuItems = await MenuItems.find({ 'reviews.reported': true })
-      .select('name category price available reviews.reported reviews.rating reviews.comment reviews.reportedCount reviews.userId')
+      .select('name category price available reviews._id reviews.reported reviews.rating reviews.comment reviews.reportedCount reviews.userId')
       .populate('reviews.userId', 'username')
       .lean();
 
@@ -170,7 +174,7 @@ router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), 
       reportedReviews: (item.reviews || [])
         .filter((review) => review.reported)
         .map((review) => ({
-          _id: review._id,
+          _id: review._id ? review._id.toString() : null,
           rating: review.rating,
           comment: review.comment,
           reportCount: review.reportCount,
@@ -398,6 +402,71 @@ router.get('/menuitem_export', cacheResult('admin:menuitem_export', 300), async 
   }
 });
 
+// Resolve a reported review
+router.patch('/menu-items/:menuItemId/reviews/:reviewId/resolve-report', async (req, res) => {
+  try {
+    const { menuItemId, reviewId } = req.params;
+
+    if (!menuItemId.match(/^[a-f\d]{24}$/i) || !reviewId.match(/^[a-f\d]{24}$/i)) {
+      return res.status(400).json({ error: 'Invalid IDs' });
+    }
+
+    // Find the menu item and update the specific review
+    const menuItem = await MenuItems.findOneAndUpdate(
+      { _id: menuItemId, 'reviews._id': reviewId },
+      {
+        $set: {
+          'reviews.$.reported': false,
+          'reviews.$.reportedCount': 0
+        }
+      },
+      { new: true }
+    );
+
+    if (!menuItem) {
+      return res.status(404).json({ error: 'Menu item or review not found' });
+    }
+
+    invalidateCache(['admin:reported-menuitems']);
+    res.status(200).json({ message: 'Report resolved successfully' });
+  } catch (error) {
+    console.error('Error resolving report:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/menu-items/:menuItemId/reviews/:reviewId', async (req, res) => {
+  try {
+    const { menuItemId, reviewId } = req.params;
+
+    if (!menuItemId.match(/^[a-f\d]{24}$/i) || !reviewId.match(/^[a-f\d]{24}$/i)) {
+      return res.status(400).json({ error: 'Invalid IDs' });
+    }
+
+    const menuItem = await MenuItems.findOne({ _id: menuItemId, 'reviews._id': reviewId });
+    if (!menuItem) {
+      return res.status(404).json({ error: 'Menu item or review not found' });
+    }
+
+    menuItem.reviews = (menuItem.reviews || []).filter(
+      (review) => review._id.toString() !== reviewId
+    );
+
+    const totalRatings = menuItem.reviews.length;
+    menuItem.averageRating = totalRatings > 0
+      ? parseFloat((menuItem.reviews.reduce((sum, review) => sum + review.rating, 0) / totalRatings).toFixed(1))
+      : 0;
+
+    await menuItem.save();
+
+    invalidateCache(['admin:reported-menuitems', 'admin:menulist', 'admin:menuitem_export']);
+    res.status(200).json({ message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Reward Management Endpoints
 
 router.post(
@@ -569,14 +638,7 @@ router.get('/paymentstats', cacheResult('admin:paymentstats', 300), async (req, 
   }
 });
 
-router.get('/welcome-message', (req, res) => {
-  try {
-    const username = req.session.user.username;
-      res.status(202).json({ message: `Welcome, ${username}` });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+router.get('/welcome-message', getWelcomeMessage);
 
 router.get('/health', cacheResult('system:health', 30), async (req, res) => {
   const healthResults = {

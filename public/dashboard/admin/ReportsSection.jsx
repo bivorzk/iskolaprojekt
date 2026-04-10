@@ -4,8 +4,83 @@ const ReportsSection = ({ securityLogs = [], reportedMenuItems = [], loadDashboa
     const [filterUser, setFilterUser] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [message, setMessage] = useState(null);
-    const [loadingLogs, setLoadingLogs] = useState(new Set());
     const [loadingBan, setLoadingBan] = useState(new Set());
+    const [loadingLogs, setLoadingLogs] = useState(new Set());
+    const [loadingDeleteReview, setLoadingDeleteReview] = useState(new Set());
+    const [loadingResolve, setLoadingResolve] = useState(new Set());
+
+    const getMenuItemId = (menuItem) => menuItem?._id?.toString?.() || menuItem?._id || '';
+    const getReviewId = (review) => review?._id?.toString?.() || review?._id || '';
+    const getReviewActionKey = (menuItem, review) => {
+        const menuItemId = getMenuItemId(menuItem);
+        const reviewId = getReviewId(review);
+        return reviewId ? `${menuItemId}-${reviewId}` : `${menuItemId}-${review?.comment || 'review'}`;
+    };
+
+    const handleDeleteReview = async (menuItemId, reviewId) => {
+        if (!menuItemId || !reviewId) {
+            showMessage('Missing menu item or review ID. Reload the page and try again.', 'error');
+            return;
+        }
+
+        if (!window.confirm('Delete this review message? This cannot be undone.')) {
+            return;
+        }
+
+        const actionKey = `${menuItemId}-${reviewId}`;
+        setLoadingDeleteReview((prev) => new Set(prev).add(actionKey));
+        try {
+            const response = await fetch(`/dashboard/admin/menu-items/${menuItemId}/reviews/${reviewId}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showMessage(result.message || 'Review deleted successfully', 'success');
+                if (loadDashboardData) loadDashboardData();
+            } else {
+                showMessage(result.error || 'Failed to delete review', 'error');
+            }
+        } catch (error) {
+            console.error('Delete review failed', error);
+            showMessage('Failed to delete review. Please try again.', 'error');
+        } finally {
+            setLoadingDeleteReview((prev) => {
+                const copy = new Set(prev);
+                copy.delete(actionKey);
+                return copy;
+            });
+        }
+    };
+
+    const handleResolveReport = async (menuItemId, reviewId) => {
+        if (!menuItemId || !reviewId) {
+            showMessage('Missing menu item or review ID. Reload the page and try again.', 'error');
+            return;
+        }
+
+        setLoadingResolve((prev) => new Set(prev).add(`${menuItemId}-${reviewId}`));
+        try {
+            const response = await fetch(`/dashboard/admin/menu-items/${menuItemId}/reviews/${reviewId}/resolve-report`, {
+                method: 'PATCH'
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showMessage(result.message || 'Report resolved successfully', 'success');
+                if (loadDashboardData) loadDashboardData();
+            } else {
+                showMessage(result.error || 'Failed to resolve report', 'error');
+            }
+        } catch (error) {
+            console.error('Resolve report failed', error);
+            showMessage('Failed to resolve report. Please try again.', 'error');
+        } finally {
+            setLoadingResolve((prev) => {
+                const copy = new Set(prev);
+                copy.delete(`${menuItemId}-${reviewId}`);
+                return copy;
+            });
+        }
+    };
 
     const showMessage = (text, variant = 'success') => {
         setMessage({ text, variant });
@@ -230,13 +305,31 @@ const ReportsSection = ({ securityLogs = [], reportedMenuItems = [], loadDashboa
                             </div>
                             <div className="bg-accent px-5 py-4 border-t border-gray-100">
                                 {item.reportedReviews?.map((review) => (
-                                    <div key={review._id || review.comment} className="mb-4 last:mb-0">
+                                    <div key={getReviewId(review) || review.comment} className="mb-4 last:mb-0">
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="text-sm text-gray-700 font-medium">Review by {review.user?.username || 'Unknown reviewer'}</div>
-                                            <div className="text-xs uppercase tracking-wide text-gray-500">Reported {review.reportCount ?? 0} times</div>
+                                            <div className="text-xs uppercase tracking-wide text-gray-500">Reported {review.reportedCount ?? 0} times</div>
                                         </div>
                                         <p className="mt-2 text-gray-700">{review.comment || 'No comment available'}</p>
                                         <div className="mt-2 text-xs text-gray-500">Rating: {review.rating} / 5</div>
+                                        <div className="mt-3 flex flex-col items-end gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteReview(getMenuItemId(item), getReviewId(review))}
+                                                disabled={!getReviewId(review) || loadingDeleteReview.has(getReviewActionKey(item, review))}
+                                                className="px-3 py-1.5 rounded-lg bg-red-100 text-red-800 hover:bg-red-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                                            >
+                                                {loadingDeleteReview.has(getReviewActionKey(item, review)) ? 'Deleting...' : 'Delete Message'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleResolveReport(getMenuItemId(item), getReviewId(review))}
+                                                disabled={!getReviewId(review) || loadingResolve.has(getReviewActionKey(item, review))}
+                                                className="px-3 py-1.5 rounded-lg bg-green-100 text-green-800 hover:bg-green-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                                            >
+                                                {loadingResolve.has(getReviewActionKey(item, review)) ? 'Resolving...' : 'Resolve Report'}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

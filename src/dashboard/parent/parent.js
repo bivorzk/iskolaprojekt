@@ -12,6 +12,12 @@ const redisLuaService = require('../../services/redis-lua-service');
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
 
+// Import shared welcome message handler
+const { getWelcomeMessage } = require('../shared/welcome');
+
+// Import shared utilities
+const { sendSuccess, sendError, handleValidationErrors } = require('../shared/responses');
+
 // Apply auth middleware to all routes
 router.use('/', requireParentAuth);
 router.use('/', createDashboardRateLimiter({ prefix: 'parent', windowSeconds: 60, maxRequests: 45 }));
@@ -224,12 +230,7 @@ router.get('/stats', cacheResult((req) => `parent:stats:${req.session.user.id}`,
 });
 
 // Get welcome message
-router.get('/welcome-message', cacheResult((req) => `parent:welcome:${req.session.user.id}`, 3600), async (req, res) => {
-  console.log('Welcome message request, session user:', req.session.user);
-  const username = req.session.user.username;
-  console.log('Username from session:', username);
-  res.json({ message: `Welcome, ${username}` });
-});
+router.get('/welcome-message', cacheResult((req) => `parent:welcome:${req.session.user.id}`, 3600), getWelcomeMessage);
 
 router.post('/transfer', async (req, res) => {
   try {

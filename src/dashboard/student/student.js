@@ -8,8 +8,15 @@ const mongoose = require('mongoose');
 const { User } = require('../../../src/database');
 const { Payment, ParentStudent, Order, UserLoyalty, Reward, Redemption } = require('../../../config/database_queries');
 const { requireStudent } = require('../middleware/auth-middleware');
+
+// Import shared welcome message handler
+const { getWelcomeMessage } = require('../shared/welcome');
 // Import loyalty service
 const { ConvertPoints, getHealthLevel } = require('../../LoyaltySystem/loyalty-service');
+
+// Import shared utilities
+const { sendSuccess, sendError, handleValidationErrors } = require('../shared/responses');
+const { serveDashboard } = require('../shared/dashboard-utils');
 
 // Import shared services
 const { cacheResult, invalidateCache } = require('../services/cache-service');
@@ -35,9 +42,7 @@ router.use('/', requireStudent);
 router.use('/', createDashboardRateLimiter({ prefix: 'student', windowSeconds: 60, maxRequests: 60 })); // Apply rate limiting to all student routes
 
 // Serve student dashboard
-router.get('/', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../../public/dashboard/student/student.html'));
-});
+router.get('/', serveDashboard('student'));
 
 // API endpoints for STUDENT DASHBOARD
 
@@ -141,14 +146,7 @@ router.get('/transactions', cacheResult((req) => `student:transactions:${req.ses
   }
 });
 
-router.get('/welcome-message', (req, res) => {
-  try {
-    const username = req.session.user.username;
-      res.status(202).json({ message: `Welcome, ${username}` });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+router.get('/welcome-message', getWelcomeMessage);
 
 router.get('/order_history', cacheResult((req) => `student:order_history:${req.session.user.id}`, 300), async (req, res) => {
   try {
