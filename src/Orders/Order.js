@@ -38,6 +38,65 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 
+// Constants for configuration
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_REQUESTS = 20;
+const REVIEW_RATE_LIMIT_WINDOW_SECONDS = 900; // 15 minutes
+const REVIEW_RATE_LIMIT_MAX_REQUESTS = 5;
+
+const RATING_MIN = 1;
+const RATING_MAX = 5;
+const COMMENT_MIN_LENGTH = 1;
+const COMMENT_MAX_LENGTH = 500;
+
+const PROFANITY_DISTANCE_THRESHOLD = 1;
+const AVERAGE_RATING_DECIMALS = 1;
+const DEFAULT_AVERAGE_RATING = 0;
+const DEFAULT_BALANCE = 0;
+const DEFAULT_REPORTED_COUNT = 0;
+
+const CACHE_TTL_USERNAME = 300; // 5 minutes
+const CACHE_TTL_MENU_ITEMS = 30; // 30 seconds
+const CACHE_TTL_DAILY_MENU = 600; // 10 minutes
+
+const VALID_ORDER_STATUSES = ['Pending', 'InProgress', 'Completed', 'Cancelled'];
+const DEFAULT_CURRENCY = 'USD';
+const PAYMENT_METHOD_WALLET = 'Wallet';
+const PAYMENT_METHOD_PAYPAL = 'PayPal';
+const PAYMENT_STATUS_COMPLETED = 'Completed';
+
+const PUBLIC_PATH = 'public';
+const ORDER_HTML_PATH = path.join(PUBLIC_PATH, 'Order', 'index.html');
+const INFORMATION_HTML_PATH = path.join(PUBLIC_PATH, 'information', 'index.html');
+
+const CACHE_KEY_PREFIX_MENU_ITEM = 'menu_item:';
+const CACHE_KEY_PREFIX_REVIEWS = 'reviews:';
+const CACHE_KEY_PREFIX_MENU_ITEM_RATINGS = 'menu_item_ratings:';
+const CACHE_KEY_MENU_ITEMS_AVAILABLE = 'menu_items:available';
+const CACHE_KEY_DAILY_MENU_AVAILABLE = 'daily_menu:available';
+const CACHE_KEY_USER_USERNAME = 'user:username:';
+const CACHE_KEY_ORDER = 'order:';
+const CACHE_KEY_USER_ORDERS = 'user:orders:';
+const CACHE_KEY_STUDENT_WALLET = 'student:wallet_balance:';
+const CACHE_KEY_STUDENT_TRANSACTIONS = 'student:transactions:';
+const CACHE_KEY_STUDENT_LOYALTY = 'student:loyalty:';
+const CACHE_KEY_STUDENT_ORDER_HISTORY = 'student:order_history:';
+const CACHE_KEY_INVENTORY_ITEM = 'inventory:item:';
+const CACHE_KEY_WALLET_USER = 'wallet:user:';
+const CACHE_KEY_ORDER_PUBLIC = 'order:';
+
+const getUserId = req => req.session?.user?.id || null;
+const getIpAddress = req => req.ip || req.connection.remoteAddress;
+const sendUnauthorized = (res, message = 'Authentication required') => res.status(401).json({ error: message });
+const sendJsonError = (res, status, error, message) => res.status(status).json({ error, message, timestamp: new Date().toISOString() });
+const logSecurityEvent = async (userId, ipAddress, action, type, details) => {
+    try {
+        await createSecurityLog({ userId, ipAddress, action, type, details });
+    } catch (logError) {
+        console.error('Failed to log security event:', logError);
+    }
+};
+
 // PayPal configuration
 const client = new Client({
     clientCredentialsAuthCredentials: {
@@ -57,20 +116,20 @@ const ordersController = new OrdersController(client);
 async function rateLimit(req, res, next) {
   try {
     const key = `ratelimit:orders:${req.session.user?.id || req.ip}`;
-    const rateLimitResult = await redisLuaService.checkRateLimit(key, 60, 20); // 20 requests per minute
+    const rateLimitResult = await redisLuaService.checkRateLimit(key, RATE_LIMIT_WINDOW_SECONDS, RATE_LIMIT_MAX_REQUESTS); // 20 requests per minute
 
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: 'Too many requests, please try again later.',
-        retryAfter: 60
+        retryAfter: RATE_LIMIT_WINDOW_SECONDS
       });
     }
 
     // Add rate limit headers
     res.set({
-      'X-RateLimit-Limit': '20',
-      'X-RateLimit-Remaining': Math.max(0, 19 - rateLimitResult.currentCount),
-      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + 60
+      'X-RateLimit-Limit': RATE_LIMIT_MAX_REQUESTS.toString(),
+      'X-RateLimit-Remaining': Math.max(0, RATE_LIMIT_MAX_REQUESTS - 1 - rateLimitResult.currentCount).toString(),
+      'X-RateLimit-Reset': Math.floor(Date.now() / 1000) + RATE_LIMIT_WINDOW_SECONDS
     });
 
     next();
@@ -84,7 +143,7 @@ async function rateLimit(req, res, next) {
 async function reviewRateLimit(req, res, next) {
   try {
     const key = `ratelimit:reviews:${req.session.user?.id || req.ip}`;
-    const rateLimitResult = await redisLuaService.checkRateLimit(key, 900, 5); // 5 reviews per 15 minutes
+    const rateLimitResult = await redisLuaService.checkRateLimit(key, REVIEW_RATE_LIMIT_WINDOW_SECONDS, REVIEW_RATE_LIMIT_MAX_REQUESTS); // 5 reviews per 15 minutes
 
     if (!rateLimitResult.allowed) {
       const ipAddress = req.ip || req.connection.remoteAddress;
@@ -97,7 +156,7 @@ async function reviewRateLimit(req, res, next) {
       });
       return res.status(429).json({
         error: 'Too many review submissions, please try again later.',
-        retryAfter: 900
+        retryAfter: REVIEW_RATE_LIMIT_WINDOW_SECONDS
       });
     }
 
@@ -139,11 +198,11 @@ function validateOrderInput(req, res, next) {
 
 router.get('/', (req, res) => {
     // Use the correct case-sensitive path for Linux/production environments
-    res.sendFile(path.join(process.cwd(), 'public', 'Order', 'index.html'));
+    res.sendFile(path.join(process.cwd(), ORDER_HTML_PATH));
 });
 
 router.get('/item_information/:itemName', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public/information/index.html'));
+    res.sendFile(path.join(process.cwd(), INFORMATION_HTML_PATH));
 });
 
 // Apply rate limiting to all API endpoints (not static HTML serves)
@@ -153,19 +212,14 @@ router.use(['/username', '/menu_items', '/order', '/order/wallet', '/item_inform
 
 router.post('/item_information/:itemName/Review', [
     reviewRateLimit,
-    body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be an integer between 1 and 5'),
-    body('comment').isLength({ min: 1, max: 500 }).trim().withMessage('Comment must be between 1 and 500 characters')
+    body('rating').isInt({ min: RATING_MIN, max: RATING_MAX }).withMessage(`Rating must be an integer between ${RATING_MIN} and ${RATING_MAX}`),
+    body('comment').isLength({ min: COMMENT_MIN_LENGTH, max: COMMENT_MAX_LENGTH }).trim().withMessage(`Comment must be between ${COMMENT_MIN_LENGTH} and ${COMMENT_MAX_LENGTH} characters`)
 ], async (req, res) => {
-    if (!req.session.user || !req.session.user.id) {
-        const ipAddress = req.ip || req.connection.remoteAddress;
-        await createSecurityLog({
-            userId: null,
-            ipAddress,
-            action: 'REVIEW_NOT_AUTHENTICATED',
-            type: 'AUTHENTICATION_ERROR',
-            details: 'Anonymous user attempted to submit a review'
-        });
-        return res.status(401).json({ error: 'Login required to submit reviews' });
+    const userId = getUserId(req);
+    if (!userId) {
+        const ipAddress = getIpAddress(req);
+        await logSecurityEvent(null, ipAddress, 'REVIEW_NOT_AUTHENTICATED', 'AUTHENTICATION_ERROR', 'Anonymous user attempted to submit a review');
+        return sendUnauthorized(res, 'Login required to submit reviews');
     }
 
     const errors = validationResult(req);
@@ -192,7 +246,7 @@ router.post('/item_information/:itemName/Review', [
 
     for (const word of words) {
             for (const badWord of badwords.array) {
-                if (levenshtein.get(word, badWord.toLowerCase()) < 1) {
+                if (levenshtein.get(word, badWord.toLowerCase()) < PROFANITY_DISTANCE_THRESHOLD) {
                     containsProfanity = true;
                     break;
                 }
@@ -202,7 +256,7 @@ router.post('/item_information/:itemName/Review', [
             for (const lang in naughtiness) {
                 if (Array.isArray(naughtiness[lang])) {
                     for (const naughtyWord of naughtiness[lang]) {
-                        if (levenshtein.get(word, naughtyWord.toLowerCase()) < 1) {
+                        if (levenshtein.get(word, naughtyWord.toLowerCase()) < PROFANITY_DISTANCE_THRESHOLD) {
                             containsProfanity = true;
                             break;
                         }
@@ -278,18 +332,18 @@ router.post('/item_information/:itemName/Review', [
         // Compute new average before saving
         const totalRatings = menuItem.reviews.length;
         menuItem.averageRating = totalRatings > 0
-            ? parseFloat((menuItem.reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings).toFixed(1))
-            : 0;
+            ? parseFloat((menuItem.reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings).toFixed(AVERAGE_RATING_DECIMALS))
+            : DEFAULT_AVERAGE_RATING;
 
         await menuItem.save();
         
         // Invalidate relevant caches
         if (invalidateCache) {
             invalidateCache([
-                `menu_item:${itemName}`,
-                `menu_items:available`,
-                `reviews:${itemName}`,
-                `menu_item_ratings:${menuItem._id}`
+                `${CACHE_KEY_PREFIX_MENU_ITEM}${itemName}`,
+                CACHE_KEY_MENU_ITEMS_AVAILABLE,
+                `${CACHE_KEY_PREFIX_REVIEWS}${itemName}`,
+                `${CACHE_KEY_PREFIX_MENU_ITEM_RATINGS}${menuItem._id}`
             ]);
         }
         
@@ -315,8 +369,9 @@ router.post('/item_information/:itemName/Review', [
 }); 
 
 router.post('/item_information/:itemName/Review/:reviewId/Report', async (req, res) => {
-    if (!req.session.user || !req.session.user.id) {
-        return res.status(401).json({ error: 'Login required to report review' });
+    const userId = getUserId(req);
+    if (!userId) {
+        return sendUnauthorized(res, 'Login required to report review');
     }
 
     const { itemName, reviewId } = req.params;
@@ -345,7 +400,7 @@ router.post('/item_information/:itemName/Review/:reviewId/Report', async (req, r
         }
 
         review.reported = true;
-        review.reportedCount = (review.reportedCount || 0) + 1;
+        review.reportedCount = (review.reportedCount || DEFAULT_REPORTED_COUNT) + 1;
 
         await menuItem.save();
 
@@ -369,12 +424,11 @@ router.post('/item_information/:itemName/Review/:reviewId/Report', async (req, r
 });
 
 router.get('/username', async (req, res) => {
-    if (!req.session.user || !req.session.user.id) {
-        return res.status(401).json({ error: 'Authentication required' });
+    const userId = getUserId(req);
+    if (!userId) {
+        return sendUnauthorized(res);
     }
-
-    const userId = req.session.user.id;
-    const cacheKey = `user:username:${userId}`;
+    const cacheKey = `${CACHE_KEY_USER_USERNAME}${userId}`;
 
     try {
         // Try to get from cache first
@@ -395,7 +449,7 @@ router.get('/username', async (req, res) => {
 
         // Cache the result
         if (setCached) {
-            await setCached(cacheKey, result, 300); // Cache for 5 minutes
+            await setCached(cacheKey, result, CACHE_TTL_USERNAME); // Cache for 5 minutes
         }
 
         res.json(result);
@@ -407,7 +461,7 @@ router.get('/username', async (req, res) => {
 
 router.get('/menu_items', async (req, res) => {
     try {
-        const cacheKey = 'menu_items:available';
+        const cacheKey = CACHE_KEY_MENU_ITEMS_AVAILABLE;
 
         if (getCached) {
             const cached = await getCached(cacheKey);
@@ -419,28 +473,15 @@ router.get('/menu_items', async (req, res) => {
             .populate('reviews.userId', 'username')
             .lean();
 
-        if (setCached) await setCached(cacheKey, menuItems, 30); // 30-second TTL
+        if (setCached) await setCached(cacheKey, menuItems, CACHE_TTL_MENU_ITEMS); // 30-second TTL
 
         res.json(menuItems);
     }
     catch (error) {
         console.error('Error fetching menu items:', error);
-        const ipAddress = req.ip || req.connection.remoteAddress;
-        
-        
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'MENU_ITEMS_FETCH_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during menu items fetch: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
-        
-        res.status(500).json({ error: 'Server error' });
+        const ipAddress = getIpAddress(req);
+        await logSecurityEvent(getUserId(req), ipAddress, 'MENU_ITEMS_FETCH_ERROR', 'SYSTEM_ERROR', `Database error during menu items fetch: ${error.message}`);
+        sendJsonError(res, 500, 'Server error', 'Unable to fetch menu items');
     }
 });
 
@@ -448,7 +489,8 @@ router.get('/menu_items', async (req, res) => {
 router.post('/order', validateOrderInput, async (req, res) => {
     // Extract order details from request body
     const { cart } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = getIpAddress(req);
+    const userId = getUserId(req);
     
     try {
         // Calculate total amount from cart items
@@ -477,7 +519,7 @@ router.post('/order', validateOrderInput, async (req, res) => {
 
         // Create order in database
         const newOrder = new Order({
-            userId: req.session.user ? req.session.user.id : null,
+            userId: userId,
             items: orderItems,
             orderDate: new Date(),
             status: 'Pending',
@@ -498,19 +540,13 @@ router.post('/order', validateOrderInput, async (req, res) => {
         // Invalidate menu items cache since order was created
         if (invalidateCache) {
             invalidateCache([
-                'menu_items:available',
-                'daily_menu:available'
+                CACHE_KEY_MENU_ITEMS_AVAILABLE,
+                CACHE_KEY_DAILY_MENU_AVAILABLE
             ]);
         }
 
         // Log successful order creation
-        await createSecurityLog({
-            userId: req.session.user ? req.session.user.id : null,
-            ipAddress,
-            action: 'ORDER_CREATED',
-            type: 'SUCCESS',
-            details: `Order created successfully: ${savedOrder._id}, amount: ${totalAmount}`
-        });
+        await logSecurityEvent(userId, ipAddress, 'ORDER_CREATED', 'SUCCESS', `Order created successfully: ${savedOrder._id}, amount: ${totalAmount}`);
 
         res.status(201).json({
             success: true,
@@ -526,40 +562,23 @@ router.post('/order', validateOrderInput, async (req, res) => {
         console.error('Error creating order:', error);
 
         // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_CREATION_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during order creation: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
+        await logSecurityEvent(userId, ipAddress, 'ORDER_CREATION_ERROR', 'SYSTEM_ERROR', `Database error during order creation: ${error.message}`);
 
-        res.status(500).json({ error: 'Internal Server Error' });
+        sendJsonError(res, 500, 'Internal Server Error', 'Failed to create order');
     }
 });
 
 // Process order with wallet payment (atomic operation)
 router.post('/order/wallet', validateOrderInput, async (req, res) => {
     const { cart } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = getIpAddress(req);
 
+    const userId = getUserId(req);
     // Check if user is logged in
-    if (!req.session.user || !req.session.user.id) {
-        await createSecurityLog({
-            userId: null,
-            ipAddress,
-            action: 'WALLET_ORDER_FAILED',
-            type: 'AUTHENTICATION_ERROR',
-            details: 'Unauthenticated wallet payment attempt'
-        });
-        return res.status(401).json({ error: 'User must be logged in to use wallet payment' });
+    if (!userId) {
+        await logSecurityEvent(null, ipAddress, 'WALLET_ORDER_FAILED', 'AUTHENTICATION_ERROR', 'Unauthenticated wallet payment attempt');
+        return sendUnauthorized(res, 'User must be logged in to use wallet payment');
     }
-
-    const userId = req.session.user.id;
 
     try {
         // Calculate total amount and validate items
@@ -593,19 +612,19 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
         }
 
         // Check wallet balance first
-        const walletKey = `wallet:user:${userId}`;
+        const walletKey = `${CACHE_KEY_WALLET_USER}${userId}`;
         let currentBalance;
 
         try {
             currentBalance = await redisLuaService.getWalletBalance(walletKey);
             if (currentBalance === null || currentBalance === undefined) {
                 const user = await User.findById(userId).select('balance').lean();
-                currentBalance = user ? user.balance || 0 : 0;
+                currentBalance = user ? user.balance || DEFAULT_BALANCE : DEFAULT_BALANCE;
             }
         } catch (redisError) {
             // Fallback to database
             const user = await User.findById(userId).select('balance').lean();
-            currentBalance = user ? user.balance || 0 : 0;
+            currentBalance = user ? user.balance || DEFAULT_BALANCE : DEFAULT_BALANCE;
         }
 
         if (currentBalance < totalAmount) {
@@ -617,7 +636,7 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
         }
 
         // Create order record first
-        const orderKey = `order:${Date.now()}:${userId}`;
+        const orderKey = `${CACHE_KEY_ORDER_PUBLIC}${Date.now()}:${userId}`;
         const newOrder = new Order({
             userId: userId,
             items: orderItems,
@@ -657,9 +676,9 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
             const payment = new Payment({
                 userId: userId,
                 amount: totalAmount,
-                currency: 'USD',
-                paymentMethod: 'Wallet',
-                status: 'Completed',
+                currency: DEFAULT_CURRENCY,
+                paymentMethod: PAYMENT_METHOD_WALLET,
+                status: PAYMENT_STATUS_COMPLETED,
                 transactionId: `wallet_${Date.now()}`
             });
             await payment.save();
@@ -686,10 +705,10 @@ router.post('/order/wallet', validateOrderInput, async (req, res) => {
                 // Invalidate caches
                 if (invalidateCache) {
                     invalidateCache([
-                        `student:wallet_balance:${userId}`,
-                        `student:transactions:${userId}`,
-                        `student:loyalty:${userId}`,
-                        `student:order_history:${userId}`
+                        `${CACHE_KEY_STUDENT_WALLET}${userId}`,
+                        `${CACHE_KEY_STUDENT_TRANSACTIONS}${userId}`,
+                        `${CACHE_KEY_STUDENT_LOYALTY}${userId}`,
+                        `${CACHE_KEY_STUDENT_ORDER_HISTORY}${userId}`
                     ]);
                 }
             } catch (loyaltyError) {
@@ -731,32 +750,21 @@ router.put('/:orderID/status',
     async (req, res) => {
     const { orderID } = req.params;
     const { status, paymentDetails } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = getIpAddress(req);
+    const userId = getUserId(req);
     
     try {
         // Input validation
         if (typeof orderID !== 'string' || !orderID.trim()) {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_STATUS_UPDATE_FAILED',
-                type: 'VALIDATION_ERROR',
-                details: 'Invalid order ID format'
-            });
-            return res.status(400).json({ error: 'Invalid order ID' });
+            await logSecurityEvent(userId, ipAddress, 'ORDER_STATUS_UPDATE_FAILED', 'VALIDATION_ERROR', 'Invalid order ID format');
+            return sendJsonError(res, 400, 'Invalid order ID', 'Order ID must be a valid string');
         }
         
         // Validate status
-        const validStatuses = ['Pending', 'InProgress', 'Completed', 'Cancelled'];
+        const validStatuses = VALID_ORDER_STATUSES;
         if (!validStatuses.includes(status)) {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_STATUS_UPDATE_FAILED',
-                type: 'VALIDATION_ERROR',
-                details: `Invalid status: ${status}`
-            });
-            return res.status(400).json({ error: 'Invalid status' });
+            await logSecurityEvent(userId, ipAddress, 'ORDER_STATUS_UPDATE_FAILED', 'VALIDATION_ERROR', `Invalid status: ${status}`);
+            return sendJsonError(res, 400, 'Invalid status', `Status must be one of: ${validStatuses.join(', ')}`);
         }
 
         // Update order status
@@ -774,13 +782,13 @@ router.put('/:orderID/status',
         }
 
         // If payment is completed, save payment record
-        if (status === 'Completed' && paymentDetails) {
+        if (status === PAYMENT_STATUS_COMPLETED && paymentDetails) {
             const payment = new Payment({
                 userId: updatedOrder.userId,
                 amount: updatedOrder.totalAmount,
-                currency: paymentDetails.currency || 'USD',
-                paymentMethod: paymentDetails.method || 'PayPal',
-                status: 'Completed',
+                currency: paymentDetails.currency || DEFAULT_CURRENCY,
+                paymentMethod: paymentDetails.method || PAYMENT_METHOD_PAYPAL,
+                status: PAYMENT_STATUS_COMPLETED,
                 transactionId: paymentDetails.transactionId
             });
             await payment.save();
@@ -789,19 +797,13 @@ router.put('/:orderID/status',
         // Invalidate order cache
         if (invalidateCache) {
             invalidateCache([
-                `order:${orderID}`,
-                `user:orders:${updatedOrder.userId}`
+                `${CACHE_KEY_ORDER}${orderID}`,
+                `${CACHE_KEY_USER_ORDERS}${updatedOrder.userId}`
             ]);
         }
         
         // Log successful status update
-        await createSecurityLog({
-            userId: req.session.user ? req.session.user.id : null,
-            ipAddress,
-            action: 'ORDER_STATUS_UPDATED',
-            type: 'SUCCESS',
-            details: `Order ${orderID} status updated to ${status}`
-        });
+        await logSecurityEvent(userId, ipAddress, 'ORDER_STATUS_UPDATED', 'SUCCESS', `Order ${orderID} status updated to ${status}`);
 
         res.json({
             success: true,
@@ -813,19 +815,9 @@ router.put('/:orderID/status',
         console.error('Error updating order status:', error);
         
         // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_STATUS_UPDATE_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during status update: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
+        await logSecurityEvent(userId, ipAddress, 'ORDER_STATUS_UPDATE_ERROR', 'SYSTEM_ERROR', `Database error during status update: ${error.message}`);
         
-        res.status(500).json({ error: 'Internal Server Error' });
+        sendJsonError(res, 500, 'Internal Server Error', 'Failed to update order status');
     }
 });
 
@@ -837,19 +829,14 @@ router.post('/:orderID/capture',
     mongoSanitize(), // Prevent NoSQL injection
     async (req, res) => {
     const { orderID } = req.params;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = getIpAddress(req);
+    const userId = getUserId(req);
     
     try {
         // Input validation
         if (typeof orderID !== 'string' || !orderID.trim()) {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'PAYMENT_CAPTURE_FAILED',
-                type: 'VALIDATION_ERROR',
-                details: 'Invalid order ID format'
-            });
-            return res.status(400).json({ error: 'Invalid order ID' });
+            await logSecurityEvent(userId, ipAddress, 'PAYMENT_CAPTURE_FAILED', 'VALIDATION_ERROR', 'Invalid order ID format');
+            return sendJsonError(res, 400, 'Invalid order ID', 'Order ID must be a valid string');
         }
         // Find the order in our database by PayPal order ID
         const order = await Order.findOne({ paypalOrderId: orderID }).populate('items.menuItemId');
@@ -870,7 +857,7 @@ router.post('/:orderID/capture',
             // Use Redis Lua service for atomic inventory updates
             const inventoryUpdates = [];
             for (const item of order.items) {
-              const inventoryKey = `inventory:item:${item.menuItemId._id}`;
+              const inventoryKey = `${CACHE_KEY_INVENTORY_ITEM}${item.menuItemId._id}`;
               const quantity = item.quantity;
 
               try {
@@ -924,9 +911,9 @@ router.post('/:orderID/capture',
             const payment = new Payment({
                 userId: order.userId,
                 amount: order.totalAmount,
-                currency: 'USD',
-                paymentMethod: 'PayPal',
-                status: 'Completed',
+                currency: DEFAULT_CURRENCY,
+                paymentMethod: PAYMENT_METHOD_PAYPAL,
+                status: PAYMENT_STATUS_COMPLETED,
                 transactionId: paypalCapture.jsonResponse.id
             });
             await payment.save();
@@ -953,34 +940,22 @@ router.post('/:orderID/capture',
                 // Invalidate loyalty cache
                 if (invalidateCache) {
                     invalidateCache([
-                        `student:loyalty:${order.userId}`,
-                        `order:${order._id}`,
-                        `user:orders:${order.userId}`,
-                        'menu_items:available',
-                        'daily_menu:available'
+                        `${CACHE_KEY_STUDENT_LOYALTY}${order.userId}`,
+                        `${CACHE_KEY_ORDER}${order._id}`,
+                        `${CACHE_KEY_USER_ORDERS}${order.userId}`,
+                        CACHE_KEY_MENU_ITEMS_AVAILABLE,
+                        CACHE_KEY_DAILY_MENU_AVAILABLE
                     ]);
                 }
             }
             
             // Log successful payment capture
-            await createSecurityLog({
-                userId: order.userId,
-                ipAddress,
-                action: 'PAYMENT_CAPTURED',
-                type: 'SUCCESS',
-                details: `PayPal payment captured for order: ${order._id}, amount: ${order.totalAmount}`
-            });
+            await logSecurityEvent(order.userId, ipAddress, 'PAYMENT_CAPTURED', 'SUCCESS', `PayPal payment captured for order: ${order._id}, amount: ${order.totalAmount}`);
 
             // Return the PayPal capture response (frontend expects this format)
             res.json(paypalCapture.jsonResponse);
         } else {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'PAYMENT_CAPTURE_FAILED',
-                type: 'PAYMENT_ERROR',
-                details: `PayPal capture failed with status: ${paypalCapture.httpStatusCode}`
-            });
+            await logSecurityEvent(userId, ipAddress, 'PAYMENT_CAPTURE_FAILED', 'PAYMENT_ERROR', `PayPal capture failed with status: ${paypalCapture.httpStatusCode}`);
             
             res.status(paypalCapture.httpStatusCode).json({
                 success: false,
@@ -993,19 +968,9 @@ router.post('/:orderID/capture',
         console.error('Error capturing payment:', error);
         
         // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'PAYMENT_CAPTURE_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `System error during payment capture: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
+        await logSecurityEvent(userId, ipAddress, 'PAYMENT_CAPTURE_ERROR', 'SYSTEM_ERROR', `System error during payment capture: ${error.message}`);
         
-        res.status(500).json({ error: 'Internal Server Error' });
+        sendJsonError(res, 500, 'Internal Server Error', 'Failed to capture payment');
     }
 });
 
@@ -1014,20 +979,15 @@ router.get('/:orderID',
     mongoSanitize(), // Prevent NoSQL injection
     async (req, res) => {
     const { orderID } = req.params;
-    const cacheKey = `order:${orderID}`;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const cacheKey = `${CACHE_KEY_ORDER}${orderID}`;
+    const ipAddress = getIpAddress(req);
+    const userId = getUserId(req);
     
     try {
         // Input validation
         if (typeof orderID !== 'string' || !orderID.trim()) {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_LOOKUP_FAILED',
-                type: 'VALIDATION_ERROR',
-                details: 'Invalid order ID format'
-            });
-            return res.status(400).json({ error: 'Invalid order ID' });
+            await logSecurityEvent(userId, ipAddress, 'ORDER_LOOKUP_FAILED', 'VALIDATION_ERROR', 'Invalid order ID format');
+            return sendJsonError(res, 400, 'Invalid order ID', 'Order ID must be a valid string');
         }
         // Try to get from cache first
         if (getCached) {
@@ -1051,23 +1011,13 @@ router.get('/:orderID',
         console.error('Error fetching order:', error);
         
         // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'ORDER_LOOKUP_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during order lookup: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
+        await logSecurityEvent(userId, ipAddress, 'ORDER_LOOKUP_ERROR', 'SYSTEM_ERROR', `Database error during order lookup: ${error.message}`);
         
-        res.status(500).json({ error: 'Internal Server Error' });
+        sendJsonError(res, 500, 'Internal Server Error', 'Failed to fetch order');
     }
 }); 
 
-router.get('/DailyMenu', cacheResult('daily_menu:available', 600), async (req, res) => {
+router.get('/DailyMenu', cacheResult(CACHE_KEY_DAILY_MENU_AVAILABLE, CACHE_TTL_DAILY_MENU), async (req, res) => {
     try {
         // If not in cache, fetch from database
         const menuItems = await MenuItems.find({ available: true })
@@ -1078,22 +1028,9 @@ router.get('/DailyMenu', cacheResult('daily_menu:available', 600), async (req, r
     }
     catch (error) {
         console.error('Error fetching daily menu:', error);
-        const ipAddress = req.ip || req.connection.remoteAddress;
-        
-        // Log security error
-        try {
-            await createSecurityLog({
-                userId: req.session.user ? req.session.user.id : null,
-                ipAddress,
-                action: 'DAILY_MENU_FETCH_ERROR',
-                type: 'SYSTEM_ERROR',
-                details: `Database error during daily menu fetch: ${error.message}`
-            });
-        } catch (logError) {
-            console.error('Failed to log security event:', logError);
-        }
-        
-        res.status(500).json({ error: 'Server error' });
+        const ipAddress = getIpAddress(req);
+        await logSecurityEvent(getUserId(req), ipAddress, 'DAILY_MENU_FETCH_ERROR', 'SYSTEM_ERROR', `Database error during daily menu fetch: ${error.message}`);
+        sendJsonError(res, 500, 'Server error', 'Unable to fetch daily menu');
     }
 });
 

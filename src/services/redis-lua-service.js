@@ -7,6 +7,7 @@ const scriptLoader = require('../script-loader');
 class RedisLuaService {
   constructor() {
     this.initialized = false;
+    this.errorHandler = null;
   }
 
   /**
@@ -18,6 +19,10 @@ class RedisLuaService {
     try {
       await scriptLoader.loadAllScripts();
       this.initialized = true;
+
+      // Initialize error handler
+      await this.initializeErrorHandler();
+
       console.log('Redis Lua Service initialized');
     } catch (error) {
       if (error.message.includes('Redis is not available')) {
@@ -33,6 +38,61 @@ class RedisLuaService {
   }
 
   /**
+   * Initialize the error handler
+   */
+  async initializeErrorHandler() {
+    try {
+      // Execute error handler script to get the module
+      const errorHandlerResult = await scriptLoader.executeScript('error_handler', 0, []);
+      this.errorHandler = errorHandlerResult;
+
+      // Configure error handler with sensible defaults
+      await this.configureErrorHandler({
+        max_retries: 3,
+        retry_delay: 100,
+        enable_logging: true,
+        log_prefix: '[RedisLuaService]'
+      });
+
+      console.log('Error handler initialized');
+    } catch (error) {
+      console.warn('Failed to initialize error handler:', error.message);
+      // Continue without error handler
+    }
+  }
+
+  /**
+   * Configure the error handler
+   * @param {Object} options - Configuration options
+   */
+  async configureErrorHandler(options) {
+    if (!this.errorHandler) return;
+
+    try {
+      await scriptLoader.executeScript('error_handler', 1, ['configure', JSON.stringify(options)]);
+    } catch (error) {
+      console.warn('Failed to configure error handler:', error.message);
+    }
+  }
+
+  /**
+   * Execute error handler health check
+   */
+  async errorHandlerHealthCheck() {
+    if (!this.errorHandler) {
+      return { healthy: false, reason: 'Error handler not initialized' };
+    }
+
+    try {
+      const result = await scriptLoader.executeScript('error_handler', 1, ['health_check']);
+      return JSON.parse(result);
+    } catch (error) {
+      console.warn('Error handler health check failed:', error.message);
+      return { healthy: false, reason: error.message };
+    }
+  }
+
+  /**
    * Update wallet balance atomically
    * @param {string} walletKey - Redis key for the wallet
    * @param {number} amount - Amount to add (negative for deduction)
@@ -43,10 +103,24 @@ class RedisLuaService {
       throw new Error('Redis Lua scripting is not available - Redis server not running');
     }
 
+    // Check if service is initialized
+    if (!this.initialized) {
+      throw new Error('Redis Lua scripts not loaded yet');
+    }
+
     try {
       const result = await scriptLoader.executeScript('wallet_update', 1, [walletKey, amount.toString()]);
       return result;
     } catch (error) {
+      // Enhanced error handling with error handler
+      if (this.errorHandler) {
+        console.error('Wallet update failed, attempting error analysis...');
+        const healthCheck = await this.errorHandlerHealthCheck();
+        if (!healthCheck.healthy) {
+          console.error('Error handler health check failed:', healthCheck.reason);
+        }
+      }
+
       if (error.message.includes('INSUFFICIENT_FUNDS')) {
         throw new Error('Insufficient funds in wallet');
       }
@@ -88,6 +162,19 @@ class RedisLuaService {
       throw new Error('Redis Lua scripting is not available - Redis server not running');
     }
 
+    // Check if service is initialized
+    if (!this.initialized) {
+      throw new Error('Redis Lua scripts not loaded yet');
+    }
+
+    // Input validation
+    if (!inventoryKey || !walletKey || !orderKey || !userId) {
+      throw new Error('Missing required parameters for order processing');
+    }
+    if (quantity <= 0 || price < 0) {
+      throw new Error('Invalid quantity or price values');
+    }
+
     try {
       const result = await scriptLoader.executeScript('process_order', 3,
         [inventoryKey, walletKey, orderKey, quantity.toString(), price.toString(), userId]
@@ -99,6 +186,11 @@ class RedisLuaService {
         orderId: result[2]
       };
     } catch (error) {
+      // Enhanced error handling
+      if (this.errorHandler) {
+        console.error('Order processing failed, error details logged by error handler');
+      }
+
       if (error.message.includes('ITEM_NOT_FOUND')) {
         throw new Error('Item not found in inventory');
       }
@@ -126,6 +218,18 @@ class RedisLuaService {
       return { allowed: true, currentCount: 0 };
     }
 
+    // Check if service is initialized
+    if (!this.initialized) {
+      // Scripts not loaded yet, allow request but log warning
+      console.warn('Rate limiting disabled - Redis Lua scripts not loaded yet');
+      return { allowed: true, currentCount: 0 };
+    }
+
+    // Input validation
+    if (!key || windowSeconds <= 0 || maxRequests <= 0) {
+      throw new Error('Invalid parameters for rate limit check');
+    }
+
     try {
       const now = Math.floor(Date.now() / 1000); // Unix timestamp
       const result = await scriptLoader.executeScript('rate_limit', 1,
@@ -138,6 +242,12 @@ class RedisLuaService {
       };
     } catch (error) {
       console.error('Rate limit check failed:', error);
+
+      // Enhanced error handling
+      if (this.errorHandler) {
+        console.error('Rate limit error logged by error handler');
+      }
+
       // On error, allow the request to prevent blocking legitimate users
       return { allowed: true, currentCount: 0 };
     }
@@ -154,14 +264,28 @@ class RedisLuaService {
       return null;
     }
 
-    // This could be implemented with a simple Lua script or direct Redis call
-    // For now, using direct call since it's simple
+    if (!walletKey) {
+      throw new Error('Wallet key is required');
+    }
+
     const redisLua = require('./redis-lua');
     try {
       const balance = await redisLua.client.get(walletKey);
-      return balance !== null ? parseFloat(balance) : null;
+      const parsedBalance = balance !== null ? parseFloat(balance) : null;
+
+      // Validate the result
+      if (parsedBalance !== null && isNaN(parsedBalance)) {
+        throw new Error('Invalid balance format in Redis');
+      }
+
+      return parsedBalance;
     } catch (error) {
       console.error('Failed to get wallet balance:', error);
+
+      if (this.errorHandler) {
+        console.error('Wallet balance retrieval error logged by error handler');
+      }
+
       return null;
     }
   }
@@ -177,12 +301,29 @@ class RedisLuaService {
       return 0; // Return 0 when Redis is not available
     }
 
+    if (!inventoryKey) {
+      throw new Error('Inventory key is required');
+    }
+
     const redisLua = require('./redis-lua');
     try {
       const stock = await redisLua.client.get(inventoryKey);
-      return stock ? parseInt(stock) : 0;
+      const parsedStock = stock ? parseInt(stock) : 0;
+
+      // Validate the result
+      if (isNaN(parsedStock) || parsedStock < 0) {
+        console.warn(`Invalid stock value for key ${inventoryKey}: ${stock}`);
+        return 0;
+      }
+
+      return parsedStock;
     } catch (error) {
       console.error('Failed to get inventory stock:', error);
+
+      if (this.errorHandler) {
+        console.error('Inventory stock retrieval error logged by error handler');
+      }
+
       return 0;
     }
   }
