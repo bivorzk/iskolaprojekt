@@ -89,12 +89,6 @@ function ConvertPoints(dollarAmount, tier, healthLevel, date) {
 
 
 
-/*
-
-TODO implement integration with order processing to award points based on order details
-order route, student dashboard payment route....
-
-*/
 
 
 // Testing

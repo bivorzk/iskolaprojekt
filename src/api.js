@@ -29,6 +29,9 @@ router.use(require('cors')(corsOptions));
 router.use('/orders', limiter);
 router.use('/pay-with-balance', paymentLimiter);
 
+const getUserId = req => req.session?.user?.id || null;
+const sendUnauthorized = (res, message = 'Please sign in to continue') => res.status(401).json({ error: 'Unauthorized', message });
+const sendJsonError = (res, status, error, message) => res.status(status).json({ error, message, timestamp: new Date().toISOString() });
 
 // api/orders
 router.get('/test', (req, res) => {
@@ -73,17 +76,7 @@ router.get('/daily-menu', async (req, res) => {
     try {
         const now = new Date();
         const hour = now.getHours();
-        let timeOfDay;
-
-        if (hour >= 6 && hour < 12) {
-            timeOfDay = 'morning';
-        } else if (hour >= 12 && hour < 18) {
-            timeOfDay = 'afternoon';
-        } else {
-            timeOfDay = 'afternoon';
-        }
-
-        // Use the DailyMenu table for explicit daily routes
+    const timeOfDay = hour >= 6 && hour < 12 ? 'morning' : 'afternoon';
         const startOfDay = new Date(now);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(now);
@@ -117,21 +110,16 @@ router.get('/daily-menu', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching daily menu items:', error);
-        res.status(500).json({ error: 'Server error' });
+        sendJsonError(res, 500, 'Server Error', 'Unable to fetch daily menu');
     }
 });
 
 router.post('/orders', validateOrderInput, async (req, res) => {
     const { cart, currency, amount } = req.body;
 
-    const userId = req.session && req.session.user ? req.session.user.id : null;
-
-    // Check if user is logged in
+    const userId = getUserId(req);
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to place an order'
-        });
+        return sendUnauthorized(res);
     }
 
     try {
@@ -216,14 +204,9 @@ router.post('/orders', validateOrderInput, async (req, res) => {
 router.post('/save-order', validatePaymentInput, async (req, res) => {
     const { items, subtotal, discount, total, currency, paymentMethod, transactionId } = req.body;
 
-    const userId = req.session && req.session.user ? req.session.user.id : null;
-
-    // Check if user is logged in
+    const userId = getUserId(req);
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to place an order'
-        });
+        return sendUnauthorized(res);
     }
 
     try {
@@ -254,14 +237,9 @@ router.post('/save-order', validatePaymentInput, async (req, res) => {
 router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
     const { cart, currency, amount } = req.body;
 
-    const userId = req.session && req.session.user ? req.session.user.id : null;
-
-    // Check if user is logged in
+    const userId = getUserId(req);
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to place an order'
-        });
+        return sendUnauthorized(res);
     }
 
     try {
@@ -310,14 +288,9 @@ router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
 router.post('/orders/googlepay/complete', async (req, res) => {
     const { orderId, paymentMethodData, transactionId } = req.body;
 
-    const userId = req.session && req.session.user ? req.session.user.id : null;
-
-    // Check if user is logged in
+    const userId = getUserId(req);
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to complete payment'
-        });
+        return sendUnauthorized(res, 'Please sign in to complete payment');
     }
 
     // Validate orderId
@@ -361,14 +334,10 @@ router.post('/orders/googlepay/complete', async (req, res) => {
 
 router.post('/orders/:orderID/capture', async (req, res) => {
     const { orderID } = req.params;
-    const userId = req.session && req.session.user ? req.session.user.id : null;
+    const userId = getUserId(req);
 
-    // Check if user is logged in
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to complete payment'
-        });
+        return sendUnauthorized(res, 'Please sign in to complete payment');
     }
 
     // Validate orderID parameter
@@ -428,14 +397,9 @@ router.post('/orders/:orderID/capture', async (req, res) => {
 router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
     const { items, subtotal, discount, total, currency } = req.body;
 
-    const userId = req.session && req.session.user ? req.session.user.id : null;
-
-    // Check if user is logged in
+    const userId = getUserId(req);
     if (!userId) {
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: 'You must be logged in to place an order'
-        });
+        return sendUnauthorized(res);
     }
 
     try {
