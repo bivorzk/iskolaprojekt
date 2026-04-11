@@ -27,6 +27,7 @@ const Order           = require('./Orders/Order');
 const redisLuaService   = require('./services/redis-lua-service');
 const chatService       = require('./services/chat-service');
 const geosecurityService = require('./services/Geosecurity-service');
+const { securityMiddleware, corsOptions } = require('./middleware/security');
 const cors = require('cors');
 const { startChangeStreams, stopChangeStreams } = require('./dashboard/services/cache-service');
 const { Server } = require('socket.io');
@@ -57,7 +58,6 @@ redisClient.on('error', (err) => {
 // Static assets served before session (no Redis op per asset)
 app.use(compression());
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
-app.use(cors());
 app.use(favicon(path.join(process.cwd(), 'public', 'favicon.ico')));
 
 
@@ -75,10 +75,14 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: new SessionRedisStore({ client: redisClient }),
-  cookie: { secure: false }
+  cookie: {
+    secure: process.env.SESSION_COOKIE_SECURE === 'true',
+    sameSite: 'lax',
+    httpOnly: true
+  }
 }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(securityMiddleware);
+app.use(cors(corsOptions));
 
 const server = require('http').createServer(app);
 server.keepAliveTimeout = 65000;

@@ -773,18 +773,22 @@ const filterMenuItems = (items, filters) =>
     );
 ```
 
-**Csúszó ablakos rate limiting (Redis Lua):**
-A kulcs rövidítése és egységesítése a `fnv1a` hash függvénnyel történik, hogy a Redis kulcsok rövidek és stabilak legyenek, miközben a bemeneti azonosítók (pl. IP cím, felhasználói token) variálhatók.
-```lua
-local function fnv1a(str)
-    local hash = 2166136261
-    for i = 1, #str do
-        hash = bit.bxor(hash, string.byte(str, i))
-        hash = bit.band(hash * 16777619, 0xFFFFFFFF)
-    end
-    return tostring(hash)
-end
+**Redis Lua implementációk:**
+A projekt valódi Redis Lua szkriptek a `src/scripts` könyvtárban találhatók, és több rétegbeli hibakezelést, bemeneti validációt és naplózást tartalmaznak.
 
+- `src/scripts/rate_limit.lua`: csúszó ablakos rate limit ellenőrzés, `fnv1a` kulcshashing, típusellenőrzés és biztonságos `redis.call` wrapper.
+- `src/scripts/wallet_update.lua`: atomi pénztárca-módosítás, negatív egyenleg visszautasítása, Redis hibák hibaválasszal történő kezelése.
+- `src/scripts/process_order.lua`: készletellenőrzés, pénztárcaegyenleg ellenőrzés, tranzakciós rollback Redis hibák esetén, és megrendelés rekord létrehozása.
+
+A `rate_limit.lua` működése a következőket tartalmazza:
+- `fnv1a` kulcshash a rövid, stabil Redis kulcsokhoz
+- bemeneti típusvalidáció és hibaválaszok `redis.error_reply` segítségével
+- régi bejegyzések törlése `ZREMRANGEBYSCORE`-ral
+- jelenlegi kérésszám lekérdezése `ZCARD`-dal
+- új bejegyzés hozzáadása és kulcseredmény beállítása
+
+Példakód részlet:
+```lua
 local key = "rl:" .. fnv1a(KEYS[1])
 local window = tonumber(ARGV[1])
 local max_requests = tonumber(ARGV[2])
@@ -792,26 +796,56 @@ local now = tonumber(ARGV[3])
 
 redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
 local current_count = redis.call('ZCARD', key)
-
 if current_count >= max_requests then
     return {0, current_count}
 end
-
 redis.call('ZADD', key, now, now)
 redis.call('EXPIRE', key, window)
 return {1, current_count + 1}
 ```
 
-**Atomi pénztárca-frissítés (Redis Lua):**
+A `wallet_update.lua` script a pénztárca-módosítást is biztonságosabbá teszi:
+- számszerűsíti a bemenetet
+- hitelesíti a Redis értékformátumot
+- visszautasítja a negatív egyenlegű tranzakciókat `INSUFFICIENT_FUNDS` hibával
+- csak sikeres Redis frissítés után adja vissza az új egyenleget
+- minden Redis hívást `pcall`-lal csomagolva végez a stabil működésért
+
+Példakód részlet:
 ```lua
 local current_balance = tonumber(redis.call('GET', KEYS[1]) or '0')
-local new_balance = current_balance + tonumber(ARGV[1])
-if new_balance < 0 then
+local amount = tonumber(ARGV[1])
+if amount < 0 and (current_balance + amount) < 0 then
     return redis.error_reply('INSUFFICIENT_FUNDS')
 end
-redis.call('SET', KEYS[1], new_balance)
-return new_balance
+redis.call('SET', KEYS[1], tostring(current_balance + amount))
+return current_balance + amount
 ```
+
+A `process_order.lua` esetén a dokumentációban érdemes hangsúlyozni, hogy a script nem csak egyszerű `DECRBY`-t használ, hanem:
+- készlet és pénztárca ellenőrzést hajt végre
+- Redis hibák esetén visszagörgeti a már elvégzett műveleteket
+- `HMSET`-tel order recordot hoz létre
+- részletes naplózást végez `redis.log`-gal
+
+Példakód részlet:
+```lua
+local available_stock = tonumber(redis.call('GET', KEYS[1]) or '0')
+if available_stock < tonumber(ARGV[1]) then
+    return redis.error_reply('INSUFFICIENT_STOCK')
+end
+local wallet_balance = tonumber(redis.call('GET', KEYS[2]) or '0')
+local total_cost = tonumber(ARGV[1]) * tonumber(ARGV[2])
+if wallet_balance < total_cost then
+    return redis.error_reply('INSUFFICIENT_FUNDS')
+end
+redis.call('DECRBY', KEYS[1], tonumber(ARGV[1]))
+redis.call('DECRBY', KEYS[2], total_cost)
+redis.call('HMSET', KEYS[3], 'user_id', ARGV[3], 'quantity', ARGV[1], 'price', ARGV[2])
+```
+
+Ez a dokumentáció most már tükrözi a valós implementációt: a Lua szkriptek nem egyszerű példák, hanem robosztus, hibakezeléssel és bemeneti validációval ellátott Redis műveletek.
+
 
 **reCAPTCHA ellenőrzés:**
 ```javascript
@@ -843,6 +877,7 @@ const verifyRecaptcha = async (token) => {
 | 2FA | Megvalósítva; Dioxus alapú mobil app, Google-szerű 3 véletlenszám választásos rendszer |
 | Rate limiting | `express-rate-limit` (általános) + Redis Lua csúszó ablak (admin/dashboard) |
 | Bemenet-ellenőrzés | Kliens oldali, szerver oldali, adatbázis szintű; egyéni Express middleware (`src/middleware/security.js`), Mongoose sémák |
+| NoSQL injekció elleni védelem | A központi middleware detektálja a MongoDB-szerű `$` operátorokat és blokkolja őket egy barátságos `Nice try buddy :)` válasszal |
 | XSS / injekció | `xss-clean`, `helmet`, `express-mongo-sanitize` |
 | CSRF | Részleges; tokenek tervezve minden állapotot módosító művelethez |
 | CORS | Szigorú szabályzat; csak a hivatalos frontend domain engedélyezett |
@@ -863,7 +898,7 @@ A rendszer második faktoros hitelesítést használ, ahol a mobil alkalmazás D
 
 ##### Azonosított fenyegetések
 - **Hitelesítés megkerülése**: Brute force támadások, hitelesítő adatok kitöltése, JWT token lopás.
-- **Adatbefecskendezés**: SQL/NoSQL injekció, XSS, CSRF támadások.
+- **Adatbefecskendezés**: SQL/NoSQL injekció, XSS, CSRF támadások. A rendszer speciális NoSQL bemenet-detektálást is tartalmaz, amely gyanús MongoDB `$` operátorokra barátságos "Nice try buddy :)" választ ad.
 - **Szolgáltatásmegtagadás (DoS)**: Rate limit megkerülése, erőforráskimerülés.
 - **Adatszivárgás**: Jogosulatlan hozzáférés felhasználói adatokhoz, fizetési információkhoz.
 - **E2EE kompromittálás**: Gyenge kulcscsere, közbeékelt támadások a chaten.
@@ -1460,15 +1495,43 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 | GET | `/dashboard/admin/menulist` | Menüelemek listája |
 | GET | `/dashboard/admin/stockalerts` | Alacsony készlet figyelmeztetések |
 | GET | `/dashboard/admin/paymentstats` | Fizetési statisztikák |
-| GET | `/dashboard/admin/health` | Rendszer állapot ellenőrzés |
+| GET | `/dashboard/admin/health` | Rendszer állapot ellenőrzés és szolgáltatásstátuszok |
 | GET | `/dashboard/admin/menuitem_export` | Menüelemek exportálása |
 | GET | `/dashboard/admin/delete_menuitem/:id` | Menüelem törlése |
 | POST | `/dashboard/admin/create_menuitem` | Menüelem létrehozása |
 | PUT | `/dashboard/admin/menuitem/:id` | Menüelem frissítése |
 
+A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ellenőrzi. A Redis kiesése esetén a válasz gyorsan `unavailable`/`degraded` státuszokra vált, így a dashboard nem marad végtelen frissítésben.
+
 **Példa — GET /dashboard/admin/health válasz:**
 ```json
-{ "overall": "ok", "services": { "database": "healthy", "redis": "healthy", "sessions": "healthy", "externalServices": { "paypal": "configured", "googlepay": "configured" } } }
+{
+  "overall": "degraded",
+  "timestamp": "2026-04-11T12:34:56.789Z",
+  "services": {
+    "database": "healthy",
+    "redis": "unavailable",
+    "userModel": "healthy",
+    "menuModel": "healthy",
+    "orderModel": "healthy",
+    "paymentModel": "healthy",
+    "loyaltyModel": "healthy",
+    "adminEndpoints": "healthy",
+    "redisLua": "degraded",
+    "sessions": "healthy",
+    "caching": "degraded",
+    "externalServices": {
+      "paypal": "configured",
+      "googlepay": "not_configured"
+    }
+  },
+  "details": {
+    "redis": "Redis client not available or not connected",
+    "redisLua": "Redis Lua scripts unavailable due to Redis connection issue",
+    "caching": "Redis cache unavailable"
+  },
+  "summary": "7/10 core services healthy"
+}
 ```
 
 **Példa — GET /dashboard/admin/userlist válasz:**

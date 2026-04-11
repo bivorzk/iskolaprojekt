@@ -33,6 +33,36 @@ function isRedisAvailable() {
   return redisClient && redisClient.isOpen;
 }
 
+const ADMIN_CACHE_KEYS = {
+  userCount: 'admin:usercount',
+  userList: 'admin:userlist',
+  securityLogs: 'admin:securitylogs:all',
+  reportedMenuItems: 'admin:reported-menuitems',
+  menuItemExport: 'admin:menuitem_export',
+  menuList: 'admin:menulist',
+  stockAlerts: 'admin:stockalerts',
+  soldOut: 'admin:soldout',
+  itemCount: 'admin:itemcount',
+  totalPoints: 'admin:totalpoints',
+  rewardsList: 'admin:rewards_list',
+  rewardStats: 'admin:reward_stats',
+  paymentStats: 'admin:paymentstats',
+  activeUsers: 'admin:activeusers'
+};
+
+const USER_PROJECTION = 'username email usertype createdAt isBanned isVerified balance lastActive';
+
+const isValidObjectId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
+const badRequest = (res, message = 'Invalid input') => sendError(res, message, 400);
+const notFound = (res, message = 'Not found') => sendError(res, message, 404);
+const serverError = (res, message = 'Server error') => sendError(res, message, 500);
+
+const invalidateAdminCache = (keys) => {
+  if (invalidateCache) {
+    invalidateCache(keys);
+  }
+};
+
 // Apply middleware to all admin routes
 router.use('/', requireAdmin);
 router.use('/', createDashboardRateLimiter({ prefix: 'admin', windowSeconds: 60, maxRequests: 30 }));
@@ -62,15 +92,15 @@ router.get('/userlist', cacheResult('admin:userlist', 300), async (req, res) => 
 });
 
 router.get('/user/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return badRequest(res, 'Invalid user ID');
+
   try {
-    if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
-      return sendError(res, 'Invalid user ID', 400);
-    }
-    const user = await User.findById(req.params.id, 'username email usertype createdAt isBanned isVerified balance lastActive').lean();
-    if (!user) return sendError(res, 'User not found', 404);
+    const user = await User.findById(id, USER_PROJECTION).lean();
+    if (!user) return notFound(res, 'User not found');
     sendSuccess(res, { user }, 200);
   } catch (error) {
-    sendError(res);
+    serverError(res);
   }
 });
 
@@ -81,25 +111,27 @@ router.patch('/user/:id/ban',
   ],
   async (req, res) => {
     if (handleValidationErrors(req, res)) return;
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) return badRequest(res, 'Invalid user ID');
 
     try {
-      if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
-        return res.status(400).json({ error: 'Invalid user ID' });
-      }
-      const target = await User.findById(req.params.id, 'usertype').lean();
-      if (!target) return res.status(404).json({ error: 'User not found' });
+      const target = await User.findById(id, 'usertype').lean();
+      if (!target) return notFound(res, 'User not found');
       if (target.usertype === 'admin') {
-        return res.status(403).json({ error: 'Cannot ban another admin' });
+        return sendError(res, 'Cannot ban another admin', 403);
       }
+
       const updated = await User.findByIdAndUpdate(
-        req.params.id,
+        id,
         { isBanned: req.body.isBanned },
         { new: true, select: 'username email usertype isBanned' }
       ).lean();
-      invalidateCache(['admin:userlist']);
+
+      invalidateAdminCache([ADMIN_CACHE_KEYS.userList]);
       sendSuccess(res, { message: `User ${req.body.isBanned ? 'banned' : 'unbanned'} successfully`, user: updated }, 200);
     } catch (error) {
-      sendError(res);
+      serverError(res);
     }
   }
 );
@@ -109,27 +141,28 @@ router.patch('/user/:id/role',
     body('usertype').isIn(['student', 'parent', 'teacher', 'frozen', 'editor'])
   ],
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (handleValidationErrors(req, res)) return;
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) return badRequest(res, 'Invalid user ID');
 
     try {
-      if (!req.params.id.match(/^[a-f\d]{24}$/i)) {
-        return res.status(400).json({ error: 'Invalid user ID' });
-      }
-      const target = await User.findById(req.params.id, 'usertype').lean();
-      if (!target) return res.status(404).json({ error: 'User not found' });
+      const target = await User.findById(id, 'usertype').lean();
+      if (!target) return notFound(res, 'User not found');
       if (target.usertype === 'admin') {
-        return res.status(403).json({ error: 'Cannot change role of another admin' });
+        return sendError(res, 'Cannot change role of another admin', 403);
       }
+
       const updated = await User.findByIdAndUpdate(
-        req.params.id,
+        id,
         { usertype: req.body.usertype },
         { new: true, select: 'username email usertype isBanned' }
       ).lean();
-      invalidateCache(['admin:userlist']);
-      res.status(200).json({ message: 'Role updated successfully', user: updated });
+
+      invalidateAdminCache([ADMIN_CACHE_KEYS.userList]);
+      sendSuccess(res, { message: 'Role updated successfully', user: updated }, 200);
     } catch (error) {
-      res.status(500).json({ error: 'Server error' });
+      serverError(res);
     }
   }
 );
@@ -138,10 +171,9 @@ router.get('/security-logs', cacheResult((req) => `admin:securitylogs:${req.quer
   try {
     const filter = {};
     const userId = req.query.userId;
+
     if (userId) {
-      if (!userId.match(/^[a-f\d]{24}$/i)) {
-        return res.status(400).json({ error: 'Invalid user ID filter' });
-      }
+      if (!isValidObjectId(userId)) return badRequest(res, 'Invalid user ID filter');
       filter.userId = userId;
     }
 
@@ -151,14 +183,14 @@ router.get('/security-logs', cacheResult((req) => `admin:securitylogs:${req.quer
       .limit(200)
       .lean();
 
-    res.status(200).json({ logs });
+    sendSuccess(res, { logs }, 200);
   } catch (error) {
     console.error('Error fetching security logs:', error);
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), async (req, res) => {
+router.get('/reported-menuitems', cacheResult(ADMIN_CACHE_KEYS.reportedMenuItems, 120), async (req, res) => {
   try {
     const menuItems = await MenuItems.find({ 'reviews.reported': true })
       .select('name category price available reviews._id reviews.reported reviews.rating reviews.comment reviews.reportedCount reviews.userId')
@@ -174,7 +206,7 @@ router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), 
       reportedReviews: (item.reviews || [])
         .filter((review) => review.reported)
         .map((review) => ({
-          _id: review._id ? review._id.toString() : null,
+          _id: review._id?.toString() || null,
           rating: review.rating,
           comment: review.comment,
           reportCount: review.reportCount,
@@ -183,74 +215,70 @@ router.get('/reported-menuitems', cacheResult('admin:reported-menuitems', 120), 
         }))
     }));
 
-    res.status(200).json({ reportedItems });
+    sendSuccess(res, { reportedItems }, 200);
   } catch (error) {
     console.error('Error fetching reported menu items:', error);
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 router.delete('/security-logs/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return badRequest(res, 'Invalid log ID');
+
   try {
-    const logId = req.params.id;
-    if (!logId.match(/^[a-f\d]{24}$/i)) {
-      return res.status(400).json({ error: 'Invalid log ID' });
-    }
+    const deletedLog = await SecurityLogs.findByIdAndDelete(id);
+    if (!deletedLog) return notFound(res, 'Security log not found');
 
-    const deletedLog = await SecurityLogs.findByIdAndDelete(logId);
-    if (!deletedLog) {
-      return res.status(404).json({ error: 'Security log not found' });
-    }
-
-    invalidateCache(['admin:securitylogs:all']);
+    invalidateAdminCache([ADMIN_CACHE_KEYS.securityLogs]);
     if (deletedLog.userId) {
       invalidateCache([`admin:securitylogs:${deletedLog.userId.toString()}`]);
     }
 
-    res.status(200).json({ message: 'Security log removed successfully' });
+    sendSuccess(res, { message: 'Security log removed successfully' }, 200);
   } catch (error) {
     console.error('Error removing security log:', error);
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 router.get('/orders', cacheResult('admin:orders', 300), async (req, res) => {
   try {
     const count = await Order.countDocuments({});
-    res.status(202).json({ total: count });
+    sendSuccess(res, { total: count }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/soldout', cacheResult('admin:soldout', 300), async (req, res) => {
+router.get('/soldout', cacheResult(ADMIN_CACHE_KEYS.soldOut, 300), async (req, res) => {
   try {
     const soldOutItems = await MenuItems.find({ available: false }, 'name available').lean();
-    res.status(202).json({ soldOutItems });
+    sendSuccess(res, { soldOutItems }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/itemcount', cacheResult('admin:itemcount', 300), async (req, res) => {
+router.get('/itemcount', cacheResult(ADMIN_CACHE_KEYS.itemCount, 300), async (req, res) => {
   try {
     const count = await MenuItems.countDocuments({});
-    res.status(202).json({ total: count });
+    sendSuccess(res, { total: count }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 // Total points across all users
-router.get('/totalpoints', cacheResult('admin:totalpoints', 300), async (req, res) => {
+router.get('/totalpoints', cacheResult(ADMIN_CACHE_KEYS.totalPoints, 300), async (req, res) => {
   try {
-    const result = await UserLoyalty.aggregate([
-      { $group: { _id: null, totalPoints: { $sum: "$totalPoints" } } }
+    const [result] = await UserLoyalty.aggregate([
+      { $group: { _id: null, totalPoints: { $sum: '$totalPoints' } } }
     ]);
-    const totalPoints = result[0] ? result[0].totalPoints : 0;
-    res.status(202).json({ totalPoints });
+    const totalPoints = result?.totalPoints ?? 0;
+    sendSuccess(res, { totalPoints }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
@@ -321,26 +349,29 @@ router.post(
   }
 );
 
-router.get('/menulist', cacheResult('admin:menulist', 300), async (req, res) => {
+router.get('/menulist', cacheResult(ADMIN_CACHE_KEYS.menuList, 300), async (req, res) => {
   try {
     const menuItems = await MenuItems.find({}).lean();
-    res.status(202).json({ menuItems });
+    sendSuccess(res, { menuItems }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/stockalerts', cacheResult('admin:stockalerts', 300), async (req, res) => {
+router.get('/stockalerts', cacheResult(ADMIN_CACHE_KEYS.stockAlerts, 300), async (req, res) => {
   try {
     const lowStockItems = await MenuItems.find({ stock: { $lt: 5 } }, 'name stock').lean();
-    res.json(lowStockItems);
+    sendSuccess(res, { lowStockItems }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 // Update a menu item (PUT)
 router.put('/menuitem/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return badRequest(res, 'Invalid menu item ID');
+
   try {
     const {
       name,
@@ -354,7 +385,7 @@ router.put('/menuitem/:id', async (req, res) => {
       available
     } = req.body;
     const updatedItem = await MenuItems.findByIdAndUpdate(
-      req.params.id,
+      id,
       {
         name,
         description,
@@ -368,50 +399,45 @@ router.put('/menuitem/:id', async (req, res) => {
       },
       { new: true }
     ).lean();
-    if (!updatedItem) {
-      return res.status(404).json({ error: 'Menu item not found' });
-    }
-    // Invalidate caches
-    invalidateCache(['admin:menulist', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
-    res.status(202).json({ message: 'Menu item updated', item: updatedItem });
+    if (!updatedItem) return notFound(res, 'Menu item not found');
+
+    invalidateAdminCache([ADMIN_CACHE_KEYS.menuList, ADMIN_CACHE_KEYS.menuItemExport, ADMIN_CACHE_KEYS.stockAlerts, ADMIN_CACHE_KEYS.soldOut]);
+    sendSuccess(res, { message: 'Menu item updated', item: updatedItem }, 200);
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Server error' });
+    serverError(res);
   }
 });
 
 router.get('/delete_menuitem/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return badRequest(res, 'Invalid menu item ID');
+
   try {
-    const deletedItem = await MenuItems.findByIdAndDelete(req.params.id);
-    if (!deletedItem) {
-      return res.status(404).json({ error: 'Menu item not found' });
-    }
-    // Invalidate caches
-    invalidateCache(['admin:menulist', 'admin:itemcount', 'admin:menuitem_export', 'admin:stockalerts', 'admin:soldout']);
-    res.json({ message: 'Menu item deleted' });
+    const deletedItem = await MenuItems.findByIdAndDelete(id);
+    if (!deletedItem) return notFound(res, 'Menu item not found');
+
+    invalidateAdminCache([ADMIN_CACHE_KEYS.menuList, ADMIN_CACHE_KEYS.itemCount, ADMIN_CACHE_KEYS.menuItemExport, ADMIN_CACHE_KEYS.stockAlerts, ADMIN_CACHE_KEYS.soldOut]);
+    sendSuccess(res, { message: 'Menu item deleted' }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/menuitem_export', cacheResult('admin:menuitem_export', 300), async (req, res) => {
+router.get('/menuitem_export', cacheResult(ADMIN_CACHE_KEYS.menuItemExport, 300), async (req, res) => {
   try {
     const menuItems = await MenuItems.find({}).lean();
-    res.json(menuItems);
+    sendSuccess(res, { menuItems }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 // Resolve a reported review
 router.patch('/menu-items/:menuItemId/reviews/:reviewId/resolve-report', async (req, res) => {
+  const { menuItemId, reviewId } = req.params;
+  if (!isValidObjectId(menuItemId) || !isValidObjectId(reviewId)) return badRequest(res, 'Invalid IDs');
+
   try {
-    const { menuItemId, reviewId } = req.params;
-
-    if (!menuItemId.match(/^[a-f\d]{24}$/i) || !reviewId.match(/^[a-f\d]{24}$/i)) {
-      return res.status(400).json({ error: 'Invalid IDs' });
-    }
-
-    // Find the menu item and update the specific review
     const menuItem = await MenuItems.findOneAndUpdate(
       { _id: menuItemId, 'reviews._id': reviewId },
       {
@@ -423,30 +449,23 @@ router.patch('/menu-items/:menuItemId/reviews/:reviewId/resolve-report', async (
       { new: true }
     );
 
-    if (!menuItem) {
-      return res.status(404).json({ error: 'Menu item or review not found' });
-    }
+    if (!menuItem) return notFound(res, 'Menu item or review not found');
 
-    invalidateCache(['admin:reported-menuitems']);
-    res.status(200).json({ message: 'Report resolved successfully' });
+    invalidateAdminCache([ADMIN_CACHE_KEYS.reportedMenuItems]);
+    sendSuccess(res, { message: 'Report resolved successfully' }, 200);
   } catch (error) {
     console.error('Error resolving report:', error);
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 router.delete('/menu-items/:menuItemId/reviews/:reviewId', async (req, res) => {
+  const { menuItemId, reviewId } = req.params;
+  if (!isValidObjectId(menuItemId) || !isValidObjectId(reviewId)) return badRequest(res, 'Invalid IDs');
+
   try {
-    const { menuItemId, reviewId } = req.params;
-
-    if (!menuItemId.match(/^[a-f\d]{24}$/i) || !reviewId.match(/^[a-f\d]{24}$/i)) {
-      return res.status(400).json({ error: 'Invalid IDs' });
-    }
-
     const menuItem = await MenuItems.findOne({ _id: menuItemId, 'reviews._id': reviewId });
-    if (!menuItem) {
-      return res.status(404).json({ error: 'Menu item or review not found' });
-    }
+    if (!menuItem) return notFound(res, 'Menu item or review not found');
 
     menuItem.reviews = (menuItem.reviews || []).filter(
       (review) => review._id.toString() !== reviewId
@@ -459,11 +478,11 @@ router.delete('/menu-items/:menuItemId/reviews/:reviewId', async (req, res) => {
 
     await menuItem.save();
 
-    invalidateCache(['admin:reported-menuitems', 'admin:menulist', 'admin:menuitem_export']);
-    res.status(200).json({ message: 'Review deleted successfully' });
+    invalidateAdminCache([ADMIN_CACHE_KEYS.reportedMenuItems, ADMIN_CACHE_KEYS.menuList, ADMIN_CACHE_KEYS.menuItemExport]);
+    sendSuccess(res, { message: 'Review deleted successfully' }, 200);
   } catch (error) {
     console.error('Error deleting review:', error);
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
@@ -514,22 +533,21 @@ router.post(
         availableUntil: availableUntil ? new Date(availableUntil) : undefined
       });
 
-      invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
-
-      res.status(201).json({ message: 'Reward created successfully', reward });
+      invalidateAdminCache([ADMIN_CACHE_KEYS.rewardsList, ADMIN_CACHE_KEYS.rewardStats]);
+      sendSuccess(res, { message: 'Reward created successfully', reward }, 201);
     } catch (error) {
       console.error('Error creating reward:', error);
-      res.status(500).json({ error: 'Server error' });
+      serverError(res);
     }
   }
 );
 
-router.get('/rewards_list', cacheResult('admin:rewards_list', 300), async (req, res) => {
+router.get('/rewards_list', cacheResult(ADMIN_CACHE_KEYS.rewardsList, 300), async (req, res) => {
   try {
     const rewards = await Reward.find({}).lean();
-    res.status(200).json({ rewards });
+    sendSuccess(res, { rewards }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
@@ -568,73 +586,71 @@ router.put('/reward/:id', async (req, res) => {
     ).lean();
 
     if (!updatedReward) {
-      return res.status(404).json({ error: 'Reward not found' });
+      return notFound(res, 'Reward not found');
     }
 
-    invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
-    res.status(200).json({ message: 'Reward updated successfully', reward: updatedReward });
+    invalidateAdminCache([ADMIN_CACHE_KEYS.rewardsList, ADMIN_CACHE_KEYS.rewardStats]);
+    sendSuccess(res, { message: 'Reward updated successfully', reward: updatedReward }, 200);
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Server error' });
+    serverError(res);
   }
 });
 
 router.delete('/reward/:id', async (req, res) => {
   try {
     const deletedReward = await Reward.findByIdAndDelete(req.params.id);
-    if (!deletedReward) {
-      return res.status(404).json({ error: 'Reward not found' });
-    }
+    if (!deletedReward) return notFound(res, 'Reward not found');
 
-    invalidateCache(['admin:rewards_list', 'admin:reward_stats']);
-    res.json({ message: 'Reward deleted successfully' });
+    invalidateAdminCache([ADMIN_CACHE_KEYS.rewardsList, ADMIN_CACHE_KEYS.rewardStats]);
+    sendSuccess(res, { message: 'Reward deleted successfully' }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/reward_stats', cacheResult('admin:reward_stats', 300), async (req, res) => {
+router.get('/reward_stats', cacheResult(ADMIN_CACHE_KEYS.rewardStats, 300), async (req, res) => {
   try {
     const totalRewards = await Reward.countDocuments({});
     const activeRewards = await Reward.countDocuments({ isActive: true });
     const totalRedemptions = await Redemption.countDocuments({});
     const pendingRedemptions = await Redemption.countDocuments({ status: 'pending' });
 
-    res.status(200).json({
+    sendSuccess(res, {
       totalRewards,
       activeRewards,
       totalRedemptions,
       pendingRedemptions
-    });
+    }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
-router.get('/activeusers', cacheResult('admin:activeusers', 300), async (req, res) => {
+router.get('/activeusers', cacheResult(ADMIN_CACHE_KEYS.activeUsers, 300), async (req, res) => {
   try {
     const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
-    res.status(202).json({ activeUsers });
+    sendSuccess(res, { activeUsers }, 200);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
 
-router.get('/paymentstats', cacheResult('admin:paymentstats', 300), async (req, res) => {
+router.get('/paymentstats', cacheResult(ADMIN_CACHE_KEYS.paymentStats, 300), async (req, res) => {
   try {
     const paymentStats = await Payment.aggregate([
-      { $match: { currency: "USD" } },
+      { $match: { currency: 'USD' } },
       { $group: {
-          _id: "$paymentMethod",
+          _id: '$paymentMethod',
           count: { $sum: 1 },
-          totalAmount: { $sum: "$amount" }
+          totalAmount: { $sum: '$amount' }
         }
       }
     ]);
     const totalAmount = paymentStats.reduce((sum, stat) => sum + stat.totalAmount, 0);
-    res.json({ totalAmount });
-  }catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    sendSuccess(res, { totalAmount }, 200);
+  } catch (error) {
+    serverError(res);
   }
 });
 
@@ -648,140 +664,128 @@ router.get('/health', cacheResult('system:health', 30), async (req, res) => {
     details: {}
   };
 
-  let hasErrors = false;
+  const recordService = (name, status, detail) => {
+    healthResults.services[name] = status;
+    healthResults.details[name] = detail;
+  };
 
-  try {
-    await mongoose.connection.db.admin().ping();
-    healthResults.services.database = 'healthy';
-    healthResults.details.database = 'MongoDB connection established and responding';
-  } catch (error) {
-    healthResults.services.database = 'unhealthy';
-    healthResults.details.database = `Database error: ${error.message}`;
-    hasErrors = true;
-  }
+  const timeoutPromise = (promise, ms, errorMessage) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(errorMessage)), ms);
+    promise.then((value) => {
+      clearTimeout(timer);
+      resolve(value);
+    }).catch((err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
 
-  try {
-    if (isRedisAvailable()) {
-      await redisClient.ping();
-      healthResults.services.redis = 'healthy';
-      healthResults.details.redis = 'Redis connection established and responding';
-    } else {
-      healthResults.services.redis = 'unavailable';
-      healthResults.details.redis = 'Redis client not available or not connected';
+  const safeRedisCommand = async (commandFn, timeoutMs = 1500) => {
+    if (!isRedisAvailable()) {
+      throw new Error('Redis unavailable');
     }
-  } catch (error) {
-    healthResults.services.redis = 'unhealthy';
-    healthResults.details.redis = `Redis error: ${error.message}`;
-    hasErrors = true;
+    return timeoutPromise(commandFn(), timeoutMs, 'Redis operation timed out');
+  };
+
+  const runCheck = async (name, checkFn, fallbackStatus = 'unhealthy', fallbackDetail = 'Check failed') => {
+    try {
+      await checkFn();
+      return true;
+    } catch (error) {
+      recordService(name, fallbackStatus, `${fallbackDetail}: ${error?.message || error}`);
+      return false;
+    }
+  };
+
+  await runCheck('database', async () => {
+    await timeoutPromise(mongoose.connection.db.admin().ping(), 1500, 'Database ping timed out');
+    recordService('database', 'healthy', 'MongoDB connection established and responding');
+  }, 'unhealthy', 'Database error');
+
+  if (isRedisAvailable()) {
+    await runCheck('redis', async () => {
+      await safeRedisCommand(() => redisClient.ping(), 1500);
+      recordService('redis', 'healthy', 'Redis connection established and responding');
+    }, 'unhealthy', 'Redis error');
+  } else {
+    recordService('redis', 'unavailable', 'Redis client not available or not connected');
   }
 
-  try {
-    const userCount = await User.countDocuments({});
-    healthResults.services.userModel = 'healthy';
-    healthResults.details.userModel = `User model accessible (${userCount} users)`;
+  await runCheck('models', async () => {
+    const [userCount, menuItemsCount, orderCount, paymentCount, loyaltyCount] = await Promise.all([
+      User.countDocuments({}),
+      MenuItems.countDocuments({}),
+      Order.countDocuments({}),
+      Payment.countDocuments({}),
+      UserLoyalty.countDocuments({})
+    ]);
 
-    const menuItemsCount = await MenuItems.countDocuments({});
-    healthResults.services.menuModel = 'healthy';
-    healthResults.details.menuModel = `MenuItems model accessible (${menuItemsCount} items)`;
+    recordService('userModel', 'healthy', `User model accessible (${userCount} users)`);
+    recordService('menuModel', 'healthy', `MenuItems model accessible (${menuItemsCount} items)`);
+    recordService('orderModel', 'healthy', `Order model accessible (${orderCount} orders)`);
+    recordService('paymentModel', 'healthy', `Payment model accessible (${paymentCount} payments)`);
+    recordService('loyaltyModel', 'healthy', `UserLoyalty model accessible (${loyaltyCount} loyalty records)`);
+  }, 'unhealthy', 'Database model error');
 
-    const orderCount = await Order.countDocuments({});
-    healthResults.services.orderModel = 'healthy';
-    healthResults.details.orderModel = `Order model accessible (${orderCount} orders)`;
+  await runCheck('adminEndpoints', async () => {
+    const [activeUsers, availableItems, lowStockItems] = await Promise.all([
+      User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }),
+      MenuItems.countDocuments({ available: true }),
+      MenuItems.countDocuments({ stock: { $lt: 5 } })
+    ]);
 
+    recordService('adminEndpoints', 'healthy', `Admin functions operational (${activeUsers} active users, ${availableItems} available items, ${lowStockItems} low stock alerts)`);
+  }, 'unhealthy', 'Admin endpoint error');
 
-    const paymentCount = await Payment.countDocuments({});
-    healthResults.services.paymentModel = 'healthy';
-    healthResults.details.paymentModel = `Payment model accessible (${paymentCount} payments)`;
-
-    const loyaltyCount = await UserLoyalty.countDocuments({});
-    healthResults.services.loyaltyModel = 'healthy';
-    healthResults.details.loyaltyModel = `UserLoyalty model accessible (${loyaltyCount} loyalty records)`;
-  } catch (error) {
-    healthResults.services.models = 'unhealthy';
-    healthResults.details.models = `Database model error: ${error.message}`;
-    hasErrors = true;
-  }
-
-  try {
-    const activeUsers = await User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
-    const availableItems = await MenuItems.countDocuments({ available: true });
-    const lowStockItems = await MenuItems.countDocuments({ stock: { $lt: 5 } });
-
-    healthResults.services.adminEndpoints = 'healthy';
-    healthResults.details.adminEndpoints = `Admin functions operational (${activeUsers} active users, ${availableItems} available items, ${lowStockItems} low stock alerts)`;
-  } catch (error) {
-    healthResults.services.adminEndpoints = 'unhealthy';
-    healthResults.details.adminEndpoints = `Admin endpoint error: ${error.message}`;
-    hasErrors = true;
-  }
-
-  try {
-    if (isRedisAvailable()) {
+  if (isRedisAvailable()) {
+    await runCheck('redisLua', async () => {
       const testKey = `health_check_test_${Date.now()}`;
-      const rateLimitResult = await redisLuaService.checkRateLimit(testKey, 60, 100);
-      
-      healthResults.services.redisLua = 'healthy';
-      healthResults.details.redisLua = `Redis Lua scripts operational (rate limit test: ${rateLimitResult.allowed ? 'allowed' : 'denied'})`;
-      
-      await redisClient.del(testKey);
-    } else {
-      healthResults.services.redisLua = 'degraded';
-      healthResults.details.redisLua = 'Redis Lua scripts unavailable due to Redis connection issue';
-    }
-  } catch (error) {
-    healthResults.services.redisLua = 'unhealthy';
-    healthResults.details.redisLua = `Redis Lua error: ${error.message}`;
-    hasErrors = true;
+      const rateLimitResult = await safeRedisCommand(() => redisLuaService.checkRateLimit(testKey, 60, 100), 1500);
+      await safeRedisCommand(() => redisClient.del(testKey), 1500);
+      recordService('redisLua', 'healthy', `Redis Lua scripts operational (rate limit test: ${rateLimitResult.allowed ? 'allowed' : 'denied'})`);
+    }, 'unhealthy', 'Redis Lua error');
+  } else {
+    recordService('redisLua', 'degraded', 'Redis Lua scripts unavailable due to Redis connection issue');
   }
 
-  try {
-    if (req.session) {
-      healthResults.services.sessions = 'healthy';
-      healthResults.details.sessions = 'Session system operational';
-    } else {
-      healthResults.services.sessions = 'unhealthy';
-      healthResults.details.sessions = 'Session system not available';
-      hasErrors = true;
+  await runCheck('sessions', async () => {
+    if (!req.session) {
+      throw new Error('Session system not available');
     }
-  } catch (error) {
-    healthResults.services.sessions = 'unhealthy';
-    healthResults.details.sessions = `Session error: ${error.message}`;
-    hasErrors = true;
-  }
+    recordService('sessions', 'healthy', 'Session system operational');
+  }, 'unhealthy', 'Session error');
 
-  try {
-    const cacheTestKey = `admin:health_test:${Date.now()}`;
-    const testData = { test: 'data', timestamp: Date.now() };
-    await redisClient.setEx(cacheTestKey, 60, JSON.stringify(testData));
-    const retrieved = await redisClient.get(cacheTestKey);
-    if (retrieved) {
-      healthResults.services.caching = 'healthy';
-      healthResults.details.caching = 'Cache set/get operations working';
-      await redisClient.del(cacheTestKey);
-    } else {
-      throw new Error('Cache retrieval failed');
-    }
-  } catch (error) {
-    healthResults.services.caching = 'unhealthy';
-    healthResults.details.caching = `Cache error: ${error.message}`;
-    hasErrors = true;
+  if (isRedisAvailable()) {
+    await runCheck('caching', async () => {
+      const cacheTestKey = `admin:health_test:${Date.now()}`;
+      const testData = { test: 'data', timestamp: Date.now() };
+      await safeRedisCommand(() => redisClient.setEx(cacheTestKey, 60, JSON.stringify(testData)), 1500);
+      const retrieved = await safeRedisCommand(() => redisClient.get(cacheTestKey), 1500);
+      await safeRedisCommand(() => redisClient.del(cacheTestKey), 1500);
+
+      if (!retrieved) {
+        throw new Error('Cache retrieval failed');
+      }
+
+      recordService('caching', 'healthy', 'Cache set/get operations working');
+    }, 'unhealthy', 'Cache error');
+  } else {
+    recordService('caching', 'degraded', 'Redis cache unavailable');
   }
 
   healthResults.services.externalServices = {};
-  
   try {
-    const hasPayPalConfig = process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET;
-    
+    const hasPayPalConfig = Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
     let hasGooglePayConfig = false;
+
     try {
       const googlePayService = require('../../services/googlepay-service');
-      // Check if Google Pay service functions are available
-      hasGooglePayConfig = typeof googlePayService.createGooglePayOrder === 'function' && 
-                          typeof googlePayService.completeGooglePayOrder === 'function';
+      hasGooglePayConfig = typeof googlePayService.createGooglePayOrder === 'function' &&
+        typeof googlePayService.completeGooglePayOrder === 'function';
     } catch (error) {
       hasGooglePayConfig = false;
     }
-    
+
     healthResults.services.externalServices.paypal = hasPayPalConfig ? 'configured' : 'not_configured';
     healthResults.services.externalServices.googlepay = hasGooglePayConfig ? 'configured' : 'not_configured';
     healthResults.details.externalServices = `Payment service configurations checked - PayPal: ${hasPayPalConfig ? 'env vars present' : 'missing env vars'}, Google Pay: ${hasGooglePayConfig ? 'service available' : 'service unavailable'}`;
@@ -790,34 +794,41 @@ router.get('/health', cacheResult('system:health', 30), async (req, res) => {
     healthResults.details.externalServices = `External services check error: ${error.message}`;
   }
 
-  if (hasErrors) {
+  const coreStatuses = Object.entries(healthResults.services)
+    .filter(([key]) => key !== 'externalServices')
+    .map(([, status]) => status);
+
+  if (coreStatuses.includes('unhealthy')) {
+    healthResults.overall = 'unhealthy';
+  } else if (coreStatuses.some((status) => status !== 'healthy')) {
     healthResults.overall = 'degraded';
   }
 
-  if (healthResults.services.database === 'unhealthy' || 
-      healthResults.services.sessions === 'unhealthy' ||
-      healthResults.services.models === 'unhealthy') {
-    healthResults.overall = 'unhealthy';
-  }
-
-  const healthyServices = Object.values(healthResults.services).filter(s => s === 'healthy').length;
-  const totalServices = Object.keys(healthResults.services).length - 1; // Exclude nested externalServices
+  const healthyServices = coreStatuses.filter((status) => status === 'healthy').length;
+  const totalServices = coreStatuses.length;
   healthResults.summary = `${healthyServices}/${totalServices} core services healthy`;
 
-  const httpStatus = healthResults.overall === 'unhealthy' ? 500 : 
-                    healthResults.overall === 'degraded' ? 206 : 200;
-
+  const httpStatus = healthResults.overall === 'unhealthy' ? 500 : healthResults.overall === 'degraded' ? 206 : 200;
   res.status(httpStatus).json(healthResults);
 });
 
 // ── Admin: userinfo (for dashboard switcher) ──────────────────────────────────
 router.get('/userinfo', async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id).select('username email usertype createdAt isVerified').lean();
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ username: user.username, email: user.email, usertype: user.usertype, createdAt: user.createdAt, isVerified: user.isVerified });
+    const user = await User.findById(req.session.user.id)
+      .select('username email usertype createdAt isVerified')
+      .lean();
+
+    if (!user) return notFound(res, 'User not found');
+    sendSuccess(res, {
+      username: user.username,
+      email: user.email,
+      usertype: user.usertype,
+      createdAt: user.createdAt,
+      isVerified: user.isVerified
+    }, 200);
   } catch (e) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 
@@ -864,8 +875,8 @@ router.post('/settings/personal-info', [
   body('dateOfBirth').optional({ nullable: true, checkFalsy: true }).isISO8601(),
   body('school').optional({ nullable: true }).trim().isLength({ max: 100 }),
 ], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid input', details: errors.array() });
+  if (handleValidationErrors(req, res)) return;
+
   try {
     const userId = req.session.user.id;
     const { firstName, lastName, dateOfBirth, school, address } = req.body;
@@ -876,12 +887,12 @@ router.post('/settings/personal-info', [
 
     await User.updateOne(
       { _id: userId },
-      { $set: { 'userPersonalInfo': [{ userId, ...update }] } }
+      { $set: { userPersonalInfo: [{ userId, ...update }] } }
     );
     invalidateCache(['admin:userinfo']);
-    res.json({ success: true });
+    sendSuccess(res, { success: true }, 200);
   } catch (e) {
-    res.status(500).json({ error: 'Server error' });
+    serverError(res);
   }
 });
 

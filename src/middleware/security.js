@@ -5,18 +5,96 @@ const cors = require('cors');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const crypto = require('crypto');
 
 // Security middleware configuration
 const securityMiddleware = express();
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+
+function generateCsrfToken() {
+    return crypto.randomBytes(24).toString('hex');
+}
+
+function getCsrfToken(req) {
+    if (!req.session) return null;
+    if (!req.session.csrfToken) {
+        req.session.csrfToken = generateCsrfToken();
+    }
+    return req.session.csrfToken;
+}
+
+function csrfProtection(req, res, next) {
+    const token = getCsrfToken(req);
+    if (!token) {
+        return res.status(500).json({ error: 'Session is required for CSRF protection' });
+    }
+
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        res.cookie(CSRF_COOKIE_NAME, token, {
+            sameSite: 'lax',
+            secure: process.env.CSRF_COOKIE_SECURE === 'true',
+            httpOnly: false,
+            maxAge: 1000 * 60 * 30
+        });
+        return next();
+    }
+
+    const requestToken = req.headers['x-xsrf-token'] || req.headers['x-csrf-token'] || req.body?._csrf || req.query?._csrf;
+    if (!requestToken || requestToken !== token) {
+        return res.status(403).json({ error: 'Invalid CSRF token' });
+    }
+    next();
+}
+
+function hasNoSqlInjectionPattern(value) {
+    if (value && typeof value === 'object') {
+        return Object.entries(value).some(([key, nested]) => {
+            if (typeof key === 'string' && key.startsWith('$')) {
+                return true;
+            }
+            return hasNoSqlInjectionPattern(nested);
+        });
+    }
+    if (typeof value === 'string') {
+        return /(?:^|[^\w\$])\$(?:ne|gt|lt|gte|lte|in|nin|or|and|regex|where|expr|size|type)(?:\b|[^\w])?/i.test(value);
+    }
+    return false;
+}
+
+function detectNoSqlInjection(req) {
+    return ['body', 'query', 'params'].some((source) => {
+        const payload = req[source];
+        return payload && hasNoSqlInjectionPattern(payload);
+    });
+}
+
+function noSqlInjectionEasterEgg(req, res, next) {
+    if (detectNoSqlInjection(req)) {
+        console.warn('NoSQL injection attempt blocked:', {
+            ip: req.ip,
+            url: req.originalUrl,
+            method: req.method
+        });
+        return res.status(400).json({
+            error: 'Nice try buddy :)',
+            message: 'Your input was flagged as NoSQL injection and blocked.'
+        });
+    }
+    next();
+}
+
 
 // 1. Set security headers
 securityMiddleware.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.google.com', 'https://www.gstatic.com', 'https://pay.google.com', 'https://www.paypal.com'],
+            scriptSrcElem: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.google.com', 'https://www.gstatic.com', 'https://pay.google.com', 'https://www.paypal.com'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com'],
             imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.google.com', 'https://pay.google.com', 'https://www.paypal.com', 'https://www.paypalobjects.com'],
+            frameSrc: ["'self'", 'https://www.google.com', 'https://www.paypal.com']
         },
     },
     crossOriginEmbedderPolicy: false
@@ -94,6 +172,9 @@ securityMiddleware.use(express.urlencoded({
     limit: '10mb'
 }));
 
+// Detect NoSQL injection patterns and respond with a playful message
+securityMiddleware.use(noSqlInjectionEasterEgg);
+
 // 5. Data sanitization against NoSQL injection
 securityMiddleware.use(mongoSanitize({
     replaceWith: '_'
@@ -107,7 +188,10 @@ securityMiddleware.use(hpp({
     whitelist: ['currency', 'amount', 'total'] // Allow certain parameters to be duplicated
 }));
 
-// 8. Security headers for API
+// 8. CSRF protection for all session-based state changes
+securityMiddleware.use(csrfProtection);
+
+// 9. Security headers for API
 securityMiddleware.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');

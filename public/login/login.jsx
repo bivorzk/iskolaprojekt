@@ -29,6 +29,13 @@ const Login = () => {
     const [loading,    setLoading]    = useState(false);
     const [message,    setMessage]    = useState({ text: '', type: '' });
 
+    const getCsrfTokenFromCookie = () => {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+        return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : '';
+    };
+
     const handleLoginChange = (e) => {
         const { name, value } = e.target;
         setLoginData({ ...loginData, [name]: value });
@@ -57,7 +64,10 @@ const Login = () => {
         try {
             const response = await fetch('/login', {
                 method:  'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'x-xsrf-token': getCsrfTokenFromCookie()
+                },
                 body:    new URLSearchParams(loginData),
             });
 
@@ -69,7 +79,10 @@ const Login = () => {
                         setMessage({ text: 'Initiating verification…', type: 'success' });
                         const twoFARes = await fetch('/2fa', {
                             method:  'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'x-xsrf-token': getCsrfTokenFromCookie()
+                            },
                             body:    new URLSearchParams({ email: data.email }),
                         });
                         if (twoFARes.ok) {
@@ -117,7 +130,10 @@ const Login = () => {
         try {
             const response = await fetch('/forgot-password', {
                 method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-xsrf-token': getCsrfTokenFromCookie()
+                },
                 body:    JSON.stringify(resetData),
             });
             const text = await response.text();

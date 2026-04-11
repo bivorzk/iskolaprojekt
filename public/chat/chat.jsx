@@ -1,5 +1,10 @@
 const { useState, useEffect, useRef } = React;
 
+function getCsrfToken() {
+  const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+  return c ? decodeURIComponent(c.split('=')[1]) : '';
+}
+
 const E2EEChatApp = () => {
   const [isE2EESetup, setIsE2EESetup]           = useState(false);
   const [setupError, setSetupError]             = useState(null);
@@ -156,7 +161,7 @@ const E2EEChatApp = () => {
         await ChatAPI.sendMessage(recipientId, plaintext);
         await fetch(`/chat/message/${id}/replace`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
           body: JSON.stringify({ recipientId })
         }).catch(() => {});
       } catch (err) {
@@ -196,7 +201,7 @@ const E2EEChatApp = () => {
             );
             await fetch(`/chat/message/${req.messageId}/update-sender-key`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
               body: JSON.stringify({ newSenderEncryptedKey, requesterId: req.senderId })
             });
           } catch (recErr) {
@@ -205,7 +210,7 @@ const E2EEChatApp = () => {
             if (recErr.message?.includes('could not decrypt recipientEncryptedKey')) {
               fetch(`/chat/message/${req.messageId}/recovery-failed`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() }
               }).catch(() => {});
             }
           }

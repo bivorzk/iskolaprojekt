@@ -1,4 +1,8 @@
 const SettingsSection = ({ userData }) => {
+    const getCsrfToken = () => {
+        const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+        return c ? decodeURIComponent(c.split('=')[1]) : '';
+    };
     // 2FA state
     const [is2FAEnabled, setIs2FAEnabled] = React.useState(false);
     const [twoFALoading, setTwoFALoading] = React.useState(false);
@@ -39,7 +43,7 @@ const SettingsSection = ({ userData }) => {
         setTwoFALoading(true);
         setTwoFAMsg('');
         try {
-            const res = await fetch('/dashboard/admin/settings/2fa/toggle', { method: 'POST' });
+            const res = await fetch('/dashboard/admin/settings/2fa/toggle', { method: 'POST', headers: { 'x-xsrf-token': getCsrfToken() } });
             const data = await res.json();
             if (res.ok) {
                 setIs2FAEnabled(data.is2Active);
@@ -58,7 +62,7 @@ const SettingsSection = ({ userData }) => {
         try {
             const res = await fetch('/dashboard/admin/settings/personal-info', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
                 body: JSON.stringify({
                     firstName: personalInfo.firstName,
                     lastName: personalInfo.lastName,

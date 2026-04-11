@@ -1,3 +1,8 @@
+function getCsrfToken() {
+  const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+  return c ? decodeURIComponent(c.split('=')[1]) : '';
+}
+
 window.ChatAPI = {
 
   async getCurrentUser() {
@@ -137,7 +142,7 @@ window.ChatAPI = {
       for (const [recipientId, messageIds] of Object.entries(byRecipient)) {
         fetch('/chat/request-sender-recovery', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
           body: JSON.stringify({ messageIds, recipientId })
         }).catch(err => console.warn('REST sender-recovery queue failed:', err.message));
       }
@@ -159,7 +164,7 @@ window.ChatAPI = {
               );
               await fetch(`/chat/message/${req.messageId}/update-sender-key`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
                 body: JSON.stringify({ newSenderEncryptedKey, requesterId: req.senderId })
               });
             } catch (recErr) {
@@ -168,7 +173,7 @@ window.ChatAPI = {
               if (recErr.message?.includes('could not decrypt recipientEncryptedKey')) {
                 fetch(`/chat/message/${req.messageId}/recovery-failed`, {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' }
+                  headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() }
                 }).catch(() => {});
               }
             }
@@ -217,7 +222,7 @@ window.ChatAPI = {
         try {
           const response = await fetch('/chat/send-message', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
             body: JSON.stringify({
               recipientId,
               encryptedContent: encryptedData.encryptedContent,

@@ -1,3 +1,8 @@
+function getCsrfToken() {
+    const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+    return c ? decodeURIComponent(c.split('=')[1]) : '';
+}
+
 const showLoyaltyPointsAnimation = (pointsAwarded) => {
     if (!pointsAwarded || pointsAwarded <= 0) return;
     
@@ -195,7 +200,7 @@ const loadPayPalScript = () => {
 const fulfillVoucher = (voucherCode) => {
     fetch('/dashboard/student/loyalty/voucher/fulfill', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
         body: JSON.stringify({ voucherCode })
     }).catch(err => console.error('Voucher fulfillment failed:', err));
 };
@@ -260,7 +265,8 @@ const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscoun
                     const saveResponse = await fetch('/api/save-order', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'x-xsrf-token': getCsrfToken()
                         },
                         body: JSON.stringify({
                             items: cart,
@@ -470,7 +476,8 @@ const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, 
                     const saveResponse = await fetch('/api/save-order', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'x-xsrf-token': getCsrfToken()
                         },
                         body: JSON.stringify({
                             items: orderData.items,
@@ -557,7 +564,8 @@ const handleBalancePayment = async (cart, currency, clearCart, selectedDiscount,
     fetch('/api/pay-with-balance', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-xsrf-token': getCsrfToken()
         },
         body: JSON.stringify({
             items: cart,

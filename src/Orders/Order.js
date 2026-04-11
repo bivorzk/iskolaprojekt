@@ -2,24 +2,23 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const path = require('path');
-const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { Client, Environment, OrdersController, PaymentsController, LogLevel, ApiError } = require('@paypal/paypal-server-sdk');
 
 // Import models and database queries
 const { User } = require('../database');
-const { Payment, UserLoyalty, MenuItems, Order, OrderItems } = require('../../config/database_queries');
+const { Payment, UserLoyalty, MenuItems, Order } = require('../../config/database_queries');
 const { ConvertPoints, getHealthLevel } = require('../LoyaltySystem/loyalty-service');
 
 const { cacheResult, invalidateCache, getCached, setCached } = require('../dashboard/services/cache-service');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 const redisLuaService = require('../services/redis-lua-service');
 const levenshtein = require('fast-levenshtein');
 const badwords = require('badwords-list');
 const naughtiness = require('naughty-words');
 const { createSecurityLog } = require('../auth/security');
-const { validateUsername, validatePassword } = require('../auth/validation');
 
 let redisClient = null;
 try {
@@ -85,9 +84,17 @@ const CACHE_KEY_INVENTORY_ITEM = 'inventory:item:';
 const CACHE_KEY_WALLET_USER = 'wallet:user:';
 const CACHE_KEY_ORDER_PUBLIC = 'order:';
 
-const getUserId = req => req.session?.user?.id || null;
-const getIpAddress = req => req.ip || req.connection.remoteAddress;
+const getSessionUser = req => req.session?.user || null;
+const getUserId = req => getSessionUser(req)?.id || null;
+const getIpAddress = req => req.ip || req.connection?.remoteAddress || 'unknown';
 const sendUnauthorized = (res, message = 'Authentication required') => res.status(401).json({ error: message });
+const requireAuth = (req, res, next) => {
+    if (!getSessionUser(req)) {
+        return sendUnauthorized(res, 'Login required to place an order');
+    }
+    next();
+};
+const sanitizeText = value => typeof value === 'string' ? value.trim() : value;
 const sendJsonError = (res, status, error, message) => res.status(status).json({ error, message, timestamp: new Date().toISOString() });
 const logSecurityEvent = async (userId, ipAddress, action, type, details) => {
     try {
@@ -95,6 +102,17 @@ const logSecurityEvent = async (userId, ipAddress, action, type, details) => {
     } catch (logError) {
         console.error('Failed to log security event:', logError);
     }
+};
+
+const containsProfanity = (text) => {
+    if (!text || typeof text !== 'string') return false;
+    const words = text.toLowerCase().split(/\s+/);
+    const bannedWords = [
+        ...badwords.array.map(word => word.toLowerCase()),
+        ...Object.values(naughtiness).flat().map(word => word.toLowerCase())
+    ];
+
+    return words.some(word => bannedWords.some(badWord => levenshtein.get(word, badWord) < PROFANITY_DISTANCE_THRESHOLD));
 };
 
 // PayPal configuration
@@ -111,6 +129,9 @@ const client = new Client({
 });
 
 const ordersController = new OrdersController(client);
+
+// Sanitize all incoming order-related requests
+router.use(hpp(), mongoSanitize(), xss());
 
 // Rate limiting middleware using Redis Lua service
 async function rateLimit(req, res, next) {
@@ -216,17 +237,17 @@ router.post('/item_information/:itemName/Review', [
     body('comment').isLength({ min: COMMENT_MIN_LENGTH, max: COMMENT_MAX_LENGTH }).trim().withMessage(`Comment must be between ${COMMENT_MIN_LENGTH} and ${COMMENT_MAX_LENGTH} characters`)
 ], async (req, res) => {
     const userId = getUserId(req);
+    const ipAddress = getIpAddress(req);
+
     if (!userId) {
-        const ipAddress = getIpAddress(req);
         await logSecurityEvent(null, ipAddress, 'REVIEW_NOT_AUTHENTICATED', 'AUTHENTICATION_ERROR', 'Anonymous user attempted to submit a review');
         return sendUnauthorized(res, 'Login required to submit reviews');
     }
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        const ipAddress = req.ip || req.connection.remoteAddress;
         await createSecurityLog({
-            userId: req.session.user ? req.session.user.id : null,
+            userId,
             ipAddress,
             action: 'REVIEW_VALIDATION_FAILED',
             type: 'VALIDATION_ERROR',
@@ -237,38 +258,11 @@ router.post('/item_information/:itemName/Review', [
 
     const { itemName } = req.params;
     const { rating, comment } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const normalizedComment = sanitizeText(comment);
 
-
-    // Check for profanity using Levenshtein distance
-    const words = comment.toLowerCase().split(/\s+/);
-    let containsProfanity = false;
-
-    for (const word of words) {
-            for (const badWord of badwords.array) {
-                if (levenshtein.get(word, badWord.toLowerCase()) < PROFANITY_DISTANCE_THRESHOLD) {
-                    containsProfanity = true;
-                    break;
-                }
-            }
-            if (containsProfanity) break;
-            // Check against all language lists in naughtiness
-            for (const lang in naughtiness) {
-                if (Array.isArray(naughtiness[lang])) {
-                    for (const naughtyWord of naughtiness[lang]) {
-                        if (levenshtein.get(word, naughtyWord.toLowerCase()) < PROFANITY_DISTANCE_THRESHOLD) {
-                            containsProfanity = true;
-                            break;
-                        }
-                    }
-                    if (containsProfanity) break;
-                }
-            }
-            if (containsProfanity) break;
-    }
-    if (containsProfanity) {
+    if (containsProfanity(normalizedComment)) {
         await createSecurityLog({
-            userId: req.session.user ? req.session.user.id : null,
+            userId,
             ipAddress,
             action: 'REVIEW_CONTAINS_PROFANITY',
             type: 'CONTENT_VIOLATION',
@@ -277,7 +271,6 @@ router.post('/item_information/:itemName/Review', [
         return res.status(400).json({ error: 'Review comment contains inappropriate language' });
     }
 
-    
     try {
         const cacheKey = `menu_item:${itemName}`;
         let menuItem;
@@ -299,13 +292,13 @@ router.post('/item_information/:itemName/Review', [
             return res.status(404).json({ error: 'Menu item not found' });
         }
         
-        if (req.session.user) {
+        if (userId) {
             const existingReview = menuItem.reviews?.find(
-                review => review.userId && review.userId.toString() === req.session.user.id
+                review => review.userId && review.userId.toString() === userId
             );
             if (existingReview) {
                 await createSecurityLog({
-                    userId: req.session.user.id,
+                    userId,
                     ipAddress,
                     action: 'DUPLICATE_REVIEW_ATTEMPT',
                     type: 'BUSINESS_RULE_VIOLATION',
@@ -320,11 +313,11 @@ router.post('/item_information/:itemName/Review', [
         }
         
         const newReview = {
-            userId: req.session.user ? req.session.user.id : null,
+            userId,
             rating,
-            comment: comment.trim(),
+            comment: normalizedComment,
             date: new Date(),
-            ipAddress: req.ip
+            ipAddress
         };
 
         menuItem.reviews.push(newReview);
@@ -486,7 +479,7 @@ router.get('/menu_items', async (req, res) => {
 });
 
 
-router.post('/order', validateOrderInput, async (req, res) => {
+router.post('/order', validateOrderInput, requireAuth, async (req, res) => {
     // Extract order details from request body
     const { cart } = req.body;
     const ipAddress = getIpAddress(req);

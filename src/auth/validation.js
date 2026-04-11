@@ -1,51 +1,87 @@
+const fetch = require('node-fetch');
 const passwordStrength = require('zxcvbn');
 
 // Data imports for validation
-const banned_words_hu = require('../../config/hu.json');
-const banned_words = require('badwords-list').array;
-const password_characters = require('../../data/password_characters.json');
-const disposable_email_list = require('../../data/disposable_email_list.json');
-const banned_passwords = require('../../data/Most_used_passwords.json');
+const bannedWordsHu = require('../../config/hu.json');
+const bannedWords = require('badwords-list').array;
+const passwordCharacters = require('../../data/password_characters.json');
+const disposableEmailList = require('../../data/disposable_email_list.json');
+const commonPasswords = require('../../data/Most_used_passwords.json');
 
+const MIN_USERNAME_LENGTH = 3;
+const MAX_USERNAME_LENGTH = 40;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 50;
+const MIN_STRENGTH_SCORE = 3;
+const CAPTCHA_SCORE_THRESHOLD = 0.5;
+
+const USERNAME_ALLOWED_CHARS = new Set([
+  ...passwordCharacters.hungarian_lowercase,
+  ...passwordCharacters.hungarian_uppercase,
+  ...passwordCharacters.lowercase,
+  ...passwordCharacters.uppercase,
+  ...passwordCharacters.digits,
+  '_', '.', '-', ' '
+]);
+
+const BANNED_TERMS = [
+  ...bannedWordsHu.banned.map(term => term.toLowerCase()),
+  ...bannedWords.map(term => term.toLowerCase())
+];
+
+const COMMON_PASSWORDS = new Set(commonPasswords.map(password => password.toLowerCase()));
+const PASSWORD_UPPERCASE_CHARS = new Set([
+  ...passwordCharacters.uppercase,
+  ...passwordCharacters.hungarian_uppercase
+]);
+const PASSWORD_DIGIT_CHARS = new Set(passwordCharacters.digits);
+const PASSWORD_SPECIAL_CHARS = new Set(passwordCharacters.special);
+
+const DANGEROUS_PASSWORD_PATTERNS = [
+  '(', ')', '[', ']', '{', '}', '<', '>', '"', "'", '`', '\\', '/', '$', 'db.'
+];
+
+function normalizeText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function containsBlacklistedTerm(value) {
+  return BANNED_TERMS.some(term => term && value.includes(term));
+}
+
+function containsForbiddenPasswordPattern(password) {
+  const normalized = password.toLowerCase();
+  return DANGEROUS_PASSWORD_PATTERNS.some(pattern => normalized.includes(pattern));
+}
+
+function containsCharacterFromSet(value, charSet) {
+  return [...charSet].some(char => value.includes(char));
+}
 
 function validateUsername(username, password) {
-  // Length validation
-  if (username.length < 3 || username.length > 40) {
-    return 'Username must be between 3 and 40 characters';
+  const normalizedUsername = normalizeText(username);
+  const normalizedPassword = normalizeText(password);
+
+  if (!normalizedUsername) {
+    return 'Username is required';
   }
 
-  // Username cannot equal password
-  if (username === password) {
+  if (normalizedUsername.length < MIN_USERNAME_LENGTH || normalizedUsername.length > MAX_USERNAME_LENGTH) {
+    return `Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters`;
+  }
+
+  if (normalizedUsername === normalizedPassword) {
     return 'Username and password cannot be the same';
   }
 
-  // Character validation - allow letters, digits, and specific special characters
-  const allowedChars = [
-    ...password_characters.hungarian_lowercase,
-    ...password_characters.hungarian_uppercase,
-    ...password_characters.lowercase,
-    ...password_characters.uppercase,
-    ...password_characters.digits,
-    '_', '.', '-', ' '
-  ];
-
-  for (const char of username) {
-    if (!allowedChars.includes(char)) {
-      return 'Username has to be made up of letters and digits special characters are not allowed for safety reasons';
+  for (const char of normalizedUsername) {
+    if (!USERNAME_ALLOWED_CHARS.has(char)) {
+      return 'Username may only contain letters, digits, spaces, underscores, dots, or hyphens';
     }
   }
 
-  // Banned words validation
-  for (const word of banned_words_hu.banned) {
-    if (username.toLowerCase().includes(word)) {
-      return 'Username contains banned words';
-    }
-  }
-
-  for (const word of banned_words) {
-    if (username.toLowerCase().includes(word)) {
-      return 'Username contains banned words';
-    }
+  if (containsBlacklistedTerm(normalizedUsername.toLowerCase())) {
+    return 'Username contains banned words';
   }
 
   return null;
@@ -53,67 +89,41 @@ function validateUsername(username, password) {
 
 
 function validatePassword(password) {
-  // Length validation
-  if (password.length < 8 || password.length > 50) {
-    return 'Password must be between 8 and 50 characters';
+  const normalizedPassword = normalizeText(password);
+
+  if (!normalizedPassword) {
+    return 'Password is required';
   }
 
-  // Banned passwords check
-  for (const bannedPassword of banned_passwords) {
-    if (password.toLowerCase() === bannedPassword) {
-      return 'Password is too common, choose a stronger one';
-    }
+  if (normalizedPassword.length < MIN_PASSWORD_LENGTH || normalizedPassword.length > MAX_PASSWORD_LENGTH) {
+    return `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`;
   }
 
-  // Character requirements validation
-  const hasUppercase = [...password_characters.uppercase, ...password_characters.hungarian_uppercase]
-    .some(char => password.includes(char));
-  const hasDigit = Array.from(password_characters.digits)
-    .some(char => password.includes(char));
-  const hasSpecial = Array.from(password_characters.special)
-    .some(char => password.includes(char));
+  if (COMMON_PASSWORDS.has(normalizedPassword.toLowerCase())) {
+    return 'Password is too common, choose a stronger one';
+  }
+
+  const hasUppercase = containsCharacterFromSet(normalizedPassword, PASSWORD_UPPERCASE_CHARS);
+  const hasDigit = containsCharacterFromSet(normalizedPassword, PASSWORD_DIGIT_CHARS);
+  const hasSpecial = containsCharacterFromSet(normalizedPassword, PASSWORD_SPECIAL_CHARS);
 
   if (!hasUppercase || !hasDigit || !hasSpecial) {
     return 'Password must contain at least one uppercase letter, one digit, and one special character';
   }
 
-  // Password strength check
-  const strengthResult = passwordStrength(password);
-  const warning = strengthResult.feedback.warning  ? ` (${strengthResult.feedback.warning})` : "";
-  const MIN_STRENGTH_SCORE = 3;
+  if (containsForbiddenPasswordPattern(normalizedPassword)) {
+    return 'Please avoid using brackets, quotes, slashes, or database-like patterns in your password';
+  }
+
+  if (containsBlacklistedTerm(normalizedPassword.toLowerCase())) {
+    return 'Password contains banned words';
+  }
+
+  const strengthResult = passwordStrength(normalizedPassword);
+  const warning = strengthResult.feedback.warning ? ` (${strengthResult.feedback.warning})` : '';
+
   if (strengthResult.score < MIN_STRENGTH_SCORE) {
-    return `Password is too weak, choose a stronger one ${warning} + it takes ${strengthResult.guesses.toLocaleString()} to guess password `;
-  }
-
-
-  if (typeof password !== 'string') {
-    return 'Invalid password format';
-  }
-
-
-  // Dangerous characters check
-  const dangerousPatterns = [
-    '(', ')', '[', ']', '{', '}', '<', '>', '"', "'", '`', '\\', '/', '$'
-  ];
-  
-  const hasDangerousChars = dangerousPatterns.some(char => password.includes(char)) ||
-    password.includes('db.') || password.includes('DB.');
-
-  if (hasDangerousChars) {
-    return 'Please consider avoiding using matching pairs of brackets or quotes in your password, as they can sometimes cause issues during input or processing.';
-  }
-
-  // Banned words validation
-  for (const word of banned_words_hu.banned) {
-    if (password.toLowerCase().includes(word)) {
-      return 'Password contains banned words';
-    }
-  }
-
-  for (const word of banned_words) {
-    if (password.toLowerCase().includes(word)) {
-      return 'Password contains banned words';
-    }
+    return `Password is too weak, choose a stronger one${warning}. It would take ${strengthResult.guesses.toLocaleString()} guesses to crack it.`;
   }
 
   return null;
@@ -121,57 +131,58 @@ function validatePassword(password) {
 
 
 function validateEmail(email) {
-  const domain = email.split('@')[1];
-  if (domain && disposable_email_list.includes(domain.toLowerCase())) {
-    return 'This type of email is not allowed please use another email';
+  const normalizedEmail = normalizeText(email).toLowerCase();
+  const [localPart, domain] = normalizedEmail.split('@');
+
+  if (!localPart || !domain) {
+    return 'Invalid email address';
   }
+
+  if (disposableEmailList.includes(domain)) {
+    return 'This type of email is not allowed, please use another email';
+  }
+
   return null;
 }
 
 
 async function verifyCaptcha(captchaResponse, secretKey) {
-  if (!captchaResponse) {
+  const normalizedResponse = normalizeText(captchaResponse);
+  const normalizedSecret = normalizeText(secretKey);
+
+  if (!normalizedResponse) {
     return { success: false, error: 'Please complete the CAPTCHA verification' };
   }
 
-  if (!secretKey) {
+  if (!normalizedSecret) {
     return { success: false, error: 'CAPTCHA configuration error' };
   }
 
   try {
-    console.log('Starting reCAPTCHA verification...');
-    
-    const realFetch = fetch.default || fetch;
-    const response = await realFetch('https://www.google.com/recaptcha/api/siteverify', {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        secret: secretKey,
-        response: captchaResponse
+        secret: normalizedSecret,
+        response: normalizedResponse
       })
     });
 
     const data = await response.json();
-    console.log('reCAPTCHA verification result:', data);
-    
+
     if (!data.success) {
-      console.log('reCAPTCHA verification failed:', data['error-codes']);
-      return { 
-        success: false, 
-        error: 'CAPTCHA verification failed', 
-        details: data['error-codes'] 
+      return {
+        success: false,
+        error: 'CAPTCHA verification failed',
+        details: data['error-codes'] || []
       };
     }
 
-    // For tests set 0.5 to 0.1 to get successful registration more easily
-    if (data.score <= 0.5) {
-      console.log('CAPTCHA score too low:', data.score);
+    if (typeof data.score !== 'number' || data.score <= CAPTCHA_SCORE_THRESHOLD) {
       return { success: false, error: 'CAPTCHA verification failed' };
     }
 
-    console.log('reCAPTCHA verification SUCCESS, score:', data.score);
     return { success: true, score: data.score };
-
   } catch (captchaError) {
     console.error('reCAPTCHA verification error:', captchaError);
     return { success: false, error: 'CAPTCHA verification service error' };

@@ -1,3 +1,8 @@
+function getCsrfToken() {
+  const c = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+  return c ? decodeURIComponent(c.split('=')[1]) : '';
+}
+
 window.E2EEApi = {
 
   async checkStatus() {
@@ -14,7 +19,7 @@ window.E2EEApi = {
   async setupOnServer(publicKeyBase64) {
     const response = await fetch('/chat/setup-e2ee', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
       body: JSON.stringify({ publicKey: publicKeyBase64, keyAlgorithm: 'RSA-OAEP' })
     });
     if (!response.ok) throw new Error('Failed to setup E2EE on server');
@@ -51,7 +56,7 @@ window.E2EEApi = {
         try {
           const response = await fetch('/chat/setup-e2ee', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
             body: JSON.stringify({ publicKey: keys.publicKey, keyAlgorithm: 'RSA-OAEP' })
           });
           if (!response.ok) {
@@ -72,7 +77,7 @@ window.E2EEApi = {
           const backupData = await window.e2eeCrypto.encryptPrivateKeyWithPassphrase(userPassphrase);
           const backupRes = await fetch('/chat/backup-keys', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-xsrf-token': getCsrfToken() },
             body: JSON.stringify(backupData)
           });
           if (!backupRes.ok) {
