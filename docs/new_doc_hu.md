@@ -297,6 +297,8 @@ A `User` kollekció a rendszert használók identitását és jogosultságait ke
 
 Üzleti szabályok: Aktív/tiltott státusz ellenőrzése minden bejelentkezésnél; `usertype` határozza meg az API-engedélyt. A `balance`-t tranzakciós Redis cache-sel támogathatjuk, és rollback esetén a fő adatbázis konzisztenciáját is helyreállítjuk.
 
+**V2 E2EE architektúra (ECDH P-256):** Az aktuális sémaverziója ECDH P-256 kriptográfiát használ, szemben a korábbi V1 RSA-OAEP megközelítéssel. Az `identity` aldokumentum tartalmazza a `signingPublicKey` (ECDSA P-256) mezőt. Minden eszközre (`devices` tömb) kerül: `deviceId`, `publicKey` (DID-SPKI formátumban), és `signedPreKey` (keyId, publicKey, signature) — ez a teljes Signal protokoll kompatibilis prekey-csomag. A V1 RSA-OAEP mezők (`encryption.*`) visszafelé kompatibilitás érdekében megmaradnak a sémában, de migráció után nem kerülnek feltöltésre.
+
 ---
 | recoveryBlob.storedAt | Date | Recovery blob storage time | Optional | _id, recoveryBlob.storedAt |
 | encryption.* | Mixed | V1 legacy E2EE fields (for migration) | Optional | _id, encryption.* |
@@ -422,6 +424,18 @@ A `Review` model a felhasználói feedback-eket rögzíti, a moderálás és jel
 Biztonsági szabályok:
 - spam kontroll: egy felhasználó 5 percnél gyakrabban nem tehet közzé értékelést.
 - `reported=true` esetén dedikált `reportedReviews` nézetet 24h alatt feldolgozza a moderációs pipeline.
+
+**Értékelési API végpontok és profanitásvédelem:**
+
+| Metódus | Útvonal | Leírás |
+|---|---|---|
+| `POST` | `/order/item_information/:itemName/Review` | Új értékelés beküldése (1–5 csillag, max 500 karakter, felhasználónként csak 1 db) |
+| `POST` | `/order/item_information/:itemName/Review/:reviewId/Report` | Értékelés bejelentése (`reported: true`) |
+
+Az `averageRating` mező minden beküldés után automatikusan újraszámítódik. Minden értékelés beküldést a SecurityLogs is rögzít (`REVIEW_SUBMITTED`, `REVIEW_REPORTED`, `DUPLICATE_REVIEW_ATTEMPT`, `REVIEW_CONTAINS_PROFANITY`).
+
+A `containsProfanity()` függvény (`src/Orders/Order.js`) **homályos egyezésvizsgálatot** (fuzzy matching) alkalmaz `fast-levenshtein` könyvtárral: ha a beküldött szó egy tiltott szótól ≤1 Levenshtein-távolságra van (pl. egyetlen betűcsere), az is blokkolásra kerül. Ez megakadályozza a szándékos elírással elkerülő visszaéléseket.
+
 ---
 
 ##### DailyMenu (Napi menü)
@@ -500,6 +514,51 @@ SecurityLogsScheme.post('save', function(doc) {
         .catch(err => console.error('SecurityLogs cap enforcement error:', err));
 });
 ```
+
+##### Reward (Jutalmak/Beváltható tételek)
+
+| Mező | Típus | Szerepe | Korlátozások |
+|---|---|---|---|
+| name | String | Jutalom neve | Required, unique |
+| description | String | Leírás | Optional |
+| pointCost | Number | Beváltáshoz szükséges pontok | Required |
+| marketValue | Number | Valódi piaci érték (USD) | Required |
+| healthScore | Number | Egészségességi pontszám (0–100) | Required |
+| dailyStockLimit | Number | Napi korlát (mennyi váltható be) | Optional |
+| minTier | String | Minimum szint a beváltáshoz | Enum: NONE/BRONZE/SILVER/GOLD/PLATINUM |
+| category | String | Kategória | Enum: drink/fruit/dessert/meal/upgrade/mystery/token |
+| isActive | Boolean | Aktív-e | Default: true |
+
+Üzleti szabályok: A `minTier` mező korlátozza, hogy csak az adott Tier-en lévő (vagy magasabb) felhasználó válthatja be az adott jutalmat. A `dailyStockLimit` megakadályozza a napi készletkimerülést. A `healthScore` a hűségrendszer egészségszint-bónuszaihoz is bekerül.
+
+##### Redemption (Beváltások)
+
+| Mező | Típus | Szerepe | Korlátozások |
+|---|---|---|---|
+| userId | ObjectId (ref: User) | Beváltó felhasználó | Required |
+| rewardId | ObjectId (ref: Reward) | Beváltott jutalom | Required |
+| voucherCode | String | Egyedi utalványkód | Unique, sparse |
+| status | String | Az utalvány státusza | Enum: pending/fulfilled/expired/cancelled |
+| redemptionType | String | Beváltás módja | Enum: shop/cart_discount/tier_perk/streak_bonus |
+| pointsSpent | Number | Elköltött pontok | Required |
+| processedAt | Date | Feldolgozás időpontja | Optional |
+| processedBy | ObjectId (ref: User) | Feldolgozó (pl. büfékezelő) | Optional |
+
+Üzleti szabályok: A `voucherCode` mező a `/dashboard/student/loyalty/voucher/fulfill` végponton keresztül váltható be (büfékezelő oldal). A `status` változása naplózódik. A `cart_discount` típus pénztárnál automatikusan kerül levonásra.
+
+##### MoneyRequest (Pénzátutalási kérelmek)
+
+| Mező | Típus | Szerepe | Korlátozások |
+|---|---|---|---|
+| studentId | ObjectId (ref: User) | Kérelmező diák | Required |
+| parentId | ObjectId (ref: User) | Szülő, aki jóváhagyja | Required |
+| amount | Number | Kért összeg | Required, positive |
+| status | String | Kérelem állapota | Enum: pending/approved/denied |
+| message | String | Diák üzenete | Optional |
+| processedAt | Date | Feldolgozás időpontja | Optional |
+| processedBy | ObjectId (ref: User) | Jóváhagyó szülő | Optional |
+
+Üzleti szabályok: A diák pénzátutalási kérelmet küldhet a szülőnek. A szülő a saját dashboardján látja a kérelmeket és jóváhagyhatja vagy elutasíthatja. Jóváhagyás esetén a kért összeg automatikusan átkerül a diák egyenlegére.
 
 ##### DeviceSyncSession (Device Sync Session)
 
@@ -603,6 +662,8 @@ A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolato
 
 A rendszer Double Ratchet protokollt és X3DH kulcscserét használ a végpontok közötti titkosított üzenetküldéshez. Az üzenetek titkosítva tárolódnak, a ratchet metaadat előretitkosságot biztosít. A prekey-ek és storage blob-ok kezelik a kulcselosztást és a munkamenet állapotát.
 
+**Publikus kulcs Redis gyorsítótár:** Kulcsregisztrálás és -frissítés után a szerver a publikus kulcsot `e2ee:pubkey:{userId}` Redis kulcson tárolja 30 napos TTL-lel. A `GET /chat/public-key/:userId` végpont először a Redis cache-t ellenőrzi, és csak cache-miss esetén kér le MongoDB-ből. A `invalidatePublicKey()` metódus (`src/services/chat-service.js`) törli a cache-bejegyzést, ha a kulcs frissítése megtörténik.
+
 #### 5.2.9 Kódalap leképezése (dokumentációs kiterjesztés)
 
 Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hivatkozásokkal a megvalósító kódokra és a rendszer működési helyeire.
@@ -650,6 +711,19 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 
 <span id="55-teljesitmenyoptimalizalas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ### 5.5 Teljesítményoptimalizálás {#55-teljesitmenyoptimalizalas}
+
+#### 5.5.0 HTTP szintű optimalizációk (tömörítés és keep-alive hangolás)
+
+A `src/main.js`-ben a `compression()` middleware a teljes alkalmazásra globálisan engedélyezi a gzip/deflate válasz-tömörítést, csökkentve a hálózati átviteli méretet.
+
+A Node.js HTTP szerver két időtúllépési értékkel van finomhangolva az AWS ALB (Application Load Balancer) alapértelmezett 60 másodperces keep-alive időkorlátja miatt:
+
+```js
+server.keepAliveTimeout = 65000; // ms — 1 másodperccel ALB felett
+server.headersTimeout   = 66000; // ms — keepAlive felett kell lennie
+```
+
+Ez megakadályozza, hogy az ALB 60 másodperc után lezárja a tartós kapcsolatokat mielőtt a szerver is lezárná azokat, megelőzve a `504 Gateway Timeout` hibákat forgalmas időszakokban.
 
 #### 5.5.1 Mongoose `.lean()` lekérdezés-optimalizálás
 
@@ -763,6 +837,32 @@ const determineTier = (totalPoints) => {
     return 'NONE';
 };
 ```
+
+**Tier-szintek, automatikus kedvezmények és havi ingyenes italok:**
+
+A tier-meghatározás (`determineTier`) küszöbértékei és az automatikusan hozzárendelt kedvezmények:
+
+| Tier | Pont-küszöb | Automatikus kedvezmények | Havi ingyenes ital |
+|---|---|---|---|
+| BRONZE | 1 200 | Egészséges ételek: 5% | 0 |
+| SILVER | 2 500 | Egészséges: 10%, Ital: 5% (90 napos lejárat) | 1 |
+| GOLD | 8 000 | Egészséges: 15%, Teljes étkezés: 10% | 2 |
+| PLATINUM | 20 000 | Egészséges: 20%, Általános: 15% | 4 |
+
+**Pontszám-romlás (decay) rendszer:**
+
+Ha egy felhasználó több mint 90 napja nem adott le rendelést (`lastUpdated > 90 napja`), és az utolsó decay több mint 6 hónapja volt (`lastDecay > 6 hónapja`), a rendszer pontokat von le:
+
+- **PLATINUM tier**: a pontok **30%-a** kerül levonásra
+- **Minden más tier** (GOLD, SILVER, BRONZE, NONE): **50%-os** pontlevonás
+
+A levonás `reason: 'decay'` bejegyzésként kerül a `pointHistory`-ba, és a `lastDecay` mezőt frissíti — ezzel biztosítva a 6 hónapos szünetperiódust.
+
+**Bónusz szorzók:**
+
+- **Ünnepi bónusz**: 1,5× szorzó meghatározott ünnepnapokon (pl. Húsvét — Gauss-függvénnyel közelített dátum), 1,2× karácsony előtt.
+- **Egészségpontszám-bónusz**: Ha a megrendelt tételek egészségpontszáma ≥75 → +40% bónusz; ≥50 → +20%.
+- **Alap pont-eloszlás**: Rendelésenként véletlenszerűen 4–9 pont/dollár.
 
 **Menüelem szűrés:**
 ```javascript
@@ -881,11 +981,15 @@ const verifyRecaptcha = async (token) => {
 | Bemenet-ellenőrzés | Kliens oldali, szerver oldali, adatbázis szintű; egyéni Express middleware (`src/middleware/security.js`), Mongoose sémák |
 | NoSQL injekció elleni védelem | A központi middleware detektálja a MongoDB-szerű `$` operátorokat és blokkolja őket egy barátságos `Nice try buddy :)` válasszal |
 | XSS / injekció | `xss-clean`, `helmet`, `express-mongo-sanitize` |
-| CSRF | Részleges; tokenek tervezve minden állapotot módosító művelethez |
+| CSRF | Teljes double-submit cookie implementáció: `GET`/`HEAD`/`OPTIONS` kérésekre a szerver beállítja az `XSRF-TOKEN` sütit (`req.session.csrfToken`, 30 perces lejárat); mutáló kérésekre az `x-xsrf-token` / `x-csrf-token` fejlécet vagy `_csrf` body mezőt ellenőrzi. Token: `crypto.randomBytes(24)`. |
 | CORS | Szigorú szabályzat; csak a hivatalos frontend domain engedélyezett |
+| Eldobható email blokkolás | Regisztrációkor az email domén ellenőrzésre kerül a `data/disposable_email_list.json` fájl alapján |
+| Tiltott jelszó lista | Regisztrációkor és jelszóváltáskor a `data/Most_used_passwords.json` fájl (nagy méretű közismert jelszólista) alapján ellenőrzés; egybevágó jelszavak elutasítva |
+| Tiltott jelszóminták | `containsForbiddenPasswordPattern()`: tiltja a `( ) [ ] { } < > " ' \` \ / $ db.` karaktereket/stringeket injekció-szerű jelszó payloadok megelőzésére |
+| Anti-enumeráció | Regisztrációkor meglévő fiók esetén a szerver ugyanazt a HTTP 200 választ adja vissza; az email küldési logika változik, de a response nem — ez megakadályozza a felhasználónév/email enumeration támadásokat |
 | Biztonsági middleware | Központosított Helmet/CORS/XSS/NoSQL sanitizáció és validáció a `src/middleware/security.js`-ben |
 | Biztonsági fejlécek | Helmet.js (CSP, HSTS stb.), eval() tiltva, nonce alapú inline script-ek |
-| IP hash-elés | SHA-256 a SecurityLogs tárolása előtt (GDPR 32. cikk) |
+| IP hash-elés | Keyed HMAC-SHA256 (`crypto.createHmac('sha256', IP_HASH_SECRET)`) a SecurityLogs tárolása előtt; a titkosítókulcs nélkül az eredeti IP cím visszafejthetetlen (GDPR 32. cikk) |
 | reCAPTCHA | Google reCAPTCHA v3 regisztrációhoz és bejelentkezéshez |
 | Geolokáció | iplocate.io VPN/Proxy/Tor észlelésre és kockázatpontozásra |
 | Fizetési biztonság | PayPal/Google Pay PCI-kompatibilis átjárók |
@@ -895,6 +999,37 @@ const verifyRecaptcha = async (token) => {
 A rendszer második faktoros hitelesítést használ, ahol a mobil alkalmazás Dioxus technológiával készült. A felhasználó a mobil appon keresztül három véletlenszerű szám közül választ, hasonlóan a Google által ismert "3 random szám" alapú megerősítési modellhez. Ez a választás egy további érvényesítési lépést biztosít a belépési folyamatban, növelve az account biztonságát a jelszón túl.
 
 <img src="./diagrams/output-9.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
+
+##### 5.4.1.2 Rétegzett rate limiting (útvonalankénti korlátok)
+
+A `src/main.js` hat különböző `express-rate-limit` példányt alkalmaz, mindegyiket más-más időablakkal és maximummal, az érzékenység alapján:
+
+| Limiter neve | Időablak | Max kérés | Alkalmazott útvonalak |
+|---|---|---|---|
+| `limiter` | 1 óra | 250 | `/api`, `/database`, `/pay`, `/Order`, általános |
+| `registerLimiter` | 1 óra | 100 | `/register` |
+| `LoginLimiter` | 15 perc | 35 | `/login` |
+| `dashboardLimiter` | 15 perc | 1 000 | `/dashboard` |
+| `twoFALimiter` | 15 perc | 900 | `/2fa` |
+
+A `/dashboard` útvonalakon ezentúl a Redis Lua csúszóablakos középréteg (`createDashboardRateLimiter`) is aktív, ami felhasználói session alapján alkalmaz limiteket és `X-RateLimit-Limit/Remaining/Reset` fejléceket ad vissza. Blokkolás esetén a szerver a `public/429/429.html` oldalt adja vissza.
+
+##### 5.4.1.3 Regisztráció biztonsági rétegei
+
+A regisztrációs folyamat (`src/auth/register.js` + `src/auth/validation.js`) több egymást erősítő ellenőrzési réteget alkalmaz:
+
+1. **reCAPTCHA v3**: Google Siteverify API-n keresztül, `0.5`-ös küszöbbel. A titkos kulcs a `process.env.Server_Side_Captha` változóból olvasódik.
+2. **Eldobható email szűrő**: A domain kivonódik az emailből és összehasonlítódik a `data/disposable_email_list.json` listával. Egyezés esetén elutasítás.
+3. **zxcvbn jelszóerősség**: Minimális erősségi szint kikényszerített.
+4. **Közismert jelszó tiltólista**: A `data/Most_used_passwords.json` alapján case-insensitive egyezés ellenőrzés.
+5. **Tiltott jelszóminták**: `containsForbiddenPasswordPattern()` tiltja az injekció-szerű karaktereket: `( ) [ ] { } < > " ' \` \ / $ db.`
+6. **Magyar karaktertámogatás**: A `USERNAME_ALLOWED_CHARS` és a jelszó-nagybetű ellenőrzés tartalmazza a `data/password_characters.json`-ból betöltött magyar ábécé karaktereit.
+7. **Tiltott szólista**: A `config/hu.json` alapján felhasználónév- és jelszóellenőrzés.
+8. **Anti-enumeráció**: Meglévő fiók esetén a szerver ugyanazt a HTTP 200 választ adja — a response nem különbözteti meg az „email már létezik" és az „új felhasználó" eseteket; csak az email-küldési logika tér el.
+
+##### 5.4.1.4 VerificationStore — Redis/memória kettős fallback
+
+A `src/verificationStore.js` modul az email-ellenőrző kódok ideiglenes tárolását végzi. Ha Redis elérhető, 10 perces TTL-lel írja oda az adatokat; ha Redis leáll, egy in-memory `Map`-be esik vissza manuális lejárat-ellenőrzéssel. Ez biztosítja, hogy a regisztrációs folyamat Redis-leállás esetén is működőképes maradjon — azzal a fenntartással, hogy az in-memory tároló adatai szerver-újraindításkor elvesznek.
 
 #### 5.4.2 Fenyegetésmodellezés
 
@@ -1164,6 +1299,50 @@ const processBalancePayment = async (payerUserId, orderUserId, items, ...) => {
     await UserLoyalty.updatePointsAtomically(orderUserId, totalPoints, ...);
 };
 ```
+
+A szerver oldalon a `resolveOrderTargetUserId` segédfüggvény a `ParentStudent` gyűjteményen ellenőrzi, hogy a szülő valóban hozzá van-e rendelve a kiválasztott diákhoz (`status: 'approved'`). Ha igen, a rendelés a diák (`orderUserId`) nevére jön létre; ha nem, `403 Forbidden` válasz születik. Egyenleg-alapú fizetésnél a `processBalancePayment` külön kezeli a két felet: a szülő (`payerUserId`) egyenlegéből von le, de a rendelést és a hűségpontokat a gyermek (`orderUserId`) fiókjához rendeli:
+
+```javascript
+// src/api.js
+const resolveOrderTargetUserId = async (req, userId) => {
+    if (!isParentUser(req)) return userId;
+    const selectedStudentId = getSelectedStudentId(req);
+    if (!selectedStudentId) throw errorWith(400, 'Parent orders must specify a linked student.');
+    const link = await ParentStudent.findOne({
+        parentId: userId, studentId: selectedStudentId, status: 'approved'
+    }).lean();
+    if (!link) throw errorWith(403, 'Selected student is not linked to your parent account.');
+    return selectedStudentId;
+};
+
+// src/services/order-service.js
+const processBalancePayment = async (payerUserId, orderUserId, items, ...) => {
+    // Egyenleg levonása a szülő fiókjáról
+    const payer = await User.findById(payerUserId).session(session);
+    payer.balance = currentBalance - totalInUSD;
+    await payer.save({ session });
+    // Rendelés létrehozása a gyermek fiókján
+    const newOrder = await createOrderRecord(orderUserId, dbOrderItems, ...);
+    // Hűségpontok a gyermeknek
+    await UserLoyalty.updatePointsAtomically(orderUserId, totalPoints, ...);
+};
+```
+
+**MongoDB többdokumentumos tranzakció:** A `processBalancePayment` az egyetlen kódútvonal, ahol MongoDB natív tranzakciókat (`startSession()` → `withTransaction()`) alkalmaznak. Ez egy atomi csomagban végzi el: az egyenleg-levonást a szülő nevében, a készletcsökkentést minden rendelési tételnél, és a rendelésrekord létrehozását a gyerek fiókján. Ez replica set-et vagy MongoDB Atlas-t igényel.
+
+**Devizakonverzió:** A `convertCurrencyToUSD()` segédfüggvény (`src/services/order-service.js`) hardkódolt árfolyamokat alkalmaz:
+
+| Deviza | Szorzó (→ USD) |
+|---|---|
+| HUF | × 0,0027 |
+| EUR | × 1,1 |
+| USD | × 1 (nincs konverzió) |
+
+Ezek az árfolyamok az egyenlegek összevetéséhez és a pénztárca-levonásokhoz szükségesek, és manuálisan kell frissíteni, ha az árfolyamok lényegesen változnak.
+
+**NanoID a publikus rendelésazonosítóhoz:** Minden rendelés kap egy 6 karakteres `publicID` mezőt a `nanoid()` könyvtárból (`src/services/order-service.js`). Ez az ügyfél számára látható rendelésreferencia (pl. visszaigazoló emailben), és megakadályozza a szekvenciális azonosítók kitalálásából eredő információszivárgást.
+
+**Rendelés automatikus törlési szabály:** Pre-save hook (`config/database_queries.js`): ha `orderDate + 15 perc < jelenleg` ÉS `status === 'Pending'`, a rendelés státusza automatikusan `'Cancelled'`-re áll. Ez minden `save()` hívásnál lefut — nem háttérfolyamat hajtja végre.
 
 #### 6.2.5 Gyorsítótárazás és teljesítmény
 
@@ -1550,8 +1729,10 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 |--------|----------|--------|
 | GET | `/dashboard/admin/usercount` | Összes felhasználó száma |
 | GET | `/dashboard/admin/userlist` | Az összes felhasználó listája |
-| GET | `/dashboard/admin/stats` | Rendszerstatisztikák |
-| GET | `/dashboard/admin/signup-stats` | Regisztrációs statisztikák |
+| GET | `/dashboard/admin/stats` | Statisztikai elemzés: regisztrációs időbélyegek mean/median/stddev (`simple-statistics`) |
+| GET | `/dashboard/admin/signup-stats` | Napi regisztrációk száma (idősor formátumban) |
+| GET | `/dashboard/admin/most_bought_items` | Top-5 legtöbbet rendelt tétel (összes) |
+| GET | `/dashboard/admin/most_bought_items-lastweek` | Top-5 legtöbbet rendelt tétel (utolsó 7 nap) |
 | GET | `/dashboard/admin/orders` | Összes rendelés |
 | GET | `/dashboard/admin/soldout` | Elfogyott tételek |
 | GET | `/dashboard/admin/itemcount` | Menüelemek száma |
@@ -1563,6 +1744,8 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 | GET | `/dashboard/admin/delete_menuitem/:id` | Menüelem törlése |
 | POST | `/dashboard/admin/create_menuitem` | Menüelem létrehozása |
 | PUT | `/dashboard/admin/menuitem/:id` | Menüelem frissítése |
+
+A statisztikai végpontok (`/stats`, `/signup-stats`, `/most_bought_items*`) a `simple-statistics` npm csomagot használják, és csak admin szerepkör számára érhetők el. Az eredmények Redis-ben gyorsítótárazódnak a `cacheResult()` middleware segítségével (`src/dashboard/services/cache-service.js`), amely transzparensen (a route handler módosítása nélkül) köti be a cache-logikát — csak 2xx GET válaszokat tárol, konfiguálható TTL-lel és opcionális `shouldCache` feltétel-hookkal.
 
 A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ellenőrzi. A Redis kiesése esetén a válasz gyorsan `unavailable`/`degraded` státuszokra vált, így a dashboard nem marad végtelen frissítésben.
 
@@ -1842,6 +2025,17 @@ const keyRegistry = {
 - Dashboard és admin végpontok: a `src/dashboard/*`-ből csatolva a `src/main.js`-en keresztül.
 - Cache és nagy áteresztőképességű műveletek: `src/cache/ChangeStreamManager.js`, `src/cache/KeyRegistry.js`, `src/redis.js`.
 - E2EE logika: `src/models/Message.js`, `src/models/PreKey.js`, `src/models/StorageBlob.js`, `src/models/DeviceSyncSession.js`, valamint frontend chat komponensek a `public/chat` alatt.
+
+**Dashboard RBAC (szerepkör-alapú jogosultság) middleware:** A `src/dashboard/middleware/auth-middleware.js` a következő guard-okat biztosítja:
+
+| Middleware | Hozzáférés |
+|---|---|
+| `requireAdmin` | Csak admin és felette |
+| `requireEditor` | Editor + admin |
+| `requireStudent` | Student + admin |
+| `requireParentAuth` | Parent + admin |
+
+Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a `public/no_perm/index.html` HTML oldalt tölti be — ez tudatos döntés, hogy a dashboard-on kívüli böngészők megfelelő felhasználói felületet kapjanak. Az admin szerepkör minden dashboard típushoz hozzáfér.
 
 ### 8.4 Adatbázis logika és megszorítások {#84-adatbazis-logika-es-megszoritasok}
 
