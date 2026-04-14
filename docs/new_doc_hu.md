@@ -54,7 +54,7 @@
 
 A SnapTray egy webalapú menza-rendelőrendszer, amelynek célja, hogy egyszerűsítse az étkezési rendelések lebonyolítását iskolai környezetben. Fő célja, hogy a diákok, szülők és az étkeztető személyzet közötti interakció gyorsabbá és átláthatóbbá váljon az online rendelés, a valós idejű rendeléskövetés és a biztonságos fizetési lehetőségek révén.
 
-A rendszer három fő felhasználói szerepet szolgál ki: a **diákok** böngészhetnek az étlapok között, rendelhetnek és kezelhetik a virtuális pénztárcájukat; a **szülők** figyelemmel kísérhetik gyermekeik rendeléseit és kezelhetik a fizetéseket; az **adminisztrátorok** számára dashboard biztosít lehetőséget az étlapok kezelésére és statisztikák elemzésére.
+A rendszer négy főbb felhasználói szerepet szolgál ki: a **diákok** böngészhetnek az étlapok között, rendelhetnek és kezelhetik a virtuális pénztárcájukat; a **szülők** figyelemmel kísérhetik gyermekeik rendeléseit, kezelhetik a fizetéseket, és közvetlenül rendelhetnek a kapcsolt gyermekeik nevére; az **adminisztrátorok** számára dashboard biztosít lehetőséget az étlapok kezelésére és statisztikák elemzésére; a **szerkesztők (editor)** megtekinthetik a menüt és rendelési oldalt, azonban rendelés leadása számukra tiltott.
 
 A SnapTray modern biztonsági megoldásokat alkalmaz (kétlépcsős azonosítás, email-ellenőrzés, gyakori webes támadások elleni védelem), valamint PayPal és Google Pay integrációt kínál.
 
@@ -68,7 +68,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 ### Megvalósított fő funkciók
 
 **Felhasználókezelés és autentikáció:**
-- Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor)
+- Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor, szerkesztő/editor)
 - Email alapú fiókellenőrzés és kétlépcsős azonosítás (2FA)
 - JWT alapú munkamenet-kezelés Redis tárolással
 - Jelszó biztonság bcrypt hasheléssel és erősség validációval
@@ -77,6 +77,8 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 - Dinamikus menükezelés kategóriákkal és táplálkozási információkkal
 - Valós idejű készletkövetés riasztásokkal
 - Napi menü funkcionalitás, QR kód integráció, allergén információk
+- Editor (szerkesztő) szerepkörű fiókok megtekinthetik a rendelési oldalt, azonban rendelés leadása és kosárba helyezés tiltott (`denyEditorOrderPlacement` middleware, `isEditor` prop)
+- Szülők közvetlenül rendelhetnek a kapcsolt diák nevére: a szülő egyenlegéről kerül levonás, a rendelés a kiválasztott gyermekhez lesz rendelve (`resolveOrderTargetUserId`)
 
 **Fizetés feldolgozás:**
 - PayPal és Google Pay API integráció
@@ -94,7 +96,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 - Skálázható és nagy teljesítményű backend
 - Külső fizetési szolgáltatók integrálása (PayPal, Google Pay)
 
-**Felhasználókezelés:** Regisztráció, email alapú fiókellenőrzés, szerepkör-alapú hozzáférés (diák, szülő, admin).
+**Felhasználókezelés:** Regisztráció, email alapú fiókellenőrzés, szerepkör-alapú hozzáférés (diák, szülő, admin, editor).
 
 **Hitelesítés és biztonság:** JWT alapú hitelesítés, kétlépcsős azonosítás (2FA), rate limiting brute-force védelem ellen.
 
@@ -1104,6 +1106,65 @@ router.post('/orders', async (req, res) => {
 });
 ```
 
+##### Editor szerepkör – rendelés tiltása
+
+Minden rendelési és fizetési végpont előtt a `denyEditorOrderPlacement` middleware fut le (`src/api.js` és `src/Orders/Order.js`). Ha az aktuális munkamenetben szereplő felhasználó `usertype` értéke `editor`, a middleware `403 Forbidden` választ ad, és a kérés feldolgozása megszakad:
+
+```javascript
+// src/api.js
+const isEditorUser = req => req.session?.user?.usertype?.toString().toLowerCase() === 'editor';
+
+const denyEditorOrderPlacement = (req, res, next) => {
+    if (isEditorUser(req)) {
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Editor accounts may browse the menu but cannot place orders.'
+        });
+    }
+    next();
+};
+
+// Alkalmazva minden order végponton:
+router.post('/orders',              validateOrderInput, denyEditorOrderPlacement, ...);
+router.post('/save-order',          validatePaymentInput, denyEditorOrderPlacement, ...);
+router.post('/orders/googlepay',    validateOrderInput, denyEditorOrderPlacement, ...);
+router.post('/pay-with-balance',    validatePaymentInput, denyEditorOrderPlacement, ...);
+```
+
+A frontend (`public/Order/order.jsx`) az autentikáció során beállítja az `isEditor` állapotot, amelyet prop-ként átad a `Cart`, `MobileCart` és `MenuItem` komponenseknek. Ez letiltja a „Kosárba" gombot, szürkébe fordítja a fizetési gombokat, és egy figyelmeztető bannert jelenít meg.
+
+##### Szülő→gyermek rendelés (Parent ordering)
+
+Szülői bejelentkezés esetén a rendelési oldal betöltésekor a `loadParentStudentList` lekérdezi a `/dashboard/parent/studentlist` végpontot, majd megjeleníti a kapcsolt diákok listáját egy legördülő panelben. A kiválasztott gyermek azonosítója (`selectedChildId`) átkerül minden fizetési handlerbe (`handleGooglePayPayment`, `handlePayPalPayment`, `handleBalancePayment`) és az API-kérések törzsében `selectedStudentId` mezőként utazik a backendhez.
+
+A szerver oldalon a `resolveOrderTargetUserId` segédfüggvény a `ParentStudent` gyűjteményen ellenőrzi, hogy a szülő valóban hozzá van-e rendelve a kiválasztott diákhoz (`status: 'approved'`). Ha igen, a rendelés a diák (`orderUserId`) nevére jön létre; ha nem, `403 Forbidden` válasz születik. Egyenleg-alapú fizetésnél a `processBalancePayment` külön kezeli a két felet: a szülő (`payerUserId`) egyenlegéből von le, de a rendelést és a hűségpontokat a gyermek (`orderUserId`) fiókjához rendeli:
+
+```javascript
+// src/api.js
+const resolveOrderTargetUserId = async (req, userId) => {
+    if (!isParentUser(req)) return userId;
+    const selectedStudentId = getSelectedStudentId(req);
+    if (!selectedStudentId) throw errorWith(400, 'Parent orders must specify a linked student.');
+    const link = await ParentStudent.findOne({
+        parentId: userId, studentId: selectedStudentId, status: 'approved'
+    }).lean();
+    if (!link) throw errorWith(403, 'Selected student is not linked to your parent account.');
+    return selectedStudentId;
+};
+
+// src/services/order-service.js
+const processBalancePayment = async (payerUserId, orderUserId, items, ...) => {
+    // Egyenleg levonása a szülő fiókjáról
+    const payer = await User.findById(payerUserId).session(session);
+    payer.balance = currentBalance - totalInUSD;
+    await payer.save({ session });
+    // Rendelés létrehozása a gyermek fiókján
+    const newOrder = await createOrderRecord(orderUserId, dbOrderItems, ...);
+    // Hűségpontok a gyermeknek
+    await UserLoyalty.updatePointsAtomically(orderUserId, totalPoints, ...);
+};
+```
+
 #### 6.2.5 Gyorsítótárazás és teljesítmény
 
 A Redis az alkalmazás teljes területén az elsődleges gyorsítótárazási réteg, al-másodperces válaszidőt biztosítva gyakran lekérdezett adatok esetén, és lehetővé téve összetett atomi műveleteket Lua szkripteléssel. A rendszer többrétegű gyorsítótárazási stratégiát valósít meg, mely Redis-t és MongoDB változásfolyamokat (change stream) használ a gyorsítótár érvénytelenítésére.
@@ -1299,6 +1360,7 @@ A szülők a diák dashboardot használják, de kiegészített jogosultságokkal
 - Hozzáférés a diákok hűségpontjaihoz és költési előzményeihez.
 - A ParentStudent kapcsolat használata a jogosultságok és adathozzáférés szabályozásához.
 - Mobilbarát nézet és egyszerű áttekintés a gyermeki megrendelés státuszáról.
+- A rendelési oldalon szülői bejelentkezés esetén megjelenik egy gyermek-kiválasztó panel (`ParentStudent` kapcsolat alapján); rendelés csak kiválasztott gyermek esetén indítható. A fizetés a szülő egyenlegéről (`payerUserId`) kerül levonásra, a rendelés és a hűségpontok a kiválasztott gyermek (`orderUserId`) fiókjához rendelődnek.
 
 ###### Editor dashboard
 A szerkesztői dashboard a tartalmi és menükezelési folyamatokra fókuszál, de nem tartalmazza az adminisztrációs felhasználókezelést. Az editor dashboard lehetővé teszi:
@@ -1308,9 +1370,10 @@ A szerkesztői dashboard a tartalmi és menükezelési folyamatokra fókuszál, 
 - Ételek és kategóriák státuszának beállítását "elérhető" / "elfogyott" mód között.
 - Gyors hozzáférést a menü exportálásához és a menü adatainak előnézetéhez.
 - A `public/dashboard/editor/` vagy hasonló komponensek használatát a tartalomkezelő felület megjelenítéséhez.
+- Az editor felhasználók hozzáférhetnek a rendelési oldalhoz (böngészés megengedett), azonban az `isEditor` prop hatására a kosárba helyezés le van tiltva, a fizetési gombok inaktívak (szürke, `cursor-not-allowed`), és egy figyelmeztető banner jelzi a korlátozott hozzáférést: „Editor accounts may browse the order section and menu, but order placement is disabled for editors."
 
 ##### Rendelési és kosár rendszer
-A rendelési oldal (`public/order/order.jsx`) bevásárlókosarat valósít meg `useCart` hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval.
+A rendelési oldal (`public/order/order.jsx`) bevásárlókosarat valósít meg `useCart` hookkal állapotkezeléshez, valós idejű készletellenőrzéssel és fizetési integrációval. Az oldal az autentikáció során (`/api/current_user`) felismeri az `editor` és `parent` szerepköröket: editor felhasználóknak minden vásárlási funkció le van tiltva (`isEditor` prop), szülők számára egy gyermek-kiválasztó panel jelenik meg (`isParent`, `children`, `selectedChildId` állapotok), és a fizetési handlerek (`handleGooglePayPayment`, `handlePayPalPayment`, `handleBalancePayment`) a `selectedChildId` értéket `selectedStudentId` mezőként adják át a backendnek.
 
 ```jsx
 // Cart Management — public/order/useCart.js
@@ -1562,6 +1625,8 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | PUT | `/Order/:orderID/status` | Munkamenet | Rendelés állapot frissítése |
 | POST | `/Order/:orderID/capture` | Munkamenet | Fizetés rögzítése |
 
+**Megjegyzés:** `POST /Order/Order` és `POST /Order/order/wallet` végpontokon a `denyEditorOrderPlacement` middleware `403 Forbidden` hibával blokkolja az editor szerepkörű fiókok rendelés-leadási kísérleteit.
+
 **Példa — POST /Order/Order:**
 ```json
 // Request
@@ -1582,8 +1647,14 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | POST | `/api/orders/:orderID/capture` | Munkamenet | PayPal fizetés rögzítése |
 | POST | `/api/orders/googlepay` | Munkamenet | Google Pay rendelés létrehozása |
 | POST | `/api/orders/googlepay/complete` | Munkamenet | Google Pay tranzakció lezárása |
+| POST | `/api/save-order` | Munkamenet | Befejezett rendelés mentése |
+| POST | `/api/pay-with-balance` | Munkamenet | Pénztárca egyenleg alapú fizetés |
 | POST | `/api/payments/paypal` | Munkamenet | PayPal fizetés feldolgozása |
 | POST | `/api/payments/googlepay` | Munkamenet | Google Pay fizetés feldolgozása |
+
+**Editor korlátozás:** Minden `POST` rendelési és fizetési végponton a `denyEditorOrderPlacement` middleware `403 Forbidden`-nel zárja ki az editor fiókokat.
+
+**Szülő→gyermek rendelés:** A `POST /api/save-order`, `/api/orders/:orderID/capture`, `/api/orders/googlepay/complete` és `/api/pay-with-balance` végpontok elfogadnak egy opcionális `selectedStudentId` mezőt a kérés törzsében. Szülői bejelentkezés esetén ez a mező kötelező; a backend `resolveOrderTargetUserId`-vel ellenőrzi a `ParentStudent` kapcsolatot (`status: 'approved'`), és a rendelést a gyermek nevére hozza létre.
 
 **Példa — POST /api/orders/googlepay/complete:**
 ```json
@@ -1767,7 +1838,7 @@ const keyRegistry = {
 ### 8.3 Entitás leképezés kódbeli modulokra {#83-entitas-lekepezes-kodbeli-modulokra}
 
 - Hitelesítési útvonalak: `src/auth/register.js`, `src/auth/login.js`, `src/auth/2fa.js`, `src/auth/password_reset.js`, `src/auth/email_verification.js`.
-- API koordináció: `src/api.js` kezeli a rendeléseket (`/orders`, `/orders/googlepay`, `/orders/:orderID/capture`, stb.), a fizetéseket, és kapcsolódik `orderService`, `paypalService` és `googlePayService` szolgáltatásokhoz.
+- API koordináció: `src/api.js` kezeli a rendeléseket (`/orders`, `/orders/googlepay`, `/orders/:orderID/capture`, stb.), a fizetéseket, és kapcsolódik `orderService`, `paypalService` és `googlePayService` szolgáltatásokhoz. Tartalmazza a `denyEditorOrderPlacement` middleware-t (minden rendelési endpoint előtt) és a `resolveOrderTargetUserId` segédfüggvényt, amely szülői bejelentkezés esetén a `ParentStudent` gyűjteményen ellenőrzi az `approved` kapcsolatot és a célzott gyermek `userId`-jét adja vissza.
 - Dashboard és admin végpontok: a `src/dashboard/*`-ből csatolva a `src/main.js`-en keresztül.
 - Cache és nagy áteresztőképességű műveletek: `src/cache/ChangeStreamManager.js`, `src/cache/KeyRegistry.js`, `src/redis.js`.
 - E2EE logika: `src/models/Message.js`, `src/models/PreKey.js`, `src/models/StorageBlob.js`, `src/models/DeviceSyncSession.js`, valamint frontend chat komponensek a `public/chat` alatt.
@@ -1785,12 +1856,14 @@ const keyRegistry = {
 ### 8.5 Üzleti folyamatok átfogó ábrázolása (dokumentszintű) {#85-uzleti-folyamatok-atfogo-abrazolasa-dokumentszintu}
 
 1. A felhasználó rendelést hoz létre a frontend `/api/orders` útvonalon.
-2. Az `api.js` érvényesíti a rendelés inputját és a készletet az `orderService.validateOrderStock` segítségével.
-3. Ha PayPal/Google Pay fizetés történik, a megfelelő külső API hívás megtörténik, majd az `orderService.saveCompletedOrder` vagy `orderService.completePaypalOrder` lezárja az adatbázis állapotát.
-4. A rendelést menti az `Order` gyűjteménybe és létrehozza a `Payment` rekordot.
-5. A `UserLoyalty.updatePointsAtomically` frissíti a pontokat és szinteket a `UserLoyalty` gyűjteményben.
-6. Biztonsági naplók íródnak a `SecurityLogs` gyűjteménybe.
-7. Ha a rendelés befolyásolja a menü készletét, a `MenuItems` rendezett halmaz gyorsítótára a `KeyRegistry` alapján érvénytelenül, és szükség esetén a `ChangeStreamManager` is érvénytelenít.
+2. Az `api.js` először a `denyEditorOrderPlacement` middleware-rel ellenőrzi, hogy az aktuális felhasználó editor szerepkörű-e; igen esetén a folyamat `403 Forbidden` válasszal megszakad.
+3. Ha szülői felhasználóról van szó, a `resolveOrderTargetUserId` lekérdezi a `ParentStudent` gyűjteményt a `selectedStudentId` alapján, és ellenőrzi az `approved` kapcsolatot; sikertelen esetén `400/403` válasz születik.
+4. Az `api.js` érvényesíti a rendelés inputját és a készletet az `orderService.validateOrderStock` segítségével.
+5. Ha PayPal/Google Pay fizetés történik, a megfelelő külső API hívás megtörténik, majd az `orderService.saveCompletedOrder` vagy `orderService.completePaypalOrder` az `orderUserId` (gyermek) azonosítóval lezárja az adatbázis állapotát. Egyenleg-alapú fizetésnél a `processBalancePayment` a szülő (`payerUserId`) egyenlegéből von le, a rendelés és a hűségpontok a gyermek (`orderUserId`) fiókjára kerülnek.
+6. A rendelést menti az `Order` gyűjteménybe és létrehozza a `Payment` rekordot.
+7. A `UserLoyalty.updatePointsAtomically` frissíti a pontokat és szinteket a `UserLoyalty` gyűjteményben.
+8. Biztonsági naplók íródnak a `SecurityLogs` gyűjteménybe.
+9. Ha a rendelés befolyásolja a menü készletét, a `MenuItems` rendezett halmaz gyorsítótára a `KeyRegistry` alapján érvénytelenül, és szükség esetén a `ChangeStreamManager` is érvénytelenít.
 
 
 ### 8.6 Környezet- és konfigurációs alapok {#86-kornyezet-es-konfiguracios-alapok}
