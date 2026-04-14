@@ -181,7 +181,7 @@ const saveCompletedOrder = async (userId, items, subtotal, discount, total, curr
     };
 };
 
-const processBalancePayment = async (userId, items, subtotal, discount, total, currency) => {
+const processBalancePayment = async (payerUserId, orderUserId, items, subtotal, discount, total, currency) => {
     // Round to avoid floating-point drift
     const totalInUSD = Math.round(convertCurrencyToUSD(total, currency) * 100) / 100;
 
@@ -189,24 +189,24 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
     session.startTransaction();
 
     try {
-        // Get user within transaction
-        const user = await User.findById(userId).session(session);
-        if (!user) {
-            throw new Error('User not found');
+        // Get payer user within transaction
+        const payer = await User.findById(payerUserId).session(session);
+        if (!payer) {
+            throw new Error('Payer not found');
         }
 
         // Check balance (handle both number and string types)
-        const currentBalance = parseFloat(user.balance) || 0;
+        const currentBalance = parseFloat(payer.balance) || 0;
         if (currentBalance < totalInUSD) {
             throw new Error('Your account balance is insufficient to place this order');
         }
 
-        // Deduct balance
-        user.balance = currentBalance - totalInUSD;
-        await user.save({ session });
-        const updatedBalance = user.balance;
+        // Deduct balance from payer account
+        payer.balance = currentBalance - totalInUSD;
+        await payer.save({ session });
+        const updatedBalance = payer.balance;
 
-        // Process items and create order within transaction
+        // Process items and create order within transaction for the child/student user
         const { dbOrderItems, totalAmount } = await convertItemsToDbFormat(items, session);
 
         if (dbOrderItems.length === 0) {
@@ -219,7 +219,7 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
         }
 
         const newOrder = await createOrderRecord(
-            userId,
+            orderUserId,
             dbOrderItems,
             subtotal,
             discount,
@@ -241,11 +241,11 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
             console.log('Failed to sync wallet balance to Redis after balance payment:', syncError.message);
         }
 
-        // Calculate and award loyalty points (outside transaction since it's not critical)
+        // Calculate and award loyalty points to the order beneficiary (child/student)
         let totalPoints = 0;
         try {
-            if (userId) {
-                const userLoyalty = await UserLoyalty.findOne({ userId }).lean();
+            if (orderUserId) {
+                const userLoyalty = await UserLoyalty.findOne({ userId: orderUserId }).lean();
                 let currentTier = 'NONE';
                 if (userLoyalty) {
                     currentTier = userLoyalty.userTier;
@@ -262,7 +262,7 @@ const processBalancePayment = async (userId, items, subtotal, discount, total, c
                 }
                 
                 if (totalPoints > 0) {
-                    await UserLoyalty.updatePointsAtomically(userId, totalPoints, 'balance_order_completion');
+                    await UserLoyalty.updatePointsAtomically(orderUserId, totalPoints, 'balance_order_completion');
                 }
             }
         } catch (loyaltyError) {

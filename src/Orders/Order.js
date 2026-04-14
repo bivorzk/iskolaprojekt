@@ -94,6 +94,18 @@ const requireAuth = (req, res, next) => {
     }
     next();
 };
+
+const isEditorUser = req => getSessionUser(req)?.usertype?.toString().toLowerCase() === 'editor';
+const denyEditorOrderPlacement = (req, res, next) => {
+    if (isEditorUser(req)) {
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Editor accounts may view orders but cannot create purchases.'
+        });
+    }
+    next();
+};
+
 const sanitizeText = value => typeof value === 'string' ? value.trim() : value;
 const sendJsonError = (res, status, error, message) => res.status(status).json({ error, message, timestamp: new Date().toISOString() });
 const logSecurityEvent = async (userId, ipAddress, action, type, details) => {
@@ -479,7 +491,7 @@ router.get('/menu_items', async (req, res) => {
 });
 
 
-router.post('/order', validateOrderInput, requireAuth, async (req, res) => {
+router.post('/order', validateOrderInput, requireAuth, denyEditorOrderPlacement, async (req, res) => {
     // Extract order details from request body
     const { cart } = req.body;
     const ipAddress = getIpAddress(req);
@@ -562,7 +574,7 @@ router.post('/order', validateOrderInput, requireAuth, async (req, res) => {
 });
 
 // Process order with wallet payment (atomic operation)
-router.post('/order/wallet', validateOrderInput, async (req, res) => {
+router.post('/order/wallet', validateOrderInput, requireAuth, denyEditorOrderPlacement, async (req, res) => {
     const { cart } = req.body;
     const ipAddress = getIpAddress(req);
 

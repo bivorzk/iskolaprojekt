@@ -1,4 +1,4 @@
-const MenuItem = ({ item, onAddToCart, onViewInfo }) => {
+const MenuItem = ({ item, onAddToCart, onViewInfo, isEditor }) => {
     const [isAdding, setIsAdding] = React.useState(false);
 
     const handleAddToCart = async () => {
@@ -67,14 +67,24 @@ const MenuItem = ({ item, onAddToCart, onViewInfo }) => {
                     </button>
                     <button
                         onClick={handleAddToCart}
-                        disabled={isAdding}
+                        disabled={isAdding || isEditor}
                         className={`flex-1 py-3 sm:py-2 px-4 rounded-lg font-medium text-base sm:text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 ${
-                            isAdding 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-primary text-white hover:bg-secondary'
+                            isEditor
+                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                : isAdding
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-primary text-white hover:bg-secondary'
                         }`}
+                        title={isEditor ? 'Editor accounts cannot place orders' : 'Add item to cart'}
                     >
-                        {isAdding ? (
+                        {isEditor ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M12 6a9 9 0 100 18 9 9 0 000-18z" />
+                                </svg>
+                                Ordering disabled
+                            </div>
+                        ) : isAdding ? (
                             <div className="flex items-center justify-center">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

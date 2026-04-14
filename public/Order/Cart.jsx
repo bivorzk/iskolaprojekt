@@ -1,4 +1,4 @@
-﻿const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange, isLoggedIn }) => {
+﻿const Cart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange, isLoggedIn, isEditor, isParent, selectedChildId }) => {
     const [activeTab, setActiveTab] = React.useState('cart');
     const [loyaltyData, setLoyaltyData] = React.useState(null);
     const [notLoggedIn, setNotLoggedIn] = React.useState(false);
@@ -8,6 +8,13 @@
     const [voucherError, setVoucherError] = React.useState(null);
 
     const handlePaymentClick = (action) => {
+        if (isEditor) {
+            return;
+        }
+        if (isParent && !selectedChildId) {
+            alert('Please select a child before placing the order.');
+            return;
+        }
         if (!isLoggedIn) {
             window.location.href = '/login';
             return;
@@ -196,25 +203,31 @@
                                     <div className="space-y-3">
                                         <button
                                             onClick={() => handlePaymentClick(onGooglePay)}
-                                            className="w-full bg-orange-500 text-white py-3 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 transition-colors font-semibold"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 transition-colors font-semibold ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-orange-500 text-white hover:bg-orange-600'}`}
                                         >
-                                            {isLoggedIn ? 'Pay with Google Pay' : 'Login to Pay'}
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : isLoggedIn ? 'Pay with Google Pay' : 'Login to Pay'}
                                         </button>
                                         <button
                                             onClick={() => handlePaymentClick(onPayPal)}
-                                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-colors font-semibold"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-colors font-semibold ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
                                         >
-                                            {isLoggedIn ? 'Pay with PayPal' : 'Login to Pay'}
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : isLoggedIn ? 'Pay with PayPal' : 'Login to Pay'}
                                         </button>
 
                                         <button
                                             onClick={() => handlePaymentClick(onBalance)}
-                                            className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 transition-colors font-semibold"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 transition-colors font-semibold ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
                                         >
-                                            {isLoggedIn ? 'Pay with Account Balance' : 'Login to Pay'}
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : isLoggedIn ? 'Pay with Account Balance' : 'Login to Pay'}
                                         </button>
-                                        {!isLoggedIn && (
+                                        {!isLoggedIn && !isEditor && (
                                             <p className="text-sm text-gray-600 mt-2">Please login to use payment methods and complete your order.</p>
+                                        )}
+                                        {isEditor && (
+                                            <p className="text-sm text-orange-700 mt-2">Editor accounts may browse the menu but cannot complete purchases.</p>
                                         )}
                                     </div>
                                 </div>

@@ -9,6 +9,11 @@ const { useState, useEffect } = React;
             const [searchTerm, setSearchTerm] = useState('');
             const [selectedCategory, setSelectedCategory] = useState('all');
             const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [isEditor, setIsEditor] = useState(false);
+            const [isParent, setIsParent] = useState(false);
+            const [children, setChildren] = useState([]);
+            const [selectedChildId, setSelectedChildId] = useState('');
+            const [childrenLoading, setChildrenLoading] = useState(false);
 
             const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart();
             const { isMobileCartVisible, toggleMobileCart, hideMobileCart } = useMobileCart();
@@ -30,18 +35,51 @@ const { useState, useEffect } = React;
                 loadAuthStatus();
             }, []);
 
+            const loadParentStudentList = async () => {
+                setChildrenLoading(true);
+                try {
+                    const res = await fetch('/dashboard/parent/studentlist');
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (Array.isArray(json.students) && json.students.length > 0) {
+                            setChildren(json.students);
+                            setSelectedChildId((current) => current || json.students[0].id);
+                        } else {
+                            setChildren([]);
+                            setSelectedChildId('');
+                        }
+                    } else {
+                        console.warn('Unable to fetch parent student list:', res.status);
+                    }
+                } catch (err) {
+                    console.error('Failed to load parent student list:', err);
+                } finally {
+                    setChildrenLoading(false);
+                }
+            };
+
             const loadAuthStatus = async () => {
                 try {
                     const res = await fetch('/api/current_user');
                     if (res.ok) {
                         const json = await res.json();
-                        setIsLoggedIn(json.loggedIn === true);
+                        const loggedIn = json.loggedIn === true;
+                        setIsLoggedIn(loggedIn);
+                        const usertype = json.user?.usertype?.toString().toLowerCase();
+                        setIsEditor(loggedIn && usertype === 'editor');
+                        const parentType = loggedIn && usertype === 'parent';
+                        setIsParent(parentType);
+                        if (parentType) {
+                            await loadParentStudentList();
+                        }
                         return;
                     }
                 } catch (err) {
                     console.error('Failed to load auth status:', err);
                 }
                 setIsLoggedIn(false);
+                setIsEditor(false);
+                setIsParent(false);
             };
 
             const loadMenuItems = async () => {
@@ -77,6 +115,20 @@ const { useState, useEffect } = React;
             };
 
             const handleAddToCart = (item) => {
+                if (isEditor) {
+                    if (window.showMobileToast) {
+                        window.showMobileToast('Editor accounts may view items but cannot place orders.');
+                    }
+                    return;
+                }
+
+                if (isParent && !selectedChildId) {
+                    if (window.showMobileToast) {
+                        window.showMobileToast('Select a child before adding items to the cart.');
+                    }
+                    return;
+                }
+
                 addToCart(item);
                 // Show toast notification on mobile
                 if (window.showMobileToast) {
@@ -102,6 +154,47 @@ const { useState, useEffect } = React;
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
                         {/* Loyalty Status Banner */}
                         <LoyaltyStatus isLoggedIn={isLoggedIn} />
+
+                        {/* Viewer notice for Editor users */}
+                        {isEditor && (
+                            <div className="rounded-2xl border border-orange-300 bg-orange-50 p-4 mb-6 text-orange-900 shadow-sm">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <h2 className="text-lg font-semibold text-orange-900">Editor access only</h2>
+                                    <span className="text-sm font-medium uppercase tracking-[0.15em] text-orange-700">View only</span>
+                                </div>
+                                <p className="mt-2 text-sm text-orange-800">Your account can browse the order section and menu, but order placement is disabled for editors.</p>
+                            </div>
+                        )}
+
+                        {isParent && (
+                            <div className="rounded-2xl border border-primary shadow-sm bg-white p-4 mb-6">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-primary">Order for your child</h2>
+                                        <p className="mt-1 text-sm text-gray-600">Select which linked student should receive the order.</p>
+                                    </div>
+                                    <div className="sm:w-72">
+                                        <select
+                                            value={selectedChildId}
+                                            onChange={(e) => setSelectedChildId(e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-base"
+                                            disabled={childrenLoading}
+                                        >
+                                            <option value="">Select a child</option>
+                                            {children.map((child) => (
+                                                <option key={child.id} value={child.id}>{child.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                {!selectedChildId && !childrenLoading && (
+                                    <p className="mt-3 text-sm text-orange-700">Please choose a child before placing an order.</p>
+                                )}
+                                {childrenLoading && (
+                                    <p className="mt-3 text-sm text-gray-500">Loading linked children...</p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Daily Menu Highlight */}
                         {dailyMenu.length > 0 && (
@@ -176,6 +269,7 @@ const { useState, useEffect } = React;
                                             item={item}
                                             onAddToCart={handleAddToCart}
                                             onViewInfo={handleViewInfo}
+                                            isEditor={isEditor}
                                         />
                                     ))}
                                 </div>
@@ -200,9 +294,12 @@ const { useState, useEffect } = React;
                                     currency={currency}
                                     onCurrencyChange={setCurrency}
                                     isLoggedIn={isLoggedIn}
-                                    onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
-                                    onPayPal={() => handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
-                                    onBalance={() => handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher)}
+                                    isEditor={isEditor}
+                                    isParent={isParent}
+                                    selectedChildId={selectedChildId}
+                                    onGooglePay={() => handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent)}
+                                    onPayPal={() => handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent)}
+                                    onBalance={() => handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent)}
                                     selectedDiscount={selectedDiscount}
                                     onDiscountChange={setSelectedDiscount}
                                     appliedVoucher={appliedVoucher}
@@ -220,17 +317,20 @@ const { useState, useEffect } = React;
                         currency={currency}
                         onCurrencyChange={setCurrency}
                         isLoggedIn={isLoggedIn}
+                        isEditor={isEditor}
+                        isParent={isParent}
+                        selectedChildId={selectedChildId}
                         onGooglePay={() => {
                             hideMobileCart();
-                            handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
+                            handleGooglePayPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent);
                         }}
                         onPayPal={() => {
                             hideMobileCart();
-                            handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
+                            handlePayPalPayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent);
                         }}
                         onBalance={() => {
                             hideMobileCart();
-                            handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher);
+                            handleBalancePayment(cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent);
                         }}
                         isVisible={isMobileCartVisible}
                         onToggle={toggleMobileCart}

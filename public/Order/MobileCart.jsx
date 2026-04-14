@@ -1,4 +1,4 @@
-const MobileCart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, isVisible, onToggle, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange, isLoggedIn }) => {
+const MobileCart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurrencyChange, onGooglePay, onPayPal, onBalance, isVisible, onToggle, selectedDiscount, onDiscountChange, appliedVoucher, onVoucherChange, isLoggedIn, isEditor, isParent, selectedChildId }) => {
     const [activeTab, setActiveTab] = React.useState('cart');
     const [loyaltyData, setLoyaltyData] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
@@ -9,6 +9,13 @@ const MobileCart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurr
     const [showPaymentOptions, setShowPaymentOptions] = React.useState(false);
 
     const handlePaymentClick = (action) => {
+        if (isEditor) {
+            return;
+        }
+        if (isParent && !selectedChildId) {
+            alert('Please select a child before placing the order.');
+            return;
+        }
         if (!isLoggedIn) {
             window.location.href = '/login';
             return;
@@ -408,22 +415,31 @@ const MobileCart = ({ cart, onUpdateQuantity, onRemoveFromCart, currency, onCurr
 
                                         <button
                                             onClick={() => handlePaymentClick(onGooglePay)}
-                                            className="w-full bg-orange-500 text-white py-4 px-4 rounded-xl hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 transition-colors font-semibold text-lg active:bg-orange-700"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-4 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 transition-colors font-semibold text-lg ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700'}`}
                                         >
-                                            Pay with Google Pay
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : 'Pay with Google Pay'}
                                         </button>
                                         <button
                                             onClick={() => handlePaymentClick(onPayPal)}
-                                            className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-colors font-semibold text-lg active:bg-blue-800"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-4 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-colors font-semibold text-lg ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'}`}
                                         >
-                                            Pay with PayPal
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : 'Pay with PayPal'}
                                         </button>
                                         <button
                                             onClick={() => handlePaymentClick(onBalance)}
-                                            className="w-full bg-green-600 text-white py-4 px-4 rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 transition-colors font-semibold text-lg active:bg-green-800"
+                                            disabled={isEditor || (isParent && !selectedChildId)}
+                                            className={`w-full py-4 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 transition-colors font-semibold text-lg ${isEditor || (isParent && !selectedChildId) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'}`}
                                         >
-                                            Pay with Account Balance
+                                            {isEditor ? 'Ordering disabled' : isParent && !selectedChildId ? 'Select a child first' : 'Pay with Account Balance'}
                                         </button>
+                                        {isEditor && (
+                                            <p className="text-sm text-orange-700">Editor accounts may browse the menu but cannot complete purchases.</p>
+                                        )}
+                                        {isParent && !selectedChildId && (
+                                            <p className="text-sm text-orange-700">Select a linked child before completing the order.</p>
+                                        )}
                                     </div>
                                 )}
                             </div>

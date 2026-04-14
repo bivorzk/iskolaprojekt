@@ -1,7 +1,7 @@
 const express = require('express');
 // Import User model and other database models
 const { User } = require('./database');
-const { Payment, UserLoyalty, MenuItems, Order, OrderItems, DailyMenu } = require('../config/database_queries');
+const { Payment, UserLoyalty, MenuItems, Order, OrderItems, DailyMenu, ParentStudent } = require('../config/database_queries');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 
@@ -30,6 +30,49 @@ router.use('/orders', limiter);
 router.use('/pay-with-balance', paymentLimiter);
 
 const getUserId = req => req.session?.user?.id || null;
+const isEditorUser = req => req.session?.user?.usertype?.toString().toLowerCase() === 'editor';
+const isParentUser = req => req.session?.user?.usertype?.toString().toLowerCase() === 'parent';
+const getSelectedStudentId = req => req.body.selectedStudentId || req.body.studentId || req.body.childId || null;
+
+const denyEditorOrderPlacement = (req, res, next) => {
+    if (isEditorUser(req)) {
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Editor accounts may browse the menu but cannot place orders.'
+        });
+    }
+    next();
+};
+
+const resolveOrderTargetUserId = async (req, userId) => {
+    if (!isParentUser(req)) {
+        return userId;
+    }
+
+    const selectedStudentId = getSelectedStudentId(req);
+    if (!selectedStudentId || typeof selectedStudentId !== 'string') {
+        const error = new Error('Parent orders must specify a linked student.');
+        error.status = 400;
+        error.error = 'Invalid Student Selection';
+        throw error;
+    }
+
+    const link = await ParentStudent.findOne({
+        parentId: userId,
+        studentId: selectedStudentId,
+        status: 'approved'
+    }).lean();
+
+    if (!link) {
+        const error = new Error('Selected student is not linked to your parent account.');
+        error.status = 403;
+        error.error = 'Forbidden';
+        throw error;
+    }
+
+    return selectedStudentId;
+};
+
 const sendUnauthorized = (res, message = 'Please sign in to continue') => res.status(401).json({ error: 'Unauthorized', message });
 const sendJsonError = (res, status, error, message) => res.status(status).json({ error, message, timestamp: new Date().toISOString() });
 
@@ -114,7 +157,7 @@ router.get('/daily-menu', async (req, res) => {
     }
 });
 
-router.post('/orders', validateOrderInput, async (req, res) => {
+router.post('/orders', validateOrderInput, denyEditorOrderPlacement, async (req, res) => {
     const { cart, currency, amount } = req.body;
 
     const userId = getUserId(req);
@@ -148,6 +191,14 @@ router.post('/orders', validateOrderInput, async (req, res) => {
         res.status(httpStatusCode).json(jsonResponse);
     }
     catch (error) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: error.error || 'Error',
+                message: error.message,
+                timestamp: new Date().toISOString()
+            });
+        }
+
         console.error('Error creating PayPal order for user:', userId, '- Error:', error.message);
 
         let statusCode = 500;
@@ -201,7 +252,7 @@ router.post('/orders', validateOrderInput, async (req, res) => {
 });
 
 // Route to save completed orders (after payment is done)
-router.post('/save-order', validatePaymentInput, async (req, res) => {
+router.post('/save-order', validatePaymentInput, denyEditorOrderPlacement, async (req, res) => {
     const { items, subtotal, discount, total, currency, paymentMethod, transactionId } = req.body;
 
     const userId = getUserId(req);
@@ -210,8 +261,9 @@ router.post('/save-order', validatePaymentInput, async (req, res) => {
     }
 
     try {
+        const targetUserId = await resolveOrderTargetUserId(req, userId);
         const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.saveCompletedOrder(
-            userId, items, subtotal, discount, total, currency, paymentMethod, transactionId
+            targetUserId, items, subtotal, discount, total, currency, paymentMethod, transactionId
         );
 
         console.log('Order saved successfully for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);
@@ -234,7 +286,7 @@ router.post('/save-order', validatePaymentInput, async (req, res) => {
 });
 
 // Google Pay order creation endpoint
-router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
+router.post('/orders/googlepay', validateOrderInput, denyEditorOrderPlacement, async (req, res) => {
     const { cart, currency, amount } = req.body;
 
     const userId = getUserId(req);
@@ -243,7 +295,8 @@ router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
     }
 
     try {
-        const orderResult = await googlePayService.createGooglePayOrder(userId, cart);
+        const targetUserId = await resolveOrderTargetUserId(req, userId);
+        const orderResult = await googlePayService.createGooglePayOrder(targetUserId, cart);
 
         console.log('Google Pay order created for user:', userId, '- Order ID:', orderResult.orderId);
 
@@ -285,7 +338,7 @@ router.post('/orders/googlepay', validateOrderInput, async (req, res) => {
 });
 
 // Google Pay payment completion endpoint
-router.post('/orders/googlepay/complete', async (req, res) => {
+router.post('/orders/googlepay/complete', denyEditorOrderPlacement, async (req, res) => {
     const { orderId, paymentMethodData, transactionId } = req.body;
 
     const userId = getUserId(req);
@@ -302,8 +355,9 @@ router.post('/orders/googlepay/complete', async (req, res) => {
     }
 
     try {
+        const targetUserId = await resolveOrderTargetUserId(req, userId);
         const result = await googlePayService.completeGooglePayOrder(
-            userId, orderId, paymentMethodData, transactionId
+            targetUserId, orderId, paymentMethodData, transactionId
         );
 
         console.log('Google Pay order completed for user:', userId, '- Order ID:', orderId);
@@ -332,7 +386,7 @@ router.post('/orders/googlepay/complete', async (req, res) => {
     }
 });
 
-router.post('/orders/:orderID/capture', async (req, res) => {
+router.post('/orders/:orderID/capture', denyEditorOrderPlacement, async (req, res) => {
     const { orderID } = req.params;
     const userId = getUserId(req);
 
@@ -353,8 +407,9 @@ router.post('/orders/:orderID/capture', async (req, res) => {
 
         if (httpStatusCode === 201) {
             // Payment successful, update database order
-            await orderService.completePaypalOrder(userId, orderID, jsonResponse);
-            console.log('PayPal order captured for user:', userId, '- Order ID:', orderID);
+            const targetUserId = await resolveOrderTargetUserId(req, userId);
+            await orderService.completePaypalOrder(targetUserId, orderID, jsonResponse);
+            console.log('PayPal order captured for user:', targetUserId, '- Order ID:', orderID);
         }
 
         res.status(httpStatusCode).json(jsonResponse);
@@ -394,7 +449,7 @@ router.post('/orders/:orderID/capture', async (req, res) => {
 });
 
 // Order from balance
-router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
+router.post('/pay-with-balance', validatePaymentInput, denyEditorOrderPlacement, async (req, res) => {
     const { items, subtotal, discount, total, currency } = req.body;
 
     const userId = getUserId(req);
@@ -403,8 +458,9 @@ router.post('/pay-with-balance', validatePaymentInput, async (req, res) => {
     }
 
     try {
+        const orderUserId = await resolveOrderTargetUserId(req, userId);
         const { orderId, loyaltyPointsAwarded, orderDetails } = await orderService.processBalancePayment(
-            userId, items, subtotal, discount, total, currency
+            userId, orderUserId, items, subtotal, discount, total, currency
         );
 
         console.log('Balance payment processed for user:', userId, '- Order ID:', orderId, '- Points awarded:', loyaltyPointsAwarded);

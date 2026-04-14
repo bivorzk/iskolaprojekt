@@ -205,7 +205,11 @@ const fulfillVoucher = (voucherCode) => {
     }).catch(err => console.error('Voucher fulfillment failed:', err));
 };
 
-const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
+const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent) => {
+    if (isParent && !selectedChildId) {
+        alert('Please select a child before placing the order.');
+        return;
+    }
     try {
         const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
         const discountAmount = selectedDiscount ? subtotal * selectedDiscount.rate : 0;
@@ -280,7 +284,8 @@ const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscoun
                             total: amount,
                             currency: currency,
                             paymentMethod: 'GooglePay',
-                            transactionId: paymentData.paymentMethodData?.tokenizationData?.token || 'gpay_' + Date.now()
+                            transactionId: paymentData.paymentMethodData?.tokenizationData?.token || 'gpay_' + Date.now(),
+                            selectedStudentId: selectedChildId
                         })
                     });
 
@@ -334,7 +339,12 @@ const handleGooglePayPayment = async (cart, currency, clearCart, selectedDiscoun
     }
 };
 
-const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
+const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent) => {
+    if (isParent && !selectedChildId) {
+        alert('Please select a child before placing the order.');
+        return;
+    }
+
     console.log('PayPal button clicked');
     try {
         const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -358,7 +368,8 @@ const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, 
             } : null,
             voucherCode: appliedVoucher ? appliedVoucher.voucherCode : null,
             total: amount,
-            currency: currency
+            currency: currency,
+            selectedStudentId: selectedChildId
         };
         console.log('Order data stored:', window.orderData);
 
@@ -487,7 +498,8 @@ const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, 
                             total: orderData.total,
                             currency: orderData.currency,
                             paymentMethod: 'PayPal',
-                            transactionId: details.id
+                            transactionId: details.id,
+                            selectedStudentId: orderData.selectedStudentId
                         })
                     });
 
@@ -556,7 +568,11 @@ const handlePayPalPayment = async (cart, currency, clearCart, selectedDiscount, 
     }
 };
 
-const handleBalancePayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher) => {
+const handleBalancePayment = async (cart, currency, clearCart, selectedDiscount, appliedVoucher, selectedChildId, isParent) => {
+    if (isParent && !selectedChildId) {
+        alert('Please select a child before placing the order.');
+        return;
+    }
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const discountAmount = selectedDiscount ? subtotal * selectedDiscount.rate : 0;
     const voucherDeduction = appliedVoucher ? appliedVoucher.marketValue : 0;
@@ -577,7 +593,8 @@ const handleBalancePayment = async (cart, currency, clearCart, selectedDiscount,
             } : null,
             voucherCode: appliedVoucher ? appliedVoucher.voucherCode : null,
             total: total,
-            currency: currency
+            currency: currency,
+            selectedStudentId: selectedChildId
         })
     }).then(response => response.json())
     .then(data => {
