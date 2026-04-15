@@ -592,8 +592,16 @@ async function store2FACode(userId, code, ttl=1500) {
   await redisClient.setEx(key, ttl, String(code));
 }`;
 
-  addCodeBlock(s, code, 5.2, 0.82, 4.45, 3.15, 8.5);
-  addPlaceholder(s, 5.2, 4.1, 4.45, 1.3, 'Kepernyo\u0151kep: Bejelentkezesi oldal / 2FA form');
+  addCodeBlock(s, code, 5.2, 0.82, 4.45, 4.55, 8.5);
+}
+
+// ── SLIDE 9b: Hitelesites -- kepernokepek ────────────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Hiteles\u00edt\u00e9s \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: Bejelentkezesi oldal');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: 2FA form / Email meger\u0151s\u00edt\u00e9s');
 }
 
 // ── SLIDE 10: Redis & Caching ────────────────────────────────────────────────
@@ -646,8 +654,16 @@ if bal >= tonumber(ARGV[1]) then
 end
 return 0`;
 
-  addCodeBlock(s, code, 5.2, 0.82, 4.45, 3.65, 8);
-  addPlaceholder(s, 5.2, 4.6, 4.45, 0.8, 'Kepernyo\u0151kep: Redis monitor / cache dashboard');
+  addCodeBlock(s, code, 5.2, 0.82, 4.45, 4.55, 8);
+}
+
+// ── SLIDE 10b: Redis -- kepernokepek ─────────────────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Redis Cache \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: Redis monitor / Lua szkript debug');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: Cache dashboard / session store');
 }
 
 // ── SLIDE 11: Rendelési rendszer ─────────────────────────────────────────────
@@ -694,8 +710,68 @@ return 0`;
 // Compound index a gyors kereseshez:
 { userId:1, status:1, orderDate:-1 }`;
 
-  addCodeBlock(s, code, 5.2, 0.82, 4.45, 3.15, 8.5);
-  addPlaceholder(s, 5.2, 4.1, 4.45, 1.3, 'Kepernyo\u0151kep: Rendel\u00e9si oldal / kosar nezet');
+  addCodeBlock(s, code, 5.2, 0.82, 4.45, 4.55, 8.5);
+}
+
+// ── SLIDE 11b: Editor tiltás és Szülő -> Diák rendelés ─────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Editor tilt\u00e1s \u00e9s Sz\u00fcl\u0151 \u2192 Di\u00e1k rendel\u00e9s');
+
+  s.addText('Szerepk\u00f6r-alap\u00fa rendel\u00e9sv\u00e9delem', {
+    x: 0.35, y: 0.82, w: 4.6, h: 0.38,
+    fontSize: 13, bold: true, color: C_DARK, margin: 0,
+  });
+  s.addText(bullets([
+    'denyEditorOrderPlacement \u2014 minden POST rendel\u00e9si v\u00e9gponton',
+    'Editor fi\u00f3k: 403 Forbidden, rendel\u00e9s megtagadva',
+    'resolveOrderTargetUserId \u2014 sz\u00fcl\u0151i bejelentkezésn\u00e9l',
+    'ParentStudent kapcsolat ellen\u0151rz\u00e9se (status: approved)',
+    'Rendel\u00e9s a gyermek nev\u00e9re, lev\u00e1l a sz\u00fcl\u0151 egyenleg\u00e9b\u0151l',
+    'Sikertelen linkn\u00e9l: 403 Forbidden v\u00e1lasz',
+  ]), {
+    x: 0.35, y: 1.26, w: 4.6, h: 2.7,
+    fontSize: 11, color: C_TEXT,
+  });
+
+  const codeEditor = `// src/api.js
+const denyEditorOrderPlacement = (req, res, next) => {
+  if (isEditorUser(req))
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Editor accounts may browse ' +
+               'but cannot place orders.'
+    });
+  next();
+};
+
+// Sz\u00fcl\u0151 -> Diak rendeles feloldasa
+const resolveOrderTargetUserId =
+  async (req, userId) => {
+  if (!isParentUser(req)) return userId;
+  const studentId = getSelectedStudentId(req);
+  const link = await ParentStudent.findOne({
+    parentId: userId,
+    studentId,
+    status: 'approved'
+  }).lean();
+  if (!link) {
+    const err = new Error('Student not linked.');
+    err.status = 403; throw err;
+  }
+  return studentId; // rendeles a diakhoz
+};`;
+  addCodeBlock(s, codeEditor, 5.2, 0.82, 4.45, 4.55, 8.5);
+}
+
+// ── SLIDE 11c: Rendelési rendszer -- kepernokepek ───────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Rendel\u00e9si rendszer \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: Rendel\u00e9si oldal / kos\u00e1r n\u00e9zet');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: Mobil n\u00e9zet / napi men\u00fc');
 }
 
 // ── SLIDE 12: Fizetési integráció ────────────────────────────────────────────
@@ -748,8 +824,16 @@ router.post('/paypal', async (req, res) => {
   );
 });`;
 
-  addCodeBlock(s, code, 5.2, 0.82, 4.45, 3.65, 8.5);
-  addPlaceholder(s, 5.2, 4.6, 4.45, 0.8, 'Kepernyo\u0151kep: PayPal / Google Pay checkout');
+  addCodeBlock(s, code, 5.2, 0.82, 4.45, 4.55, 8.5);
+}
+
+// ── SLIDE 12b: Fizetes -- kepernokepek ───────────────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Fizet\u00e9si integr\u00e1ci\u00f3 \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: PayPal checkout oldal');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: Google Pay / P\u00e9nzt\u00e1rca egyenleg');
 }
 
 // ── SLIDE 13: Admin Dashboard ────────────────────────────────────────────────
@@ -776,8 +860,45 @@ router.post('/paypal', async (req, res) => {
     fontSize: 11, color: C_TEXT,
   });
 
-  addPlaceholder(s, 5.2, 0.82, 4.45, 2.1, 'Kepernyo\u0151kep: Admin dashboard f\u0151oldal');
-  addPlaceholder(s, 5.2, 3.05, 4.45, 2.35, 'Kepernyo\u0151kep: Men\u00fckeze\u0151l\u0151 / rendel\u00e9slisat\u00e1z\u00f3');
+  const adminCode = `// src/dashboard/services/cache-service.js
+function cacheResult(cacheKey, ttl = 300) {
+  return async (req, res, next) => {
+    if (req.method !== 'GET' || !isRedisAvailable())
+      return next();
+    const key = await resolveCacheKey(cacheKey, req);
+    const cached = await redisClient.get(key);
+    if (cached)
+      return res.status(200).json(JSON.parse(cached));
+    // Intercept & cache the response
+    const origJson = res.json.bind(res);
+    res.json = (data) => {
+      redisClient
+        .setEx(key, ttl, JSON.stringify(data))
+        .catch(console.error);
+      return origJson(data);
+    };
+    next();
+  };
+}
+
+// MongoDB Change Stream -> val\u00f3s idej\u0171 friss\u00edt\u00e9s
+mongoose.connection.watch().on('change', d => {
+  redisClient.publish('dashboard:update',
+    JSON.stringify({
+      op:   d.operationType,
+      coll: d.ns.coll
+    }));
+});`;
+  addCodeBlock(s, adminCode, 5.2, 0.82, 4.45, 4.55, 8);
+}
+
+// ── SLIDE 13b: Admin Dashboard -- kepernokepek ───────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Admin Dashboard \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: Admin dashboard f\u0151oldal');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: Men\u00fckezel\u0151 / rendel\u00e9slista');
 }
 
 // ── SLIDE 14: Adatbázis architektúra ─────────────────────────────────────────
@@ -826,6 +947,64 @@ router.post('/paypal', async (req, res) => {
   s.addImage({ path: 'docs/Database.png', x: 5.35, y: 0.82, w: 4.3, h: 4.58 });
 }
 
+// ── SLIDE 14b: Adatbazis -- User sema kod ────────────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Adatb\u00e1zis \u2014 User s\u00e9ma');
+
+  s.addText('Felhaszn\u00e1l\u00f3 adatmodell', {
+    x: 0.35, y: 0.82, w: 4.6, h: 0.38,
+    fontSize: 13, bold: true, color: C_DARK, margin: 0,
+  });
+  s.addText(bullets([
+    'Egyedi username + email (unique index)',
+    'usertype: student / parent / admin / editor',
+    'bcrypt jelsz\u00f3, isVerified + isBanned z\u00e1szl\u00f3k',
+    'balance: digit\u00e1lis p\u00e9nzt\u00e1rca (Redis Lua atomi)',
+    'identity: ECDH P-256 nyilv\u00e1nos kulcs (E2EE)',
+    'devices: multi-device signedPreKey t\u00f6mb',
+    'userPersonalInfo: n\u00e9v, oszt\u00e1ly, iskola alsk\u00e9ma',
+  ]), {
+    x: 0.35, y: 1.26, w: 4.6, h: 3.0,
+    fontSize: 11, color: C_TEXT,
+  });
+
+  const userCode = `// src/models/User.js
+const userSchema = new mongoose.Schema({
+  username:   { type: String, required: true,
+                unique: true },
+  email:      { type: String, required: true,
+                unique: true,
+                match: [/^\\S+@\\S+\\.\\S+$/] },
+  usertype:   { type: String, default: 'student',
+    enum: ['admin','student','parent',
+           'teacher','frozen','editor'] },
+  isVerified: { type: Boolean, default: false },
+  balance:    { type: Number,  default: 0 },
+  isBanned:   { type: Boolean, default: false },
+  // ECDH P-256 E2EE identity
+  identity: {
+    publicKey:        String,
+    signingPublicKey: String,
+    keyId:            String,
+  },
+  devices: [{
+    deviceId:     String,
+    publicKey:    String,
+    signedPreKey: Object, // Signal prekey bundle
+  }],
+  createdAt: { type: Date, default: Date.now },
+});
+
+// Compound indexek:
+userSchema.index({ username: 1 }, { unique: true });
+userSchema.index({ email: 1 },    { unique: true });
+userSchema.index({ usertype: 1 });
+userSchema.index({ isBanned: 1 });`;
+  addCodeBlock(s, userCode, 5.2, 0.82, 4.45, 4.55, 8.5);
+}
+
 // ── SLIDE 15: E2EE Chat & Hűségprogram ──────────────────────────────────────
 {
   const s = pres.addSlide();
@@ -871,8 +1050,46 @@ router.post('/paypal', async (req, res) => {
     fontSize: 11, color: C_TEXT,
   });
 
-  addPlaceholder(s, 5.2, 0.82, 4.45, 2.1, 'Kepernyo\u0151kep: E2EE chat interface');
-  addPlaceholder(s, 5.2, 3.05, 4.45, 2.35, 'Kepernyo\u0151kep: H\u0171s\u00e9gprogram / pontok oldal');
+  const e2eeCode = `// src/models/Message.js - E2EE uzenet sema
+const messageSchema = new mongoose.Schema({
+  senderId:    { type: ObjectId, ref: 'User',
+                 required: true },
+  recipientId: { type: ObjectId, ref: 'User',
+                 required: true },
+  schemaVersion: { type: Number, default: 2 },
+  status: { type: String, default: 'sent',
+    enum: ['sent','delivered','read','replaced'] },
+  createdAt:   { type: Date, default: Date.now },
+  senderKeyRecovery: {
+    needed:          Boolean,
+    senderPublicKey: String,  // ECDH P-256
+    senderKeyId:     String,
+  }
+});
+messageSchema.index(
+  { senderId:1, recipientId:1, createdAt:-1 });
+
+// src/LoyaltySystem/loyalty-service.js
+function ConvertPoints(amount, tier, health, date) {
+  let pts = 0;
+  for (let i = 0; i < Math.floor(amount); i++)
+    pts += Math.floor(Math.random() * 6) + 4;
+  if (isHoliday(date))       pts *= 1.5;
+  if (isHolidaySeason(date)) pts *= 1.2;
+  pts *= 1 + (health * 0.2); // egeszseg bonus
+  pts *= 1 + (DISCOUNT_RATES[tier] || 0);
+  return Math.floor(pts);
+}`;
+  addCodeBlock(s, e2eeCode, 5.2, 0.82, 4.45, 4.55, 8);
+}
+
+// ── SLIDE 15b: E2EE + Husegprogram -- kepernokepek ───────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'E2EE Chat \u00e9s H\u0171s\u00e9gprogram \u2014 K\u00e9perny\u0151k\u00e9pek');
+  addPlaceholder(s, 0.35, 0.82, 4.72, 4.55, 'K\u00e9perny\u0151k\u00e9p: E2EE chat interface');
+  addPlaceholder(s, 5.25, 0.82, 4.4, 4.55, 'K\u00e9perny\u0151k\u00e9p: H\u0171s\u00e9gprogram / pontok oldal');
 }
 
 // ── SLIDE: Rendszer architektúra diagram ─────────────────────────────────────
