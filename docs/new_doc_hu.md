@@ -299,12 +299,6 @@ A `User` kollekció a rendszert használók identitását és jogosultságait ke
 
 **V2 E2EE architektúra (ECDH P-256):** Az aktuális sémaverziója ECDH P-256 kriptográfiát használ, szemben a korábbi V1 RSA-OAEP megközelítéssel. Az `identity` aldokumentum tartalmazza a `signingPublicKey` (ECDSA P-256) mezőt. Minden eszközre (`devices` tömb) kerül: `deviceId`, `publicKey` (DID-SPKI formátumban), és `signedPreKey` (keyId, publicKey, signature) — ez a teljes Signal protokoll kompatibilis prekey-csomag. A V1 RSA-OAEP mezők (`encryption.*`) visszafelé kompatibilitás érdekében megmaradnak a sémában, de migráció után nem kerülnek feltöltésre.
 
----
-| recoveryBlob.storedAt | Date | Recovery blob storage time | Optional | _id, recoveryBlob.storedAt |
-| encryption.* | Mixed | V1 legacy E2EE fields (for migration) | Optional | _id, encryption.* |
-
-Üzleti szabályok: Minden felhasználó egyedi felhasználónévvel és e-mail címmel rendelkezik. A felhasználói típus befolyásolja a jogosultságokat (pl. admin mindent elér).
-
 ##### Fizetés (Payments)
 
 A `Payment` gyűjtemény a pénzügyi tranzakciók auditját, státuszát és külső azonosítóit tárolja.
@@ -459,9 +453,8 @@ Index-optimalizációk:
 Üzleti logika:
 - naponta egyszeri generálás a rendelési ablak nyitásakor;
 - menü-elkülönítést biztosítjuk `dailyMenu`-val a feketelistázás és változtatás nyomon követéséhez.
----
 
-Üzleti szabályok: A napi menük időszakonként jönnek létre.
+---
 
 ##### ParentStudent (Parent-Student Relationship)
 
@@ -491,29 +484,7 @@ Index-optimalizációk:
 | isTor | Boolean | Tor usage | Optional | _id, isTor |
 | isProxy | Boolean | Proxy usage | Optional | _id, isProxy |
 
-Üzleti szabályok: Minden fontos esemény naplózásra kerül (bejelentkezés, regisztráció, jelszócsere, 2FA, rendelések stb.). Az IP-cím SHA-256 hash-elve tárolódik (GDPR megfelelőség).
-
-**Automatikus adatkezelés:**
-- **TTL index**: A `Timestamp` mező 90 napos TTL indexet kap (`expireAfterSeconds: 7 776 000`); a MongoDB automatikusan törli a 90 napnál régebbi bejegyzéseket, megakadályozva a korlátlan növekedést.
-- **Felhasználónkénti cap**: Maximum 500 napló tárolható felhasználónként. Egy `post('save')` hook figyeli a mentés után a darabszámot, és amennyiben meghaladja a limitet, automatikusan törli a legrégebbi bejegyzéseket (`Timestamp` szerint rendezve).
-
-```js
-// config/database_queries.js
-const MAX_SECURITY_LOGS_PER_USER = 500;
-SecurityLogsScheme.post('save', function(doc) {
-    if (!doc.userId) return;
-    const Model = doc.constructor;
-    Model.countDocuments({ userId: doc.userId })
-        .then(count => {
-            if (count <= MAX_SECURITY_LOGS_PER_USER) return;
-            const excess = count - MAX_SECURITY_LOGS_PER_USER;
-            return Model.find({ userId: doc.userId }, '_id')
-                .sort({ Timestamp: 1 }).limit(excess).lean()
-                .then(oldest => Model.deleteMany({ _id: { $in: oldest.map(d => d._id) } }));
-        })
-        .catch(err => console.error('SecurityLogs cap enforcement error:', err));
-});
-```
+Üzleti szabályok: Minden fontos esemény naplózásra kerül (bejelentkezés, regisztráció, jelszócsere, 2FA, rendelések stb.). Az IP-cím SHA-256 hash-elve tárolódik (GDPR megfelelőség). Az automatikus TTL és felhasználónkénti cap mechanizmus részletesen a [5.5.2 fejezetben](#552-securitylogs-automatikus-adatkezeles) olvasható.
 
 ##### Reward (Jutalmak/Beváltható tételek)
 
@@ -988,7 +959,39 @@ const verifyRecaptcha = async (token) => {
 | Tiltott jelszóminták | `containsForbiddenPasswordPattern()`: tiltja a `( ) [ ] { } < > " ' \` \ / $ db.` karaktereket/stringeket injekció-szerű jelszó payloadok megelőzésére |
 | Anti-enumeráció | Regisztrációkor meglévő fiók esetén a szerver ugyanazt a HTTP 200 választ adja vissza; az email küldési logika változik, de a response nem — ez megakadályozza a felhasználónév/email enumeration támadásokat |
 | Biztonsági middleware | Központosított Helmet/CORS/XSS/NoSQL sanitizáció és validáció a `src/middleware/security.js`-ben |
+| NoSQL injekció elleni middleware | `hasNoSqlInjectionPattern()` és `noSqlInjectionEasterEgg()` a központi express middleware-ben |
 | Biztonsági fejlécek | Helmet.js (CSP, HSTS stb.), eval() tiltva, nonce alapú inline script-ek |
+
+```javascript
+// src/middleware/security.js
+function hasNoSqlInjectionPattern(value) {
+    if (value && typeof value === 'object') {
+        return Object.entries(value).some(([key, nested]) => {
+            if (typeof key === 'string' && key.startsWith('$')) return true;
+            return hasNoSqlInjectionPattern(nested);
+        });
+    }
+    if (typeof value === 'string') {
+        return /(?:^|[^\w\$])\$(?:ne|gt|lt|gte|lte|in|nin|or|and|regex|where|expr|size|type)(?:\b|[^\w])?/i.test(value);
+    }
+    return false;
+}
+
+function noSqlInjectionEasterEgg(req, res, next) {
+    if (['body', 'query', 'params'].some(src => hasNoSqlInjectionPattern(req[src]))) {
+        console.warn('NoSQL injection attempt blocked:', {
+            ip: req.ip,
+            url: req.originalUrl,
+            method: req.method
+        });
+        return res.status(400).json({
+            error: 'Nice try buddy :)',
+            message: 'Your input was flagged as NoSQL injection and blocked.'
+        });
+    }
+    next();
+}
+```
 | IP hash-elés | Keyed HMAC-SHA256 (`crypto.createHmac('sha256', IP_HASH_SECRET)`) a SecurityLogs tárolása előtt; a titkosítókulcs nélkül az eredeti IP cím visszafejthetetlen (GDPR 32. cikk) |
 | reCAPTCHA | Google reCAPTCHA v3 regisztrációhoz és bejelentkezéshez |
 | Geolokáció | iplocate.io VPN/Proxy/Tor észlelésre és kockázatpontozásra |
@@ -997,6 +1000,48 @@ const verifyRecaptcha = async (token) => {
 
 ##### 5.4.1.1 Kétfaktoros hitelesítés (2FA)
 A rendszer második faktoros hitelesítést használ, ahol a mobil alkalmazás Dioxus technológiával készült. A felhasználó a mobil appon keresztül három véletlenszerű szám közül választ, hasonlóan a Google által ismert "3 random szám" alapú megerősítési modellhez. Ez a választás egy további érvényesítési lépést biztosít a belépési folyamatban, növelve az account biztonságát a jelszón túl.
+
+**2FA kihívás-kód generálás és tárolás (`src/auth/2fa.js`):**
+
+A szerver a `crypto.randomInt(10, 100)` segítségével egy 10–99 közötti kétjegyű kódot állít elő, amelyet Redis-ben tárol 1500 másodperces TTL-lel. Ha Redis nem elérhető, in-memory `Map`-be esik vissza:
+
+```javascript
+// src/auth/2fa.js — Redis/memória kettős tároló
+async function store2FACode(userId, code, ttlSeconds = 1500) {
+    const key = `2fa:${userId}`;
+    if (isRedisAvailable) {
+        try { await redisClient.setEx(key, ttlSeconds, String(code)); return; }
+        catch (err) { console.error('Redis 2FA store failed:', err.message); }
+    }
+    pendingCodes.set(String(userId), { code, expires: Date.now() + ttlSeconds * 1000 });
+}
+```
+
+A `POST /2fa` végpont idempotens: ha már létezik kód az adott felhasználóhoz (pl. a companion app már lekérte), nem állít elő újat — ezzel megakadályozza, hogy az asztali és mobil kliens egymás kódját írja felül:
+
+```javascript
+// Meglévő kód újrafelhasználása (idempotens)
+const existingCode = await get2FACode(user._id);
+const code = existingCode ? parseInt(existingCode, 10) : crypto.randomInt(10, 100);
+```
+
+A companion alkalmazás a `GET /2fa/code` végpontot kéri le Bearer tokennel (`JWT_2FA_SECRET`), majd megjeleníti a kódot. A `POST /2fa/approve` végpont jelzi a jóváhagyást. A `GET /2fa/status` polling-gal észleli a jóváhagyást, majd egy műveletben törli az összes 2FA kulcsot és felépíti a munkamenetet:
+
+```javascript
+// GET /2fa/status — jóváhagyás detektálás és munkamenet-felépítés
+const approved = await getApproval(decoded.userId);
+if (!approved) return res.json({ approved: false });
+
+// Atomikusan törli a kódot, jóváhagyást és pending session-t
+await Promise.all([
+    delete2FACode(decoded.userId),
+    deleteApproval(decoded.userId),
+    deletePendingSession(decoded.userId),
+]);
+
+req.session.user = { ...sessionData, IsLoggedIn: true };
+res.json({ approved: true, redirect: redirectMap[sessionData.usertype] || '/dashboard/student' });
+```
 
 <img src="./diagrams/output-9.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
@@ -1178,6 +1223,45 @@ Node.js + Express.js, MongoDB + Mongoose, Redis + Lua szkriptek, JWT, bcrypt, Pa
 #### 6.2.3 Hitelesítés és biztonság
 
 A regisztráció érvényesíti a bemenetet, ellenőrzi a reCAPTCHA-t, bcrypttel hash-eli a jelszót, küld egy e-mailes ellenőrzőkódot, és naplózza az eseményt. A bejelentkezés ellenőrzi a hitelesítő adatokat, JWT-t ad ki, naplózza az IP/hely alapú kockázatot és IP-nként rate limitinget alkalmaz.
+
+**Bejelentkezéskori Redis brute-force védelem (`src/auth/login.js`):**
+
+```javascript
+// src/auth/login.js — IP-alapú bejelentkezési kísérlet számláló
+if (isRedisAvailable) {
+    const rateLimitKey = `login_attempts:${clientIp}`;
+    const attempts = await redisClient.get(rateLimitKey);
+    const attemptCount = attempts ? parseInt(attempts) : 0;
+
+    if (attemptCount >= 5) {
+        return res.status(429).send('Too many login attempts. Please try again later.');
+    }
+    // 1 óra TTL — minden sikertelen kísérlet növeli a számlálót
+    await redisClient.setEx(rateLimitKey, 3600, (attemptCount + 1).toString());
+}
+```
+
+**IP-változás észlelése és SecurityLog bejegyzés (`src/auth/login.js`):**
+
+```javascript
+// IP hash és geolokáció alapú biztonsági naplózás
+const hashedIP = crypto.createHash('sha256').update(clientIp).digest('hex');
+const lastLog = await SecurityLogs.findOne({ userId: user._id }).sort({ Timestamp: -1 }).lean();
+const ipMatches = lastLog && lastLog.ipAddress === hashedIP;
+
+if (!ipMatches && lastLog) {
+    await createSecurityLog({
+        userId: user._id,
+        ipAddress: clientIp,
+        action: 'ip_mismatch_login_attempt',
+        type: 'WARNING',
+        country: geo?.country ?? 'unknown',
+        IsVPN: geo?.privacy?.is_vpn ?? false,
+        isTor: geo?.privacy?.is_tor ?? false,
+        isProxy: geo?.privacy?.is_proxy ?? false,
+    });
+}
+```
 
 A rendszer hitelesítési folyamatait az alábbi aktivitási diagram mutatja be:
 
@@ -1386,6 +1470,36 @@ A rendszer MongoDB változásfolyamokat (`src/cache/ChangeStreamManager.js`) has
 - A menüelemek frissítései érvénytelenítik a menü gyorsítótár kulcsait.
 - A felhasználói egyenleg változásai érvénytelenítik a hűség- és irányítópult gyorsítótárakat.
 - Az új rendelések érvénytelenítik a statisztika gyorsítótárakat.
+
+**ChangeStreamManager kulcs-érvénytelenítési logika (`src/cache/ChangeStreamManager.js`):**
+
+```javascript
+// insert / update / replace / delete eseményekre fut
+async function handleChange(collectionName, change) {
+    if (!WATCHED_OPS.has(change.operationType)) return;
+
+    const doc = change.fullDocument ?? { _id: change.documentKey?._id };
+
+    // OrderItems esetén a rendelés userId-ját kell feloldani aszinkron
+    let ids;
+    if (collectionName === COLLECTIONS.orderitems) {
+        ids = await resolveOrderItemsIds(doc);
+    } else {
+        const extractor = idExtractors[collectionName];
+        ids = extractor ? extractor(doc) : [doc._id];
+    }
+
+    // A KeyRegistry-ból kiszámolja az érintett Redis kulcsokat és törli őket
+    await invalidateKeys(collectionName, ids.filter(Boolean));
+}
+
+// Stream újraindítás hibától való felépülés esetén (5 s backoff)
+stream.on('error', (err) => {
+    activeStreams.delete(collectionName);
+    stream.close().catch(() => {});
+    setTimeout(() => watchCollection(collectionName), 5000);
+});
+```
 
 ##### Teljesítmény optimalizálás
 
@@ -1965,19 +2079,7 @@ Minden chatüzenet kliensoldalon van titkosítva (E2EE). A szerver csak a titkos
 <span id="backend-modellek-mongodb" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ### Backend modellek (MongoDB) {#backend-modellek-mongodb}
 
-#### User modell
-
-| Field | Type | Notes |
-|-------|------|-------|
-| username | String | Required, unique |
-| password | String | bcrypt hashed (10 rounds) |
-| email | String | Required, unique, validated |
-| isVerified | Boolean | Default false |
-| usertype | Enum | admin / student / parent / teacher / frozen / editor |
-| balance | Number | Wallet balance, default 0 |
-| isBanned | Boolean | Default false |
-| identity | Subdocument | E2EE identity fields |
-| devices | Array | Registered device info |
+A részletes entitásleírások — mezők, indexek, üzleti szabályok — az [5.2.3 fejezetben](#523-reszletes-entitasleirasok) találhatók.
 
 #### Gyorsítótárazás — Redis kulcs-regiszter
 
@@ -2074,45 +2176,79 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 
 ---
 
-<span id="9-teszteles-es-ervenyesites" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 9. Tesztelés és érvényesítés {#9-teszteles-es-ervenyesites}
-
-*(Szakasz to be completed)*
-
----
-
 <span id="10-felhasznaloi-kezikonyv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ## 10. Felhasználói kézikönyv {#10-felhasznaloi-kezikonyv}
 
-*(Szakasz to be completed)*
+*A felhasználói kézikönyv tartalma eltávolításra került.*
 
 ---
 
 <span id="11-telepites-es-karbantartas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ## 11. Telepítés és karbantartás {#11-telepites-es-karbantartas}
 
-*(Szakasz to be completed)*
+*A telepítési és karbantartási szakasz tartalma eltávolításra került.*
 
 ---
 
-<span id="12-kovetkeztetes-es-jovobeni-munka" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ## 12. Következtetés és jövőbeni munka {#12-kovetkeztetes-es-jovobeni-munka}
 
-*(Szakasz to be completed)*
+### 12.1 Összefoglalás {#121-osszefoglalas}
 
----
+A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési platformot valósít meg, amely a következő főbb funkciókat tartalmazza:
 
-<span id="13-hivatkozasok" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 13. Hivatkozások {#13-hivatkozasok}
+- **Többfaktoros hitelesítés**: reCAPTCHA v3, email-ellenőrzés, Redis/memória kettős fallback 2FA, DX-SnapTray companion alkalmazás.
+- **Szerepalapú hozzáférés-vezérlés**: négy felhasználói szerepkör (diák, szülő, admin, editor) teljes RBAC middleware-rel.
+- **Biztonságos fizetési rendszer**: PayPal, Google Pay és egyenleg-alapú fizetés, MongoDB natív tranzakcióval az atomicitás biztosítására.
+- **Hűségprogram**: pontgyűjtés, szintrendszer, automatikus kedvezmények, ünnepi bónuszok és pontromlás mechanizmus.
+- **E2EE üzenetküldés**: Double Ratchet + X3DH kulcscsere, IndexedDB-alapú kulcstárolás, kulcsmásolat és -visszaállítás.
+- **Valós idejű gyorsítótárazás**: Redis + MongoDB Change Stream alapú érvénytelenítési stratégia.
+- **Geobiztonsági kockázatelemzés**: VPN/Tor/Proxy detektálás, lehetetlen utazás ellenőrzés, IP HMAC-SHA256 hash (GDPR).
 
-*(Szakasz to be completed)*
+### 12.2 Jövőbeni fejlesztési irányok {#122-jovobeni-fejlesztesi-iranyok}
+
+| Terület | Leírás |
+|---|---|
+| Push értesítések | Web Push API integráció rendelésvisszajelzéshez és promóciókhoz |
+| Mobilalkalmazás | React Native vagy Flutter kliens natív mobil élményhez |
+| Automatikus árfolyam-frissítés | Devizakonverziós API integrálása a `convertCurrencyToUSD()` funkcióhoz |
+| Gépi tanulás alapú ajánlórendszer | Rendelési előzmények elemzése személyre szabott menüajánlatokhoz |
+| Grafikus analitika | Chart.js / Recharts alapú interaktív adatvizualizáció az admin dashboardon |
+| Sormérleg funkció | Napi büfésori hosszbecslés és csúcsidő-értesítő |
+| OAuth2 integráció | Google / Microsoft bejelentkezés opcionális alternatívaként |
+| Kétirányú szülő–diák üzenetküldés | E2EE chat kiterjesztése szülő–diák kommunikációs csatornával |
 
 ---
 
 <span id="14-mellekletek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ## 14. Mellékletek {#14-mellekletek}
 
-*(Szakasz to be completed)*
+### 14.1 Kulcsgenerátor parancsok {#141-kulcsgeneralas}
+
+```bash
+# JWT titkok generálása (Node.js REPL)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# IP_HASH_SECRET generálása
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 14.2 Redis kulcsnév-konvenciók {#142-redis-kulcsok}
+
+| Kulcs minta | Típus | TTL | Tartalom |
+|---|---|---|---|
+| `2fa:{userId}` | String | 1500 s | 2FA kihívás kód |
+| `2fa:pending:{userId}` | String (JSON) | 1500 s | Függőben lévő munkamenet adatok |
+| `2fa:approved:{userId}` | String | 600 s | Jóváhagyási jelző |
+| `e2ee:pubkey:{userId}` | String | 30 nap | E2EE nyilvános kulcs |
+| `rl:{hash}` | Sorted Set | ablakidő | Csúszó ablakos rate limit bejegyzések |
+| `login_attempts:{ip}` | String | 3600 s | Brute-force számláló |
+| `reg_attempts:{ip}` | String | 3600 s | Regisztrációs kísérlet számláló |
+| `student:loyalty:{userId}` | String (JSON) | változó | Hűségpont cache |
+| `admin:usercount` | String | változó | Felhasználószám cache |
+| `menu_item:{name}` | String (JSON) | változó | Menüelem cache |
+| `daily_menu:available` | String (JSON) | változó | Napi menü cache |
+
+
 
 
 

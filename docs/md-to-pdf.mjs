@@ -25,7 +25,7 @@ import { chromium }                   from "playwright";
 import { execSync }                   from "child_process";
 import { writeFileSync, unlinkSync,
          existsSync, readFileSync as readCss }                 from "fs";
-import { resolve }                    from "path";
+import { resolve, dirname, join }              from "path";
 
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
@@ -83,6 +83,33 @@ try {
 
 import { readFileSync } from "fs";
 let html = readFileSync(tmpHtml, "utf8");
+
+// ── Inline local SVG <img> tags as base64 data URIs ──────────────────────────
+// Chromium blocks loading external local files when opened via file:// protocol.
+// Replacing src="./path/to.svg" with a data URI ensures they always render.
+// HTML named entities (e.g. &ndash; &uacute;) are invalid XML and cause the
+// browser's XML parser to reject the SVG — so we decode them to Unicode first.
+const HTML_ENTITIES = {
+  '&nbsp;':'\u00A0','&ndash;':'–','&mdash;':'—','&hellip;':'…','&middot;':'·',
+  '&bull;':'•','&laquo;':'«','&raquo;':'»','&copy;':'©','&reg;':'®',
+  '&aacute;':'á','&Aacute;':'Á','&eacute;':'é','&Eacute;':'É',
+  '&iacute;':'í','&Iacute;':'Í','&oacute;':'ó','&Oacute;':'Ó',
+  '&ouml;':'ö','&Ouml;':'Ö','&uacute;':'ú','&Uacute;':'Ú',
+  '&uuml;':'ü','&Uuml;':'Ü','&szlig;':'ß','&ntilde;':'ñ','&Ntilde;':'Ñ',
+};
+function decodeSvgEntities(s) {
+  return s.replace(/&[a-zA-Z]+;/g, m => HTML_ENTITIES[m] ?? m);
+}
+
+const mdDir = dirname(mdPath);
+html = html.replace(/<img([^>]*)\bsrc="([^"]+\.svg)"([^>]*)>/gi, (match, before, src, after) => {
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) return match;
+  const svgPath = src.startsWith('/') ? src : join(mdDir, src);
+  if (!existsSync(svgPath)) return match;
+  const svgContent = decodeSvgEntities(readFileSync(svgPath, 'utf8'));
+  const b64 = Buffer.from(svgContent).toString('base64');
+  return `<img${before} src="data:image/svg+xml;base64,${b64}"${after}>`;
+});
 
 // ── Inject print CSS into marky's self-contained HTML ────────────────────────
 // Injected before </head> so it overrides theme styles only for layout/pagination.

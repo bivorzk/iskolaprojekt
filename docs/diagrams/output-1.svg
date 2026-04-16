@@ -1,1 +1,223 @@
-<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 823.57px; background-color: white;" viewBox="0 0 823.5703125 604" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:1px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#9370DB;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#my-svg [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="my-svg-DATA" data-look="classic"><rect style="" x="49.21484375" y="492" width="726.51171875" height="104"/><g class="cluster-label" transform="translate(374.486328125, 492)"><text x="37.984375" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="37.984375" y="16.0" dy="0">Adat réteg</tspan></text></g></g><g class="cluster" id="my-svg-BE" data-look="classic"><rect style="" x="8" y="210" width="654.90625" height="232"/><g class="cluster-label" transform="translate(305.53125, 210)"><text x="29.921875" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="29.921875" y="16.0" dy="0">Backend</tspan></text></g></g><g class="cluster" id="my-svg-FE" data-look="classic"><rect style="" x="206.4296875" y="8" width="609.140625" height="128"/><g class="cluster-label" transform="translate(478.6640625, 8)"><text x="32.3359375" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="32.3359375" y="16.0" dy="0">Frontend</tspan></text></g></g></g><g class="edgePaths"><path d="M387.863,111L374.708,115.167C361.552,119.333,335.241,127.667,322.085,138C308.93,148.333,308.93,160.667,308.93,173C308.93,185.333,308.93,197.667,308.93,207.333C308.93,217,308.93,224,308.93,227.5L308.93,231" id="my-svg-L_FEUI_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_FEUI_API_0" data-points="W3sieCI6Mzg3Ljg2MzQwMzMyMDMxMjUsInkiOjExMX0seyJ4IjozMDguOTI5Njg3NSwieSI6MTM2fSx7IngiOjMwOC45Mjk2ODc1LCJ5IjoxNzN9LHsieCI6MzA4LjkyOTY4NzUsInkiOjIxMH0seyJ4IjozMDguOTI5Njg3NSwieSI6MjM1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M308.93,289L308.93,295.167C308.93,301.333,308.93,313.667,308.93,325.333C308.93,337,308.93,348,308.93,353.5L308.93,359" id="my-svg-L_API_AUTH_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_AUTH_0" data-points="W3sieCI6MzA4LjkyOTY4NzUsInkiOjI4OX0seyJ4IjozMDguOTI5Njg3NSwieSI6MzI2fSx7IngiOjMwOC45Mjk2ODc1LCJ5IjozNjN9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M238.852,285.461L218.669,292.217C198.487,298.974,158.122,312.487,137.94,324.743C117.758,337,117.758,348,117.758,353.5L117.758,359" id="my-svg-L_API_LOGIC_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_LOGIC_0" data-points="W3sieCI6MjM4Ljg1MTU2MjUsInkiOjI4NS40NjA1NjM5NTU4NjQzfSx7IngiOjExNy43NTc4MTI1LCJ5IjozMjZ9LHsieCI6MTE3Ljc1NzgxMjUsInkiOjM2M31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M379.008,282.602L403.611,289.835C428.214,297.068,477.419,311.534,502.022,324.267C526.625,337,526.625,348,526.625,353.5L526.625,359" id="my-svg-L_API_PAY_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_PAY_0" data-points="W3sieCI6Mzc5LjAwNzgxMjUsInkiOjI4Mi42MDIxODkxMjYxNDM5fSx7IngiOjUyNi42MjUsInkiOjMyNn0seyJ4Ijo1MjYuNjI1LCJ5IjozNjN9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M117.758,417L117.758,421.167C117.758,425.333,117.758,433.667,117.758,442C117.758,450.333,117.758,458.667,117.758,467C117.758,475.333,117.758,483.667,119.724,491.416C121.69,499.165,125.623,506.329,127.589,509.911L129.556,513.494" id="my-svg-L_LOGIC_MONGO_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_LOGIC_MONGO_0" data-points="W3sieCI6MTE3Ljc1NzgxMjUsInkiOjQxN30seyJ4IjoxMTcuNzU3ODEyNSwieSI6NDQyfSx7IngiOjExNy43NTc4MTI1LCJ5Ijo0Njd9LHsieCI6MTE3Ljc1NzgxMjUsInkiOjQ5Mn0seyJ4IjoxMzEuNDgwMzkzNjI5ODA3NjgsInkiOjUxN31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M308.93,417L308.93,421.167C308.93,425.333,308.93,433.667,308.93,442C308.93,450.333,308.93,458.667,308.93,467C308.93,475.333,308.93,483.667,337.961,493.91C366.993,504.154,425.057,516.308,454.088,522.385L483.12,528.462" id="my-svg-L_AUTH_REDIS_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_AUTH_REDIS_0" data-points="W3sieCI6MzA4LjkyOTY4NzUsInkiOjQxN30seyJ4IjozMDguOTI5Njg3NSwieSI6NDQyfSx7IngiOjMwOC45Mjk2ODc1LCJ5Ijo0Njd9LHsieCI6MzA4LjkyOTY4NzUsInkiOjQ5Mn0seyJ4Ijo0ODcuMDM1MTU2MjUsInkiOjUyOS4yODE4NjE3ODE1ODY2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M192.516,402.957L230.059,409.464C267.603,415.971,342.69,428.986,380.234,439.66C417.777,450.333,417.777,458.667,417.777,467C417.777,475.333,417.777,483.667,428.696,491.901C439.614,500.136,461.45,508.271,472.369,512.339L483.287,516.407" id="my-svg-L_LOGIC_REDIS_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_LOGIC_REDIS_0" data-points="W3sieCI6MTkyLjUxNTYyNSwieSI6NDAyLjk1NzE3NzI2NzEwNX0seyJ4Ijo0MTcuNzc3MzQzNzUsInkiOjQ0Mn0seyJ4Ijo0MTcuNzc3MzQzNzUsInkiOjQ2N30seyJ4Ijo0MTcuNzc3MzQzNzUsInkiOjQ5Mn0seyJ4Ijo0ODcuMDM1MTU2MjUsInkiOjUxNy44MDM1MjY0NDgzNjI3fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M425.344,407.869L393.101,413.557C360.858,419.246,296.372,430.623,264.13,440.478C231.887,450.333,231.887,458.667,231.887,467C231.887,475.333,231.887,483.667,225.599,491.654C219.311,499.641,206.734,507.282,200.446,511.103L194.158,514.923" id="my-svg-L_PAY_MONGO_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_PAY_MONGO_0" data-points="W3sieCI6NDI1LjM0Mzc1LCJ5Ijo0MDcuODY4ODE4OTk5OTA3Mn0seyJ4IjoyMzEuODg2NzE4NzUsInkiOjQ0Mn0seyJ4IjoyMzEuODg2NzE4NzUsInkiOjQ2N30seyJ4IjoyMzEuODg2NzE4NzUsInkiOjQ5Mn0seyJ4IjoxOTAuNzM5NjMzNDEzNDYxNTUsInkiOjUxN31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M526.625,417L526.625,421.167C526.625,425.333,526.625,433.667,526.625,442C526.625,450.333,526.625,458.667,526.625,467C526.625,475.333,526.625,483.667,528.748,491.426C530.87,499.185,535.116,506.371,537.238,509.963L539.361,513.556" id="my-svg-L_PAY_REDIS_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_PAY_REDIS_0" data-points="W3sieCI6NTI2LjYyNSwieSI6NDE3fSx7IngiOjUyNi42MjUsInkiOjQ0Mn0seyJ4Ijo1MjYuNjI1LCJ5Ijo0Njd9LHsieCI6NTI2LjYyNSwieSI6NDkyfSx7IngiOjU0MS4zOTU1MDc4MTI1LCJ5Ijo1MTd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M627.66,520.521L641.895,515.767C656.13,511.014,684.6,501.507,698.835,492.587C713.07,483.667,713.07,475.333,713.07,467C713.07,458.667,713.07,450.333,713.07,437.5C713.07,424.667,713.07,407.333,713.07,388C713.07,368.667,713.07,347.333,713.07,326C713.07,304.667,713.07,283.333,713.07,264C713.07,244.667,713.07,227.333,713.07,212.5C713.07,197.667,713.07,185.333,713.07,173C713.07,160.667,713.07,148.333,700.55,138.201C688.03,128.069,662.99,120.139,650.47,116.173L637.95,112.208" id="my-svg-L_REDIS_FEUI_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REDIS_FEUI_0" data-points="W3sieCI6NjI3LjY2MDE1NjI1LCJ5Ijo1MjAuNTIwNzU3NTU2NzU0fSx7IngiOjcxMy4wNzAzMTI1LCJ5Ijo0OTJ9LHsieCI6NzEzLjA3MDMxMjUsInkiOjQ2N30seyJ4Ijo3MTMuMDcwMzEyNSwieSI6NDQyfSx7IngiOjcxMy4wNzAzMTI1LCJ5IjozOTB9LHsieCI6NzEzLjA3MDMxMjUsInkiOjMyNn0seyJ4Ijo3MTMuMDcwMzEyNSwieSI6MjYyfSx7IngiOjcxMy4wNzAzMTI1LCJ5IjoyMTB9LHsieCI6NzEzLjA3MDMxMjUsInkiOjE3M30seyJ4Ijo3MTMuMDcwMzEyNSwieSI6MTM2fSx7IngiOjYzNC4xMzY1OTY2Nzk2ODc1LCJ5IjoxMTF9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(308.9296875, 173)"><g class="label" data-id="L_FEUI_API_0" transform="translate(-65.25, -12)"><text x="65.25" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="65.25" y="16.0" dy="0">REST / WebSocket</tspan></text></g></g><g class="edgeLabel"><g class="label" data-id="L_API_AUTH_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_API_LOGIC_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_API_PAY_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_LOGIC_MONGO_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_AUTH_REDIS_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_LOGIC_REDIS_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_PAY_MONGO_0" transform="translate(0, 0)"></g></g><g class="edgeLabel"><g class="label" data-id="L_PAY_REDIS_0" transform="translate(0, 0)"></g></g><g class="edgeLabel" transform="translate(713.0703125, 326)"><g class="label" data-id="L_REDIS_FEUI_0" transform="translate(-30.1640625, -12)"><text x="30.1640625" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="30.1640625" y="16.0" dy="0">Pub/Sub</tspan></text></g></g></g><g class="nodes"><g class="node default" id="my-svg-flowchart-FEUI-0" data-look="classic" transform="translate(511, 72)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"/><g class="label" style="" transform="translate(-100, -24)"><rect/><text x="100.0" y="28.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="100.0" y="28.0" dy="0">React.js + Tailwind + Socket.IO</tspan></text></g></g><g class="node default" id="my-svg-flowchart-API-1" data-look="classic" transform="translate(308.9296875, 262)"><rect class="basic label-container" style="" x="-70.078125" y="-27" width="140.15625" height="54"/><g class="label" style="" transform="translate(-40.078125, -12)"><rect/><text x="40.078125" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="40.078125" y="16.0" dy="0">Express API</tspan></text></g></g><g class="node default" id="my-svg-flowchart-AUTH-2" data-look="classic" transform="translate(308.9296875, 390)"><rect class="basic label-container" style="" x="-66.4140625" y="-27" width="132.828125" height="54"/><g class="label" style="" transform="translate(-36.4140625, -12)"><rect/><text x="36.4140625" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="36.4140625" y="16.0" dy="0">JWT + 2FA</tspan></text></g></g><g class="node default" id="my-svg-flowchart-LOGIC-3" data-look="classic" transform="translate(117.7578125, 390)"><rect class="basic label-container" style="" x="-74.7578125" y="-27" width="149.515625" height="54"/><g class="label" style="" transform="translate(-44.7578125, -12)"><rect/><text x="44.7578125" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="44.7578125" y="16.0" dy="0">Üzleti logika</tspan></text></g></g><g class="node default" id="my-svg-flowchart-PAY-4" data-look="classic" transform="translate(526.625, 390)"><rect class="basic label-container" style="" x="-101.28125" y="-27" width="202.5625" height="54"/><g class="label" style="" transform="translate(-71.28125, -12)"><rect/><text x="71.28125" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="71.28125" y="16.0" dy="0">PayPal / Google Pay</tspan></text></g></g><g class="node default" id="my-svg-flowchart-MONGO-5" data-look="classic" transform="translate(146.30078125, 544)"><rect class="basic label-container" style="" x="-62.0859375" y="-27" width="124.171875" height="54"/><g class="label" style="" transform="translate(-32.0859375, -12)"><rect/><text x="32.0859375" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="32.0859375" y="16.0" dy="0">MongoDB</tspan></text></g></g><g class="node default" id="my-svg-flowchart-REDIS-6" data-look="classic" transform="translate(557.34765625, 544)"><rect class="basic label-container" style="" x="-70.3125" y="-27" width="140.625" height="54"/><g class="label" style="" transform="translate(-40.3125, -12)"><rect/><text x="40.3125" y="16.0" text-anchor="middle" font-family="trebuchet ms,verdana,arial,sans-serif" font-size="16"><tspan x="40.3125" y="16.0" dy="0">Redis + Lua</tspan></text></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs></svg>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 820" width="980" height="820" font-family="'Segoe UI',Arial,sans-serif" font-size="13">
+<defs>
+  <marker id="arr-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7c3aed"/></marker>
+  <marker id="arr-blue"   markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+  <marker id="arr-green"  markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#059669"/></marker>
+  <marker id="arr-gray"   markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#64748b"/></marker>
+  <marker id="arr-amber"  markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#d97706"/></marker>
+  <marker id="arr-pink"   markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#db2777"/></marker>
+  <filter id="sh"  x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="3"   flood-color="#00000018"/></filter>
+  <filter id="sh2" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#00000014"/></filter>
+  <linearGradient id="g-bg"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#eef2f7"/></linearGradient>
+  <linearGradient id="g-usr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#faf5ff"/><stop offset="100%" stop-color="#ede9fe"/></linearGradient>
+  <linearGradient id="g-fe"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#dbeafe"/></linearGradient>
+  <linearGradient id="g-be"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0fdf4"/><stop offset="100%" stop-color="#d1fae5"/></linearGradient>
+  <linearGradient id="g-da"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient>
+  <linearGradient id="g-mongo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+  <linearGradient id="g-redis" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fca5a5"/><stop offset="100%" stop-color="#ef4444"/></linearGradient>
+</defs>
+<rect width="980" height="820" fill="url(#g-bg)" rx="14"/>
+<text x="490" y="34" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a" letter-spacing="0.4">SnapTray &#x2013; Rendszerarchitekt&#xFA;ra</text>
+<line x1="200" y1="44" x2="780" y2="44" stroke="#cbd5e1" stroke-width="1.2"/>
+<rect x="18" y="52" width="944" height="116" rx="10" fill="url(#g-usr)" stroke="#a855f7" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="30" y="62" width="130" height="20" rx="10" fill="#7c3aed"/>
+<text x="95" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" letter-spacing="1">FELHASZN&#xC1;L&#xD3;K</text>
+<rect x="28"  y="86" width="180" height="70" rx="8" fill="#fff" stroke="#ddd6fe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="28"  y="86" width="180" height="4"  rx="3" fill="#7c3aed"/>
+<text x="118" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">Di&#xE1;k</text>
+<text x="118" y="124" text-anchor="middle" font-size="10" fill="#5b21b6">Rendel&#xE9;s &#xB7; &#xE9;tlap</text>
+<text x="118" y="138" text-anchor="middle" font-size="10" fill="#5b21b6">p&#xE9;nzt&#xE1;rca kezel&#xE9;s</text>
+<rect x="224" y="86" width="160" height="70" rx="8" fill="#fff" stroke="#ddd6fe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="224" y="86" width="160" height="4"  rx="3" fill="#7c3aed"/>
+<text x="304" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">Sz&#xFC;l&#x151;</text>
+<text x="304" y="124" text-anchor="middle" font-size="10" fill="#5b21b6">Gyermek rendel&#xE9;se</text>
+<text x="304" y="138" text-anchor="middle" font-size="10" fill="#5b21b6">fizet&#xE9;s kezel&#xE9;s</text>
+<rect x="410" y="86" width="160" height="70" rx="8" fill="#fff" stroke="#ddd6fe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="410" y="86" width="160" height="4"  rx="3" fill="#7c3aed"/>
+<text x="490" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">Adminisztr&#xE1;tor</text>
+<text x="490" y="124" text-anchor="middle" font-size="10" fill="#5b21b6">Men&#xFC; kezel&#xE9;s</text>
+<text x="490" y="138" text-anchor="middle" font-size="10" fill="#5b21b6">statisztik&#xE1;k &#xB7; riport</text>
+<rect x="596" y="86" width="160" height="70" rx="8" fill="#fff" stroke="#ddd6fe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="596" y="86" width="160" height="4"  rx="3" fill="#7c3aed"/>
+<text x="676" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">Szerkeszt&#x151;</text>
+<text x="676" y="124" text-anchor="middle" font-size="10" fill="#5b21b6">Csak megtekint&#xE9;s</text>
+<text x="676" y="138" text-anchor="middle" font-size="10" fill="#5b21b6">rendel&#xE9;s tiltott</text>
+<line x1="118" y1="156" x2="118" y2="208" stroke="#7c3aed" stroke-width="2"   marker-end="url(#arr-purple)"/>
+<line x1="304" y1="156" x2="304" y2="208" stroke="#7c3aed" stroke-width="2"   marker-end="url(#arr-purple)"/>
+<line x1="490" y1="156" x2="490" y2="208" stroke="#7c3aed" stroke-width="2"   marker-end="url(#arr-purple)"/>
+<line x1="676" y1="156" x2="676" y2="208" stroke="#7c3aed" stroke-width="2"   marker-end="url(#arr-purple)"/>
+<rect x="18" y="210" width="944" height="150" rx="10" fill="url(#g-fe)" stroke="#3b82f6" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="30" y="222" width="126" height="20" rx="10" fill="#2563eb"/>
+<text x="93" y="236" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" letter-spacing="1">FRONTEND R&#xC9;TEG</text>
+<text x="178" y="236" font-size="10" fill="#1e40af">React.js &#xB7; Tailwind CSS &#xB7; Socket.IO</text>
+<rect x="23"  y="246" width="190" height="102" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="23"  y="246" width="190" height="4"   rx="3" fill="#2563eb"/>
+<text x="118" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">Di&#xE1;k Dashboard</text>
+<text x="118" y="282" text-anchor="middle" font-size="10" fill="#1d4ed8">Rendel&#xE9;si oldal</text>
+<text x="118" y="296" text-anchor="middle" font-size="10" fill="#1d4ed8">&#xE9;tlap &#xB7; kos&#xE1;r</text>
+<text x="118" y="310" text-anchor="middle" font-size="10" fill="#1d4ed8">p&#xE9;nzt&#xE1;rca n&#xE9;zet</text>
+<text x="118" y="324" text-anchor="middle" font-size="10" fill="#1d4ed8">h&#x171;s&#xE9;gpontok</text>
+<rect x="219" y="246" width="170" height="102" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="219" y="246" width="170" height="4"   rx="3" fill="#2563eb"/>
+<text x="304" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">Sz&#xFC;l&#x151;i Dashboard</text>
+<text x="304" y="282" text-anchor="middle" font-size="10" fill="#1d4ed8">Gyermek rendel&#xE9;se</text>
+<text x="304" y="296" text-anchor="middle" font-size="10" fill="#1d4ed8">fizet&#xE9;si m&#xF3;dok</text>
+<text x="304" y="310" text-anchor="middle" font-size="10" fill="#1d4ed8">rendel&#xE9;s k&#xF6;vet&#xE9;s</text>
+<text x="304" y="324" text-anchor="middle" font-size="10" fill="#1d4ed8">egyenleg felt&#xF6;lt&#xE9;s</text>
+<rect x="405" y="246" width="170" height="102" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="405" y="246" width="170" height="4"   rx="3" fill="#2563eb"/>
+<text x="490" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">Admin Panel</text>
+<text x="490" y="282" text-anchor="middle" font-size="10" fill="#1d4ed8">Men&#xFC; kezel&#xE9;s</text>
+<text x="490" y="296" text-anchor="middle" font-size="10" fill="#1d4ed8">felhaszn&#xE1;l&#xF3;kezel&#xE9;s</text>
+<text x="490" y="310" text-anchor="middle" font-size="10" fill="#1d4ed8">statisztik&#xE1;k</text>
+<text x="490" y="324" text-anchor="middle" font-size="10" fill="#1d4ed8">riportok &#xB7; napl&#xF3;k</text>
+<rect x="591" y="246" width="170" height="102" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="591" y="246" width="170" height="4"   rx="3" fill="#2563eb"/>
+<text x="676" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">Szerkeszt&#x151;i N&#xE9;zet</text>
+<text x="676" y="282" text-anchor="middle" font-size="10" fill="#1d4ed8">Read-only m&#xF3;d</text>
+<text x="676" y="296" text-anchor="middle" font-size="10" fill="#1d4ed8">men&#xFC; b&#xF6;ng&#xE9;sz&#xE9;s</text>
+<text x="676" y="310" text-anchor="middle" font-size="10" fill="#1d4ed8">rendel&#xE9;s tiltott</text>
+<text x="676" y="324" text-anchor="middle" font-size="10" fill="#1d4ed8">isEditor prop</text>
+<rect x="777" y="246" width="178" height="102" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="777" y="246" width="178" height="4"   rx="3" fill="#2563eb"/>
+<text x="866" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">Auth &amp; Chat</text>
+<text x="866" y="282" text-anchor="middle" font-size="10" fill="#1d4ed8">Login &#xB7; 2FA &#xB7; regisztr.</text>
+<text x="866" y="296" text-anchor="middle" font-size="10" fill="#1d4ed8">jelsz&#xF3; visszaall&#xED;t&#xE1;s</text>
+<text x="866" y="310" text-anchor="middle" font-size="10" fill="#1d4ed8">E2EE chat UI</text>
+<text x="866" y="324" text-anchor="middle" font-size="10" fill="#1d4ed8">Socket.IO kliens</text>
+<line x1="490" y1="362" x2="490" y2="402" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arr-blue)"/>
+<rect x="425" y="368" width="130" height="20" rx="10" fill="#1d4ed8"/>
+<text x="490" y="382" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">REST &#xB7; WebSocket</text>
+<rect x="18" y="404" width="944" height="250" rx="10" fill="url(#g-be)" stroke="#10b981" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="30" y="416" width="120" height="20" rx="10" fill="#059669"/>
+<text x="90" y="430" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" letter-spacing="1">BACKEND R&#xC9;TEG</text>
+<text x="168" y="430" font-size="10" fill="#065f46">Node.js / Express.js</text>
+<rect x="270" y="438" width="440" height="52" rx="8" fill="#fff" stroke="#6ee7b7" stroke-width="1.8" filter="url(#sh)"/>
+<rect x="270" y="438" width="440" height="5"  rx="4" fill="#059669"/>
+<text x="490" y="461" text-anchor="middle" font-size="13" font-weight="700" fill="#064e3b">Express API Gateway</text>
+<text x="490" y="479" text-anchor="middle" font-size="10" fill="#047857">CORS &#xB7; Helmet &#xB7; HPP &#xB7; Rate Limiter &#xB7; Sanitiz&#xE1;ci&#xF3; &#xB7; JWT verif.</text>
+<line x1="310" y1="490" x2="118" y2="504" stroke="#059669" stroke-width="1.3" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<line x1="380" y1="490" x2="304" y2="504" stroke="#059669" stroke-width="1.3" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<line x1="490" y1="490" x2="490" y2="504" stroke="#059669" stroke-width="1.6" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<line x1="600" y1="490" x2="676" y2="504" stroke="#059669" stroke-width="1.3" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<line x1="668" y1="490" x2="862" y2="504" stroke="#059669" stroke-width="1.3" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<rect x="23"  y="504" width="190" height="136" rx="8" fill="#fff" stroke="#a7f3d0" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="23"  y="504" width="190" height="4"   rx="3" fill="#059669"/>
+<text x="118" y="524" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Auth modul</text>
+<text x="118" y="540" text-anchor="middle" font-size="10" fill="#065f46">JWT munkamenet</text>
+<text x="118" y="554" text-anchor="middle" font-size="10" fill="#065f46">bcrypt jelszóhash</text>
+<text x="118" y="568" text-anchor="middle" font-size="10" fill="#065f46">2FA (TOTP)</text>
+<text x="118" y="582" text-anchor="middle" font-size="10" fill="#065f46">email-verif.</text>
+<text x="118" y="596" text-anchor="middle" font-size="10" fill="#065f46">jelsz&#xF3;visszaall&#xED;t&#xE1;s</text>
+<text x="118" y="610" text-anchor="middle" font-size="10" fill="#065f46">eldobhat&#xF3; email sz&#x171;r&#xE9;s</text>
+<rect x="219" y="504" width="170" height="136" rx="8" fill="#fff" stroke="#a7f3d0" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="219" y="504" width="170" height="4"   rx="3" fill="#059669"/>
+<text x="304" y="524" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Rendel&#xE9;s modul</text>
+<text x="304" y="540" text-anchor="middle" font-size="10" fill="#065f46">men&#xFC; &#xB7; kos&#xE1;r kezel&#xE9;s</text>
+<text x="304" y="554" text-anchor="middle" font-size="10" fill="#065f46">rendel&#xE9;s lead&#xE1;s</text>
+<text x="304" y="568" text-anchor="middle" font-size="10" fill="#065f46">h&#x171;s&#xE9;gpontok</text>
+<text x="304" y="582" text-anchor="middle" font-size="10" fill="#065f46">QR k&#xF3;d &#xB7; allerg&#xE9;n</text>
+<text x="304" y="596" text-anchor="middle" font-size="10" fill="#065f46">sz&#xFC;l&#x151;&#x2013;di&#xE1;k deleg&#xE1;l&#xE1;s</text>
+<text x="304" y="610" text-anchor="middle" font-size="10" fill="#065f46">k&#xE9;szletk&#xF6;vet&#xE9;s</text>
+<rect x="405" y="504" width="170" height="136" rx="8" fill="#fff" stroke="#a7f3d0" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="405" y="504" width="170" height="4"   rx="3" fill="#059669"/>
+<text x="490" y="524" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Fizet&#xE9;si modul</text>
+<text x="490" y="540" text-anchor="middle" font-size="10" fill="#065f46">PayPal integr&#xE1;ci&#xF3;</text>
+<text x="490" y="554" text-anchor="middle" font-size="10" fill="#065f46">Google Pay API</text>
+<text x="490" y="568" text-anchor="middle" font-size="10" fill="#065f46">p&#xE9;nzt&#xE1;rca egyenleg</text>
+<text x="490" y="582" text-anchor="middle" font-size="10" fill="#065f46">atomi tranzakci&#xF3;k</text>
+<text x="490" y="596" text-anchor="middle" font-size="10" fill="#065f46">tranzakci&#xF3; napl&#xF3;</text>
+<text x="490" y="610" text-anchor="middle" font-size="10" fill="#065f46">audit trail</text>
+<rect x="591" y="504" width="170" height="136" rx="8" fill="#fff" stroke="#a7f3d0" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="591" y="504" width="170" height="4"   rx="3" fill="#059669"/>
+<text x="676" y="524" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Chat / WS modul</text>
+<text x="676" y="540" text-anchor="middle" font-size="10" fill="#065f46">Socket.IO szerver</text>
+<text x="676" y="554" text-anchor="middle" font-size="10" fill="#065f46">E2EE &#xFC;zenetek</text>
+<text x="676" y="568" text-anchor="middle" font-size="10" fill="#065f46">Redis Pub/Sub</text>
+<text x="676" y="582" text-anchor="middle" font-size="10" fill="#065f46">szoba kezel&#xE9;s</text>
+<text x="676" y="596" text-anchor="middle" font-size="10" fill="#065f46">val&#xF3;s idej&#x171; &#xE9;rtes&#xED;t&#xE9;s</text>
+<text x="676" y="610" text-anchor="middle" font-size="10" fill="#065f46">WebSocket kapcsolat</text>
+<rect x="777" y="504" width="178" height="136" rx="8" fill="#fff" stroke="#a7f3d0" stroke-width="1.3" filter="url(#sh2)"/>
+<rect x="777" y="504" width="178" height="4"   rx="3" fill="#059669"/>
+<text x="866" y="524" text-anchor="middle" font-size="11" font-weight="700" fill="#064e3b">Biztons&#xE1;g</text>
+<text x="866" y="540" text-anchor="middle" font-size="10" fill="#065f46">rate limiting</text>
+<text x="866" y="554" text-anchor="middle" font-size="10" fill="#065f46">geo-kock&#xE1;zat elemz&#xE9;s</text>
+<text x="866" y="568" text-anchor="middle" font-size="10" fill="#065f46">IP blokkol&#xE1;s</text>
+<text x="866" y="582" text-anchor="middle" font-size="10" fill="#065f46">security audit log</text>
+<text x="866" y="596" text-anchor="middle" font-size="10" fill="#065f46">SecurityLogs MongoDB</text>
+<text x="866" y="610" text-anchor="middle" font-size="10" fill="#065f46">locationRiskAnalyzer</text>
+<!-- Collect bus -->
+<line x1="118" y1="640" x2="118" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="304" y1="640" x2="304" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="490" y1="640" x2="490" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="676" y1="640" x2="676" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="866" y1="640" x2="866" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="118" y1="656" x2="866" y2="656" stroke="#64748b" stroke-width="1.2"/>
+<line x1="175" y1="656" x2="175" y2="678" stroke="#d97706" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+<line x1="435" y1="656" x2="435" y2="678" stroke="#ef4444" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+<line x1="770" y1="656" x2="770" y2="678" stroke="#db2777" stroke-width="1.8" marker-end="url(#arr-pink)"/>
+<!-- Data layer -->
+<rect x="18" y="670" width="944" height="134" rx="10" fill="url(#g-da)" stroke="#d97706" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="30" y="680" width="96" height="20" rx="10" fill="#d97706"/>
+<text x="78" y="694" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" letter-spacing="1">ADAT R&#xC9;TEG</text>
+<!-- MongoDB card with cylinder icon -->
+<rect x="44" y="704" width="272" height="88" rx="6" fill="#fff" stroke="#fcd34d" stroke-width="1.4" filter="url(#sh2)"/>
+<rect x="44" y="704" width="272" height="4" rx="3" fill="#d97706"/>
+<!-- Cylinder body -->
+<ellipse cx="82" cy="732" rx="17" ry="7" fill="url(#g-mongo)" stroke="#b45309" stroke-width="1.1"/>
+<rect x="65" y="732" width="34" height="30" fill="#f59e0b"/>
+<rect x="65" y="732" width="34" height="2"  fill="#d97706"/>
+<rect x="65" y="756" width="34" height="2"  fill="#b45309"/>
+<ellipse cx="82" cy="762" rx="17" ry="7" fill="#fbbf24" stroke="#b45309" stroke-width="1.1"/>
+<ellipse cx="82" cy="732" rx="17" ry="7" fill="url(#g-mongo)" stroke="#b45309" stroke-width="1.1"/>
+<line x1="65" y1="741" x2="99" y2="741" stroke="#b45309" stroke-width="0.8" stroke-dasharray="3,2"/>
+<line x1="65" y1="750" x2="99" y2="750" stroke="#b45309" stroke-width="0.8" stroke-dasharray="3,2"/>
+<text x="200" y="724" text-anchor="middle" font-size="13" font-weight="700" fill="#78350f">MongoDB</text>
+<text x="200" y="742" text-anchor="middle" font-size="10" fill="#92400e">Perzisztens adat&#xE1;r &#xB7; Mongoose ODM</text>
+<text x="200" y="756" text-anchor="middle" font-size="10" fill="#92400e">Users &#xB7; Orders &#xB7; Menu &#xB7; Payments</text>
+<text x="200" y="770" text-anchor="middle" font-size="10" fill="#92400e">SecurityLogs &#xB7; indexek &#xB7; Change Streams</text>
+<!-- Redis card with cylinder icon -->
+<rect x="328" y="704" width="214" height="88" rx="6" fill="#fff" stroke="#fca5a5" stroke-width="1.4" filter="url(#sh2)"/>
+<rect x="328" y="704" width="214" height="4" rx="3" fill="#ef4444"/>
+<ellipse cx="365" cy="732" rx="15" ry="6" fill="url(#g-redis)" stroke="#b91c1c" stroke-width="1.1"/>
+<rect x="350" y="732" width="30" height="28" fill="#f87171"/>
+<rect x="350" y="732" width="30" height="2"  fill="#ef4444"/>
+<rect x="350" y="754" width="30" height="2"  fill="#b91c1c"/>
+<ellipse cx="365" cy="760" rx="15" ry="6" fill="#fca5a5" stroke="#b91c1c" stroke-width="1.1"/>
+<ellipse cx="365" cy="732" rx="15" ry="6" fill="url(#g-redis)" stroke="#b91c1c" stroke-width="1.1"/>
+<line x1="350" y1="740" x2="380" y2="740" stroke="#b91c1c" stroke-width="0.8" stroke-dasharray="3,2"/>
+<line x1="350" y1="748" x2="380" y2="748" stroke="#b91c1c" stroke-width="0.8" stroke-dasharray="3,2"/>
+<text x="452" y="724" text-anchor="middle" font-size="13" font-weight="700" fill="#78350f">Redis + Lua</text>
+<text x="452" y="742" text-anchor="middle" font-size="10" fill="#92400e">Cache &#xB7; munkamenetek &#xB7; rate limit</text>
+<text x="452" y="756" text-anchor="middle" font-size="10" fill="#92400e">atomi m&#x171;veletek &#xB7; Pub/Sub</text>
+<!-- External services card with cloud icon -->
+<rect x="556" y="704" width="398" height="88" rx="6" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="1.4" filter="url(#sh2)"/>
+<rect x="556" y="704" width="398" height="4" rx="3" fill="#db2777"/>
+<g transform="translate(572,720)">
+  <ellipse cx="18" cy="20" rx="14" ry="11" fill="#fbcfe8" stroke="#db2777" stroke-width="1.2"/>
+  <ellipse cx="32" cy="14" rx="12" ry="11" fill="#fbcfe8" stroke="#db2777" stroke-width="1.2"/>
+  <ellipse cx="44" cy="22" rx="10" ry="10" fill="#fbcfe8" stroke="#db2777" stroke-width="1.2"/>
+  <rect x="8" y="22" width="48" height="12" fill="#fbcfe8"/>
+  <line x1="8"  y1="34" x2="56" y2="34" stroke="#db2777" stroke-width="1.2"/>
+</g>
+<text x="740" y="724" text-anchor="middle" font-size="13" font-weight="700" fill="#9d174d">K&#xFC;ls&#x151; szolg&#xE1;ltat&#xE1;sok</text>
+<text x="740" y="742" text-anchor="middle" font-size="10" fill="#be185d">PayPal API &#xB7; Google Pay API</text>
+<text x="740" y="756" text-anchor="middle" font-size="10" fill="#be185d">SMTP e-mail k&#xFC;ld&#xE9;s</text>
+<text x="740" y="770" text-anchor="middle" font-size="10" fill="#be185d">iplocate.io (geo/VPN detekt&#xE1;l&#xE1;s)</text>
+<!-- Pub/Sub return arrow -->
+<path d="M 542 748 C 958 748 958 297 954 297" fill="none" stroke="#ef4444" stroke-width="1.6" stroke-dasharray="6,3" marker-end="url(#arr-amber)"/>
+<rect x="942" y="490" width="14" height="68" rx="4" fill="#ffffffcc"/>
+<text transform="rotate(90,949,524)" x="949" y="524" text-anchor="middle" font-size="9" fill="#b91c1c">Pub/Sub visszajelz&#xE9;s</text>
+<!-- Legend -->
+<line x1="18"  y1="810" x2="962" y2="810" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="40"  y1="815" x2="70"  y2="815" stroke="#7c3aed" stroke-width="2"   marker-end="url(#arr-purple)"/>
+<text x="76"  y="819" font-size="10" fill="#475569">Felhaszn&#xE1;l&#xF3; interakci&#xF3;</text>
+<line x1="230" y1="815" x2="260" y2="815" stroke="#2563eb" stroke-width="2"   marker-end="url(#arr-blue)"/>
+<text x="266" y="819" font-size="10" fill="#475569">REST/WebSocket</text>
+<line x1="400" y1="815" x2="430" y2="815" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-green)"/>
+<text x="436" y="819" font-size="10" fill="#475569">Gateway routing</text>
+<line x1="570" y1="815" x2="600" y2="815" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+<text x="606" y="819" font-size="10" fill="#475569">Adat el&#xE9;r&#xE9;s</text>
+<line x1="720" y1="815" x2="750" y2="815" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-amber)"/>
+<text x="756" y="819" font-size="10" fill="#475569">Pub/Sub visszajelz&#xE9;s</text>
+</svg>
