@@ -1,8 +1,25 @@
 
 
+<div class="cover" style="page-break-after: always; display: flex; flex-direction: column; min-height: 90vh;">
+  <div style="text-align: center;">
+    <img src="logo.png" alt="Győri SZC Bolyai János Technikum" style="height: 90px;">
+  </div>
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+    <h1 style="font-size: 36pt; font-weight: bold; line-height: 1.1; margin-bottom: 0.15em; text-align: center; letter-spacing: -0.5pt;">SnapTray</h1>
+    <p style="margin-top: 0.8em; text-indent: 0; font-size: 14pt;"><strong>Szoftverfejlesztő és -tesztelő technikus</strong></p>
+    <br><br>
+    <p style="text-indent: 0; font-size: 12pt;"><strong>készítette:</strong></p>
+    <p style="text-indent: 0; font-size: 12pt;">Kugli Balázs 13.A</p>
+    <p style="text-indent: 0; font-size: 12pt;">Hargitai Tamás 13.A</p>
+    <p style="text-indent: 0; font-size: 12pt;">Peti Aliz Andrea 13.A</p>
+    <br><br>
+    <p style="text-indent: 0; font-size: 12pt;"><strong>2026</strong></p>
+  </div>
+</div>
+
 # SnapTray szoftver dokumentációja
 
-## Tartalomjegyzék
+## 1 Tartalomjegyzék
 
 - [1. Bevezetés](#1-bevezetes)
 - [2. Rendszer áttekintése](#2-rendszer-attekintese)
@@ -46,6 +63,67 @@
 - [12. Következtetés és jövőbeni munka](#12-kovetkeztetes-es-jovobeni-munka)
 - [13. Hivatkozások](#13-hivatkozasok)
 - [14. Mellékletek](#14-mellekletek)
+
+---
+
+## 2 Kivonat
+
+Jelen vizsgaremek egy olyan innovatív elektronikus napló fejlesztését és
+implementációját mutatja be, amely a hagyományos adminisztrációs kereteket túllépve a
+modern pedagógiai szemléletet és a digitális ösztönzőrendszereket ötvözi. A projekt alapvető
+célkitűzése egy olyan felhasználóbarát platform létrehozása volt, amely nem csupán az
+érdemjegyek és mulasztások rögzítésére szolgál, hanem aktív szerepet vállal a tanulói
+elköteleződés növelésében és az oktatási folyamat transzparenciájában. A szoftver fejlesztése
+során a korszerű webes technológiák alkalmazása mellett kiemelt figyelmet fordítottam a
+reszponzív kialakításra és a magas szintű adatbiztonságra, biztosítva ezzel a zökkenőmentes
+használatot minden eszközön.
+
+A dolgozat központi részét a rendszerbe integrált motivációs eszközök részletezése
+alkotja, amelyek a gamifikáció és a pozitív visszacsatolás elveire épülnek. A fejlesztés során
+beépítettem egy egyedi fejlődés-vizualizációs modult, amely interaktív grafikonok
+segítségével teszi láthatóvá a diákok számára saját tanulmányi előmenetelüket, ezáltal erősítve
+a belső motivációt és a tudatosságot. A rendszer emellett digitális elismerésekkel és
+jelvényekkel jutalmazza a mérföldkövek elérését, például a javuló tendenciát vagy a példás
+feladatmegoldásokat, ami a kompetenciaérzet növelésével ösztönzi a tanulókat a jobb
+teljesítményre.
+
+A technikai megvalósítás során a tiszta kód elveit és a skálázható adatbázis-
+architektúrát követtem, hogy a szoftver hosszú távon is fenntartható és bővíthető maradjon.
+Az elkészült vizsgaremek eredményei alátámasztják, hogy egy jól strukturált digitális
+környezet képes csökkenteni a pedagógusok adminisztrációs terheit, miközben a diákok
+számára támogató, ösztönző közeget teremt. Az összegzés rávilágít arra, hogy az elektronikus
+napló a jövőben nem csupán egy statikus adattárként, hanem egyfajta digitális mentorként is
+funkcionálhat az oktatási intézmények mindennapjaiban.
+
+---
+
+## 3 Abstract
+
+This thesis project presents the development and implementation of an innovative
+electronic gradebook that transcends traditional administrative boundaries by blending
+modern pedagogical approaches with digital incentive systems. The fundamental objective of
+the project was to create a user-friendly platform that serves not only as a record-keeper for
+grades and attendance but also plays an active role in increasing student engagement and the
+transparency of the educational process. During the software development phase, alongside
+the application of contemporary web technologies, significant emphasis was placed on
+responsive design and high-level data security, ensuring seamless usability across all devices.
+
+The central part of the work details the motivational tools integrated into the system,
+which are built upon the principles of gamification and positive feedback. During
+development, I incorporated a unique progress visualization module that utilizes interactive
+charts to make academic advancement visible to students, thereby strengthening intrinsic
+motivation and self-awareness. Additionally, the system rewards the achievement of specific
+milestones—such as improving trends or exemplary assignment completion—with digital
+accolades and badges, encouraging students toward better performance by boosting their
+sense of competence.
+
+Regarding technical execution, I followed clean code principles and a scalable
+database architecture to ensure the software remains sustainable and expandable in the long
+term. The results of this thesis project demonstrate that a well-structured digital environment
+is capable of reducing the administrative burden on educators while creating a supportive and
+stimulating atmosphere for students. The summary highlights that, in the future, the electronic
+gradebook can function not merely as a static repository of data but as a kind of digital mentor
+in the daily life of educational institutions.
 
 ---
 

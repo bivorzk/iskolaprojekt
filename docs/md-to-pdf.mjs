@@ -26,6 +26,10 @@ import { execSync }                   from "child_process";
 import { writeFileSync, unlinkSync,
          existsSync, readFileSync as readCss }                 from "fs";
 import { resolve, dirname, join }              from "path";
+import { fileURLToPath }              from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
 
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
@@ -112,32 +116,12 @@ html = html.replace(/<img([^>]*)\bsrc="([^"]+\.svg)"([^>]*)>/gi, (match, before,
 });
 
 // ── Inject print CSS into marky's self-contained HTML ────────────────────────
-// Injected before </head> so it overrides theme styles only for layout/pagination.
-const userCss = existsSync("styles.css") ? readCss("styles.css", "utf8") : "";
-const printCss = `
-<style>
-${userCss}
-  @page {
-    size: A4;
-    margin: 2.5cm 2cm 2.5cm 3cm; /* wider left margin for binding */
-  }
+// Injected just before </body> so it is the LAST stylesheet processed,
+// guaranteeing it wins over any marky theme styles (even those in <body>).
+const cssPath = join(__dirname, "styles.css");
+const userCss = existsSync(cssPath) ? readCss(cssPath, "utf8") : "";
 
-  body { background: #fff !important; }
-
-  /* Avoid breaking inside code blocks, tables, diagrams */
-  pre, table, figure, .mermaid { page-break-inside: avoid; }
-
-  /* Chapter breaks */
-  h1 { page-break-before: always; }
-  h1:first-of-type { page-break-before: avoid; }
-  h1, h2, h3, h4 { page-break-after: avoid; }
-
-  /* Print-friendly links */
-  a { color: inherit; }
-</style>
-`;
-
-html = html.replace("</head>", `${printCss}\n</head>`);
+html = html.replace("</body>", `<style>\n${userCss}\n</style>\n</body>`);
 
 // ── Write updated HTML (with print CSS injected) back to temp file ───────────
 writeFileSync(tmpHtml, html, "utf8");
@@ -168,7 +152,7 @@ await page.pdf({
     <div style="font-size:9px;width:100%;text-align:center;color:#888;font-family:sans-serif;">
       <span class="pageNumber"></span> / <span class="totalPages"></span>
     </div>`,
-  margin: { top: "2.5cm", right: "2cm", bottom: "2.5cm", left: "3cm" },
+  margin: { top: "2.5cm", right: "2.5cm", bottom: "2.5cm", left: "2.5cm" },
 });
 
 await browser.close();

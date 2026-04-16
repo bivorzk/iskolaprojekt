@@ -1,122 +1,290 @@
+/* ============================================================
+   styles.css � extracted from sablon.docx (Bolyai J�nos Technikum)
+   All values derived directly from word/styles.xml and word/document.xml.
+   Unit conversions: twips � pt  (divide by 20)
+                     half-pts � pt (divide by 2)
+                     line240 � ratio (divide by 240)
+   Page: A4 (11906�16838 twips), margins 2.5 cm all sides (1417 twips each)
+   ============================================================ */
+
+/* �� Page ����������������������������������������������������� */
 @page {
-  size: A4 landscape;
-  margin: 1.5cm;
+  size: A4;
+  margin: 2.5cm;   /* 1417 twips = 2.5 cm on all four sides */
 }
 
-body {
-  font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+/* �� Body / Normal �������������������������������������������� */
+/* Normal: Times New Roman, sz=24 (12pt), after=120 (6pt),
+   line=360 (1.5x), firstLine=709 (1.25 cm), jc=both          */
+body,
+main,
+main.container,
+#root {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+  text-align: justify !important;
+  color: #000000 !important;
+  background: #ffffff !important;
 }
 
-.fullpage {
-  page-break-before: always;
-  page-break-after: always;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
+p,
+body p,
+main p,
+main.container p,
+#root p,
+article p,
+section p,
+.markdown p,
+.content p {
+  margin-top: 0 !important;
+  margin-bottom: 6pt !important;
+  text-indent: 1.25cm !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+  font-family: "Times New Roman", Times, serif !important;
+  text-align: justify !important;
 }
 
-img {
-  display: block;
-  max-width: 98%;
-  max-height: 85vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin: 1rem auto;
+/* Cover page — override body paragraph rules */
+main.container .cover p,
+main .cover p,
+#root .cover p,
+body .cover p,
+.cover p,
+main.container .cover h1,
+main .cover h1,
+#root .cover h1,
+body .cover h1,
+.cover h1,
+.cover h2 {
+  text-align: center !important;
+  text-indent: 0 !important;
+  line-height: 1.4 !important;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1.5rem 0;
-  font-size: 0.9rem;
-  background: #fff;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+/* �� Headings ������������������������������������������������� */
+
+/* H1 � Cmsor1: sz=48 (24pt), bold, before=360 (18pt), after=480 (24pt) */
+h1 {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 24pt !important;
+  font-weight: bold !important;
+  line-height: 1.2 !important;
+  margin-top: 18pt !important;
+  margin-bottom: 24pt !important;
+  text-indent: 0 !important;
+  text-align: left;          /* no !important — cover page overrides this inline */
+  page-break-after: avoid;
 }
 
-th, td {
-  padding: 12px 15px;
+/* H2 � Cmsor2: sz=36 (18pt), bold, before=120 (6pt), after=240 (12pt) */
+h2 {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 18pt !important;
+  font-weight: bold !important;
+  line-height: 1.2 !important;
+  margin-top: 6pt !important;
+  margin-bottom: 12pt !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  page-break-after: avoid;
+}
+
+/* H3 � Cmsor3: sz=28 (14pt), bold, before=240 (12pt), after=0 */
+h3 {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 14pt !important;
+  font-weight: bold !important;
+  line-height: 1.2 !important;
+  margin-top: 12pt !important;
+  margin-bottom: 0 !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  page-break-after: avoid;
+}
+
+/* H4 � Cmsor4: sz=12pt (inherited), bold, before=80 (4pt), after=40 (2pt) */
+h4 {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 12pt !important;
+  font-weight: bold !important;
+  line-height: 1.2 !important;
+  margin-top: 4pt !important;
+  margin-bottom: 2pt !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  page-break-after: avoid;
+}
+
+/* �� Title ���������������������������������������������������� */
+/* Cm (Title): sz=72 (36pt), bold, center, line=240 (1.0�),
+   after=80 (4pt), letter-spacing=-10 (-0.5pt)                 */
+.title {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 36pt;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.0;
+  margin-top: 0;
+  margin-bottom: 4pt;
+  text-indent: 0;
+  letter-spacing: -0.5pt;
+}
+
+/* �� Subtitle ������������������������������������������������� */
+/* Alcm (Subtitle): sz=28 (14pt), color=#595959, tracking=+0.75pt */
+.subtitle {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14pt;
+  color: #595959;
+  letter-spacing: 0.75pt;
+  text-indent: 0;
+}
+
+/* �� Code block � K�dr�szlet ���������������������������������� */
+/* sz=22 (11pt), Courier New, fill=#E7E6E6, after=0, firstLine=0 */
+pre, code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11pt;
+  background-color: #E7E6E6;
   text-align: left;
-  border-bottom: 1px solid #e1e5e9;
+  text-indent: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0;
 }
-
-th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-}
-
-tr:hover { background: #f8f9fa; }
-tr:last-child td { border-bottom: none; }
 
 pre {
-  background: #f8f9fa;
-  border: 1px solid #e1e5e9;
-  border-radius: 6px;
-  padding: 1rem;
-  overflow-x: auto;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  margin: 1rem 0;
-  page-break-inside: auto;
-  orphans: 3;
-  widows: 3;
+  display: block;
+  padding: 0.5em 0.8em;
 }
 
 code {
-  background: #f1f3f4;
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 0.85rem;
-  color: #e83e8c;
+  display: inline;
+  padding: 0.1em 0.3em;
 }
 
-pre code { 
-  background: none; 
-  padding: 0; 
-  color: inherit; 
+/* �� Hyperlinks � Hiperhivatkozs ������������������������������ */
+/* color=#0563C1, underline */
+a {
+  color: #0563C1;
+  text-decoration: underline;
 }
 
-h1 { 
-  font-size: 2.5rem; 
-  color: #1a1a1a; 
-  border-bottom: 3px solid #007acc; 
-  padding-bottom: 0.5rem; 
-  page-break-before: always; 
-  page-break-after: avoid; 
-}
-h2 { 
-  font-size: 2rem; 
-  color: #2d3748; 
-  border-bottom: 2px solid #e1e5e9; 
-  padding-bottom: 0.3rem; 
-  page-break-after: avoid; 
-  margin-top: 3rem; 
-}
-h3 { font-size: 1.5rem; color: #4a5568; page-break-after: avoid; }
-h4 { font-size: 1.25rem; color: #718096; page-break-after: avoid; }
-
-ul, ol { margin: 1rem 0; padding-left: 2rem; }
-li { margin: 0.5rem 0; }
-
-.directory-tree {
-  page-break-inside: avoid;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 6px;
-  border: 1px solid #e1e5e9;
+/* �� Quote � Id�zet ������������������������������������������� */
+/* italic, color=#404040, center, before=160 (8pt) */
+blockquote {
+  font-style: italic;
+  color: #404040;
+  text-align: center;
+  margin-top: 8pt;
+  text-indent: 0;
 }
 
-.schema-table { font-size: 0.85rem; }
-.schema-table th { background: #343a40; color: #fff; }
-.schema-table tr:nth-child(even) { background: #f8f9fa; }
+/* �� Intense Quote � Kiemelt id�zet �������������������������� */
+/* italic, color=#2F5496, borders top/bottom, before=after=18pt,
+   ind left=right=864 (43.2pt), center                          */
+.intense-quote {
+  font-style: italic;
+  color: #2F5496;
+  border-top: 1px solid #2F5496;
+  border-bottom: 1px solid #2F5496;
+  padding: 18pt 43.2pt;
+  margin: 18pt 0;
+  text-align: center;
+  text-indent: 0;
+}
+
+/* �� Caption � K�pal��r�s ������������������������������������� */
+/* sz=22 (11pt), bold, center, before=240 (12pt), after=200 (10pt),
+   line=240 (1.0�), firstLine=0                                  */
+caption, .caption {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.0;
+  margin-top: 12pt;
+  margin-bottom: 10pt;
+  text-indent: 0;
+  caption-side: bottom;
+}
+
+/* �� Tables � T�bl�zat r�csos ��������������������������������� */
+/* Grid Table: all borders single 1px, cell padding left/right=108 (5.4pt) */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 6pt;
+  font-size: 12pt;
+  line-height: 1.0;
+}
+
+table, th, td {
+  border: 1px solid #000000;
+}
+
+th, td {
+  padding: 4pt 5.4pt;   /* tblCellMar left/right=108 twips = 5.4pt */
+  text-align: left;
+  text-indent: 0;
+}
+
+/* Grid Table 4 Accent 3 header row: fill=#A5A5A5, white text */
+thead th {
+  background-color: #A5A5A5;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+/* �� Lists ���������������������������������������������������� */
+ul, ol {
+  margin-left: 1.25cm;
+  padding-left: 0;
+  text-indent: 0;
+}
+
+li {
+  text-indent: 0;
+  margin-bottom: 4pt;
+}
+
+/* �� TOC entries ���������������������������������������������� */
+/* TJ1: after=5pt; TJ2: left=12pt; TJ3: left=24pt */
+.toc-1 {
+  margin-bottom: 5pt;
+  text-indent: 0;
+}
+
+.toc-2 {
+  padding-left: 12pt;
+  margin-bottom: 5pt;
+  text-indent: 0;
+}
+
+.toc-3 {
+  padding-left: 24pt;
+  margin-bottom: 5pt;
+  text-indent: 0;
+}
+
+/* �� Page break utility ��������������������������������������� */
+.page-break {
+  page-break-after: always;
+}
+
+/* �� Print / PDF layout ��������������������������������������� */
+body { background: #fff !important; }
+
+/* Avoid breaking inside code blocks, tables, diagrams */
+pre, table, figure, .mermaid { page-break-inside: avoid; }
+
+/* Chapter breaks */
+h1 { page-break-before: always; }
+h1:first-of-type { page-break-before: avoid; }
+
+/* Print-friendly links */
+@media print {
+  a { color: inherit; text-decoration: none; }
+}
