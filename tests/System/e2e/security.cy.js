@@ -1,15 +1,32 @@
-describe('Security Tests', () => {
-  it('Blocks unauthorized student route', () => {
-    cy.request({
-      url: '/dashboard/student/student.html',
-      failOnStatusCode: false
-    }).its('status').should('not.eq', 200);
+describe("SECURITY / ROLE ACCESS", () => {
+  beforeEach(() => {
+    cy.fixture("users").as("users");
   });
 
-  it('Blocks admin without login', () => {
+  it("student cannot access admin dashboard", function () {
+    cy.login(this.users.student.username, this.users.student.password);
+
+    cy.visit("/admin/admin.html");
+
+    cy.url().should("not.include", "/admin");
+  });
+
+  it("admin can access admin dashboard", function () {
+    cy.login(this.users.admin.username, this.users.admin.password);
+
+    cy.visit("/admin/admin.html");
+
+    cy.contains("Admin").should("exist");
+  });
+
+  it("unauthenticated user redirected/blocked", () => {
+    cy.visit("/dashboard/admin");
+
     cy.request({
-      url: '/admin/usercount',
+      url: "/order/username",
       failOnStatusCode: false
-    }).its('status').should('eq', 403);
+    }).then((res) => {
+      expect(res.status).to.eq(401);
+    });
   });
 });

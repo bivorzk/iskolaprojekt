@@ -8,7 +8,6 @@ jest.mock('../../../auth/security', () => ({
   createSecurityLog: jest.fn().mockResolvedValue(true),
 }));
 
-// Middleware, ami lehetővé teszi a session beállítást minden tesztnél
 const mockSessionMiddleware = (user) => (req, res, next) => {
   req.session.user = user;
   next();
@@ -32,7 +31,7 @@ describe('Admin Access', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('success', true);
-    expect(createSecurityLog).toHaveBeenCalled(); // Ellenőrizzük a log hívást
+    expect(createSecurityLog).toHaveBeenCalled();
   });
 
   test('Non-admin user cannot access admin route', async () => {

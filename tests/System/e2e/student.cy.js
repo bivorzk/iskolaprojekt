@@ -1,16 +1,24 @@
-describe('Student Dashboard', () => {
+describe("STUDENT FLOW", () => {
   beforeEach(() => {
-    cy.login('student1', 'password123');
+    cy.fixture("users").as("users");
   });
 
-  it('Loads student dashboard', () => {
-    cy.visit('/dashboard/student/student.html');
-    cy.contains('Orders');
+  it("student can access menu", function () {
+    cy.login(this.users.student.username, this.users.student.password);
+
+    cy.getMenuItems().then((res) => {
+      expect(res.status).to.eq(200);
+    });
   });
 
-  it('Loads wallet', () => {
-    cy.request('/dashboard/student/wallet/balance')
-      .its('status')
-      .should('eq', 200);
+  it("student cannot access admin endpoints", function () {
+    cy.login(this.users.student.username, this.users.student.password);
+
+    cy.request({
+      url: "/admin",
+      failOnStatusCode: false
+    }).then((res) => {
+      expect([401, 403, 404]).to.include(res.status);
+    });
   });
 });

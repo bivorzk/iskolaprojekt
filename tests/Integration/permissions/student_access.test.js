@@ -8,7 +8,6 @@ app.use(
   session({ secret: 'test', resave: false, saveUninitialized: true })
 );
 
-// Middleware, hogy beállítsuk a session-t teszt alatt
 const setSessionUser = (user) => (req, res, next) => {
   req.session.user = user;
   next();

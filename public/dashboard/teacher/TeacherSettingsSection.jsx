@@ -26,7 +26,6 @@ const TeacherSettingsSection = ({ userData }) => {
                         </div>
                     </div>
                 </div>
-                {/* A második doboz (Parent Link) eltávolítva */}
             </div>
         </div>
     );

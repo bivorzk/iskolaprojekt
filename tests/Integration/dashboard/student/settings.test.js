@@ -18,13 +18,11 @@ const createApp = () => {
   app.use(express.json());
   app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
-  // session mock
   app.use((req, res, next) => {
     req.session.user = usersMock[0];
     next();
   });
 
-  // GET user info
   app.get('/dashboard/student/userinfo', (req, res) => {
     res.status(200).json({ 
       username: req.session.user.username, 
@@ -32,7 +30,6 @@ const createApp = () => {
     });
   });
 
-  // GET parent info
   app.get('/dashboard/student/parent', (req, res) => {
     res.status(200).json({ 
       linked: req.session.user.linked, 

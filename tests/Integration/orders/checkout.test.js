@@ -54,7 +54,6 @@ describe('Checkout API', () => {
   });
 
   test('POST /orders/order/wallet processes successful wallet order', async () => {
-    // Mock a valid menu item
     MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Burger', price: 20, available: true, stock: 10 });
 
     const res = await request(app)
@@ -64,12 +63,11 @@ describe('Checkout API', () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.newBalance).toBe(50);  // Expect wallet balance after purchase
-    expect(res.body.newStock).toBe(10);    // Ensure stock has been checked
+    expect(res.body.newBalance).toBe(50);  
+    expect(res.body.newStock).toBe(10);  
   });
 
   test('POST /orders/order/wallet fails insufficient balance', async () => {
-    // Mock an expensive item
     MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Expensive', price: 200, available: true, stock: 10 });
 
     const res = await request(app)
@@ -82,7 +80,6 @@ describe('Checkout API', () => {
   });
 
   test('POST /orders/order/wallet fails due to item not available', async () => {
-    // Simulate an unavailable item
     MenuItems.findById.mockResolvedValueOnce({ _id: '1', name: 'Burger', price: 20, available: false, stock: 0 });
 
     const res = await request(app)

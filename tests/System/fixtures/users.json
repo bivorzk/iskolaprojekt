@@ -1,22 +1,27 @@
 {
+  "admin": {
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin"
+  },
   "student": {
     "username": "student1",
-    "password": "password123",
-    "role": "STUDENT"
+    "password": "test123",
+    "role": "student"
   },
   "teacher": {
     "username": "teacher1",
-    "password": "password123",
-    "role": "TEACHER"
+    "password": "test123",
+    "role": "teacher"
   },
   "parent": {
     "username": "parent1",
-    "password": "password123",
-    "role": "PARENT"
+    "password": "test123",
+    "role": "parent"
   },
-  "admin": {
-    "username": "admin1",
-    "password": "password123",
-    "role": "ADMIN"
+  "editor": {
+    "username": "editor1",
+    "password": "test123",
+    "role": "editor"
   }
 }

@@ -19,19 +19,16 @@ const createApp = () => {
   app.use(express.json());
   app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
-  // session mock
   app.use((req, res, next) => {
     req.session.user = usersMock[0]; 
     next();
   });
 
-  // GET order history
   app.get('/dashboard/student/order_history', async (req, res) => {
     const orderData = await Order.find({ userId: req.session.user.username });
     res.status(200).json({ orderData });
   });
 
-  // POST create order
   app.post('/api/orders', async (req, res) => {
     const order = await Order.create({ ...req.body, userId: req.session.user.username });
     res.status(201).json({ id: order.id, userId: order.userId, cart: req.body.cart, amount: req.body.amount });

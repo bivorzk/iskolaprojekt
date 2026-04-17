@@ -40,16 +40,14 @@ describe('Student Wallet', () => {
   let app;
   beforeAll(() => { app = createApp(); });
 
-  // Teszt: egyenleg lekérése
   test('GET /dashboard/student/wallet/balance returns balance', async () => {
     const res = await request(app).get('/dashboard/student/wallet/balance');
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('balance');
     expect(typeof res.body.balance).toBe('number');
-    expect(res.body.balance).toBe(20);  // Ellenőrizzük, hogy a várt értéket kapjuk
+    expect(res.body.balance).toBe(20); 
   });
 
-  // Teszt: egyenleggel történő fizetés
   test('POST /pay-with-balance processes payment', async () => {
     const res = await request(app)
       .post('/api/pay-with-balance')
@@ -59,10 +57,9 @@ describe('Student Wallet', () => {
     expect(res.body).toHaveProperty('success', true);
     expect(res.body).toHaveProperty('orderId');
     expect(res.body).toHaveProperty('loyaltyPointsAwarded');
-    expect(res.body.loyaltyPointsAwarded).toBe(5); // Loyalty pontok ellenőrzése (Math.floor(total))
+    expect(res.body.loyaltyPointsAwarded).toBe(5);
   });
 
-  // Teszt: ha nincs elegendő egyenleg
   test('POST /pay-with-balance returns error when balance is insufficient', async () => {
     const res = await request(app)
       .post('/api/pay-with-balance')

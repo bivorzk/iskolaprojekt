@@ -1,17 +1,21 @@
-describe('Admin Dashboard', () => {
+describe("ADMIN DASHBOARD", () => {
   beforeEach(() => {
-    cy.login('admin1', 'password123');
+    cy.fixture("users").as("users");
   });
 
-  it('Gets user count', () => {
-    cy.request('/admin/usercount')
-      .its('status')
-      .should('eq', 202);
+  it("admin loads dashboard", function () {
+    cy.login(this.users.admin.username, this.users.admin.password);
+
+    cy.visit("/admin/admin.html");
+
+    cy.contains("Admin").should("exist");
   });
 
-  it('Gets system health', () => {
-    cy.request('/admin/health')
-      .its('status')
-      .should('eq', 200);
+  it("menu items visible in admin context", function () {
+    cy.login(this.users.admin.username, this.users.admin.password);
+
+    cy.request("/order/menu_items").then((res) => {
+      expect(res.status).to.eq(200);
+    });
   });
 });

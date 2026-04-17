@@ -43,7 +43,6 @@ describe('Cart API', () => {
       { _id: '2', name: 'Pizza', price: 8, available: true, reviews: [] }
     ];
     
-    // Ensuring mock for the `MenuItems.find` is correct
     MenuItems.find.mockResolvedValueOnce(fakeItems);
 
     const res = await request(app).get('/orders/menu_items');
@@ -66,7 +65,6 @@ describe('Cart API', () => {
   });
 
   test('POST /orders/item_information/:itemName/Review rejects profanity', async () => {
-    // Ensuring mock returns the correct MenuItem for review
     MenuItems.findOne.mockResolvedValueOnce({ name: 'Burger', reviews: [], save: jest.fn().mockResolvedValue(true) });
 
     const res = await request(app)

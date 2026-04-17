@@ -6,7 +6,6 @@ const app = express();
 app.use(express.json());
 app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
-// Middleware a session beállításához minden tesztnél
 const setSessionUser = (user) => (req, res, next) => {
   req.session.user = user;
   next();

@@ -7,7 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
 
-// Mock login endpoint a session beállításához
 app.post('/auth/login', (req, res) => {
   const { username, password } = req.body;
   if (username === 'teacher1' && password === 'password123') {
@@ -17,7 +16,6 @@ app.post('/auth/login', (req, res) => {
   return res.status(401).send('Invalid credentials');
 });
 
-// Teacher dashboard endpoint
 app.get('/dashboard/teacher/data', (req, res) => {
   if (req.session.user && req.session.user.role === 'TEACHER') {
     return res.status(200).json({
@@ -36,7 +34,6 @@ describe('Teacher Dashboard Data Integration', () => {
   beforeAll(async () => {
     await setupTestDB();
 
-    // Mock login a session megszerzéséhez
     const res = await request(app)
       .post('/auth/login')
       .send({ username: 'teacher1', password: 'password123' });

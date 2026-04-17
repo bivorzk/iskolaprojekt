@@ -17,7 +17,6 @@ app.get('/parent-area', requireParentAuth, (req, res) => {
   res.status(200).json({ message: 'Access granted to parent' });
 });
 
-// Middleware a tesztekhez: könnyebb session beállítás
 const setSessionUser = (user) => (req, res, next) => {
   req.session.user = user;
   next();

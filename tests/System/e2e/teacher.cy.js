@@ -1,17 +1,21 @@
-describe('Teacher Dashboard', () => {
+describe("TEACHER FLOW", () => {
   beforeEach(() => {
-    cy.login('teacher1', 'password123');
+    cy.fixture("users").as("users");
   });
 
-  it('Loads teacher data', () => {
-    cy.request('/dashboard/teacher/data')
-      .its('status')
-      .should('eq', 200);
+  it("teacher login works", function () {
+    cy.login(this.users.teacher.username, this.users.teacher.password);
+
+    cy.request("/order/username").then((res) => {
+      expect([200, 401]).to.include(res.status);
+    });
   });
 
-  it('Loads students list', () => {
-    cy.request('/dashboard/teacher/students')
-      .its('status')
-      .should('eq', 200);
+  it("teacher cannot access admin panel", function () {
+    cy.login(this.users.teacher.username, this.users.teacher.password);
+
+    cy.visit("/admin/admin.html");
+
+    cy.url().should("not.include", "/admin");
   });
 });

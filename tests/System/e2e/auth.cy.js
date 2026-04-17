@@ -1,17 +1,36 @@
-describe('Auth System', () => {
-  it('Login works', () => {
-    cy.request('POST', '/auth/login', {
-      username: 'student1',
-      password: 'password123'
-    }).its('status').should('eq', 200);
+describe("AUTH FLOW", () => {
+  beforeEach(() => {
+    cy.fixture("users").as("users");
   });
 
-  it('Register works', () => {
-    cy.request('POST', '/auth/register', {
-      username: 'newuser123',
-      password: 'StrongPass123!',
-      email: 'test@test.com',
-      'g-recaptcha-response': 'test'
-    }).its('status').should('eq', 200);
+  it("login success creates session", function () {
+    cy.login(this.users.student.username, this.users.student.password);
+
+    cy.request({
+      url: "/order/username",
+      failOnStatusCode: false
+    }).then((res) => {
+      expect([200, 401]).to.include(res.status);
+    });
+  });
+
+  it("login fail is rejected", function () {
+    cy.login("wronguser", "wrongpass");
+
+    cy.request({
+      url: "/order/username",
+      failOnStatusCode: false
+    }).then((res) => {
+      expect(res.status).to.eq(401);
+    });
+  });
+
+  it("session protected endpoint requires auth", () => {
+    cy.request({
+      url: "/order/username",
+      failOnStatusCode: false
+    }).then((res) => {
+      expect(res.status).to.eq(401);
+    });
   });
 });

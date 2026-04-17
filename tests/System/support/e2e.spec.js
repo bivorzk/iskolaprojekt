@@ -1,3 +1,5 @@
+import "./commands";
+
 describe('Home Page', () => {
   it('should load successfully', () => {
     cy.visit('/');
