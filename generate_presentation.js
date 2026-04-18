@@ -25,6 +25,13 @@ const C_CODE_FN   = 'FDBA74';
 const C_CODE_PROP = 'FDE68A';
 const C_CODE_TYPE = 'FFE5DC';
 
+// 20-25 perces prezentaciohoz ajanlott, visszakapcsolhato extra reszletekkel
+const INCLUDE_SECTION_DIVIDERS = false;
+const INCLUDE_SCREENSHOT_PLACEHOLDERS = false;
+const INCLUDE_DB_USER_DEEP_DIVE = false;
+const INCLUDE_APPENDIX_METRICS = false;
+const INCLUDE_ALL_ARCH_DIAGRAMS = false;
+
 function addHeader(slide, title) {
   slide.addShape(pres.shapes.RECTANGLE, { x:0,y:0,w:10,h:0.62, fill:{color:C_DARK}, line:{color:C_DARK} });
   slide.addShape(pres.shapes.RECTANGLE, { x:0,y:0.62,w:10,h:0.06, fill:{color:C_PRIMARY}, line:{color:C_PRIMARY} });
@@ -38,6 +45,10 @@ function addSectionSlide(p, num, title, subtitle) {
   s.addText(num,      { x:0.3,y:1.4,w:9,h:1.1, fontSize:72, bold:true, color:'2D3A55', fontFace:'Calibri', align:'left', valign:'middle', margin:0 });
   s.addText(title,    { x:0.35,y:2.38,w:9.2,h:0.95, fontSize:42, bold:true, color:C_WHITE, fontFace:'Calibri', align:'left', valign:'middle', margin:0 });
   s.addText(subtitle, { x:0.35,y:3.25,w:9,h:0.55, fontSize:18, color:C_SECONDARY, fontFace:'Calibri', align:'left', valign:'middle', margin:0 });
+}
+
+function addSectionDivider(p, num, title, subtitle) {
+  if (INCLUDE_SECTION_DIVIDERS) addSectionSlide(p, num, title, subtitle);
 }
 
 function addPlaceholder(slide, x, y, w, h, label) {
@@ -86,11 +97,11 @@ function bullets(items) {
   s.background = { color: C_WHITE };
   addHeader(s, 'Tartalom');
   const items = [
-    { num:'01', label:'Celunk - A problema bemutatasa' },
-    { num:'02', label:'Tervunk - Szerepkorok, funkciok, technologiak' },
-    { num:'03', label:'Hogyan dolgoztunk? - Projektszervezes, munkamegosztas' },
-    { num:'04', label:'A kesz szoftver - Funkciok es forraskod' },
-    { num:'05', label:'Koszonjuk a figyelmet' },
+    { num:'01', label:'Bevezetes - Problemafelvetes es motivacio' },
+    { num:'02', label:'Rendszer attekintese - Szerepkorok es kovetelmenyek' },
+    { num:'03', label:'Rendszerarchitektura es tervezes' },
+    { num:'04', label:'Megvalositas - Funkciok, API es kepernyok' },
+    { num:'05', label:'Eredmenyek es kovetkeztetes' },
   ];
   items.forEach((item, i) => {
     const y = 0.88 + i * 0.86;
@@ -102,7 +113,7 @@ function bullets(items) {
   });
 }
 
-addSectionSlide(pres, '01', 'Celunk', 'A problema bemutatasa');
+addSectionDivider(pres, '01', 'Bevezetes', 'Problemafelvetes es motivacio');
 
 // SLIDE 3
 {
@@ -150,13 +161,45 @@ addSectionSlide(pres, '01', 'Celunk', 'A problema bemutatasa');
   });
 }
 
-addSectionSlide(pres, '02', 'Tervunk', 'Szerepkorok, funkciok es technologiak');
+addSectionDivider(pres, '02', 'Rendszer attekintese', 'Szerepkorok es kovetelmenyek');
+
+// SLIDE 5 - Requirements
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'Kovetelmenyek es fo celok');
+  s.addText('A dokumentacio 3. fejezete alapjan', { x:0.35,y:0.82,w:9.2,h:0.4, fontSize:12.5, color:C_MUTED, fontFace:'Calibri', margin:0 });
+
+  s.addShape(pres.shapes.RECTANGLE, { x:0.35,y:1.3,w:4.55,h:3.95, fill:{color:C_GRAY_BG}, line:{color:C_CARD_LINE,width:1} });
+  s.addShape(pres.shapes.RECTANGLE, { x:0.35,y:1.3,w:4.55,h:0.52, fill:{color:C_DARK}, line:{color:C_DARK} });
+  s.addText('Funkcionalis kovetelmenyek', { x:0.5,y:1.36,w:4.2,h:0.36, fontSize:12, bold:true, color:C_WHITE, fontFace:'Calibri', margin:0 });
+  s.addText(bullets([
+    'Biztonsagos es ellenorzott rendelesi folyamat',
+    'Tobbszerepkoru felhasznalokezeles (diak/szulo/admin/editor)',
+    'Digitalis penztarca es husegpont rendszer',
+    'PayPal es Google Pay fizetesi integracio',
+    'Admin dashboard statisztikakkal es naplozassal',
+    'Szulo -> gyermek rendeles tamogatasa'
+  ]), { x:0.5,y:1.96,w:4.2,h:3.1, fontSize:10.5, color:C_TEXT, fontFace:'Calibri' });
+
+  s.addShape(pres.shapes.RECTANGLE, { x:5.1,y:1.3,w:4.55,h:3.95, fill:{color:C_WHITE}, line:{color:C_CARD_LINE,width:1} });
+  s.addShape(pres.shapes.RECTANGLE, { x:5.1,y:1.3,w:4.55,h:0.52, fill:{color:C_PRIMARY}, line:{color:C_PRIMARY} });
+  s.addText('Nem funkcionalis kovetelmenyek', { x:5.25,y:1.36,w:4.2,h:0.36, fontSize:12, bold:true, color:C_WHITE, fontFace:'Calibri', margin:0 });
+  s.addText(bullets([
+    'Skalazhato backend (Node.js + MongoDB + Redis)',
+    'Atomi muveletek tranzakciokhoz es keszletkezeleshez',
+    'Reszponziv UI desktop es mobil nezettel',
+    'Rate limiting, CSRF, IP hash, SecurityLogs',
+    'Cache-first valaszok es automatikus invalidacio',
+    'Karbantarthato, modularis kodszerkezet'
+  ]), { x:5.25,y:1.96,w:4.2,h:3.1, fontSize:10.5, color:C_TEXT, fontFace:'Calibri' });
+}
 
 // SLIDE 5 - Roles
 {
   const s = pres.addSlide();
   s.background = { color: C_WHITE };
-  addHeader(s, 'Felhasznaloi szerepkorok');
+  addHeader(s, 'Felhasznaloi szerepkorok (Rendszer attekintes)');
   const roles = [
     { role:'Diak',          color:C_PRIMARY, items:['Menu bongeszese es rendeles','Virtualis penztalca kezelese','Rendelesi elozmeny','Husegpontok gyujtese','Etelek ertekelese (fuzzy)','QR kodos azonositas'] },
     { role:'Szulo',         color:C_DARK,    items:['Gyermek rendelesek kovetese','Rendeles gyermek nevere','Fizetes szulo egyenlegebol','PayPal es Google Pay','Penzatutalaisi kerelem jovahagyas','Tobb gyermek kovetheto'] },
@@ -171,6 +214,8 @@ addSectionSlide(pres, '02', 'Tervunk', 'Szerepkorok, funkciok es technologiak');
     s.addText(bullets(r.items), { x:x+0.1,y:1.55,w:2.08,h:3.82, fontSize:10, color:C_TEXT, fontFace:'Calibri', valign:'top' });
   });
 }
+
+addSectionDivider(pres, '03', 'Rendszerarchitektura', 'Technologiak, adatfolyam es tervezes');
 
 // SLIDE 6 - Tech
 {
@@ -206,7 +251,28 @@ addSectionSlide(pres, '02', 'Tervunk', 'Szerepkorok, funkciok es technologiak');
   });
 }
 
-addSectionSlide(pres, '03', 'Hogyan dolgoztunk?', 'Projektszervezes es munkamegosztas');
+// Architecture diagram slides (dokumentacio 4. fejezet)
+const architectureDiagrams = INCLUDE_ALL_ARCH_DIAGRAMS
+  ? [
+      { path:'docs/diagrams/output-1.svg',               title:'Rendszer architektura' },
+      { path:'docs/diagrams/output-2.svg',               title:'Adatfolyam diagram' },
+      { path:'docs/diagrams/output-9.svg',               title:'Ketlepcsos azonositas (2FA) - folyamat' },
+      { path:'docs/diagrams/output-13.svg',              title:'Frontend architektura' },
+      { path:'docs/diagrams/snaptray_redis_key_map.svg', title:'Redis kulcsszerkezet' },
+    ]
+  : [
+      { path:'docs/diagrams/output-1.svg',               title:'Rendszer architektura' },
+      { path:'docs/diagrams/output-2.svg',               title:'Adatfolyam diagram' },
+      { path:'docs/diagrams/snaptray_redis_key_map.svg', title:'Redis kulcsszerkezet' },
+    ];
+
+architectureDiagrams.forEach(d => {
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, d.title);
+  try { s.addImage({ path:d.path, x:0.3,y:0.76,w:9.4,h:4.62 }); }
+  catch(e) { addPlaceholder(s,0.3,0.76,9.4,4.62,`${d.path}\n(nem talalhato)`); }
+});
 
 // SLIDE 7 - Gantt
 {
@@ -257,7 +323,7 @@ addSectionSlide(pres, '03', 'Hogyan dolgoztunk?', 'Projektszervezes es munkamego
   });
 }
 
-addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo kepek');
+addSectionDivider(pres, '04', 'Megvalositas', 'Funkciok, API es kepernyo kepek');
 
 // SLIDE 9 - Auth
 {
@@ -265,7 +331,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Hitelesites es Biztonsag');
   s.addText('Tobbretegu biztonsagi architektura', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['Email-alapu fiokellenszes (SendGrid)','2FA - Dioxus mobil app (veletlen 3 szam)','JWT token + Redis session tarolas','bcrypt jelszohasheles (cost factor 12)','CSRF: double-submit cookie (XSRF-TOKEN, 30 perc)','Rate limiting: 5 retegben (utvonanankent)','Login: 35 kiszert./15 perc (RedisStore)','HMAC-SHA256 IP hasheles (GDPR 32. cikk)','Eldobhato email bl. + jelszo tiltolista (zxcvbn)','Anti-enumeracio (HTTP 200 meglévo fioknál is)','SecurityLogs: 90 nap TTL + 500/user cap']),
+  s.addText(bullets(['Email-alapu fiokellenorzes + 2FA (Dioxus)','JWT token + Redis session tarolas','bcrypt jelszohasheles + erossegellenorzes','CSRF: double-submit cookie (XSRF-TOKEN, 30 perc)','Retegezett rate limiting (utvonalankent)','HMAC-SHA256 IP hasheles + anti-enumeracio','SecurityLogs: 90 nap TTL + 500/user cap']),
     { x:0.35,y:1.26,w:4.7,h:4.05, fontSize:10.5, color:C_TEXT });
   const t9 = [
     {text:'// src/middleware/security.js\n',type:'cmt'},
@@ -285,7 +351,13 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t9, 5.2, 0.82, 4.45, 4.58, 8.0);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'Hitelesites - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Bejelentkezesi oldal'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: 2FA form / Email megerosites'); }
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
+  const s = pres.addSlide();
+  s.background = { color:C_WHITE };
+  addHeader(s, 'Hitelesites - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Bejelentkezesi oldal');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: 2FA form / Email megerosites');
+}
 
 // SLIDE 10 - Redis
 {
@@ -293,7 +365,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Redis Cache es Lua szkriptek');
   s.addText('Atomi muveletek es gyorsito tarazas', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['Redis-first cache API valaszhoz (cacheResult MW)','Lua szkriptek atomi penztalca-frissiteshez','NOSCRIPT fallback (EVALSHA => EVAL)','Rate limiting: Redis Lua csuszoablak','2FA kodok idoleges tarolasa (TTL: 10 perc)','E2EE pubkey cache (e2ee:pubkey:{id}, 30 nap)','Dashboard change stream ervenytelenites','keepAliveTimeout: 65000ms (AWS ALB felett)']),
+  s.addText(bullets(['Redis-first cache API valaszokhoz (cacheResult MW)','Lua szkriptek atomi penztarca-frissiteshez','NOSCRIPT fallback (EVALSHA => EVAL)','Rate limiting: Redis Lua csuszoablak','Change stream alapu cache-ervenytelenites','keepAliveTimeout: 65000ms (AWS ALB felett)']),
     { x:0.35,y:1.26,w:4.7,h:3.0, fontSize:11, color:C_TEXT });
   const t10 = [
     {text:'// src/redis-lua.js\n',type:'cmt'},
@@ -314,7 +386,13 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t10, 5.2, 0.82, 4.45, 4.58, 7.8);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'Redis Cache - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Redis monitor / Lua debug'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Cache dashboard / session store'); }
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
+  const s = pres.addSlide();
+  s.background = { color:C_WHITE };
+  addHeader(s, 'Redis Cache - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Redis monitor / Lua debug');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Cache dashboard / session store');
+}
 
 // SLIDE 11 - Orders
 {
@@ -322,7 +400,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Rendelesi rendszer');
   s.addText('Funkciok es adatmodell', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['Dinamikus menukezeles kategoraikkal','Valos ideju keszletkovetes (pre-save hook)','QR kod integracio + allergen szuro','Napi menu ($sample fallback, idoszak-alapu)','NanoID 6-kar. kozos rendelesazonosito','15 perces auto-lemondas (Pending => Cancelled)','Fuzzy profanity szuro (ertekelesokhoz, Lev. <=1)','Editor: TILTOTT rendeles (isEditor prop)','Szulo: resolveOrderTargetUserId']),
+  s.addText(bullets(['Dinamikus menukezeles + allergenek + QR','Valos ideju keszletkovetes','Napi menu ($sample fallback, idoszak-alapu)','NanoID 6-karakteres publicID','15 perces auto-lemondas (Pending => Cancelled)','Editor tiltas + Szulo -> Diak rendeles feloldas']),
     { x:0.35,y:1.26,w:4.7,h:3.7, fontSize:10.5, color:C_TEXT });
   const t11 = [
     {text:'// config/database_queries.js\n',type:'cmt'},
@@ -348,7 +426,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Editor tiltas es Szulo -> Diak rendeles');
   s.addText('Szerepkor-alapu rendelesvedelem', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['denyEditorOrderPlacement - POST rendelesi vegpontokon','Editor fiok: 403 Forbidden, rendeles megtagadva','resolveOrderTargetUserId - szuloi belepesnel','ParentStudent kapcsolat (status: approved)','Rendeles gyermek nevere, leval szulo egyenlegbol','MongoDB withTransaction() - atomi 3-lepesu folyamat']),
+  s.addText(bullets(['denyEditorOrderPlacement - POST rendelesi vegpontokon','Editor fiok: 403 Forbidden','resolveOrderTargetUserId - szuloi belepesnel','ParentStudent kapcsolat (status: approved)','MongoDB withTransaction() - atomi 3-lepesu folyamat']),
     { x:0.35,y:1.26,w:4.7,h:2.8, fontSize:11, color:C_TEXT });
   const t11b = [
     {text:'// src/auth/middleware.js\n',type:'cmt'},
@@ -367,7 +445,13 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t11b, 5.2, 0.82, 4.45, 4.58, 7.5);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'Rendelesi rendszer - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Rendelesi oldal / kosar'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Mobil nezet / napi menu'); }
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
+  const s = pres.addSlide();
+  s.background = { color:C_WHITE };
+  addHeader(s, 'Rendelesi rendszer - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Rendelesi oldal / kosar');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Mobil nezet / napi menu');
+}
 
 // SLIDE 12 - Payments
 {
@@ -375,7 +459,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Fizetesi integracio - PayPal es Google Pay');
   s.addText('Fizetesi megoldasok', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['PayPal SDK (@paypal/paypal-server-sdk)','Google Pay API integracio','Virtualis penztalca egyenleg rendszer','MongoDB withTransaction() atomi fizetes','Devizakonverzio: HUF x0.0027, EUR x1.1 (USD)','Idempotens keresek (transactionId unique index)','Raw body tarol (webhook alairas-ellenorzes)','Audit trail minden penzugyi esemenynel']),
+  s.addText(bullets(['PayPal SDK + Google Pay API integracio','Virtualis penztarca egyenleg rendszer','MongoDB withTransaction() atomi fizetes','Devizakonverzio: HUF/EUR/USD -> USD','Idempotens keresek (transactionId unique index)','Webhook alairas-ellenorzes + audit trail']),
     { x:0.35,y:1.26,w:4.7,h:3.0, fontSize:11, color:C_TEXT });
   const t12 = [
     {text:'// src/payments/paypal.js\n',type:'cmt'},
@@ -393,7 +477,13 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t12, 5.2, 0.82, 4.45, 4.58, 7.8);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'Fizetesi integracio - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: PayPal checkout oldal'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Google Pay / Penztalca egyenleg'); }
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
+  const s = pres.addSlide();
+  s.background = { color:C_WHITE };
+  addHeader(s, 'Fizetesi integracio - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: PayPal checkout oldal');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Google Pay / Penztalca egyenleg');
+}
 
 // SLIDE 13 - Admin
 {
@@ -401,7 +491,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   s.background = { color: C_WHITE };
   addHeader(s, 'Admin es Editor Dashboard');
   s.addText('Adminisztratori funkciok', { x:0.35,y:0.82,w:4.7,h:0.38, fontSize:13, bold:true, color:C_DARK, fontFace:'Calibri', margin:0 });
-  s.addText(bullets(['Menuelem CRUD + Jutalmak (Reward) kezelese','Statisztikak: mean/median/stddev (simple-statistics)','Top-5 legrendeltebb etel (all-time es utolso 7 nap)','Felhasznalok tiltasa es szerepkor-valtas','SecurityLogs: 90 nap TTL + 500/user cap','cacheResult() transparens GET cache MW','RBAC: requireAdmin/Editor/Student/ParentAuth','403: no_perm.html redirect (nem JSON)']),
+  s.addText(bullets(['Menuelem CRUD + Reward kezeles','Statisztikak: mean/median/stddev (simple-statistics)','Top-5 etel: all-time + utolso 7 nap','Felhasznalok tiltasa es szerepkor-valtas','cacheResult() transparens GET cache middleware','RBAC + no_perm 403 redirect']),
     { x:0.35,y:1.26,w:4.7,h:3.4, fontSize:11, color:C_TEXT });
   const t13 = [
     {text:'// cache-service.js\n',type:'cmt'},
@@ -415,7 +505,43 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t13, 5.2, 0.82, 4.45, 4.58, 7.5);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'Admin Dashboard - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Admin dashboard fooldal'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Menukezelo / rendelesista'); }
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
+  const s = pres.addSlide();
+  s.background = { color:C_WHITE };
+  addHeader(s, 'Admin Dashboard - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: Admin dashboard fooldal');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Menukezelo / rendelesista');
+}
+
+// API reference summary (dokumentacio 7. fejezet)
+{
+  const s = pres.addSlide();
+  s.background = { color: C_WHITE };
+  addHeader(s, 'API referencia - Fo vegpontok');
+  s.addText('A dokumentacio 7. fejezetenek osszefoglaloja', { x:0.35,y:0.82,w:9.2,h:0.36, fontSize:12, color:C_MUTED, fontFace:'Calibri', margin:0 });
+  s.addText(bullets([
+    'Hitelesites: POST /register, POST /login, POST /2fa, POST /2fa/verify',
+    'Rendeles: GET /api/menu-items, POST /orders, POST /pay-with-balance',
+    'Fizetes: POST /paypal, POST /googlepay, webhook alairas-ellenorzes',
+    'Dashboard: /dashboard/admin/*, /dashboard/student/*, /dashboard/parent/*',
+    'Chat es valos ido: /chat/* vegpontok + Socket.IO csatornak',
+    'Biztonsag: rate limit middleware, CSRF token, SecurityLogs naplozas'
+  ]), { x:0.35,y:1.22,w:4.7,h:4.15, fontSize:10.5, color:C_TEXT, fontFace:'Calibri' });
+  addCodeBlock(s,
+`# Pelda API hivasok
+POST /auth/register
+POST /auth/login
+POST /orders
+POST /orders/googlepay
+POST /pay-with-balance
+GET  /dashboard/admin/stats
+GET  /chat/messages/:userId
+
+# Biztonsagi valaszok
+403 -> no_perm / forbidden
+429 -> rate limit oldal`,
+    5.2, 0.82, 4.45, 4.58, 8.2);
+}
 
 // SLIDE 14 - DB
 {
@@ -445,7 +571,7 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
 }
 
 // SLIDE 14b - User schema
-{
+if (INCLUDE_DB_USER_DEEP_DIVE) {
   const s = pres.addSlide();
   s.background = { color: C_WHITE };
   addHeader(s, 'Adatbazis - User sema (ECDH P-256)');
@@ -499,35 +625,28 @@ addSectionSlide(pres, '04', 'A kesz szoftver', 'Funkciok, forraskod es kepernyo 
   ];
   addCodeBlockSyntax(s, t15, 5.2, 0.82, 4.45, 4.58, 7.5);
 }
-{ const s=pres.addSlide(); s.background={color:C_WHITE}; addHeader(s,'E2EE Chat es Husegprogram - Kepernyo kepek'); addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: E2EE chat interface'); addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Husegprogram / pontok oldal'); }
-
-// Diagram slides
-[
-  { path:'docs/diagrams/output-1.svg',               title:'Rendszer architektura' },
-  { path:'docs/diagrams/output-2.svg',               title:'Adatfolyam diagram' },
-  { path:'docs/diagrams/output-9.svg',               title:'Ketlepcsos azonositas (2FA) - folyamat' },
-  { path:'docs/diagrams/output-13.svg',              title:'Frontend architektura' },
-  { path:'docs/diagrams/snaptray_redis_key_map.svg', title:'Redis kulcsszerkezet' },
-].forEach(d => {
+if (INCLUDE_SCREENSHOT_PLACEHOLDERS) {
   const s = pres.addSlide();
-  s.background = { color: C_WHITE };
-  addHeader(s, d.title);
-  try { s.addImage({ path:d.path, x:0.3,y:0.76,w:9.4,h:4.62 }); }
-  catch(e) { addPlaceholder(s,0.3,0.76,9.4,4.62,`${d.path}\n(nem talalhato)`); }
-});
+  s.background = { color:C_WHITE };
+  addHeader(s, 'E2EE Chat es Husegprogram - Kepernyo kepek');
+  addPlaceholder(s,0.35,0.82,4.72,4.55,'Kepernyo kep: E2EE chat interface');
+  addPlaceholder(s,5.25,0.82,4.4,4.55,'Kepernyo kep: Husegprogram / pontok oldal');
+}
 
-// onefetch slides
-['onefetch #1\n\nFuttasd: onefetch\n\nNyelvek aranya, commit-szam,\nkozremuk datok, repo merete.',
- 'onefetch #2\n\nFuttasd: onefetch --no-color\n\nFajlok szama, kodsorok,\natlagos commit merete.',
-].forEach((label, i) => {
-  const s = pres.addSlide();
-  s.background = { color: C_CODE_BG };
-  addHeader(s, `Repozitorium attekintes - onefetch #${i+1}`);
-  s.addText(i===0 ? 'iskolaprojekt-1 - kodbazis statisztikak' : 'iskolaprojekt-1 - reszletes statisztikak', {
-    x:0.4,y:0.82,w:9.2,h:0.36, fontSize:12, bold:true, color:C_SECONDARY, fontFace:'Calibri', margin:0,
+// onefetch slides (opcionalis melleklet)
+if (INCLUDE_APPENDIX_METRICS) {
+  ['onefetch #1\n\nFuttasd: onefetch\n\nNyelvek aranya, commit-szam,\nkozremuk datok, repo merete.',
+   'onefetch #2\n\nFuttasd: onefetch --no-color\n\nFajlok szama, kodsorok,\natlagos commit merete.',
+  ].forEach((label, i) => {
+    const s = pres.addSlide();
+    s.background = { color: C_CODE_BG };
+    addHeader(s, `Melleklet - Repozitorium attekintes #${i+1}`);
+    s.addText(i===0 ? 'iskolaprojekt-1 - kodbazis statisztikak' : 'iskolaprojekt-1 - reszletes statisztikak', {
+      x:0.4,y:0.82,w:9.2,h:0.36, fontSize:12, bold:true, color:C_SECONDARY, fontFace:'Calibri', margin:0,
+    });
+    addPlaceholder(s,0.4,1.26,9.2,4.1,label);
   });
-  addPlaceholder(s,0.4,1.26,9.2,4.1,label);
-});
+}
 
 // autocannon
 {
@@ -550,7 +669,7 @@ Bytes/s   12.4 MB  1.1 MB  14.8 MB`,
   addPlaceholder(s,5.2,0.82,4.45,4.58,'autocannon eredmeny kepernyo kep\n35 000 req/s\n\nillesszd be a kepernyo kepet');
 }
 
-addSectionSlide(pres, '05', 'Koszonjuk', 'Szivesen valaszolunk kerdesekre!');
+addSectionDivider(pres, '05', 'Kovetkeztetes', 'Eredmenyek, tanulsagok es Q&A');
 
 // SLIDE 16 - Thank you
 {
@@ -570,6 +689,9 @@ addSectionSlide(pres, '05', 'Koszonjuk', 'Szivesen valaszolunk kerdesekre!');
 }
 
 // WRITE
+const slideCount = Array.isArray(pres._slides) ? pres._slides.length : 'ismeretlen';
+console.log(`INFO  Slide count: ${slideCount} (cel: 20-25 perces eloadas)`);
+
 pres.writeFile({ fileName: 'SnapTray_Prezentacio_v3.pptx' })
   .then(() => console.log('OK  SnapTray_Prezentacio_v3.pptx elkeszult!'))
   .catch(err => { console.error('HIBA:', err); process.exit(1); });
