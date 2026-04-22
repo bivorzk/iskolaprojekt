@@ -45,10 +45,11 @@
   - [Irányítópult útvonalak](#iranyitopult-utvonalak)
   - [Adminisztrátori irányítópult API útvonalak](#adminisztratori-iranyitopult-api-utvonalak)
   - [Diák irányítópult útvonalak](#diak-iranyitopult-utvonalak)
+  - [Szülő irányítópult útvonalak](#szulo-iranyitopult-utvonalak)
   - [Rendeléskezelő útvonalak](#rendeleskezelo-utvonalak)
   - [Általános API útvonalak](#altalanos-api-utvonalak)
   - [GeoSecurity API útvonalak](#geosecurity-api-utvonalak)
-  - [Chat API és WebSocket útvonalak](#chat-api-es-websocket-utvonalak)
+  - [Chat API és Socket.IO események](#chat-api-es-websocket-utvonalak)
   - [Backend modellek (MongoDB)](#backend-modellek-mongodb)
 - [8. Adatmodell és kódlap leképezése](#8-adatmodell-es-kodlap-lekepezese)
   - [8.1 Fő adatbázis entitások (MongoDB, Mongoose)](#81-fo-adatbazis-entitasok-mongodb-mongoose)
@@ -57,11 +58,10 @@
   - [8.5 Üzleti folyamatok átfogó ábrázolása (dokumentszintű)](#85-uzleti-folyamatok-atfogo-abrazolasa-dokumentszintu)
   - [8.6 Környezet- és konfigurációs alapok](#86-kornyezet-es-konfiguracios-alapok)
   - [8.7 Tesztelési hivatkozások](#87-tesztelesi-hivatkozasok)
-- [9. Tesztelés és érvényesítés](#9-teszteles-es-ervenyesites)
+- [9. Tesztelés](#9-teszteles)
 - [10. Felhasználói kézikönyv](#10-felhasznaloi-kezikonyv)
 - [11. Telepítés és karbantartás](#11-telepites-es-karbantartas)
 - [12. Következtetés és jövőbeni munka](#12-kovetkeztetes-es-jovobeni-munka)
-- [13. Hivatkozások](#13-hivatkozasok)
 - [14. Mellékletek](#14-mellekletek)
 
 ---
@@ -229,8 +229,6 @@ A rendszer három fő rétegből áll:
 
 <img src="./diagrams/output-14.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
-> A Dioxus egy erőteljes Rust keretrendszer fullstack alkalmazásokhoz webre, asztalira és mobilra. A diagram SVG formátumban van beágyazva, a további ábrák is így készülnek.
-
 | Technológia | Indok |
 |-------------|-------|
 | Node.js + Express.js | JavaScript full-stack konzisztencia, gyors fejlesztés |
@@ -240,7 +238,6 @@ A rendszer három fő rétegből áll:
 | JWT + bcrypt | Iparági standard hitelesítés és jelszóvédelem |
 | PayPal / Google Pay | Megbízható, PCI-kompatibilis fizetési integrációk |
 | Socket.IO | Kétirányú valós idejű kommunikáció |
-| Dioxus | Rust alapú fullstack alkalmazásfejlesztő keretrendszer |
 | Helmet, HPP, CORS | HTTP biztonsági fejlécek és védelmi middleware |
 
 <span id="44-technologiai-valasztas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
@@ -303,7 +300,7 @@ A rendszer fő entitásai és kapcsolataik:
 - **OrderItems** (Rendelési tételek): Menüelemek egy rendeléshez (beágyazott a Rendelésben).
 - **Payment** (Fizetés): Pénzügyi tranzakciók.
 - **Review** (Értékelés): Menüelemek értékelései (beágyazott a MenuItems-ben).
-- **DailyMenu** (Napi menü): Iskolai időszakokra bontott napi menük, több Menüelem halmazzal (N:N kapcsolat linktáblával).
+- **DailyMenu** (Napi menü): Dátum/időszak alapú menürekord, ObjectId referenciákkal a `MenuItems` elemekre.
 - **ParentStudent** (Szülő-diák kapcsolat): Szülők és diákok összekapcsolása.
 - **SecurityLogs** (Biztonsági naplók): Eseménynaplózás.
 - **UserLoyalty** (Hűségprogram): Felhasználói pontok, kedvezmények és hűségszint.
@@ -320,8 +317,8 @@ A teljes adatbázis entitás-diagram:
 - User 1:N Payment, Order, SecurityLogs, UserLoyalty, Message (sender/recipient), PreKey, StorageBlob, ParentStudent.
 - MenuItems 1:N OrderItems (Rendelésben beágyazva), Review (MenuItems-ben beágyazva).
 - Order 1:N OrderItems (beágyazott tételsorokkal).
-- DailyMenu N:M MenuItems (normálizált kapcsolattábla: DailyMenuMenuItems).
-- Message 1:1 PreKey (opcionális, X3DH kulcscsere támogatására).
+- DailyMenu 1:N MenuItems referenciákkal (`menuItems` tömb a DailyMenu dokumentumban).
+- Message a sender/recipient User relációt használ; a PreKey gyűjtemény külön, eszközönkénti kulcskészletet tárol.
 - StorageBlob 1:1 User (kulcspáros: userId + blobType + partitionKey, egyedi indexelés).
 - DeviceSyncSession: önálló entitás rövid életű E2EE szinkronizációhoz.
 
@@ -358,20 +355,20 @@ A `User` kollekció a rendszert használók identitását és jogosultságait ke
 | username | String | Felhasználónév | Required, unique | {_id: 1}, {username: 1} (unique) | Egyetlen lefedett index a loginhoz |
 | password | String | Hash-olt jelszó | Kötelező | {_id: 1} | A jelszó hash-olt formában tárolódik, nem indexelt. |
 | email | String | Email cím | Kötelező, egyedi, email formátum, trim | {email: 1} (unique) | Email cím szűrés és ellenőrzés gyorsításához |
-| isVerified | Boolean | Email ellenőrzöttség | Alapértelmezett false | {isVerified: 1} | Jól használható újregisztrációs szűrőhöz |
+| isVerified | Boolean | Email ellenőrzöttség | Alapértelmezett false | - | Jól használható újregisztrációs szűrőhöz |
 | usertype | String | Szerepkör | Enum, alapértelmezett érték szerepkör | {usertype: 1} | Szerepkör-alapú lekérdezés gyorsításához |
-| createdAt | Date | Regisztráció dátum | Alapértelmezett Date.now | {createdAt: -1} | Archiválás és lapozás támogatásához |
-| balance | Number | Pénztárca egyenleg | Alapértelmezett 0 | {balance: 1} | Pénzügyi aggregációs lekérdezésekhez |
-| isBanned | Boolean | Tiltott felhasználó | Alapértelmezett false | {isBanned: 1} | Gyors ideiglenes tiltás-szűréshez |
+| createdAt | Date | Regisztráció dátum | Alapértelmezett Date.now | - | Archiválás és lapozás támogatásához |
+| balance | Number | Pénztárca egyenleg | Alapértelmezett 0 | - | Pénzügyi aggregációs lekérdezésekhez |
+| isBanned | Boolean | Tiltott felhasználó | Alapértelmezett false | - | Gyors ideiglenes tiltás-szűréshez |
 | banReason | String | Tiltás oka | Optional | _id | Felesleges indexelni ritkán használt lekérdezésnél |
 | userPersonalInfo | Subdocument | Profiladatok | Optional | - | Subdocumentben változó lekérdezett mezők miatt nincs index |
-| identity.publicKey | String | E2EE kulcs | Optional | {identity.keyId: 1} | Keresés eszközazonosításra |
-| identity.keyId | String | Kulcspéldány | Optional, unique | {identity.keyId: 1} (sugallt) | Kizárólagos kulcspárosított ellenőrzés |
-| devices | Array | Regisztrált eszközök | Optional | {devices.deviceId: 1} | Multi-key index a device lookuphoz |
+| identity.publicKey | String | E2EE kulcs | Optional | - | Keresés eszközazonosításra |
+| identity.keyId | String | Kulcspéldány | Optional | - | Kizárólagos kulcspárosított ellenőrzés |
+| devices | Array | Regisztrált eszközök | Optional | - | Multi-device azonosítók tárolása |
 | recoveryBlob.encryptedData | String | Titkosított blob | Optional | _id | Nincs szükség extra indexre |
 | recoveryBlob.iv | String | Inicializáló vektor | Optional | _id | - |
 | recoveryBlob.salt | String | Salt | Optional | _id | - |
-| recoveryBlob.storedAt | Date | Mentési időpont | Optional | {recoveryBlob.storedAt: 1} | TTL index javasolt |
+| recoveryBlob.storedAt | Date | Mentési időpont | Optional | - | TTL index javasolt (jelenleg nincs definiálva) |
 
 Üzleti szabályok: Aktív/tiltott státusz ellenőrzése minden bejelentkezésnél; `usertype` határozza meg az API-engedélyt. A `balance`-t tranzakciós Redis cache-sel támogathatjuk, és rollback esetén a fő adatbázis konzisztenciáját is helyreállítjuk.
 
@@ -380,23 +377,22 @@ A `User` kollekció a rendszert használók identitását és jogosultságait ke
 ##### Fizetés (Payments)
 
 A `Payment` gyűjtemény a pénzügyi tranzakciók auditját, státuszát és külső azonosítóit tárolja.
-- Fontos, hogy a `transactionId` azonosító a PayPal/Google Pay és belső logika számára is egyedi legyen.
+- A `transactionId` mező külső fizetési azonosítók tárolására szolgál; egyediség-ellenőrzést az alkalmazási logika is végez.
 - `status` mezőnél szigorú enum és text szűrés biztosítja a befejezett/feldolgozás alatt/hibás tételek elkülönítését.
 
 | Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
 |------------|------|--------------|-------------|---------|-----------|
 | userId | ObjectId (ref: User) | Fizető felhasználó | Optional | {userId: 1} | Felhasználói összegzések gyorsítása |
-| amount | Number | Fizetett összeg | Required | {amount: 1} | Range query-khez, aggregációhoz |
-| currency | String | Devizanem | Required | {currency: 1} | Többdevizás pénzügyi lekérdezéshez |
-| paymentMethod | String | Fizetési mód | Required | {paymentMethod: 1} | Módszer alapú számlázási riporthoz |
+| amount | Number | Fizetett összeg | Required | - | Range query-khez, aggregációhoz |
+| currency | String | Devizanem | Required | {paymentMethod:1, currency:1} | Többdevizás pénzügyi lekérdezéshez |
+| paymentMethod | String | Fizetési mód | Required | {paymentMethod:1, currency:1} | Módszer alapú számlázási riporthoz |
 | status | String | Állapot | Required, enum ['Completed','Pending','Failed'] | {status:1} | Népszerű statusz szűréshez |
-| transactionId | String | Külső tranzakciós ID | Optional | {transactionId:1} (unique) | Idempotencia azonosításra |
-| createdAt | Date | Létrehozás idő | Default now | {createdAt:-1} | Legfrissebb tranzakciók lekérése |
+| transactionId | String | Külső tranzakciós ID | Optional | - | Idempotencia azonosításra |
+| createdAt | Date | Létrehozás idő | Default now | {userId:1, createdAt:-1}, {userId:1, status:1, createdAt:-1} | Legfrissebb tranzakciók lekérése |
 
 Index-optimalizációk:
 - compound index `{userId:1, status:1, createdAt:-1}` a felhasználói tranzakciók lekérdezéséhez.
-- `transactionId` egyedi index az idempotens kérések megakadályozásához.
-- archival pipeline heti feladat, 2 évesnél idősebb rekordok `history.payments` archív kollekcióba mozgatása.
+- `paymentMethod+currency` index a fizetési típus szerinti kimutatásokhoz.
 
 ---
 
@@ -408,23 +404,25 @@ A `MenuItems` gyűjtemény a jelenleg elérhető menü tételeket kínálja, bel
 
 | Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
 |------------|------|--------------|-------------|---------|-----------|
-| name | String | Tétel neve | Required, text index | {name: 'text'} | Teljes szöveges keresés és súlyozott találat |
-| description | String | Leírás | Required, text index | {description: 'text'} | Keresés AND/OR támogatás |
+| name | String | Tétel neve | Required | {name:1}, {name:1, available:1} | Név szerinti gyors keresés/listázás |
+| description | String | Leírás | Required | - | Megjelenítési és részletes információs mező |
 | stock | Number | Készlet | Required, min 0, default 0 | {stock:1} | készletfigyelő triggerhez gyors lookup |
 | price | Number | Ár | Required | {price:1} | ár alapú szűréshez |
-| category | String | Kategória | Required, enum | {category:1} | napi menücsoportosítás gyorsítása |
+| category | String | Kategória | Required, enum | {category:1}, {category:1, available:1} | kategória alapú listázás gyorsítása |
 | available | Boolean | Elérhető-e | Default true | {available:1} | listázás pull-up optimalizálása |
-| QRCode | String | QR kód | Optional | {QRCode:1} | QR beolvasásnál pod cache-re hivatkozás |
-| allergens | [String] | Allergének | Default [] | {'allergens':1} multi-key | Allergen filter pipeline gyorsítás |
-| nutritionalInfo.calories | Number | Kalóriaérték | Optional | {'nutritionalInfo.calories':1} | statisztikai kimutatásokhoz |
-| nutritionalInfo.protein | Number | Fehérje | Optional | {'nutritionalInfo.protein':1} | RT kalkulációhoz |
-| nutritionalInfo.carbs | Number | Szénhidrát | Optional | {'nutritionalInfo.carbs':1} | low-carb query-hez |
-| nutritionalInfo.fat | Number | Zsír | Optional | {'nutritionalInfo.fat':1} | diet-specific listázáshoz |
+| QRCode | String | QR kód | Optional | - | opcionális azonosítási mező |
+| allergens | [String] | Allergének | Default [] | - | allergénszűrés kliens/aggregációs oldalon |
+| nutritionalInfo.calories | Number | Kalóriaérték | Optional | - | statisztikai kimutatásokhoz |
+| nutritionalInfo.protein | Number | Fehérje | Optional | - | RT kalkulációhoz |
+| nutritionalInfo.carbs | Number | Szénhidrát | Optional | - | low-carb query-hez |
+| nutritionalInfo.fat | Number | Zsír | Optional | - | diet-specific listázáshoz |
+| healthScore | Number | Egészségpontszám | Optional, default 0 | {healthScore:1} | hűségkedvezmény-számításhoz |
+| reviews.reported | Boolean | Jelentett értékelés jelző | Optional | {'reviews.reported':1} | moderációs nézetek gyorsítása |
 
 Index-optimalizációk:
-- compound index `{available:1, category:1, price:1}` a gyors menülistázáshoz.
-- TTL cache megoldásban `daily-menu-cache` nincs perzisztens lag.
-- Schema validation diszkrét consumer-side caching (Mongoose virtuals + readOnly view) biztosítja a tolls forrását.
+- Egyedi indexkombinációk a tényleges lekérdezésekhez: `{category:1, available:1}` és `{name:1, available:1}`.
+- Moderációs gyorsítás: `{'reviews.reported':1}` index a bejelentett értékelésekhez.
+- A készletváltozás `pre('save')` hookban frissíti az `available` értéket.
 
 Üzleti szabályok: Stock <= 0 esetén `available=false`, `price` pozitív (számlázás hitelesítés), `allergens` kötelezően normalizált string tömörítéssel (small lexicographically sorted list).
 
@@ -439,19 +437,20 @@ A `Order` kollekció az ügyfélrendeléseket, tételsorokat, státuszokat és f
 | userId | ObjectId (ref: User) | Rendelést leadó felhasználó | Required | {userId:1} | felhasználó alapú rendezés |
 | items | [OrderItemsScheme] | Rendeléssorok | Required | - | beágyazottan gyors OLTP, 20+ tétel esetén külső OrderItems | 
 | orderDate | Date | Rendelés időpontja | Default Date.now | {orderDate:-1} | friss lista/pagination |
-| status | String | Rendelés állapot | Enum + default Pending | {status:1, createdAt:-1} | állapot-szűrés, backlog clean-up |
-| totalAmount | Number | Végösszeg | Required | {totalAmount:1} | pénzügyi jelentésekhez |
-| pickupTime | Date | Átvétel ideje | Optional | {pickupTime:1} | időpont alapú optimalizált lekérdezés |
+| status | String | Rendelés állapot | Enum + default Pending | {status:1}, {orderDate:-1,status:1}, {userId:1,status:1} | állapot-szűrés, backlog clean-up |
+| subtotalAmount | Number | Kedvezmény előtti összeg | Required | - | pénzügyi bontás |
+| discount | Object | Kedvezmény adatai | Optional | - | audit és visszaszámítás |
+| totalAmount | Number | Végösszeg | Required | - | pénzügyi jelentésekhez |
+| pickupTime | Date | Átvétel ideje | Optional | - | időpont alapú lekérdezések |
 | notes | String | Megjegyzés | Optional | - | max 500 char, egységes szűrés minimalizált index nélkül |
-| paypalOrderId | String | PayPal azonosító | Optional | {paypalOrderId:1} (unique) | idempotencia és visszaellenőrzés |
-| paymentMethod | String | Fizetési mód | Optional | {paymentMethod:1} | lekérdezési szegmentálás |
-| transactionId | String | Tranzakció ID | Optional | {transactionId:1} | cross-system követés |
+| paypalOrderId | String | PayPal azonosító | Optional | {paypalOrderId:1} | idempotencia és visszaellenőrzés |
+| paymentMethod | String | Fizetési mód | Optional | - | lekérdezési szegmentálás |
+| transactionId | String | Tranzakció ID | Optional | - | cross-system követés |
 | publicID | String | Publikus azonosító | Required, unique | {publicID:1} | URL-alapú megosztás, kérésekhez |
 
 Index-optimalizáció:
 - Compound index `{userId:1, status:1, orderDate:-1}` a felhasználói rendeléslistázáshoz.
-- Kubebase audit feldolgozási workflow: `status` változás trigger csillapítással.
-- Archíválás: 90 nap után lezárt rendeléseket `order_archive` gyűjteménybe mozgatjuk.
+- Külön indexek: `{orderDate:-1,status:1}`, `{status:1}`, `{paypalOrderId:1}`, `{userId:1, orderDate:-1}`.
 
 ---
 
@@ -464,16 +463,13 @@ A `OrderItems` szabványosított tételtáblázata a rendelések vonatkozású e
 | Field Name | Type | Meaning/Role | Constraints | Indexek | Optimálás |
 |------------|------|--------------|-------------|---------|-----------|
 | menuItemId | ObjectId (ref: MenuItems) | Menüelem referenciája | Required | {menuItemId:1} | hozzáférés a tétel részletekhez |
-| orderId | ObjectId (ref: Order) | Rendelés referenciája | Required | {orderId:1} | rendelés alapú agregáció |
+| orderId | ObjectId (ref: Order) | Rendelés referenciája | Optional (beágyazott használatnál hiányozhat) | {orderId:1} | rendelés alapú agregáció |
 | quantity | Number | Mennyiség | Required, min 1 | {quantity:1} | mennyiség alapú riport |
-| unitPrice | Number | Egységár | Required | - | árváltozás követés, pénzügyi rekonstrukció |
-| totalPrice | Number | Tétel végösszeg | Required | {orderId:1, totalPrice:-1} | tételes lezárásokhoz |
 
 Indexelés:
-- Compound index `{orderId:1, menuItemId:1}` a rendelés tétel lekérdezésekhez.
-- Tétel-aggregációkhoz `menuItemId` + `quantity` szűrés.
+- A gyakori lekérdezések jellemzően az `Order.items` beágyazott tömbön keresztül futnak.
 
-- Üzleti szabályok: Számított mező `totalPrice = unitPrice * quantity`; változáskor audit log generálódik.
+- Üzleti szabályok: minden tételhez kötelező `menuItemId` és pozitív `quantity`; készletellenőrzés a rendelési szolgáltatási rétegben történik.
 ---
 
 ##### Értékelés (Reviews) - MenuItems beágyazva
@@ -506,7 +502,7 @@ Biztonsági szabályok:
 
 Az `averageRating` mező minden beküldés után automatikusan újraszámítódik. Minden értékelés beküldést a SecurityLogs is rögzít (`REVIEW_SUBMITTED`, `REVIEW_REPORTED`, `DUPLICATE_REVIEW_ATTEMPT`, `REVIEW_CONTAINS_PROFANITY`).
 
-A `containsProfanity()` függvény (`src/Orders/Order.js`) **homályos egyezésvizsgálatot** (fuzzy matching) alkalmaz `fast-levenshtein` könyvtárral: ha a beküldött szó egy tiltott szótól ≤1 Levenshtein-távolságra van (pl. egyetlen betűcsere), az is blokkolásra kerül. Ez megakadályozza a szándékos elírással elkerülő visszaéléseket.
+A `containsProfanity()` függvény (`src/Orders/Order.js`) `fast-levenshtein` összehasonlítást használ. A jelenlegi konfigurációban (`PROFANITY_DISTANCE_THRESHOLD = 1` és `<` összehasonlítás) ez gyakorlatban az egzakt egyezéseket blokkolja; a küszöbérték növelésével kapcsolható be lazább, elírás-tűrő fuzzy szűrés.
 
 ---
 
@@ -538,11 +534,14 @@ Index-optimalizációk:
 
 | Field Name | Type | Meaning/Role | Constraints | Indexes |
 |------------|------|--------------|-------------|---------|
-| parentId | ObjectId (ref: User) | Parent user | Required | _id, parentId |
-| studentId | ObjectId (ref: User) | Student user | Required | _id, studentId |
-| createdAt | Date | Creation time | Default: current time | _id, createdAt |
+| parentId | ObjectId (ref: User) | Parent user | Required | parentId |
+| studentId | ObjectId (ref: User) | Student user | Required | studentId |
+| status | String | Kapcsolat állapota | Enum: pending/approved/denied | parentId+status, studentId+status |
+| createdAt | Date | Creation time | Default: current time | createdAt |
+| approvedAt | Date | Jóváhagyás időpontja | Optional | - |
+| deniedAt | Date | Elutasítás időpontja | Optional | - |
 
-Üzleti szabályok: Parents can be linked to multiple students.
+Üzleti szabályok: Parents can be linked to multiple students; rendelési jogosultsághoz `status: 'approved'` szükséges.
 
 ##### SecurityLogs (Biztonsági naplók)
 
@@ -562,7 +561,7 @@ Index-optimalizációk:
 | isTor | Boolean | Tor usage | Optional | _id, isTor |
 | isProxy | Boolean | Proxy usage | Optional | _id, isProxy |
 
-Üzleti szabályok: Minden fontos esemény naplózásra kerül (bejelentkezés, regisztráció, jelszócsere, 2FA, rendelések stb.). Az IP-cím SHA-256 hash-elve tárolódik (GDPR megfelelőség). Az automatikus TTL és felhasználónkénti cap mechanizmus részletesen a [5.5.2 fejezetben](#552-securitylogs-automatikus-adatkezeles) olvasható.
+Üzleti szabályok: Minden fontos esemény naplózásra kerül (bejelentkezés, regisztráció, jelszócsere, 2FA, rendelések stb.). Az IP-cím keyed HMAC-SHA256 formában tárolódik (`IP_HASH_SECRET`), ezért kulcs nélkül nem visszafejthető (GDPR megfelelőség). Az automatikus TTL és felhasználónkénti cap mechanizmus részletesen a [5.5.2 fejezetben](#552-securitylogs-automatikus-adatkezeles) olvasható.
 
 ##### Reward (Jutalmak/Beváltható tételek)
 
@@ -574,7 +573,7 @@ Index-optimalizációk:
 | marketValue | Number | Valódi piaci érték (USD) | Required |
 | healthScore | Number | Egészségességi pontszám (0–100) | Required |
 | dailyStockLimit | Number | Napi korlát (mennyi váltható be) | Optional |
-| minTier | String | Minimum szint a beváltáshoz | Enum: NONE/BRONZE/SILVER/GOLD/PLATINUM |
+| minTier | String | Minimum szint a beváltáshoz | Enum: none/Bronze/Silver/Gold/Platinum |
 | category | String | Kategória | Enum: drink/fruit/dessert/meal/upgrade/mystery/token |
 | isActive | Boolean | Aktív-e | Default: true |
 
@@ -590,8 +589,8 @@ Index-optimalizációk:
 | status | String | Az utalvány státusza | Enum: pending/fulfilled/expired/cancelled |
 | redemptionType | String | Beváltás módja | Enum: shop/cart_discount/tier_perk/streak_bonus |
 | pointsSpent | Number | Elköltött pontok | Required |
-| processedAt | Date | Feldolgozás időpontja | Optional |
-| processedBy | ObjectId (ref: User) | Feldolgozó (pl. büfékezelő) | Optional |
+| fulfilledAt | Date | Feldolgozás időpontja | Optional |
+| fulfilledBy | String | Feldolgozó azonosító | Optional |
 
 Üzleti szabályok: A `voucherCode` mező a `/dashboard/student/loyalty/voucher/fulfill` végponton keresztül váltható be (büfékezelő oldal). A `status` változása naplózódik. A `cart_discount` típus pénztárnál automatikusan kerül levonásra.
 
@@ -603,11 +602,11 @@ Index-optimalizációk:
 | parentId | ObjectId (ref: User) | Szülő, aki jóváhagyja | Required |
 | amount | Number | Kért összeg | Required, positive |
 | status | String | Kérelem állapota | Enum: pending/approved/denied |
-| message | String | Diák üzenete | Optional |
+| reason | String | Diák üzenete/indoklása | Optional |
 | processedAt | Date | Feldolgozás időpontja | Optional |
 | processedBy | ObjectId (ref: User) | Jóváhagyó szülő | Optional |
 
-Üzleti szabályok: A diák pénzátutalási kérelmet küldhet a szülőnek. A szülő a saját dashboardján látja a kérelmeket és jóváhagyhatja vagy elutasíthatja. Jóváhagyás esetén a kért összeg automatikusan átkerül a diák egyenlegére.
+Üzleti szabályok: A sémadefiníció jelen van a kódbázisban, de önálló `MoneyRequest` Mongoose modell-export jelenleg nincs. A tényleges szülő→diák pénzmozgás a `/dashboard/parent/transfer` végponton valósul meg.
 
 ##### DeviceSyncSession (Device Sync Session)
 
@@ -643,7 +642,7 @@ Index-optimalizációk:
 | senderKeyRecovery.senderPublicKey | String | Recovery public key | Optional | _id |
 | senderKeyRecovery.senderKeyId | String | Recovery key ID | Optional | _id |
 
-Üzleti szabályok: End-to-end titkosított üzeneteket tárol Double Ratchet protokollal. Az állapotkövetés figyeli a kézbesítést és olvasást. Támogatja a kapott kulcsok helyreállítását. A migráció érdekében régi mezők is megmaradnak. Az indexek optimalizáltak a beszélgetések lekérésére és állapotszűrésre.
+Üzleti szabályok: End-to-end titkosított üzeneteket tárol, `status` és `senderKeyRecovery` állapotmezőkkel. A migráció érdekében a legacy titkosítási mezők (`encryptedContent`, `encryptionMetadata`) is megmaradnak. Az indexek optimalizáltak a beszélgetések lekérésére és állapotszűrésre.
 
 ##### PreKey (Prekeys)
 
@@ -709,7 +708,7 @@ A logikai szerkezet az ER-modellt követi: entitások kollekciókban, kapcsolato
 
 #### 5.2.8 E2EE chat és üzenetkezelés
 
-A rendszer Double Ratchet protokollt és X3DH kulcscserét használ a végpontok közötti titkosított üzenetküldéshez. Az üzenetek titkosítva tárolódnak, a ratchet metaadat előretitkosságot biztosít. A prekey-ek és storage blob-ok kezelik a kulcselosztást és a munkamenet állapotát.
+A jelenlegi chat implementáció hibrid E2EE-t használ: kliensoldali RSA-OAEP kulcscserét és AES-GCM üzenettitkosítást (`public/js/e2ee-crypto.js`, `Message.encryptionMetadata`). A `User`/`PreKey`/`StorageBlob`/`DeviceSyncSession` modellekben elérhető ECDH-prekey mezők a többeszközös E2EE migráció alapját adják.
 
 **Publikus kulcs Redis gyorsítótár:** Kulcsregisztrálás és -frissítés után a szerver a publikus kulcsot `e2ee:pubkey:{userId}` Redis kulcson tárolja 30 napos TTL-lel. A `GET /chat/public-key/:userId` végpont először a Redis cache-t ellenőrzi, és csak cache-miss esetén kér le MongoDB-ből. A `invalidatePublicKey()` metódus (`src/services/chat-service.js`) törli a cache-bejegyzést, ha a kulcs frissítése megtörténik.
 
@@ -720,7 +719,7 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 ##### Fő MongoDB modellek és helyek
 
 - `src/models/User.js`: `User` and sub-schemas (`userPersonalInfo`, `identity`, `devices`, `recoveryBlob`, `encryption`).
-- `config/database_queries.js`: `Payment`, `MenuItems`, `Order`, `OrderItems`, `DailyMenu`, `ParentStudent`, `SecurityLogs`, `UserLoyalty`, `Reward`, `Redemption`, `MoneyRequest` and regular indexes + pre-save hooks.
+- `config/database_queries.js`: `Payment`, `MenuItems`, `Order`, `OrderItems`, `DailyMenu`, `ParentStudent`, `SecurityLogs`, `UserLoyalty`, `Reward`, `Redemption` + indexek és pre-save hookok.
 - `src/models/DeviceSyncSession.js`: `DeviceSyncSession`, TTL index `expiresAt`.
 - `src/models/Message.js`: `Message` (E2EE metadata, state-tracking, indexes, markAsRead helper).
 - `src/models/PreKey.js`: `PreKey` (X3DH keys, `userId`/`deviceId` indexes and `keyId` uniqueness).
@@ -879,11 +878,11 @@ function ConvertPoints(dollarAmount, tier, healthLevel, date) {
 **Szint meghatározás:**
 ```javascript
 const determineTier = (totalPoints) => {
-    if (totalPoints >= 20000) return 'PLATINUM';
-    if (totalPoints >= 8000)  return 'GOLD';
-    if (totalPoints >= 2500)  return 'SILVER';
-    if (totalPoints >= 1200)  return 'BRONZE';
-    return 'NONE';
+  if (totalPoints >= 40000) return 'Platinum';
+  if (totalPoints >= 15000) return 'Gold';
+  if (totalPoints >= 5000)  return 'Silver';
+  if (totalPoints >= 1200)  return 'Bronze';
+  return 'none';
 };
 ```
 
@@ -893,17 +892,17 @@ A tier-meghatározás (`determineTier`) küszöbértékei és az automatikusan h
 
 | Tier | Pont-küszöb | Automatikus kedvezmények | Havi ingyenes ital |
 |---|---|---|---|
-| BRONZE | 1 200 | Egészséges ételek: 5% | 0 |
-| SILVER | 2 500 | Egészséges: 10%, Ital: 5% (90 napos lejárat) | 1 |
-| GOLD | 8 000 | Egészséges: 15%, Teljes étkezés: 10% | 2 |
-| PLATINUM | 20 000 | Egészséges: 20%, Általános: 15% | 4 |
+| Bronze | 1 200 | Egészséges ételek: 5% | 0 |
+| Silver | 5 000 | Egészséges: 10%, Ital: 5% (90 napos lejárat) | 1 |
+| Gold | 15 000 | Egészséges: 15%, Teljes étkezés: 10% | 2 |
+| Platinum | 40 000 | Egészséges: 20%, Általános: 15% | 4 |
 
 **Pontszám-romlás (decay) rendszer:**
 
 Ha egy felhasználó több mint 90 napja nem adott le rendelést (`lastUpdated > 90 napja`), és az utolsó decay több mint 6 hónapja volt (`lastDecay > 6 hónapja`), a rendszer pontokat von le:
 
-- **PLATINUM tier**: a pontok **30%-a** kerül levonásra
-- **Minden más tier** (GOLD, SILVER, BRONZE, NONE): **50%-os** pontlevonás
+- **Platinum tier**: a pontok **30%-a** kerül levonásra
+- **Minden más tier** (Gold, Silver, Bronze, none): **50%-os** pontlevonás
 
 A levonás `reason: 'decay'` bejegyzésként kerül a `pointHistory`-ba, és a `lastDecay` mezőt frissíti — ezzel biztosítva a 6 hónapos szünetperiódust.
 
@@ -1025,7 +1024,7 @@ const verifyRecaptcha = async (token) => {
 |---------|---------|
 | Hitelesítés | JWT (HS256), szerepalapú hozzáférés-vezérlés (RBAC) |
 | Jelszó tárolás | bcrypt, 10–12 salt kör |
-| 2FA | Megvalósítva; Dioxus alapú mobil app, Google-szerű 3 véletlenszám választásos rendszer |
+| 2FA | Megvalósítva; 2 jegyű challenge-kód (`10..99`) Redis/memória fallback tárolással, tokenes jóváhagyási folyamattal |
 | Rate limiting | `express-rate-limit` (általános) + Redis Lua csúszó ablak (admin/dashboard) |
 | Bemenet-ellenőrzés | Kliens oldali, szerver oldali, adatbázis szintű; egyéni Express middleware (`src/middleware/security.js`), Mongoose sémák |
 | NoSQL injekció elleni védelem | A központi middleware detektálja a MongoDB-szerű `$` operátorokat és blokkolja őket egy barátságos `Nice try buddy :)` válasszal |
@@ -1077,7 +1076,7 @@ function noSqlInjectionEasterEgg(req, res, next) {
 | Környezeti titkok | Minden hitelesítő adat `.env`-ben, soha verziókezelésben |
 
 ##### 5.4.1.1 Kétfaktoros hitelesítés (2FA)
-A rendszer második faktoros hitelesítést használ, ahol a mobil alkalmazás Dioxus technológiával készült. A felhasználó a mobil appon keresztül három véletlenszerű szám közül választ, hasonlóan a Google által ismert "3 random szám" alapú megerősítési modellhez. Ez a választás egy további érvényesítési lépést biztosít a belépési folyamatban, növelve az account biztonságát a jelszón túl.
+A rendszer második faktoros hitelesítést használ challenge-kód alapú jóváhagyással. A szerver egy kétjegyű kódot generál (`10..99`), amit Redisben tárol (fallback: in-memory `Map`), majd a kliens a tokenes 2FA végpontokon (`/2fa/code`, `/2fa/approve`, `/2fa/status`) keresztül végigviszi a jóváhagyást. Ez a lépés a jelszón felüli extra belépésvédelmet ad.
 
 **2FA kihívás-kód generálás és tárolás (`src/auth/2fa.js`):**
 
@@ -1121,6 +1120,65 @@ req.session.user = { ...sessionData, IsLoggedIn: true };
 res.json({ approved: true, redirect: redirectMap[sessionData.usertype] || '/dashboard/student' });
 ```
 
+**DX-SnapTray companion kliens snippetek (külső projekt: DX-SnapTray repository):**
+
+```rust
+// src/components/two_factor_auth/api.rs
+pub async fn api_start_2fa(email: &str) -> Result<TwoFaInitResponse, String> {
+  let resp = client()
+    .post(format!("{}/2fa", API_BASE))
+    .form(&[("email", email)])
+    .send()
+    .await
+    .map_err(|e: reqwest::Error| e.to_string())?;
+  let raw = resp.text().await.map_err(|e: reqwest::Error| e.to_string())?;
+  serde_json::from_str::<TwoFaInitResponse>(&raw)
+    .map_err(|e| format!("Parse error: {e} — body: {raw}"))
+}
+
+pub async fn api_approve(token: &str) -> Result<(), String> {
+  let resp = client()
+    .post(format!("{}/2fa/approve", API_BASE))
+    .bearer_auth(token)
+    .send()
+    .await
+    .map_err(|e: reqwest::Error| e.to_string())?;
+  if !resp.status().is_success() {
+    return Err(resp.text().await.unwrap_or_else(|_| "Approval failed".into()));
+  }
+  Ok(())
+}
+```
+
+```rust
+// src/components/two_factor_auth/model.rs
+pub enum Status {
+  Ready,
+  Loading,
+  Idle,      // 3 szám megjelenítése, /2fa/status polling
+  Verifying, // jóváhagyási kérés folyamatban
+  Success,
+  Error,
+  Expired,
+}
+```
+
+```rust
+// src/components/two_factor_auth/mod.rs
+if picked != expected {
+  error_msg.set("Wrong number - try again.".into());
+  return;
+}
+
+match api_approve(&token).await {
+  Ok(()) => status.set(Status::Success),
+  Err(e) => {
+    error_msg.set(format!("Approval failed: {e}"));
+    status.set(Status::Error);
+  }
+}
+```
+
 <img src="./diagrams/output-9.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
 ##### 5.4.1.2 Rétegzett rate limiting (útvonalankénti korlátok)
@@ -1129,13 +1187,15 @@ A `src/main.js` hat különböző `express-rate-limit` példányt alkalmaz, mind
 
 | Limiter neve | Időablak | Max kérés | Alkalmazott útvonalak |
 |---|---|---|---|
-| `limiter` | 1 óra | 250 | `/api`, `/database`, `/pay`, `/Order`, általános |
+| `limiter` | 1 óra | 250 | `/api`, `/database`, `/pay`, `/email-verification`, `/passwordhash` |
 | `registerLimiter` | 1 óra | 100 | `/register` |
 | `LoginLimiter` | 15 perc | 35 | `/login` |
 | `dashboardLimiter` | 15 perc | 1 000 | `/dashboard` |
 | `twoFALimiter` | 15 perc | 900 | `/2fa` |
 
 A `/dashboard` útvonalakon ezentúl a Redis Lua csúszóablakos középréteg (`createDashboardRateLimiter`) is aktív, ami felhasználói session alapján alkalmaz limiteket és `X-RateLimit-Limit/Remaining/Reset` fejléceket ad vissza. Blokkolás esetén a szerver a `public/429/429.html` oldalt adja vissza.
+
+A `/order` modul külön Redis Lua korlátot is használ (`rateLimit` middleware a `src/Orders/Order.js`-ben), alapértéken 20 kérés/perc limitálással.
 
 ##### 5.4.1.3 Regisztráció biztonsági rétegei
 
@@ -1216,7 +1276,7 @@ flowchart TD
 
 - **GDPR megfelelőség**: Adatminimalizálás, hozzájárulás kezelése, törlés joga, IP hash-elés az anonimizáláshoz.
 - **PCI DSS**: A fizetési adatokat nem tároljuk helyben; minden tranzakció minősített átjárókon keresztül történik.
-- **Adattárolási szabályok**: A SecurityLogs 2 évig megőrzésre kerül, a felhasználói adatok a fiók törléséig.
+- **Adattárolási szabályok**: A `SecurityLogs` bejegyzések 90 napos TTL-lel törlődnek, és felhasználónként 500 rekordos cap is érvényesül. A felhasználói adatok a fiók törléséig maradnak.
 - **Privacy by Design**: Alapértelmezett titkosítás, hozzáférésszabályozás és audit naplók.
 
 #### 5.4.5 Biztonsági tesztelés
@@ -1356,14 +1416,14 @@ flowchart TD
     loginInput --> creds(Hitelesítés jelszó, token)
     creds --> genaut(Geobiztonsági ellenőrzés)
     genaut --> twofa{2FA szükséges?}
-    twofa -- Igen --> twofaStep(2FA ellenőrzés a DX-SnapTray alkalmazással)
+    twofa -- Igen --> twofaStep(2FA challenge jóváhagyás)
     twofa -- Nem --> issueJWT(JWT token kiadása)
     twofaStep --> issueJWT
     issueJWT --> success(Belépés sikeres)
     genaut -- Sikertelen --> fail(Belépés elutasítva)
 ```
 
-A backend támogatja a külső Dioxus alapú **DX-SnapTray** 2FA alkalmazást, amely a rendszerhez kapcsolódó másodlagos hitelesítési réteget biztosítja. A `POST /2fa` és a `POST /2fa/verify` végpontok lehetővé teszik, hogy a mobil/web/asztali Dioxus kliens lekérje a felhasználói 2FA állapotot, fogadja a challenge üzeneteket és továbbítsa az érvényesítési kódokat a szervernek.
+A backend tokenes 2FA folyamatot biztosít a `POST /2fa`, `GET /2fa/code`, `POST /2fa/approve`, `GET /2fa/status` és `POST /2fa/verify` végpontokon keresztül. A folyamat a külön DX-SnapTray companion klienssel is működik (DX-SnapTray repository), miközben ez a repo a szerveroldali 2FA API-kat tartalmazza.
 
 A rendszer emellett egy belső geobiztonsági szolgáltatást is tartalmaz (`src/services/Geosecurity-service.js`), amely az IP-alapú helyadatokat elemzi, VPN/Tor/Proxy kockázatpontszámot számít és lehetetlen utazás detektálást végez a `src/locationRiskAnalyzer/locationRiskAnalyzer.js` modulon keresztül.
 
@@ -1372,7 +1432,13 @@ A rendszer emellett egy belső geobiztonsági szolgáltatást is tartalmaz (`src
 const hashedPassword = await bcrypt.hash(password, 10);
 const user = new User({ username, password: hashedPassword, email });
 await user.save();
-await createSecurityLog('USER_REGISTER', { username, email }, clientIp);
+await createSecurityLog({
+  userId: user._id,
+  ipAddress: clientIp,
+  action: 'registration_attempt',
+  type: 'INFO',
+  details: '--'
+});
 res.status(200).json({ message: 'Regisztráció sikeres! Ellenőrizze e-mailjét az érvényesítéshez.' });
 ```
 
@@ -1428,39 +1494,11 @@ router.post('/orders/googlepay',    validateOrderInput, denyEditorOrderPlacement
 router.post('/pay-with-balance',    validatePaymentInput, denyEditorOrderPlacement, ...);
 ```
 
-A frontend (`public/Order/order.jsx`) az autentikáció során beállítja az `isEditor` állapotot, amelyet prop-ként átad a `Cart`, `MobileCart` és `MenuItem` komponenseknek. Ez letiltja a „Kosárba" gombot, szürkébe fordítja a fizetési gombokat, és egy figyelmeztető bannert jelenít meg.
+A frontend (`public/order/order.jsx`) az autentikáció során beállítja az `isEditor` állapotot, amelyet prop-ként átad a `Cart`, `MobileCart` és `MenuItem` komponenseknek. Ez letiltja a „Kosárba" gombot, szürkébe fordítja a fizetési gombokat, és egy figyelmeztető bannert jelenít meg.
 
 ##### Szülő→gyermek rendelés (Parent ordering)
 
 Szülői bejelentkezés esetén a rendelési oldal betöltésekor a `loadParentStudentList` lekérdezi a `/dashboard/parent/studentlist` végpontot, majd megjeleníti a kapcsolt diákok listáját egy legördülő panelben. A kiválasztott gyermek azonosítója (`selectedChildId`) átkerül minden fizetési handlerbe (`handleGooglePayPayment`, `handlePayPalPayment`, `handleBalancePayment`) és az API-kérések törzsében `selectedStudentId` mezőként utazik a backendhez.
-
-A szerver oldalon a `resolveOrderTargetUserId` segédfüggvény a `ParentStudent` gyűjteményen ellenőrzi, hogy a szülő valóban hozzá van-e rendelve a kiválasztott diákhoz (`status: 'approved'`). Ha igen, a rendelés a diák (`orderUserId`) nevére jön létre; ha nem, `403 Forbidden` válasz születik. Egyenleg-alapú fizetésnél a `processBalancePayment` külön kezeli a két felet: a szülő (`payerUserId`) egyenlegéből von le, de a rendelést és a hűségpontokat a gyermek (`orderUserId`) fiókjához rendeli:
-
-```javascript
-// src/api.js
-const resolveOrderTargetUserId = async (req, userId) => {
-    if (!isParentUser(req)) return userId;
-    const selectedStudentId = getSelectedStudentId(req);
-    if (!selectedStudentId) throw errorWith(400, 'Parent orders must specify a linked student.');
-    const link = await ParentStudent.findOne({
-        parentId: userId, studentId: selectedStudentId, status: 'approved'
-    }).lean();
-    if (!link) throw errorWith(403, 'Selected student is not linked to your parent account.');
-    return selectedStudentId;
-};
-
-// src/services/order-service.js
-const processBalancePayment = async (payerUserId, orderUserId, items, ...) => {
-    // Egyenleg levonása a szülő fiókjáról
-    const payer = await User.findById(payerUserId).session(session);
-    payer.balance = currentBalance - totalInUSD;
-    await payer.save({ session });
-    // Rendelés létrehozása a gyermek fiókján
-    const newOrder = await createOrderRecord(orderUserId, dbOrderItems, ...);
-    // Hűségpontok a gyermeknek
-    await UserLoyalty.updatePointsAtomically(orderUserId, totalPoints, ...);
-};
-```
 
 A szerver oldalon a `resolveOrderTargetUserId` segédfüggvény a `ParentStudent` gyűjteményen ellenőrzi, hogy a szülő valóban hozzá van-e rendelve a kiválasztott diákhoz (`status: 'approved'`). Ha igen, a rendelés a diák (`orderUserId`) nevére jön létre; ha nem, `403 Forbidden` válasz születik. Egyenleg-alapú fizetésnél a `processBalancePayment` külön kezeli a két felet: a szülő (`payerUserId`) egyenlegéből von le, de a rendelést és a hűségpontokat a gyermek (`orderUserId`) fiókjához rendeli:
 
@@ -1618,11 +1656,11 @@ A Redis teljesítményét beépített INFO parancsokkal figyelik, nyomon követv
 
 #### 6.2.6 Hűségprogram
 
-A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 pont/dollár), szorzva ünnepi, egészségszint és tier bónuszokkal. Tier-ek: NONE → BRONZE (1200 pont) → SILVER (2500) → GOLD (8000) → PLATINUM (20000). Lásd `src/LoyaltySystem/loyalty-service.js` és `config/DATABASE_CONSTANTS.JS` a díjszabásokhoz.
+A pontok rendelésenként számolódnak véletlenszerű érték alapján (4–9 pont/dollár), szorzva ünnepi, egészségszint és tier bónuszokkal. Tier-ek: none → Bronze (1200 pont) → Silver (5000) → Gold (15000) → Platinum (40000). Lásd `src/LoyaltySystem/loyalty-service.js` és `config/DATABASE_CONSTANTS.JS` a díjszabásokhoz.
 
 #### 6.2.7 Rate Limiting
 
-Két stratégiát alkalmaz: `express-rate-limit` Redis tárolóval általános API végpontokra, valamint egy egyedi Redis Lua csúszóablakos script admin/dashboard útvonalakhoz (30 kérés/perc). A Lua megvalósítás atomi — egyetlen megszakíthatatlan tranzakcióként fut, ezzel elkerülve a versenyhelyzeteket nagy párhuzamos terhelésnél. Lásd a Lua scriptet az 5.3.2 szakaszban.
+Két szintű stratégiát alkalmaz: globális `express-rate-limit` korlátokat (`/api` 250/óra, `/dashboard` 1000/15 perc), valamint dashboard-modulonként Redis Lua csúszóablakos limitet (`admin` 30/perc, `editor` 20/perc, `parent` 45/perc, `student` 60/perc). A Lua megvalósítás atomi — egyetlen megszakíthatatlan tranzakcióként fut, ezzel elkerülve a versenyhelyzeteket nagy párhuzamos terhelésnél. Lásd a Lua scriptet az 5.3.2 szakaszban.
 
 #### 6.2.8 Bővíthetőség és karbantarthatóság
 
@@ -1642,7 +1680,7 @@ React.js JSX-szel, Tailwind CSS stílushoz, Socket.IO kliens valós idejű kommu
 - **Állapotkezelés**: Lokális komponensállapot `useState`, `useEffect` és egyéni hook-ok (pl. `useAdminData.js`) használatával.
 - **Routing**: Kliens oldali útválasztás URL hash változások és feltételes renderelés alapján.
 - **Stílus**: Tailwind CSS osztályok reszponzív, utility-first tervezéshez.
-- **DX-SnapTray 2FA companion**: A frontend kiegészíti a fő alkalmazást egy külső, Dioxus/Rust alapú 2FA klienssel, amely a felhasználók második faktora számára külön eszközön futó hitelesítést biztosít. Ez a companion alkalmazás nem része a jelen repo frontend kódjának, de a dokumentáció szerint szoros integrációban áll a backend 2FA API végpontjaival.
+- **2FA companion kliens (opcionális)**: A backend 2FA API-k (`/2fa/*`) külső kliensből is használhatók. A companion alkalmazás nem része ennek a repónak.
 
 A dashboard adatfolyama:
 
@@ -1683,7 +1721,7 @@ stateDiagram-v2
 ##### Dashboard rendszer
 Az adminisztrációs irányítópult (`public/dashboard/admin/admin.jsx`) sidebar navigációt, felhasználók, statisztikák, menüpontok, jutalmak, egészségellenőrzések és beállítások szakaszait tartalmazza. Egy egyedi `useAdminData` hookot használ az adatok REST API-król történő lekérésére és kezelésére.
 
-A rendszer integrálja a 2FA folyamatot is, amelyet külső Dioxus alapú DX-SnapTray alkalmazás támogat; a backend 2FA endpointjai a felhasználói fiókhoz tartozó második hitelesítési feltételeket kezelik.
+A rendszer integrálja a 2FA folyamatot is; a backend 2FA végpontjai a felhasználói fiókhoz tartozó második hitelesítési lépést kezelik, külső kliensből is használható módon.
 
 ```jsx
 // Admin irányítópult felépítés — public/dashboard/admin/admin.jsx
@@ -1879,6 +1917,10 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 | POST | `/logout` | Munkamenet | Felhasználói kijelentkezés |
 | GET | `/logout` | Munkamenet | Kijelentkezés (átirányítás) |
 | POST | `/2fa` | Nyilvános | Kétfaktoros hitelesítés |
+| GET | `/2fa/code` | Bearer token | Függő 2FA kód lekérése |
+| POST | `/2fa/approve` | Bearer token | 2FA jóváhagyás jelzése |
+| GET | `/2fa/status` | Bearer token | 2FA jóváhagyási állapot és session felépítés |
+| POST | `/2fa/verify` | Nyilvános | 2FA kód ellenőrzése token + kód alapon |
 | POST | `/email-verification/verify-code` | Nyilvános | E-mail kód ellenőrzése |
 | GET | `/email-verification/verify/:token` | Nyilvános | E-mail token ellenőrzése |
 | POST | `/password-reset/` | Nyilvános | Jelszó-visszaállítás kérése |
@@ -1910,7 +1952,9 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 |--------|----------|-------------|--------|
 | GET | `/dashboard/` | Munkamenet | Fő irányítópult (szerepkör átirányítás) |
 | GET | `/dashboard/admin` | Admin | Adminisztrátori irányítópult |
-| GET | `/dashboard/student` | Diák/Szülő | Diák irányítópult |
+| GET | `/dashboard/editor` | Editor/Admin | Szerkesztői irányítópult |
+| GET | `/dashboard/student` | Diák/Admin | Diák irányítópult |
+| GET | `/dashboard/parent` | Szülő/Admin | Szülői irányítópult |
 
 <span id="adminisztratori-iranyitopult-api-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ### Adminisztrátori irányítópult API útvonalak {#adminisztratori-iranyitopult-api-utvonalak}
@@ -1923,8 +1967,11 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 | GET | `/dashboard/admin/userlist` | Az összes felhasználó listája |
 | GET | `/dashboard/admin/stats` | Statisztikai elemzés: regisztrációs időbélyegek mean/median/stddev (`simple-statistics`) |
 | GET | `/dashboard/admin/signup-stats` | Napi regisztrációk száma (idősor formátumban) |
-| GET | `/dashboard/admin/most_bought_items` | Top-5 legtöbbet rendelt tétel (összes) |
-| GET | `/dashboard/admin/most_bought_items-lastweek` | Top-5 legtöbbet rendelt tétel (utolsó 7 nap) |
+| GET | `/dashboard/admin/stats/most_bought_items` | Top-5 legtöbbet rendelt tétel (összes) |
+| GET | `/dashboard/admin/stats/most_bought_items-lastweek` | Top-5 legtöbbet rendelt tétel (utolsó 7 nap) |
+| GET | `/dashboard/admin/stats/revenue-lastmonth` | Elmúlt havi bevétel idősor |
+| GET | `/dashboard/admin/stats/average-order-value` | Átlagos rendelésérték |
+| GET | `/dashboard/admin/stats/total-revenue` | Összesített bevétel |
 | GET | `/dashboard/admin/orders` | Összes rendelés |
 | GET | `/dashboard/admin/soldout` | Elfogyott tételek |
 | GET | `/dashboard/admin/itemcount` | Menüelemek száma |
@@ -1937,7 +1984,7 @@ Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 | POST | `/dashboard/admin/create_menuitem` | Menüelem létrehozása |
 | PUT | `/dashboard/admin/menuitem/:id` | Menüelem frissítése |
 
-A statisztikai végpontok (`/stats`, `/signup-stats`, `/most_bought_items*`) a `simple-statistics` npm csomagot használják, és csak admin szerepkör számára érhetők el. Az eredmények Redis-ben gyorsítótárazódnak a `cacheResult()` middleware segítségével (`src/dashboard/services/cache-service.js`), amely transzparensen (a route handler módosítása nélkül) köti be a cache-logikát — csak 2xx GET válaszokat tárol, konfiguálható TTL-lel és opcionális `shouldCache` feltétel-hookkal.
+A statisztikai végpontok (`/stats`, `/signup-stats`, `/stats/most_bought_items*`, `/stats/revenue-lastmonth`, `/stats/average-order-value`, `/stats/total-revenue`) a `simple-statistics` npm csomagot használják, és csak admin szerepkör számára érhetők el. Az eredmények Redis-ben gyorsítótárazódnak a `cacheResult()` middleware segítségével (`src/dashboard/services/cache-service.js`), amely transzparensen (a route handler módosítása nélkül) köti be a cache-logikát — csak 2xx GET válaszokat tárol, konfiguálható TTL-lel és opcionális `shouldCache` feltétel-hookkal.
 
 A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ellenőrzi. A Redis kiesése esetén a válasz gyorsan `unavailable`/`degraded` státuszokra vált, így a dashboard nem marad végtelen frissítésben.
 
@@ -1987,22 +2034,41 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 |--------|----------|-------------|--------|
 | GET | `/dashboard/student/freeze_account` | Diák | Fiók felfüggesztése oldal |
 | POST | `/dashboard/student/parent/link` | Diák | Szülői fiók összekapcsolása |
+| POST | `/dashboard/student/parent` | Diák | Közvetlen parent kapcsolat létrehozása |
+| GET | `/dashboard/student/parent/unlink` | Diák | Szülői kapcsolat megszüntetése |
+| GET | `/dashboard/student/loyalty/rewards` | Diák | Elérhető jutalmak listája |
+| POST | `/dashboard/student/loyalty/redeem` | Diák | Jutalom beváltása pontokért |
+| GET | `/dashboard/student/loyalty/vouchers` | Diák | Saját voucher lista |
+
+<span id="szulo-iranyitopult-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### Szülő irányítópult útvonalak {#szulo-iranyitopult-utvonalak}
+
+| Módszer | Végpont | Hitelesítés | Leírás |
+|--------|----------|-------------|--------|
+| GET | `/dashboard/parent/studentlist` | Szülő | Kapcsolt diákok listája |
+| GET | `/dashboard/parent/link-requests` | Szülő | Függőben lévő kapcsolódási kérelmek |
+| POST | `/dashboard/parent/link-request/:requestId` | Szülő | Kapcsolódási kérés jóváhagyása/elutasítása |
+| GET | `/dashboard/parent/orders` | Szülő | Kapcsolt diákok rendelései |
+| GET | `/dashboard/parent/stats` | Szülő | Szülői összesített statisztikák |
+| POST | `/dashboard/parent/transfer` | Szülő | Egyenlegátutalás a kapcsolt diáknak |
 
 <span id="rendeleskezelo-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ### Rendeléskezelő útvonalak {#rendeleskezelo-utvonalak}
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
-| GET | `/Order/` | Munkamenet | Rendelés oldal |
-| GET | `/Order/menu_items` | Munkamenet | Elérhető menüelemek |
-| GET | `/Order/:orderID` | Munkamenet | Rendelés részletek |
-| POST | `/Order/Order` | Munkamenet | Új rendelés létrehozása |
-| PUT | `/Order/:orderID/status` | Munkamenet | Rendelés állapot frissítése |
-| POST | `/Order/:orderID/capture` | Munkamenet | Fizetés rögzítése |
+| GET | `/order/` | Munkamenet | Rendelés oldal |
+| GET | `/order/menu_items` | Munkamenet | Elérhető menüelemek |
+| GET | `/order/:orderID` | Munkamenet | Rendelés részletek |
+| POST | `/order/order` | Munkamenet | Új rendelés létrehozása |
+| POST | `/order/order/wallet` | Munkamenet | Wallet alapú rendelés |
+| PUT | `/order/:orderID/status` | Munkamenet | Rendelés állapot frissítése |
+| POST | `/order/:orderID/capture` | Munkamenet | Fizetés rögzítése |
+| GET | `/order/DailyMenu` | Munkamenet | Napi menü ajánlások |
 
-**Megjegyzés:** `POST /Order/Order` és `POST /Order/order/wallet` végpontokon a `denyEditorOrderPlacement` middleware `403 Forbidden` hibával blokkolja az editor szerepkörű fiókok rendelés-leadási kísérleteit.
+**Megjegyzés:** `POST /order/order` és `POST /order/order/wallet` végpontokon a `denyEditorOrderPlacement` middleware `403 Forbidden` hibával blokkolja az editor szerepkörű fiókok rendelés-leadási kísérleteit.
 
-**Példa — POST /Order/Order:**
+**Példa — POST /order/order:**
 ```json
 // Request
 { "cart": [{ "id": "item_id", "quantity": 2, "price": 8.99 }], "currency": "USD", "amount": 17.98 }
@@ -2016,8 +2082,10 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
 | GET | `/api/test` | Nyilvános | API állapot ellenőrzése |
-| GET | `/api/current_user` | Munkamenet | Bejelentkezett felhasználó adatok |
-| GET | `/api/menu-items` | Munkamenet | Elérhető menüelemek |
+| GET | `/api/current_user` | Nyilvános (session állapot) | Bejelentkezett állapot és session user objektum |
+| GET | `/api/current-user` | Munkamenet | Chat-kompatibilis aktuális user adatok |
+| GET | `/api/menu-items` | Nyilvános | Elérhető menüelemek |
+| GET | `/api/daily-menu` | Nyilvános | Időszak alapú napi menü ajánlás |
 | POST | `/api/orders` | Munkamenet | PayPal rendelés létrehozása |
 | POST | `/api/orders/:orderID/capture` | Munkamenet | PayPal fizetés rögzítése |
 | POST | `/api/orders/googlepay` | Munkamenet | Google Pay rendelés létrehozása |
@@ -2043,12 +2111,14 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 **Példa — GET /api/current_user válasz:**
 ```json
 {
-  "id": "user_1",
-  "username": "johndoe",
-  "email": "john@example.com",
-  "role": "student",
-  "balance": 1250,
-  "isVerified": true
+  "loggedIn": true,
+  "user": {
+    "id": "user_1",
+    "username": "johndoe",
+    "usertype": "student",
+    "email": "john@example.com",
+    "IsLoggedIn": true
+  }
 }
 ```
 
@@ -2063,17 +2133,16 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 **Példa — POST /api/orders:**
 ```json
 {
-  "userId": "user_1",
-  "items": [
-    { "menuItemId": "item_1", "quantity": 2 },
-    { "menuItemId": "item_2", "quantity": 1 }
+  "cart": [
+    { "menuItemId": "item_1", "quantity": 2, "price": 450 },
+    { "menuItemId": "item_2", "quantity": 1, "price": 320 }
   ],
   "currency": "HUF",
-  "totalAmount": 1200
+  "amount": 1220
 }
 ```
 ```json
-{ "orderId": "order_123", "status": "pending", "paymentUrl": "/pay?order=order_123" }
+{ "id": "PAYPAL_ORDER_ID", "status": "CREATED" }
 ```
 
 <span id="geosecurity-api-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
@@ -2081,9 +2150,9 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
-| GET | `/api/geosecurity/location-info` | Munkamenet | IP és hely alapú kockázati adatok lekérése |
-| POST | `/api/geosecurity/analyze-risk` | Munkamenet | Helyalapú kockázatelemzés |
-| POST | `/api/geosecurity/impossible-travel` | Munkamenet | Lehetetlen utazás detektálás |
+| GET | `/api/geosecurity/location-info` | Nyilvános (session opcionális) | IP és hely alapú kockázati adatok lekérése |
+| POST | `/api/geosecurity/analyze-risk` | Nyilvános (session opcionális) | Helyalapú kockázatelemzés |
+| POST | `/api/geosecurity/impossible-travel` | Nyilvános (session opcionális) | Lehetetlen utazás detektálás |
 
 **Példa — POST /api/geosecurity/analyze-risk:**
 ```json
@@ -2106,12 +2175,12 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 ```
 
 <span id="chat-api-es-websocket-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Chat API és WebSocket útvonalak {#chat-api-es-websocket-utvonalak}
+### Chat API és Socket.IO események {#chat-api-es-websocket-utvonalak}
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
 | GET | `/chat` | Munkamenet | Chat felület |
-| WS | `/chat` | Munkamenet | WebSocket valós idejű chathez |
+| Socket.IO | `io.on('connection')` | Munkamenet | Eseményalapú valós idejű kapcsolat |
 | POST | `/chat/setup-e2ee` | Munkamenet | E2EE nyilvános kulcs beállítása |
 | GET | `/chat/public-key/:userId` | Munkamenet | Felhasználó nyilvános kulcsának lekérése |
 | POST | `/chat/send-message` | Munkamenet | Titkosított üzenet küldése |
@@ -2129,15 +2198,19 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | <span style="color:#d32f2f;font-weight:bold">POST</span> | <span style="color:#d32f2f;font-weight:bold">`/chat/admin/clear-all-e2ee`</span> | <span style="color:#d32f2f;font-weight:bold">Admin</span> | <span style="color:#d32f2f;font-weight:bold">Minden E2EE adat törlése (csak admin)</span> |
 | POST | `/chat/request-sender-recovery` | Munkamenet | Küldőkulcs helyreállításának kérése |
 | GET | `/chat/pending-recovery` | Munkamenet | Helyreállítást igénylő üzenetek lekérése |
+| POST | `/chat/message/:messageId/update-sender-key` | Munkamenet | Helyreállított kulcs visszaírása |
+| POST | `/chat/message/:messageId/recovery-failed` | Munkamenet | Sikertelen helyreállítás jelölése |
 
-**Példa — WebSocket csatlakozás a chathez:**
+**Példa — Socket.IO csatlakozás a chathez:**
 ```js
-const socket = new WebSocket("wss://example.com/chat");
-socket.addEventListener("open", () => {
-  socket.send(JSON.stringify({ type: "authenticate", token: "JWT_TOKEN" }));
+import { io } from "socket.io-client";
+
+const socket = io("https://example.com", { withCredentials: true });
+socket.on("connect", () => {
+  socket.emit("authenticate", "USER_ID");
 });
-socket.addEventListener("message", (event) => {
-  console.log("Üzenet érkezett:", JSON.parse(event.data));
+socket.on("newMessage", (payload) => {
+  console.log("Üzenet érkezett:", payload);
 });
 ```
 
@@ -2145,12 +2218,17 @@ socket.addEventListener("message", (event) => {
 ```json
 {
   "recipientId": "user_2",
-  "encryptedMessage": "BASE64_ENCODED_CIPHERTEXT",
-  "timestamp": "2026-04-05T12:00:00Z"
+  "encryptedContent": "BASE64_ENCODED_CIPHERTEXT",
+  "encryptionMetadata": {
+    "senderEncryptedKey": "BASE64_SENDER_KEY",
+    "recipientEncryptedKey": "BASE64_RECIPIENT_KEY",
+    "iv": "BASE64_IV"
+  },
+  "messageType": "text"
 }
 ```
 
-**WebSocket események:** `newMessage`, `messageReplaced`, `processPendingRecovery`
+**Socket.IO események:** `newMessage`, `messageReplaced`, `processPendingRecovery`, `resendRequired`
 
 Minden chatüzenet kliensoldalon van titkosítva (E2EE). A szerver csak a titkosított szöveget és metaadatokat tárolja.
 
@@ -2193,7 +2271,7 @@ const keyRegistry = {
 - `SecurityLogs` (a `config/database_queries.js`-ben): biztonsági esemény audit naplói akcióval, típussal, IP-vel és geolokációs metaadatokkal.
 - `DeviceSyncSession` (a `src/models/DeviceSyncSession.js`-ben): átmeneti munkamenet adatok E2EE szinkronizációhoz, TTL indexsel `expiresAt`-on.
 
-- `Message` (a `src/models/Message.js`-ben): E2EE üzenet tároló (Double Ratchet/X3DH metaadat), státusz nyomon követés, indexek hatékony lekéréshez.
+- `Message` (a `src/models/Message.js`-ben): E2EE üzenet tároló (legacy metadata + recovery mezők), státusz nyomon követés, indexek hatékony lekéréshez.
 - `PreKey` (a `src/models/PreKey.js`-ben): prekey-k X3DH bootstrappinghez, egyedi és indexelési megszorításokkal.
 - `StorageBlob` (a `src/models/StorageBlob.js`-ben): titkosított tárolt blobok munkamenet/üzenet állapothoz, egyedi user/blobType/partition kombinációnként.
 - `Reward` és `Redemption` (a `config/database_queries.js`-ben): kibővített hűségprogram katalógus és utalvány entitásokkal.
@@ -2210,7 +2288,7 @@ const keyRegistry = {
 
 | Middleware | Hozzáférés |
 |---|---|
-| `requireAdmin` | Csak admin és felette |
+| `requireAdmin` | Csak admin|
 | `requireEditor` | Editor + admin |
 | `requireStudent` | Student + admin |
 | `requireParentAuth` | Parent + admin |
@@ -2254,6 +2332,14 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 
 ---
 
+<span id="9-teszteles" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+## 9. Tesztelés {#9-teszteles}
+
+A projekt tesztelési fókusza az egység-, integrációs, biztonsági és teljesítménytesztek kombinációjára épül.
+A konkrét tesztfájlok és hivatkozások listája a [8.7 Tesztelési hivatkozások](#87-tesztelesi-hivatkozasok) szakaszban található.
+
+---
+
 <span id="10-felhasznaloi-kezikonyv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
 ## 10. Felhasználói kézikönyv {#10-felhasznaloi-kezikonyv}
 
@@ -2274,11 +2360,11 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 
 A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési platformot valósít meg, amely a következő főbb funkciókat tartalmazza:
 
-- **Többfaktoros hitelesítés**: reCAPTCHA v3, email-ellenőrzés, Redis/memória kettős fallback 2FA, DX-SnapTray companion alkalmazás.
+- **Többfaktoros hitelesítés**: reCAPTCHA v3, email-ellenőrzés, Redis/memória kettős fallback 2FA, opcionális külső companion kliens támogatással.
 - **Szerepalapú hozzáférés-vezérlés**: négy felhasználói szerepkör (diák, szülő, admin, editor) teljes RBAC middleware-rel.
 - **Biztonságos fizetési rendszer**: PayPal, Google Pay és egyenleg-alapú fizetés, MongoDB natív tranzakcióval az atomicitás biztosítására.
 - **Hűségprogram**: pontgyűjtés, szintrendszer, automatikus kedvezmények, ünnepi bónuszok és pontromlás mechanizmus.
-- **E2EE üzenetküldés**: Double Ratchet + X3DH kulcscsere, IndexedDB-alapú kulcstárolás, kulcsmásolat és -visszaállítás.
+- **E2EE üzenetküldés**: RSA-OAEP + AES-GCM alapú kliensoldali titkosítás, IndexedDB-alapú kulcstárolás, kulcsmásolat és -visszaállítás; ECDH-prekey migrációs alapokkal.
 - **Valós idejű gyorsítótárazás**: Redis + MongoDB Change Stream alapú érvénytelenítési stratégia.
 - **Geobiztonsági kockázatelemzés**: VPN/Tor/Proxy detektálás, lehetetlen utazás ellenőrzés, IP HMAC-SHA256 hash (GDPR).
 
