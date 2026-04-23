@@ -67,62 +67,49 @@
 
 ## 2 Kivonat
 
-Jelen vizsgaremek egy olyan innovatív elektronikus napló fejlesztését és
-implementációját mutatja be, amely a hagyományos adminisztrációs kereteket túllépve a
-modern pedagógiai szemléletet és a digitális ösztönzőrendszereket ötvözi. A projekt alapvető
-célkitűzése egy olyan felhasználóbarát platform létrehozása volt, amely nem csupán az
-érdemjegyek és mulasztások rögzítésére szolgál, hanem aktív szerepet vállal a tanulói
-elköteleződés növelésében és az oktatási folyamat transzparenciájában. A szoftver fejlesztése
-során a korszerű webes technológiák alkalmazása mellett kiemelt figyelmet fordítottam a
-reszponzív kialakításra és a magas szintű adatbiztonságra, biztosítva ezzel a zökkenőmentes
-használatot minden eszközön.
+A SnapTray vizsgaprojekt egy webalapú iskolai menza-rendelő és fizetési rendszer tervezését,
+megvalósítását és dokumentálását mutatja be. A rendszer célja, hogy egységes platformon
+kezelje a diákok, szülők, adminisztrátorok és szerkesztői szerepkörben dolgozó felhasználók
+folyamatait, az étlap megtekintésétől a rendelésen át a fizetésig. A megoldás központi értéke,
+hogy az intézményi étkeztetés folyamata gyorsabbá, átláthatóbbá és jobban követhetővé válik.
 
-A dolgozat központi részét a rendszerbe integrált motivációs eszközök részletezése
-alkotja, amelyek a gamifikáció és a pozitív visszacsatolás elveire épülnek. A fejlesztés során
-beépítettem egy egyedi fejlődés-vizualizációs modult, amely interaktív grafikonok
-segítségével teszi láthatóvá a diákok számára saját tanulmányi előmenetelüket, ezáltal erősítve
-a belső motivációt és a tudatosságot. A rendszer emellett digitális elismerésekkel és
-jelvényekkel jutalmazza a mérföldkövek elérését, például a javuló tendenciát vagy a példás
-feladatmegoldásokat, ami a kompetenciaérzet növelésével ösztönzi a tanulókat a jobb
-teljesítményre.
+A projekt architektúrája rétegezett felépítésű. A frontend React alapú felületet és
+szerepkör-specifikus dashboardokat használ, a backend Node.js és Express környezetben
+biztosít REST API-kat, hitelesítést és üzleti logikát, az adatréteg pedig MongoDB és Redis
+komponensekre épül. A rendszer fő funkciói közé tartozik a regisztráció és bejelentkezés,
+email-ellenőrzés, kétlépcsős azonosítás (2FA), menü- és rendeléskezelés, szülői rendelés
+gyermekhez rendelése, digitális pénztárca, valamint PayPal és Google Pay fizetési integráció.
 
-A technikai megvalósítás során a tiszta kód elveit és a skálázható adatbázis-
-architektúrát követtem, hogy a szoftver hosszú távon is fenntartható és bővíthető maradjon.
-Az elkészült vizsgaremek eredményei alátámasztják, hogy egy jól strukturált digitális
-környezet képes csökkenteni a pedagógusok adminisztrációs terheit, miközben a diákok
-számára támogató, ösztönző közeget teremt. Az összegzés rávilágít arra, hogy az elektronikus
-napló a jövőben nem csupán egy statikus adattárként, hanem egyfajta digitális mentorként is
-funkcionálhat az oktatási intézmények mindennapjaiban.
+A megvalósítás security-first és performance-first szemléletben készült, ezért kiemelt
+szempont volt a biztonság, a teljesítmény, a skálázhatóság és az üzemeltetési stabilitás.
+Ennek része a JWT alapú jogosultságkezelés, rate limiting, biztonsági naplózás,
+Redis-alapú gyorsítótárazás és atomi műveletek, valamint a tesztelési és teljesítményvizsgálati
+eszközök használata. Az elkészült rendszer olyan technikai alapot ad, amely valós környezetben
+is képes támogatni az iskolai étkeztetés digitális működését.
 
 ---
 
 ## 3 Abstract
 
-This thesis project presents the development and implementation of an innovative
-electronic gradebook that transcends traditional administrative boundaries by blending
-modern pedagogical approaches with digital incentive systems. The fundamental objective of
-the project was to create a user-friendly platform that serves not only as a record-keeper for
-grades and attendance but also plays an active role in increasing student engagement and the
-transparency of the educational process. During the software development phase, alongside
-the application of contemporary web technologies, significant emphasis was placed on
-responsive design and high-level data security, ensuring seamless usability across all devices.
+This thesis project presents the design, implementation, and documentation of SnapTray, a
+web-based school cafeteria ordering and payment platform. The system is intended to provide
+a unified workflow for students, parents, administrators, and editor-level users, covering the
+full process from menu browsing to order placement and payment. Its primary value is to make
+institutional meal management faster, more transparent, and easier to track.
 
-The central part of the work details the motivational tools integrated into the system,
-which are built upon the principles of gamification and positive feedback. During
-development, I incorporated a unique progress visualization module that utilizes interactive
-charts to make academic advancement visible to students, thereby strengthening intrinsic
-motivation and self-awareness. Additionally, the system rewards the achievement of specific
-milestones—such as improving trends or exemplary assignment completion—with digital
-accolades and badges, encouraging students toward better performance by boosting their
-sense of competence.
+The solution follows a layered architecture. The frontend is built with React and role-based
+dashboards, the backend uses Node.js and Express to provide REST APIs, authentication, and
+business logic, and the data layer combines MongoDB with Redis. Core features include user
+registration and login, email verification, two-factor authentication (2FA), menu and order
+management, parent-to-child order targeting, a digital wallet flow, and PayPal/Google Pay
+integrations.
 
-Regarding technical execution, I followed clean code principles and a scalable
-database architecture to ensure the software remains sustainable and expandable in the long
-term. The results of this thesis project demonstrate that a well-structured digital environment
-is capable of reducing the administrative burden on educators while creating a supportive and
-stimulating atmosphere for students. The summary highlights that, in the future, the electronic
-gradebook can function not merely as a static repository of data but as a kind of digital mentor
-in the daily life of educational institutions.
+The implementation was carried out with a security-first and performance-first mindset,
+emphasizing security, performance, scalability, and operational reliability. This includes
+JWT-based authorization, rate limiting, security logging, Redis-based caching with atomic
+operations, and dedicated testing/performance tooling. The completed system provides a
+practical technical foundation for digitally operating school meal services in real-world
+educational environments.
 
 ---
 
