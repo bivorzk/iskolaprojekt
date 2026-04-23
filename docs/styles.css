@@ -65,10 +65,10 @@ body .cover h1,
 
 /* �� Headings ������������������������������������������������� */
 
-/* H1 � Cmsor1: sz=48 (24pt), bold, before=360 (18pt), after=480 (24pt) */
+/* H1 (document title): 36pt */
 h1 {
   font-family: "Times New Roman", Times, serif !important;
-  font-size: 24pt !important;
+  font-size: 36pt !important;
   font-weight: bold !important;
   line-height: 1.2 !important;
   margin-top: 18pt !important;
@@ -78,20 +78,22 @@ h1 {
   page-break-after: avoid;
 }
 
-/* H2 � Cmsor2: sz=36 (18pt), bold, before=120 (6pt), after=240 (12pt) */
+/* H2 (section heading): 24pt */
 h2 {
   font-family: "Times New Roman", Times, serif !important;
-  font-size: 18pt !important;
+  font-size: 24pt !important;
   font-weight: bold !important;
   line-height: 1.2 !important;
   margin-top: 6pt !important;
   margin-bottom: 12pt !important;
   text-indent: 0 !important;
   text-align: left !important;
+  break-before: page !important;
+  page-break-before: always !important;
   page-break-after: avoid;
 }
 
-/* H3 � Cmsor3: sz=28 (14pt), bold, before=240 (12pt), after=0 */
+/* H3 (subsection heading): 14pt */
 h3 {
   font-family: "Times New Roman", Times, serif !important;
   font-size: 14pt !important;

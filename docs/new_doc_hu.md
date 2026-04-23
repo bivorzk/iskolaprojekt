@@ -17,7 +17,6 @@
   </div>
 </div>
 
-# SnapTray szoftver dokumentációja
 
 ## 1 Tartalomjegyzék
 
