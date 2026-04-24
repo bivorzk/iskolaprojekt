@@ -45,6 +45,7 @@
   - [Adminisztrátori irányítópult API útvonalak](#adminisztratori-iranyitopult-api-utvonalak)
   - [Diák irányítópult útvonalak](#diak-iranyitopult-utvonalak)
   - [Szülő irányítópult útvonalak](#szulo-iranyitopult-utvonalak)
+  - [Tanári irányítópult útvonalak (Apollo ág)](#tanari-iranyitopult-utvonalak)
   - [Rendeléskezelő útvonalak](#rendeleskezelo-utvonalak)
   - [Általános API útvonalak](#altalanos-api-utvonalak)
   - [GeoSecurity API útvonalak](#geosecurity-api-utvonalak)
@@ -58,6 +59,8 @@
   - [8.6 Környezet- és konfigurációs alapok](#86-kornyezet-es-konfiguracios-alapok)
   - [8.7 Tesztelési hivatkozások](#87-tesztelesi-hivatkozasok)
 - [9. Tesztelés](#9-teszteles)
+  - [9.1 Automatizált egységtesztelés (Unit Testing)](#91-automatizalt-egysegteszteles-unit-testing)
+  - [9.2 Tesztdokumentációs táblázat (Manuális tesztelés)](#92-tesztdokumentacios-tablazat-manualis-teszteles)
 - [10. Felhasználói kézikönyv](#10-felhasznaloi-kezikonyv)
 - [11. Telepítés és karbantartás](#11-telepites-es-karbantartas)
 - [12. Következtetés és jövőbeni munka](#12-kovetkeztetes-es-jovobeni-munka)
@@ -70,8 +73,9 @@
 A SnapTray vizsgaprojekt egy webalapú iskolai menza-rendelő és fizetési rendszer tervezését,
 megvalósítását és dokumentálását mutatja be. A rendszer célja, hogy egységes platformon
 kezelje a diákok, szülők, adminisztrátorok és szerkesztői szerepkörben dolgozó felhasználók
-folyamatait, az étlap megtekintésétől a rendelésen át a fizetésig. A megoldás központi értéke,
-hogy az intézményi étkeztetés folyamata gyorsabbá, átláthatóbbá és jobban követhetővé válik.
+folyamatait, az étlap megtekintésétől a rendelésen át a fizetésig. Az apollo ágon ehhez tanári
+(teacher) dashboard funkciók is kapcsolódnak. A megoldás központi értéke, hogy az intézményi
+étkeztetés folyamata gyorsabbá, átláthatóbbá és jobban követhetővé válik.
 
 A projekt architektúrája rétegezett felépítésű. A frontend React alapú felületet és
 szerepkör-specifikus dashboardokat használ, a backend Node.js és Express környezetben
@@ -94,7 +98,8 @@ is képes támogatni az iskolai étkeztetés digitális működését.
 This thesis project presents the design, implementation, and documentation of SnapTray, a
 web-based school cafeteria ordering and payment platform. The system is intended to provide
 a unified workflow for students, parents, administrators, and editor-level users, covering the
-full process from menu browsing to order placement and payment. Its primary value is to make
+full process from menu browsing to order placement and payment. On the apollo branch, the
+dashboard layer also includes teacher-focused workflows. Its primary value is to make
 institutional meal management faster, more transparent, and easier to track.
 
 The solution follows a layered architecture. The frontend is built with React and role-based
@@ -114,25 +119,25 @@ educational environments.
 ---
 
 <span id="1-bevezetes" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 1. Bevezetés {#1-bevezetes}
+## 1. Bevezetés 
 
 A SnapTray egy webalapú menza-rendelőrendszer, amelynek célja, hogy egyszerűsítse az étkezési rendelések lebonyolítását iskolai környezetben. Fő célja, hogy a diákok, szülők és az étkeztető személyzet közötti interakció gyorsabbá és átláthatóbbá váljon az online rendelés, a valós idejű rendeléskövetés és a biztonságos fizetési lehetőségek révén.
 
-A rendszer négy főbb felhasználói szerepet szolgál ki: a **diákok** böngészhetnek az étlapok között, rendelhetnek és kezelhetik a virtuális pénztárcájukat; a **szülők** figyelemmel kísérhetik gyermekeik rendeléseit, kezelhetik a fizetéseket, és közvetlenül rendelhetnek a kapcsolt gyermekeik nevére; az **adminisztrátorok** számára dashboard biztosít lehetőséget az étlapok kezelésére és statisztikák elemzésére; a **szerkesztők (editor)** megtekinthetik a menüt és rendelési oldalt, azonban rendelés leadása számukra tiltott.
+A rendszer négy főbb felhasználói szerepet szolgál ki: a **diákok** böngészhetnek az étlapok között, rendelhetnek és kezelhetik a virtuális pénztárcájukat; a **szülők** figyelemmel kísérhetik gyermekeik rendeléseit, kezelhetik a fizetéseket, és közvetlenül rendelhetnek a kapcsolt gyermekeik nevére; az **adminisztrátorok** számára dashboard biztosít lehetőséget az étlapok kezelésére és statisztikák elemzésére; a **szerkesztők (editor)** megtekinthetik a menüt és rendelési oldalt, azonban rendelés leadása számukra tiltott. Az **apollo** ágon emellett külön **tanári (teacher)** dashboard is elérhető.
 
 A SnapTray modern biztonsági megoldásokat alkalmaz (kétlépcsős azonosítás, email-ellenőrzés, gyakori webes támadások elleni védelem), valamint PayPal és Google Pay integrációt kínál.
 
 ---
 
 <span id="2-rendszer-attekintese" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 2. Rendszer áttekintése {#2-rendszer-attekintese}
+## 2. Rendszer áttekintése 
 
 A rendszer egy webalapú rendelési és fizetési platform oktatási intézmények számára, kliens–szerver architektúrában. A backend Node.js alapú Express szerver, a frontend React komponensekből épül fel szerepkör-alapú dashboardokkal. Redis biztosítja a gyorsítótárazást, rate limitinget és az atomi műveleteket, MongoDB az adatok perzisztens tárolását.
 
 ### Megvalósított fő funkciók
 
 **Felhasználókezelés és autentikáció:**
-- Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor, szerkesztő/editor)
+- Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor, szerkesztő/editor, tanár - apollo ág)
 - Email alapú fiókellenőrzés és kétlépcsős azonosítás (2FA)
 - JWT alapú munkamenet-kezelés Redis tárolással
 - Jelszó biztonság bcrypt hasheléssel és erősség validációval
@@ -152,7 +157,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 ---
 
 <span id="3-kovetelmenyek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 3. Követelmények {#3-kovetelmenyek}
+## 3. Követelmények 
 
 ### Fő célok
 - Biztonságos és ellenőrzött rendelési folyamat
@@ -160,7 +165,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 - Skálázható és nagy teljesítményű backend
 - Külső fizetési szolgáltatók integrálása (PayPal, Google Pay)
 
-**Felhasználókezelés:** Regisztráció, email alapú fiókellenőrzés, szerepkör-alapú hozzáférés (diák, szülő, admin, editor).
+**Felhasználókezelés:** Regisztráció, email alapú fiókellenőrzés, szerepkör-alapú hozzáférés (diák, szülő, admin, editor, tanár - apollo ág).
 
 **Hitelesítés és biztonság:** JWT alapú hitelesítés, kétlépcsős azonosítás (2FA), rate limiting brute-force védelem ellen.
 
@@ -171,7 +176,7 @@ A rendszer egy webalapú rendelési és fizetési platform oktatási intézmény
 ---
 
 <span id="4-rendszerarchitektura" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 4. Rendszerarchitektúra {#4-rendszerarchitektura}
+## 4. Rendszerarchitektúra 
 
 A rendszer három fő rétegből áll:
 
@@ -184,7 +189,7 @@ A rendszer három fő rétegből áll:
 <img src="./diagrams/output-1.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
 <span id="41-komponensekmodulok" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 4.1 Komponensek/modulok {#41-komponensekmodulok}
+### 4.1 Komponensek/modulok 
 
 | Modul | Leírás |
 |-------|--------|
@@ -196,7 +201,7 @@ A rendszer három fő rétegből áll:
 | Hűségprogram | Pontszámítás, szintkezelés, kedvezmények |
 
 <span id="42-adatfolyam" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 4.2 Adatfolyam {#42-adatfolyam}
+### 4.2 Adatfolyam 
 
 1. A felhasználó a React frontenddel interaktál, HTTP kéréseket küld.
 2. Az Express szerver middleware-eken (hitelesítés, rate limiting, sanitizáció) keresztül irányítja a kéréseket.
@@ -211,7 +216,7 @@ A rendszer három fő rétegből áll:
 <img src="./diagrams/output-3.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
 <span id="43-technologiak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 4.3 Technológiák {#43-technologiak}
+### 4.3 Technológiák 
 
 <img src="./diagrams/output-14.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
@@ -227,7 +232,7 @@ A rendszer három fő rétegből áll:
 | Helmet, HPP, CORS | HTTP biztonsági fejlécek és védelmi middleware |
 
 <span id="44-technologiai-valasztas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 4.4 Technológiai választás {#44-technologiai-valasztas}
+### 4.4 Technológiai választás 
 
 Ez a rendszer olyan technológiákat használ, amelyek gyors fejlesztést, skálázhatóságot és biztonságot biztosítanak az oktatási menza-rendelő platformhoz:
 
@@ -247,10 +252,10 @@ Ez a kombináció lehetővé teszi a gyors fejlesztést, a magas rendelkezésre 
 ---
 
 <span id="5-tervezes" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 5. Tervezés {#5-tervezes}
+## 5. Tervezés 
 
 <span id="51-tervezesi-elvek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 5.1 Tervezési elvek {#51-tervezesi-elvek}
+### 5.1 Tervezési elvek 
 
 | Elv | Megvalósítás |
 |-----|-------------|
@@ -265,15 +270,15 @@ Ez a kombináció lehetővé teszi a gyors fejlesztést, a magas rendelkezésre 
 
 
 <span id="52-adatbazis-tervezes" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 5.2 Adatbázis tervezés {#52-adatbazis-tervezes}
+### 5.2 Adatbázis tervezés
 
-#### 5.2.1 Cél, funkció és a tárolt információk összefoglalása {#521-cel-funkcio-tarolt-informaciok}
+#### 5.2.1 Cél, funkció és a tárolt információk összefoglalása 
 
 Ez az adatbázis egy iskolai menzarendszer része (MERN stack projekt), amely lehetővé teszi a felhasználók számára (diákok, szülők, tanárok), hogy ételeket rendeljenek, kifizessék azokat és értékeléseket adjanak. A rendszer támogatja a felhasználóhitelesítést, menükezelést, rendelések kezelését, fizetéseket, hűségprogramokat, E2EE chatet és biztonsági naplózást. A fő cél az iskolai étkezések hatékony és biztonságos kezelése, beleértve a készletgazdálkodást, értékeléseket és pénzügyi tranzakciókat. Az adatbázis MongoDB-t használ Mongoose ODM-mel, amely NoSQL adatbázis, de sémákkal struktúrált. Redis gyorsítótárazásra és ideiglenes adatokra szolgál.
 
 Az adatbázis modell típusa: NoSQL (MongoDB), lekérdező nyelv: JavaScript (Mongoose query-k). Redis memóriában tárolt adatbázis gyorsítótárazásra, munkamenetekre és rövid életű adatokra.
 
-#### 5.2.2 Adatbázis terv és séma {#522-adatbazis-terv-sema}
+#### 5.2.2 Adatbázis terv és séma 
 
 ##### Entitások és kapcsolatok (ER modell összefoglaló)
 
@@ -744,7 +749,7 @@ Ez a szakasz kiegészíti a fent leírt adatbázisséma leírást közvetlen hiv
 <img src="./diagrams/output-8.svg" alt="Diagram" style="width:80%; max-width:700px; display:block; margin:1rem auto;" />
 
 <span id="55-teljesitmenyoptimalizalas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 5.5 Teljesítményoptimalizálás {#55-teljesitmenyoptimalizalas}
+### 5.5 Teljesítményoptimalizálás 
 
 #### 5.5.0 HTTP szintű optimalizációk (tömörítés és keep-alive hangolás)
 
@@ -817,7 +822,7 @@ A frekventált lekérdezési útvonalakhoz további adatbázis-optimalizációk 
 - A 2FA és jelszó-visszaállítás modulok már nem hoznak létre külön MongoDB kapcsolatot; a megosztott alkalmazáskapcsolatra támaszkodnak, ami csökkenti a Render környezetben az indulási és memóriaigényt.
 
 <span id="53-algoritmusok-es-adatszerkezetek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 5.3 Algoritmusok és adatszerkezetek {#53-algoritmusok-es-adatszerkezetek}
+### 5.3 Algoritmusok és adatszerkezetek 
 
 #### 5.3.1 Adatszerkezetek
 
@@ -1002,7 +1007,7 @@ const verifyRecaptcha = async (token) => {
 - **Gyorsítótár middleware**: Redis gyorsítótár elsődlegesen, visszaesés MongoDB-re, mintázat alapú érvénytelenítéssel írások esetén.
 
 <span id="54-biztonsagi-tervezes" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 5.4 Biztonsági tervezés {#54-biztonsagi-tervezes}
+### 5.4 Biztonsági tervezés
 
 #### 5.4.1 Biztonsági funkciók
 
@@ -1279,10 +1284,10 @@ flowchart TD
 ---
 
 <span id="6-megvalositas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 6. Megvalósítás {#6-megvalositas}
+## 6. Megvalósítás 
 
 <span id="61-konyvtarszerkezet" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 6.1 Könyvtárstruktúra {#61-konyvtarszerkezet}
+### 6.1 Könyvtárstruktúra
 
 ```
 ├── config/
@@ -1325,7 +1330,7 @@ flowchart TD
 ```
 
 <span id="62-backend-megvalositas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 6.2 Backend megvalósítás {#62-backend-megvalositas}
+### 6.2 Backend megvalósítás 
 
 #### 6.2.1 Technológiai stack
 
@@ -1653,7 +1658,7 @@ Két szintű stratégiát alkalmaz: globális `express-rate-limit` korlátokat (
 A backend rétegezett, szolgáltatásorientált architektúrát használ (route-ok → szolgáltatások → modellek). A konfiguráció környezeti változókon keresztül történik `.env` fájl segítségével. A hibakezelés központilag történik Express hibakezelő middleware-eken keresztül, amelyek naplózzák a biztonsági eseményeket és biztonságos üzeneteket küldenek a kliensnek. Az állapotmentes JWT tervezés és a Redis munkamenet tárolás vízszintes skálázást tesz lehetővé. A függőségek `npm audit`-tal vannak kezelve és naprakészen tartva.
 
 <span id="63-frontend-megvalositas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### 6.3 Frontend megvalósítás {#63-frontend-megvalositas}
+### 6.3 Frontend megvalósítás 
 
 #### 6.3.1 Technológiai stack
 
@@ -1878,12 +1883,12 @@ A frontend komponens-alapú architektúrát követ újrafelhasználható UI elem
 ---
 
 <span id="7-api-referencia" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 7. API referencia {#7-api-referencia}
+## 7. API referencia 
 
 Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjelölést kap. A hitelesítési hiba `401 Unauthorized`-t ad vissza; a jogosultság hiánya `403 Forbidden`-t.
 
 <span id="foalkalmazas-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Főalkalmazás útvonalak {#foalkalmazas-utvonalak}
+### Főalkalmazás útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -1894,7 +1899,7 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 | GET | `/chat` | Munkamenet | E2EE chat felület |
 
 <span id="hitelesitesi-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Hitelesítési útvonalak {#hitelesitesi-utvonalak}
+### Hitelesítési útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -1932,7 +1937,7 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 ```
 
 <span id="iranyitopult-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Irányítópult útvonalak {#iranyitopult-utvonalak}
+### Irányítópult útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -1941,9 +1946,10 @@ Minden végpont aktív munkamenetet igényel, kivéve, ha **nyilvános** megjel�
 | GET | `/dashboard/editor` | Editor/Admin | Szerkesztői irányítópult |
 | GET | `/dashboard/student` | Diák/Admin | Diák irányítópult |
 | GET | `/dashboard/parent` | Szülő/Admin | Szülői irányítópult |
+| GET | `/dashboard/teacher` | Tanár (Apollo ág) | Tanári irányítópult |
 
 <span id="adminisztratori-iranyitopult-api-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Adminisztrátori irányítópult API útvonalak {#adminisztratori-iranyitopult-api-utvonalak}
+### Adminisztrátori irányítópult API útvonalak 
 
 Minden útvonal admin munkamenetet igényel. Hibák: `401`, `403`, `500`.
 
@@ -2014,7 +2020,7 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 ```
 
 <span id="diak-iranyitopult-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Diák irányítópult útvonalak {#diak-iranyitopult-utvonalak}
+### Diák irányítópult útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2027,7 +2033,7 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | GET | `/dashboard/student/loyalty/vouchers` | Diák | Saját voucher lista |
 
 <span id="szulo-iranyitopult-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Szülő irányítópult útvonalak {#szulo-iranyitopult-utvonalak}
+### Szülő irányítópult útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2038,8 +2044,26 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 | GET | `/dashboard/parent/stats` | Szülő | Szülői összesített statisztikák |
 | POST | `/dashboard/parent/transfer` | Szülő | Egyenlegátutalás a kapcsolt diáknak |
 
+<span id="tanari-iranyitopult-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### Tanári irányítópult útvonalak (Apollo ág)
+
+Az alábbi végpontok az **apollo** ág `src/dashboard/teacher/teacher.js` moduljában szerepelnek.
+
+| Módszer | Végpont | Hitelesítés | Leírás |
+|--------|----------|-------------|--------|
+| GET | `/dashboard/teacher` | Tanár | Tanári dashboard felület (`public/dashboard/teacher/teacher.html`) |
+| GET | `/dashboard/teacher/profile` | Tanár | Tanári profiladatok fejléchez |
+| GET | `/dashboard/teacher/students` | Tanár | Diáklista lekérdezése |
+| GET | `/dashboard/teacher/reports` | Tanár | Összesített riportok (diákszám, rendelések, bevétel, top tételek) |
+| GET | `/dashboard/teacher/orders` | Tanár | Rendeléslista tanári nézethez |
+
+Apollo implementation note:
+- Jogosultság-ellenőrzés: helyi `requireTeacher` middleware a teacher routerben
+- Rate limit: 45 kérés/perc (`redisLuaService.checkRateLimit`)
+- Gyorsítótár: `cacheResult()` alapú endpoint cache kulcsok (`teacher:*`)
+
 <span id="rendeleskezelo-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Rendeléskezelő útvonalak {#rendeleskezelo-utvonalak}
+### Rendeléskezelő útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2063,7 +2087,7 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 ```
 
 <span id="altalanos-api-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Általános API útvonalak {#altalanos-api-utvonalak}
+### Általános API útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2132,7 +2156,7 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 ```
 
 <span id="geosecurity-api-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### GeoSecurity API útvonalak {#geosecurity-api-utvonalak}
+### GeoSecurity API útvonalak 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2161,7 +2185,7 @@ A `/dashboard/admin/health` végpont a szerveroldali komponensek állapotát ell
 ```
 
 <span id="chat-api-es-websocket-utvonalak" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Chat API és Socket.IO események {#chat-api-es-websocket-utvonalak}
+### Chat API és Socket.IO események 
 
 | Módszer | Végpont | Hitelesítés | Leírás |
 |--------|----------|-------------|--------|
@@ -2219,7 +2243,7 @@ socket.on("newMessage", (payload) => {
 Minden chatüzenet kliensoldalon van titkosítva (E2EE). A szerver csak a titkosított szöveget és metaadatokat tárolja.
 
 <span id="backend-modellek-mongodb" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-### Backend modellek (MongoDB) {#backend-modellek-mongodb}
+### Backend modellek (MongoDB)
 
 A részletes entitásleírások — mezők, indexek, üzleti szabályok — az [5.2.3 fejezetben](#523-reszletes-entitasleirasok) találhatók.
 
@@ -2241,10 +2265,10 @@ const keyRegistry = {
 ---
 
 <span id="8-adatmodell-es-kodlap-lekepezese" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 8. Adatmodell és kódlap leképezése {#8-adatmodell-es-kodlap-lekepezese}
+## 8. Adatmodell és kódlap leképezése
 
 
-### 8.1 Fő adatbázis entitások (MongoDB, Mongoose) {#81-fo-adatbazis-entitasok-mongodb-mongoose}
+### 8.1 Fő adatbázis entitások (MongoDB, Mongoose) 
 
 - `User` (a `src/models/User.js`-ben): alap felhasználói fiók entitás hitelesítési mezőkkel, szerepekkel, státuszjelzőkkel, egyenleggel, tiltási adatokkal, E2EE identitással, regisztrált eszközökkel, helyreállítási blobbal és régi titkosítási mezőkkel.
 - `Payment` (a `config/database_queries.js`-ben): fizetési rekordok összeggel, valutával, fizetési móddal, státusszal, tranzakció hivatkozással és létrehozás időbélyeggel.
@@ -2262,11 +2286,12 @@ const keyRegistry = {
 - `StorageBlob` (a `src/models/StorageBlob.js`-ben): titkosított tárolt blobok munkamenet/üzenet állapothoz, egyedi user/blobType/partition kombinációnként.
 - `Reward` és `Redemption` (a `config/database_queries.js`-ben): kibővített hűségprogram katalógus és utalvány entitásokkal.
 
-### 8.3 Entitás leképezés kódbeli modulokra {#83-entitas-lekepezes-kodbeli-modulokra}
+### 8.3 Entitás leképezés kódbeli modulokra 
 
 - Hitelesítési útvonalak: `src/auth/register.js`, `src/auth/login.js`, `src/auth/2fa.js`, `src/auth/password_reset.js`, `src/auth/email_verification.js`.
 - API koordináció: `src/api.js` kezeli a rendeléseket (`/orders`, `/orders/googlepay`, `/orders/:orderID/capture`, stb.), a fizetéseket, és kapcsolódik `orderService`, `paypalService` és `googlePayService` szolgáltatásokhoz. Tartalmazza a `denyEditorOrderPlacement` middleware-t (minden rendelési endpoint előtt) és a `resolveOrderTargetUserId` segédfüggvényt, amely szülői bejelentkezés esetén a `ParentStudent` gyűjteményen ellenőrzi az `approved` kapcsolatot és a célzott gyermek `userId`-jét adja vissza.
 - Dashboard és admin végpontok: a `src/dashboard/*`-ből csatolva a `src/main.js`-en keresztül.
+- Apollo tanári dashboard: `src/dashboard/teacher/teacher.js` backend route + `public/dashboard/teacher/*` frontend komponensek; mount `src/dashboard/dashboard.js` alatt `/teacher` útvonalon.
 - Cache és nagy áteresztőképességű műveletek: `src/cache/ChangeStreamManager.js`, `src/cache/KeyRegistry.js`, `src/redis.js`.
 - E2EE logika: `src/models/Message.js`, `src/models/PreKey.js`, `src/models/StorageBlob.js`, `src/models/DeviceSyncSession.js`, valamint frontend chat komponensek a `public/chat` alatt.
 
@@ -2281,7 +2306,9 @@ const keyRegistry = {
 
 Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a `public/no_perm/index.html` HTML oldalt tölti be — ez tudatos döntés, hogy a dashboard-on kívüli böngészők megfelelő felhasználói felületet kapjanak. Az admin szerepkör minden dashboard típushoz hozzáfér.
 
-### 8.4 Adatbázis logika és megszorítások {#84-adatbazis-logika-es-megszoritasok}
+Apollo megjegyzés: a tanári útvonalak jogosultságát a `src/dashboard/middleware/auth-middleware.js` helyett közvetlenül a `src/dashboard/teacher/teacher.js` lokális `requireTeacher` middleware kezeli.
+
+### 8.4 Adatbázis logika és megszorítások 
 
 - `MenuItems` pre-save hookkal: `available` false, ha `stock <= 0`.
 - `Order` pre-save hookkal: 15 percnél régebbi `Pending` rendelések `Cancelled`-re állnak.
@@ -2291,7 +2318,7 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 - `PreKey` indexek: `userId/deviceId/used` és egyedi `userId/keyId`.
 - `StorageBlob` indexek: egyedi `(userId, blobType, partitionKey)` és `userId/updatedAt`.
 
-### 8.5 Üzleti folyamatok átfogó ábrázolása (dokumentszintű) {#85-uzleti-folyamatok-atfogo-abrazolasa-dokumentszintu}
+### 8.5 Üzleti folyamatok átfogó ábrázolása (dokumentszintű) 
 
 1. A felhasználó rendelést hoz létre a frontend `/api/orders` útvonalon.
 2. Az `api.js` először a `denyEditorOrderPlacement` middleware-rel ellenőrzi, hogy az aktuális felhasználó editor szerepkörű-e; igen esetén a folyamat `403 Forbidden` válasszal megszakad.
@@ -2304,13 +2331,13 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 9. Ha a rendelés befolyásolja a menü készletét, a `MenuItems` rendezett halmaz gyorsítótára a `KeyRegistry` alapján érvénytelenül, és szükség esetén a `ChangeStreamManager` is érvénytelenít.
 
 
-### 8.6 Környezet- és konfigurációs alapok {#86-kornyezet-es-konfiguracios-alapok}
+### 8.6 Környezet- és konfigurációs alapok
 
 - `.env` értékek: `MONGODB_URI`, `DB_NAME`, `JWT_LOGIN_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `GOOGLE_PAY_MERCHANT_ID`, `RECAPTCHA_SECRET` és `REDIS_URL`.
 - `mongoose.connect` a `src/models/User.js` és a `config/database_queries.js` fájlokban van meghívva. Használj kapcsolatpoolozást és monitorozást.
 - `dotenv` használat mindkét fájlban `require('dotenv').config()` formában történik.
 
-### 8.7 Tesztelési hivatkozások {#87-tesztelesi-hivatkozasok}
+### 8.7 Tesztelési hivatkozások 
 
 - Egység- és integrációs tesztek a `tests/` és `tests/performance_tests/` könyvtárakban találhatók.
 - Létező seed szkriptek: `tests/creating_test_users.js`, `tests/seed_rewards.js`.
@@ -2319,30 +2346,247 @@ Jogosulatlan próbálkozásnál a szerver **nem JSON 403-at** ad vissza, hanem a
 ---
 
 <span id="9-teszteles" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 9. Tesztelés {#9-teszteles}
+## 9. Tesztelés 
 
-A projekt tesztelési fókusza az egység-, integrációs, biztonsági és teljesítménytesztek kombinációjára épül.
-A konkrét tesztfájlok és hivatkozások listája a [8.7 Tesztelési hivatkozások](#87-tesztelesi-hivatkozasok) szakaszban található.
+A projekt minőségbiztosítási szakaszában az automatizált egység- és integrációs tesztek,
+valamint a strukturált manuális tesztek kombinációját alkalmaztuk. Ez a megközelítés biztosítja,
+hogy a kritikus üzleti logika (hitelesítés, jogosultságkezelés, rendelési folyamat, védett
+végpontok) stabilan működjön még a teljes felhasználói folyamatok ellenőrzése előtt.
+
+A `develop` ágon külön, részletes tesztstruktúra található (`tests/Unit`, `tests/Integration`,
+`tests/System`), ezért a jelen fejezet ezt referencia mintaként használja.
+
+<span id="91-automatizalt-egysegteszteles-unit-testing" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 9.1 Automatizált egységtesztelés (Unit Testing)
+
+A backend útvonalak és autentikációs logika teszteléséhez a `Jest` + `Supertest` eszközpárost
+használtuk. A cél annak igazolása, hogy a rendszer helyesen kezelje a sikeres és sikertelen
+bejelentkezési ágakat, és a várható HTTP státuszkódokat adja vissza.
+
+Az alábbi kódrészlet a `develop` ág `tests/Unit/auth/user_auth/login.test.js` fájljának mintája:
+
+```js
+const request = require('supertest');
+const express = require('express');
+const bcrypt = require('bcrypt');
+const session = require('express-session');
+
+const router = require('../../../../src/auth/passwordhash');
+
+const app = express();
+app.use(express.json());
+app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
+app.use('/', router);
+
+describe('LOGIN ROUTE (/login)', () => {
+  beforeEach(() => {
+    jest.spyOn(bcrypt, 'hash').mockImplementation((pw, salt, cb) => cb(null, 'fakehash'));
+    jest.spyOn(bcrypt, 'compare').mockImplementation((pw, h, cb) => cb(null, true));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('Successful login', async () => {
+    const res = await request(app)
+      .post('/login')
+      .send({ username: 'user', password: 'TestPass1!' });
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  test('Failed login', async () => {
+    jest.spyOn(bcrypt, 'compare').mockImplementation((pw, h, cb) => cb(null, false));
+
+    const res = await request(app)
+      .post('/login')
+      .send({ username: 'user', password: 'wrong' });
+
+    expect(res.statusCode).toBe(401);
+  });
+});
+```
+
+A jogosultsági és rendszerfolyamat-tesztek ugyanebben a struktúrában készültek:
+- Integrációs jogosultság-teszt (példa): `tests/Integration/permissions/student_access.test.js`
+- E2E hitelesítési folyamat (példa): `tests/System/e2e/auth.cy.js`
+
+<span id="92-tesztdokumentacios-tablazat-manualis-teszteles" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 9.2 Tesztdokumentációs táblázat (Manuális tesztelés) 
+
+A funkcionális és rendszerintegrációs manuális teszteket strukturált teszteset-táblában
+dokumentáltuk. A táblázat a diák, szülő, admin és oktatói/tanári jogosultságok főbb
+interakcióit foglalja össze.
+
+| ID | Teszteset megnevezése | Elvárt működés | Állapot (Pass/Fail) | Megjegyzés |
+|---|---|---|---|---|
+| TC-01 | Bejelentkezés érvényes adatokkal | A rendszer munkamenetet hoz létre, és a szerepkörnek megfelelő dashboardra irányít. | Pass (referencia) | Gyors válaszidő, stabil session-kezelés. |
+| TC-02 | Jogosultság ellenőrzés (diák útvonal) | A diák eléri a saját dashboardot, nem diák szerepkör esetén 403 válasz érkezik. | Pass (referencia) | RBAC működés a `student_access` teszt alapján. |
+| TC-03 | Hibás bejelentkezés | Rossz hitelesítő adatoknál a szerver elutasítja a kérést (401). | Pass (referencia) | Hibakezelés kiszámítható. |
+| TC-04 | Védett endpoint munkamenet nélkül | Session nélküli hívás védett végpontra 401/403 választ ad. | Pass (referencia) | Jogosulatlan hozzáférés blokkolva. |
+| TC-05 | Brute-force védelem / rate limit | Ismételt sikertelen kéréseknél korlátozás lép életbe (429). | Pass (referencia) | Védelem aktív, támadási felület csökkentett. |
+| TC-06 | Reszponzivitás teszt | Mobil nézetben a menü, grafikonok és dashboard elemek használhatók maradnak. | Pass (referencia) | Tailwind-alapú töréspontok megfelelően működnek. |
+
+> Megjegyzés: a "Pass (referencia)" státuszok a `develop` ág tesztstruktúrájának és tesztkódjának
+> dokumentációs összefoglalását jelölik.
 
 ---
 
 <span id="10-felhasznaloi-kezikonyv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 10. Felhasználói kézikönyv {#10-felhasznaloi-kezikonyv}
+## 10. Felhasználói kézikönyv
 
-*A felhasználói kézikönyv tartalma eltávolításra került.*
+Ez a fejezet a SnapTray rendszer napi használatához ad lépésről lépésre útmutatót, a jelenlegi
+kódbázis struktúrájához igazítva.
+
+### 10.1 Belépési pontok és fő oldalak
+
+| Funkció | URL | Megvalósítás (fájl) |
+|---|---|---|
+| Nyitóoldal | `/` | `public/home_page/home_page.html` + `public/home_page/home_page.jsx` |
+| Bejelentkezés | `/login` | `public/login/index.html` + `public/login/login.jsx` |
+| Regisztráció | `/register` | `public/register.html` |
+| Jelszó-visszaállítás | `/password-reset/:token` | `public/password_reset.html` |
+| Rendelési felület | `/Order/` | `public/Order/index.html` + `public/Order/order.jsx` |
+| Kétfaktoros jóváhagyás | `/2fa` | `public/2fa/index.html` + `public/2fa/2fa.jsx` |
+| Chat felület | `/chat` | `public/chat/index.html` + `public/chat/chat.jsx` |
+| Dashboard gyűjtőoldal | `/dashboard` | `public/dashboard/dashboard.html` |
+| Tanári dashboard (Apollo ág) | `/dashboard/teacher` | `public/dashboard/teacher/teacher.html` + `public/dashboard/teacher/teacher.jsx` |
+
+### 10.2 Regisztráció és fiókaktiválás
+
+1. Nyisd meg a `/register` oldalt.
+2. Add meg a felhasználónevet, e-mail címet, jelszót, majd szükség esetén jelöld be a szülői fiókot (`isParent`).
+3. A kliens reCAPTCHA v3 tokent küld (`g-recaptcha-response`), a szerver pedig validálja ezt a `src/auth/register.js` logikában.
+4. Sikeres regisztráció után a rendszer ellenőrző e-mailt küld (`src/auth/email_verification.js`).
+5. Az aktiválás a levélben kapott linkkel (`/email-verification/verify/:token`) vagy ellenőrzőkóddal (`POST /email-verification/verify-code`) történik.
+
+### 10.3 Bejelentkezés, 2FA és kijelentkezés
+
+1. A `/login` oldalon a kliens `POST /login` kérést küld.
+2. Ha a felhasználónál aktív a 2FA (`is2Active`), a rendszer 2FA kihívást indít (`POST /2fa`), majd a kliens a `/2fa/status` végpontot pollolja.
+3. Jóváhagyás után szerepkör szerint történik átirányítás:
+  - admin: `/dashboard/admin`
+  - editor: `/dashboard/editor`
+  - parent: `/dashboard/parent`
+  - tanár: `/dashboard/teacher` (apollo ág)
+  - alapértelmezett: `/dashboard/student`
+4. Kijelentkezéshez használható a `GET /logout` vagy `POST /logout`; mindkettő törli a session-t és a sütit (`connect.sid`).
+
+### 10.4 Rendelési folyamat (diák és szülő)
+
+1. A rendelési oldal a menüt az `/api/menu-items`, a napi ajánlatot az `/api/daily-menu` végpontról tölti.
+2. A felhasználó kosárba teszi a tételeket, majd fizetési módot választ (egyenleg, PayPal, Google Pay).
+3. Szerkesztő (editor) szerepkörnél a rendelés tiltott; ezt frontend és backend oldalon is védelem kezeli (`isEditor`, `denyEditorOrderPlacement`).
+4. Szülői fióknál a rendelés célzott gyermekhez kötött:
+  - gyermeklista: `/dashboard/parent/studentlist`
+  - szerver oldali célfelhasználó-feloldás: `resolveOrderTargetUserId` (`src/api.js`)
+5. A tranzakció eredménye mentésre kerül a rendelés- és fizetési gyűjteményekbe (`Order`, `Payment`), és frissülnek a kapcsolódó hűségadatok.
+
+### 10.5 Dashboard funkciók szerepkörönként
+
+| Szerepkör | Dashboard URL | Jellemző funkciók |
+|---|---|---|
+| Admin | `/dashboard/admin` | Felhasználókezelés, menü- és jutalomkezelés, riportok, biztonsági naplók, egészségellenőrzés |
+| Editor | `/dashboard/editor` | Menü- és jutalomkezelés, statisztikák, rendelési jogosultság nélkül |
+| Student | `/dashboard/student` | Rendelési előzmények, pénztárca, hűségadatok, szülő kapcsolás |
+| Parent | `/dashboard/parent` | Gyermekek kezelése, linkkérelmek jóváhagyása, gyermekrendelések és tranzakciók |
+| Tanár (Apollo ág) | `/dashboard/teacher` | Diáklista, rendeléslista, riportok, tanári profilinformációk |
+
+Jogosulatlan hozzáférés esetén a middleware nem JSON hibát ad vissza, hanem a `public/no_perm/index.html` oldalt jeleníti meg.
+
+### 10.6 Hibaoldalak és tipikus felhasználói visszajelzések
+
+- Általános nem található oldal: `public/404/404.html`
+- Túl sok kérés (rate limit): `public/429/429.html`
+- Jogosultsági hiba dashboard belépésnél: `public/no_perm/index.html`
+
+Az autentikációs és fizetési folyamatok során a hibák egy része szöveges (`text/plain`), más része JSON formában érkezik vissza; a frontend komponensek ezekhez külön üzenetkezelést használnak.
 
 ---
 
 <span id="11-telepites-es-karbantartas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 11. Telepítés és karbantartás {#11-telepites-es-karbantartas}
+## 11. Telepítés és karbantartás
 
-*A telepítési és karbantartási szakasz tartalma eltávolításra került.*
+### 11.1 Előfeltételek
+
+- Node.js és npm (a projekt `npm start` / `npm run dev` scriptjeit futtató környezet)
+- MongoDB elérés (`MONGODB_URI` + `DB_NAME`)
+- Redis elérés (`REDIS_HOST`) session, cache és 2FA tároláshoz
+- (Dokumentáció exporthoz) `marky` és Playwright Chromium
+
+### 11.2 Környezeti konfiguráció (.env)
+
+1. Hozd létre a gyökérkönyvtárban a `.env` fájlt.
+2. Kiindulási mintának használd a `.env.example` fájlt.
+3. Töltsd ki az alábbi kulcsokat:
+
+| Csoport | Kulcsok |
+|---|---|
+| Alap futtatás | `PORT`, `SESSION_SECRET`, `SESSION_COOKIE_SECURE` |
+| Adatbázis/cache | `MONGODB_URI`, `DB_NAME`, `REDIS_HOST` |
+| JWT és auth | `JWT_LOGIN_SECRET`, `JWT_2FA_SECRET`, `JWT_EMAIL_SECRET`, `JWT_SECRET` |
+| Biztonság | `IP_HASH_SECRET`, `CSRF_COOKIE_SECURE`, `HOST`, `PRODUCTION_HOST`, `PRODUCTION_HOST_2`, `GEOIP`, `Server_Side_Captha` |
+| E-mail és fizetés | `SENDGRID_API_KEY`, `EMAIL_USER`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` |
+
+Megjegyzés: a jelenlegi kódbázisban a reCAPTCHA szerver oldali kulcs neve `Server_Side_Captha`, ezért ezt a kulcsnevet kell használni.
+
+### 11.3 Telepítés és indítás
+
+```bash
+npm install
+npm run dev
+```
+
+Production jellegű indítás:
+
+```bash
+npm start
+```
+
+Várt indulási jelek:
+- MongoDB kapcsolat felépül (`Connected to MongoDB ...`)
+- Redis kapcsolat felépül (`Redis connected`), vagy fallback logok jelennek meg Redis hiánya esetén
+- Szerver figyel a `PORT` változó szerinti porton (`Server listening on port ...`)
+
+### 11.4 Üzemeltetési ellenőrzőlista
+
+1. Session és CSRF működés ellenőrzése bejelentkezéssel (`/login`) és védett műveletekkel.
+2. Dashboard jogosultságok ellenőrzése szerepkörönként (`/dashboard/admin`, `/dashboard/editor`, `/dashboard/student`, `/dashboard/parent`, valamint apollo ágon `/dashboard/teacher`).
+3. Ráta-korlátok tesztelése: túl sok kérés esetén `429` oldal visszaadása.
+4. Alap health ellenőrzés:
+  - admin: `GET /dashboard/admin/health`
+  - student: `GET /dashboard/student/health`
+
+### 11.5 Karbantartási feladatok
+
+- Függőségek rendszeres frissítése és regressziós tesztelése.
+- Környezeti kulcsok rotációja (`SESSION_SECRET`, JWT kulcsok, PayPal és SendGrid tokenek).
+- MongoDB indexek és lassú lekérdezések rendszeres felülvizsgálata.
+- Redis kulcs-élettartamok és fallback viselkedés ellenőrzése (2FA, rate limit, cache).
+- Biztonsági naplók (`SecurityLogs`) periodikus auditálása.
+
+### 11.6 Dokumentáció export (Markdown -> PDF)
+
+A projekt tartalmaz dedikált export eszközt a `docs/md-to-pdf.mjs` fájlban.
+
+Példa futtatás a projekt gyökeréből:
+
+```bash
+node docs/md-to-pdf.mjs docs/new_doc_hu.md docs/new_doc_hu.pdf -- --all --theme latex
+```
+
+Előfeltételek:
+- `marky` telepítve és elérhető PATH-on
+- Playwright Chromium telepítve (`npx playwright install chromium`)
 
 ---
 
-## 12. Következtetés és jövőbeni munka {#12-kovetkeztetes-es-jovobeni-munka}
 
-### 12.1 Összefoglalás {#121-osszefoglalas}
+
+## 12. Következtetés és jövőbeni munka 
+
+### 12.1 Összefoglalás 
 
 A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési platformot valósít meg, amely a következő főbb funkciókat tartalmazza:
 
@@ -2354,7 +2598,7 @@ A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési pl
 - **Valós idejű gyorsítótárazás**: Redis + MongoDB Change Stream alapú érvénytelenítési stratégia.
 - **Geobiztonsági kockázatelemzés**: VPN/Tor/Proxy detektálás, lehetetlen utazás ellenőrzés, IP HMAC-SHA256 hash (GDPR).
 
-### 12.2 Jövőbeni fejlesztési irányok {#122-jovobeni-fejlesztesi-iranyok}
+### 12.2 Jövőbeni fejlesztési irányok
 
 | Terület | Leírás |
 |---|---|
@@ -2370,9 +2614,9 @@ A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési pl
 ---
 
 <span id="14-mellekletek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 14. Mellékletek {#14-mellekletek}
+## 14. Mellékletek
 
-### 14.1 Kulcsgenerátor parancsok {#141-kulcsgeneralas}
+### 14.1 Kulcsgenerátor parancsok 
 
 ```bash
 # JWT titkok generálása (Node.js REPL)
@@ -2382,7 +2626,7 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 14.2 Redis kulcsnév-konvenciók {#142-redis-kulcsok}
+### 14.2 Redis kulcsnév-konvenciók
 
 | Kulcs minta | Típus | TTL | Tartalom |
 |---|---|---|---|
