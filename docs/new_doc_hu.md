@@ -18,10 +18,15 @@
 </div>
 
 
-## 1 Tartalomjegyzék
+## Tartalomjegyzék
 
 - [1. Bevezetés](#1-bevezetes)
-- [2. Rendszer áttekintése](#2-rendszer-attekintese)
+- [2. Projektterv](#2-projektterv)
+  - [2.1 Cél és hatókör](#21-cel-es-hatokor)
+  - [2.2 Szerepkörök és felelősségek](#22-szerepkorok-es-felelossegek)
+  - [2.3 Ütemezés és mérföldkövek](#23-utemezes-es-merfoldkovek)
+  - [2.4 Kockázatkezelési terv](#24-kockazatkezelesi-terv)
+  - [2.5 Rendszer áttekintése](#2-rendszer-attekintese)
 - [3. Követelmények](#3-kovetelmenyek)
 - [4. Rendszerarchitektúra](#4-rendszerarchitektura)
   - [4.1 Komponensek/modulok](#41-komponensekmodulok)
@@ -61,14 +66,15 @@
 - [9. Tesztelés](#9-teszteles)
   - [9.1 Automatizált egységtesztelés (Unit Testing)](#91-automatizalt-egysegteszteles-unit-testing)
   - [9.2 Tesztdokumentációs táblázat (Manuális tesztelés)](#92-tesztdokumentacios-tablazat-manualis-teszteles)
-- [10. Felhasználói kézikönyv](#10-felhasznaloi-kezikonyv)
-- [11. Telepítés és karbantartás](#11-telepites-es-karbantartas)
+- [10. Felhasználói dokumentáció](#10-felhasznaloi-dokumentacio)
+- [11. Telepítési útmutató](#11-telepitesi-utmutato)
 - [12. Következtetés és jövőbeni munka](#12-kovetkeztetes-es-jovobeni-munka)
+- [13. Irodalomjegyzék és hivatkozások](#13-irodalomjegyzek-es-hivatkozasok)
 - [14. Mellékletek](#14-mellekletek)
 
 ---
 
-## 2 Kivonat
+## Kivonat
 
 A SnapTray vizsgaprojekt egy webalapú iskolai menza-rendelő és fizetési rendszer tervezését,
 megvalósítását és dokumentálását mutatja be. A rendszer célja, hogy egységes platformon
@@ -93,7 +99,7 @@ is képes támogatni az iskolai étkeztetés digitális működését.
 
 ---
 
-## 3 Abstract
+## Abstract
 
 This thesis project presents the design, implementation, and documentation of SnapTray, a
 web-based school cafeteria ordering and payment platform. The system is intended to provide
@@ -129,12 +135,69 @@ A SnapTray modern biztonsági megoldásokat alkalmaz (kétlépcsős azonosítás
 
 ---
 
+<span id="2-projektterv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+## 2. Projektterv
+
+<span id="21-cel-es-hatokor" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 2.1 Cél és hatókör
+
+A projekt célja egy üzembiztos, szerepkör-alapú iskolai menza-rendelési platform létrehozása, amely egyesíti a rendelési, fizetési, hitelesítési és adminisztrációs folyamatokat.
+
+**Hatókörön belül:**
+- Backend API-k (auth, rendelés, fizetés, dashboard, geosecurity, chat)
+- Webes frontend és szerepkör-specifikus dashboardok
+- MongoDB + Redis adatréteg, cache és rate limit logika
+- 2FA folyamat (szerveroldali API + külső companion kliens támogatás)
+- Tesztelési és dokumentációs artefaktumok
+
+**Hatókörön kívül:**
+- Natív mobil kliens teljes körű gyártási bevezetése
+- Bankkártya-adat közvetlen tárolása (külső PSP integráció használata)
+
+<span id="22-szerepkorok-es-felelossegek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 2.2 Szerepkörök és felelősségek
+
+| Készítő | GitHub felhasználónév | Fő felelősségi terület | Kulcs feladatok |
+|---|---|---|---|
+| Kugli Balázs | `bivorzk` | Backend, frontend, caching, security, optimization | API-k és üzleti logika fejlesztése, frontend működés támogatása, Redis cache/rate limit, biztonsági mechanizmusok és teljesítményoptimalizálás |
+| Hargitai Tamás | `Htomi005` | Unit/Integration/E2E testing | Egység-, integrációs és végponttól végpontig (E2E) tesztek tervezése, futtatása és eredmények dokumentálása |
+| Peti Aliz Andrea | `alizpeti123` | Dark mode és teacher dashboard | Sötét mód felületi kialakítása, tanári dashboard nézetek és workflow-k megvalósítása |
+
+<span id="23-utemezes-es-merfoldkovek" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 2.3 Ütemezés és mérföldkövek
+
+| Időszak (repo commit-ek alapján) | Fő tevékenység | Eredmény / mérföldkő |
+|---|---|---|
+| 2025.09-2025.10 | Alaprendszer és backend indulás (`bivorzk`) | Inicializálás, auth/user alapok, regisztrációs folyamat felépítése |
+| 2025.10-2025.11 | Biztonsági hardening és validáció (`bivorzk`) | Jelszóerősség-ellenőrzés, email-ellenőrzési folyamat stabilizálása |
+| 2025.12 | Refaktor, caching és rate limit (`bivorzk`) | Redis integráció, sebesség- és terheléskezelési alapok, backend szerkezeti javítások |
+| 2026.01 | Frontend és dashboard bővítések (`bivorzk`) | React/Tailwind képernyők stabilizálása, dashboard folyamatok bővítése |
+| 2026.02-2026.03 | Biztonság + optimalizáció (`bivorzk`) | Chat/cache finomhangolás, geobiztonsági ellenőrzések, indexelési és cache-szinkron optimalizálás |
+| 2026.03-2026.04 | Teacher dashboard + dark mode (`alizpeti123`), valamint Unit/Integration/E2E tesztfókusz (`Htomi005`) | Tanári nézetek és sötét mód fejlesztése, tesztszintek dokumentált lefuttatása |
+
+A fenti mérföldkövek a repository commit-idővonalára és a projekt modulstruktúrájára (`src`, `public`, `tests`) támaszkodnak.
+
+Kiemelt repo-bizonyítékok a mérföldkövekhez:
+- Backend/security/caching/optimalizáció: `src/auth/`, `src/services/`, `src/cache/`, `src/middleware/`, `src/scripts/`.
+- Frontend/dashboard fejlesztések: `public/order/`, `public/login/`, `public/home_page/`, `public/dashboard/`.
+- Tesztelés: `tests/`, `tests/performance_tests/`, `tests/performance_tests/artillery.yml`.
+
+<span id="24-kockazatkezelesi-terv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+### 2.4 Kockázatkezelési terv
+
+| Kockázat | Valószínűség | Hatás | Kezelési stratégia |
+|---|---|---|---|
+| Külső API kiesés (PayPal/Google Pay) | Közepes | Magas | Retry, fallback ágak, részletes hibalog és felhasználói visszajelzés |
+| Redis elérhetetlenség | Közepes | Közepes | In-memory fallback útvonalak kritikus 2FA/rate limit flow-khoz |
+| Jogosultsági regresszió | Alacsony-közepes | Magas | RBAC middleware tesztelés, védett route ellenőrzések |
+| Dokumentációs eltérés a kódtól | Közepes | Közepes | Verziózott dokumentáció és fejezetszintű felülvizsgálat leadás előtt |
+
 <span id="2-rendszer-attekintese" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 2. Rendszer áttekintése 
+### 2.5 Rendszer áttekintése 
 
 A rendszer egy webalapú rendelési és fizetési platform oktatási intézmények számára, kliens–szerver architektúrában. A backend Node.js alapú Express szerver, a frontend React komponensekből épül fel szerepkör-alapú dashboardokkal. Redis biztosítja a gyorsítótárazást, rate limitinget és az atomi műveleteket, MongoDB az adatok perzisztens tárolását.
 
-### Megvalósított fő funkciók
+#### Megvalósított fő funkciók
 
 **Felhasználókezelés és autentikáció:**
 - Többszerepkörű felhasználói rendszer (diák, szülő, adminisztrátor, szerkesztő/editor, tanár - apollo ág)
@@ -2433,8 +2496,8 @@ interakcióit foglalja össze.
 
 ---
 
-<span id="10-felhasznaloi-kezikonyv" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 10. Felhasználói kézikönyv
+<span id="10-felhasznaloi-dokumentacio" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+## 10. Felhasználói dokumentáció
 
 Ez a fejezet a SnapTray rendszer napi használatához ad lépésről lépésre útmutatót, a jelenlegi
 kódbázis struktúrájához igazítva.
@@ -2505,8 +2568,8 @@ Az autentikációs és fizetési folyamatok során a hibák egy része szöveges
 
 ---
 
-<span id="11-telepites-es-karbantartas" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
-## 11. Telepítés és karbantartás
+<span id="11-telepitesi-utmutato" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+## 11. Telepítési útmutató
 
 ### 11.1 Előfeltételek
 
@@ -2610,6 +2673,30 @@ A SnapTray rendszer egy biztonságos, skálázható iskolai büfé-rendelési pl
 | Sormérleg funkció | Napi büfésori hosszbecslés és csúcsidő-értesítő |
 | OAuth2 integráció | Google / Microsoft bejelentkezés opcionális alternatívaként |
 | Kétirányú szülő–diák üzenetküldés | E2EE chat kiterjesztése szülő–diák kommunikációs csatornával |
+
+---
+
+<span id="13-irodalomjegyzek-es-hivatkozasok" style="display:block; position:relative; top:-80px; visibility:hidden;"></span>
+## 13. Irodalomjegyzék és hivatkozások
+
+- Fő projekt repository (SnapTray): [https://github.com/bivorzk/iskolaprojekt](https://github.com/bivorzk/iskolaprojekt)
+- 2FA companion alkalmazás (DX-SnapTray): [https://github.com/bivorzk/DX-SnapTray](https://github.com/bivorzk/DX-SnapTray)
+- Node.js API dokumentáció: [https://nodejs.org/docs/latest/api/](https://nodejs.org/docs/latest/api/)
+- Express.js dokumentáció: [https://expressjs.com/](https://expressjs.com/)
+- React dokumentáció: [https://react.dev/](https://react.dev/)
+- Tailwind CSS dokumentáció: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+- MongoDB Manual: [https://www.mongodb.com/docs/manual/](https://www.mongodb.com/docs/manual/)
+- Mongoose dokumentáció: [https://mongoosejs.com/docs/](https://mongoosejs.com/docs/)
+- Redis dokumentáció: [https://redis.io/docs/latest/](https://redis.io/docs/latest/)
+- Socket.IO dokumentáció (v4): [https://socket.io/docs/v4/](https://socket.io/docs/v4/)
+- PayPal Developer Docs: [https://developer.paypal.com/docs/](https://developer.paypal.com/docs/)
+- Google Pay API for Web: [https://developers.google.com/pay/api/web](https://developers.google.com/pay/api/web)
+- OWASP ASVS 4.0.3: [https://owasp.org/www-project-application-security-verification-standard/](https://owasp.org/www-project-application-security-verification-standard/)
+- OWASP Authentication Cheat Sheet: [https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
+- RFC 7519 (JSON Web Token): [https://www.rfc-editor.org/rfc/rfc7519](https://www.rfc-editor.org/rfc/rfc7519)
+- Tanári minta referencia (helyi dokumentum): [docs/Elektronikus napló motivációs eszközökkel kiegészítve (SABLON) (1).docx](docs/Elektronikus%20napló%20motivációs%20eszközökkel%20kiegészítve%20(SABLON)%20(1).docx)
+
+Minden online forrás utolsó elérése: 2026-04-26.
 
 ---
 
