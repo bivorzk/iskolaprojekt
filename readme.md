@@ -1,4 +1,4 @@
-# Cafeteria Ordering System
+# Cafeteria Ordering System (Final exam Thesis)
 
 ## Project Description
 
